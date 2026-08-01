@@ -1,7 +1,7 @@
 # SOMAプロジェクト継続ハンドオフ
 
 作成日: 2026-08-01  
-対象: SOMA-CELL 0.5完了地点〜0.6での既存SOMA神経系再統合
+対象: SOMA-CELL 0.6-P0凍結地点〜0.6での既存SOMA神経系再統合
 
 ## 1. ユーザーの中心目的
 
@@ -73,6 +73,7 @@ SOMA-7R 1.0.1の実機長時間ログで、資源量0から再生不能になる
 - 損傷・修復・生活史: `canonical/SOMA_CELL_0_3_pythonista.py`
 - 物質感覚運動・生涯可塑性: `canonical/SOMA_CELL_0_4_pythonista.py`
 - 死体化学・環境DNA・水平遺伝: `canonical/SOMA_CELL_0_5_pythonista.py`
+- 凍結化学身体ポート: `src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py`
 
 旧SOMA-5〜7（Rなし）は統合元に使わない。
 
@@ -112,7 +113,7 @@ SOMA-7R 1.0.1の実機長時間ログで、資源量0から再生不能になる
 
 ## 7. 次の0.6
 
-SOMA-CELL 0.5を凍結化学身体とし、既存SOMAの神経・因果系を物質化して戻す。
+SOMA-CELL 0.6-P0を凍結身体ポートとし、P1で1個の物質神経細胞と同費用ダミーを比較する。その後、必要性が示された場合だけ既存SOMAの神経・因果系を段階的に戻す。
 
 ```text
 0.5の膜・代謝・損傷・感覚運動・死体/eDNA生態
@@ -145,7 +146,7 @@ SOMA-CELL 0.5を凍結化学身体とし、既存SOMAの神経・因果系を物
 
 ## 9. 新しい会話への復元
 
-1. `SOMA_CONTINUITY_VAULT_GOLD_20260801_0_5.zip`を添付。
+1. 最新の`SOMA_CONTINUITY_VAULT_GOLD_*_0_6_P0.zip`またはP0プロジェクトチェックポイントを添付。
 2. 「`docs/SOMA_CONTEXT_HANDOFF_JA.md`と`docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md`を基準に継続」と指定。
 3. `SHA256SUMS.txt`を照合。
 4. 現在進行中の版、実機ログ、画像も添付。

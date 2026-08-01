@@ -8,9 +8,10 @@
 4. `CURRENT_BASELINE.txt`
 5. `docs/SOMA_CONTEXT_HANDOFF_JA.md`
 6. `docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md`
-7. 現在の基準ソース
-8. 基準版の検証結果・実験レポート
-9. `planning/ROADMAP_0_6_JA.md`
+7. `docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md`（P1以降）
+8. 現在の基準ソース
+9. 基準版の検証結果・実験レポート
+10. `planning/ROADMAP_0_6_JA.md`
 
 その後、SHA-256を確認し、次を成功させて作業開始証跡を作ってください。
 

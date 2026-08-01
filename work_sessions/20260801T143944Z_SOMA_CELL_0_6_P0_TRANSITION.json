@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.1",
+  "receipt_type": "transition",
+  "session_id": "20260801T143944Z_SOMA_CELL_0_6_P0_TRANSITION",
+  "started_utc": "2026-08-01T14:39:44Z",
+  "actor": "ChatGPT GPT-5.6 Pro",
+  "purpose": "SOMA-CELL 0.6-P0.0を検証済み凍結基準版へ昇格し、SOMA-CELL 0.6-P1を次マイルストーンとして開く",
+  "acknowledgement": "COMPLETE_CURRENT_MILESTONE_AND_ADVANCE",
+  "rule_id": "SOMA-RULELOCK-20260801-R2",
+  "checkpoint_id": "SOMA-20260801-CELL06P0-CANDIDATE-RULELOCK2",
+  "baseline": "SOMA-CELL 0.5.0",
+  "canonical_source": "src/baseline/SOMA_CELL_0_5_pythonista.py",
+  "git_commit": "8cc5a289d8d314d6238db80b47ca9a6af1a39d89",
+  "git_status_at_start": "",
+  "required_sources_read_and_hash_checked": {
+    "00_MANDATORY_STARTUP_GATE_JA.md": {
+      "sha256": "c5753237c3664f82f026b6623269e312f667a386006a3b2d6f8345934d231fed",
+      "size": 5514
+    },
+    "MANDATORY_WORKFLOW.json": {
+      "sha256": "000ae065983df36f347e791fcae384fe482046cfa0d72aaa8a73b1241b0fa008",
+      "size": 1845
+    },
+    "PROJECT_STATE.json": {
+      "sha256": "5d0c466e1be9f89082a19a65e2f30fbb7e5fc57c6c7c1dc4a09786676fcb8aa0",
+      "size": 4939
+    },
+    "CURRENT_BASELINE.txt": {
+      "sha256": "f27a7a1949bb10a9da7cb4beed0e9d8d95c75e9776156a1bec4edd0cdaa9b31c",
+      "size": 266
+    },
+    "docs/SOMA_CONTEXT_HANDOFF_JA.md": {
+      "sha256": "220e984745ba67d71264a82913a63c156bee79abbf57767608c55d7ff037f959",
+      "size": 12121
+    },
+    "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md": {
+      "sha256": "26f7e89274161076550b7e3019305b818f07c51f9469af8edab9567513ce668c",
+      "size": 11419
+    },
+    "planning/ROADMAP_0_6_JA.md": {
+      "sha256": "56f18bb6b0d161249de4a34c7679fc5e525fd56a79295c1ee993aa8f93a9b44f",
+      "size": 2679
+    },
+    "src/baseline/SOMA_CELL_0_5_pythonista.py": {
+      "sha256": "5f37ac140e5a5e5cbf0e2f48597e3366ea3710a112f35940de35aae1e1931459",
+      "size": 78525
+    },
+    "results/SOMA_CELL_0_5_VALIDATION_RESULTS.txt": {
+      "sha256": "d23581fc498f828f41c67b205dd8e71a856dab3520f8ea2c6f6a2302188870c1",
+      "size": 4604
+    },
+    "results/SOMA_CELL_0_5_EXPERIMENT_REPORT.txt": {
+      "sha256": "e1ebafc41edee945d128503e5b73b56c8389bec203b3871b13eaf13f3d0b9dcc",
+      "size": 2057
+    }
+  },
+  "declared_reviews": [
+    "latest PROJECT_STATE",
+    "current canonical source",
+    "context handoff",
+    "0.6 integration contract",
+    "current baseline validation and experiment results",
+    "known failures and open risks",
+    "next milestone roadmap"
+  ],
+  "fail_closed": true,
+  "milestone": "SOMA-CELL 0.6-P0",
+  "from_milestone": "SOMA-CELL 0.6-P0",
+  "to_milestone": "SOMA-CELL 0.6-P1",
+  "baseline_before": "SOMA-CELL 0.5.0",
+  "baseline_after": "SOMA-CELL 0.6-P0.0",
+  "authorization_scope": "one commit promoting the declared completed milestone",
+  "evidence_files_hash_checked": {
+    "results/SOMA_CELL_0_6_P0_VALIDATION_RESULTS.txt": {
+      "sha256": "328eaa637d15ba1b27e97c388cc4d47419f1ec76c42d2aa0722f062705939e97",
+      "size": 3310
+    },
+    "results/SOMA_CELL_0_6_P0_EXPERIMENT_REPORT.txt": {
+      "sha256": "081ab82dff51241e41d033c75aa2c97cf53afcd15addd77eee05a152235b775e",
+      "size": 1156
+    },
+    "releases/SOMA_CELL_0_6_P0_GOLD_20260801.zip": {
+      "sha256": "06363458033afe5097dfdc533455fd8a7cea512524dcd07d6c06451e27763617",
+      "size": 156896
+    },
+    "docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md": {
+      "sha256": "fb2403fece7be7bbe2235823d171a8d93c040fe802483fa381dff0a4bc870e83",
+      "size": 2565
+    }
+  }
+}

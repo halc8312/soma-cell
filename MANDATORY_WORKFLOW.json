@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.2",
+  "schema_version": "1.3",
   "rule_id": "SOMA-RULELOCK-20260801-R2",
   "mandatory": true,
   "fail_closed": true,
@@ -10,9 +10,10 @@
     "CURRENT_BASELINE.txt",
     "docs/SOMA_CONTEXT_HANDOFF_JA.md",
     "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md",
-    "src/baseline/SOMA_CELL_0_5_pythonista.py",
-    "results/SOMA_CELL_0_5_VALIDATION_RESULTS.txt",
-    "results/SOMA_CELL_0_5_EXPERIMENT_REPORT.txt",
+    "docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md",
+    "src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py",
+    "results/SOMA_CELL_0_6_P0_VALIDATION_RESULTS.txt",
+    "results/SOMA_CELL_0_6_P0_EXPERIMENT_REPORT.txt",
     "planning/ROADMAP_0_6_JA.md"
   ],
   "required_before_edit": [
@@ -37,5 +38,10 @@
     "evidence_hashes_required": true,
     "single_commit_only": true,
     "fresh_preflight_required_after_commit": true
+  },
+  "p1_specific_guard": {
+    "mandatory": true,
+    "body_port_contract": "docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md",
+    "rule": "P1 tissue may access the body only through the frozen P0 port and must be compared with an equal-material equal-maintenance non-informational dummy."
   }
 }

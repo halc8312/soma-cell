@@ -167,5 +167,7 @@
     "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md",
     "docs/SOMA_LINEAGE_INDEX_JA.md",
     "SHA256SUMS.txt"
-  ]
+  ],
+  "current_baseline": "SOMA-CELL-0.6-P0.0",
+  "next_milestone": "SOMA-CELL-0.6-P1"
 }

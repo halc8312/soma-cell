@@ -196,12 +196,14 @@ SOMA-1の4通貨は抽象値のまま持ち込まない。
 
 ## 14. ソースの優先順位
 
-1. `canonical/SOMA_CELL_0_5_pythonista.py`
-2. 本契約
-3. `docs/SOMA_CONTEXT_HANDOFF_JA.md`
-4. `canonical/SOMA_4_2_pythonista.py`
-5. `canonical/SOMA_1_pythonista.py`
-6. `canonical/SOMA_5R_pythonista.py`以降
+1. `src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py`
+2. `docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md`
+3. `canonical/SOMA_CELL_0_5_pythonista.py`
+4. 本契約
+5. `docs/SOMA_CONTEXT_HANDOFF_JA.md`
+6. `canonical/SOMA_4_2_pythonista.py`
+7. `canonical/SOMA_1_pythonista.py`
+8. `canonical/SOMA_5R_pythonista.py`以降
 
 会話中の口頭説明とソースが矛盾した場合、検証済み基準ソースと本契約を優先する。
 

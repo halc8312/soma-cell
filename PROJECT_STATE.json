@@ -1,52 +1,50 @@
 {
-  "schema_version": "1.3",
-  "checkpoint_id": "SOMA-20260801-CELL06P0-CANDIDATE-RULELOCK2",
-  "updated_utc": "2026-08-01T14:34:30Z",
+  "schema_version": "1.4",
+  "checkpoint_id": "SOMA-20260801-CELL06P0-BASELINE-TO-06P1-RULELOCK2",
+  "updated_utc": "2026-08-01T14:42:00Z",
   "user_goal": "iPhone/Pythonistaで、教師ラベルや固定データセットに依存せず、物質的自己生産・遺伝・学習・因果監査を統合した人工生命研究系を段階的に構築する",
   "current_baseline": {
-    "name": "SOMA-CELL 0.5.0",
+    "name": "SOMA-CELL 0.6-P0.0",
     "status": "frozen",
-    "canonical_source": "src/baseline/SOMA_CELL_0_5_pythonista.py",
-    "release_archive": "releases/SOMA_CELL_0_5_GOLD_20260801.zip",
-    "validation": {
-      "passed": 20,
-      "total": 20
-    },
-    "comparison_trials": 42,
-    "known_max_final_mass_residual": 5.665759e-06
-  },
-  "next_milestone": {
-    "name": "SOMA-CELL 0.6-P0",
-    "status": "implemented_validated_pending_promotion",
-    "purpose": "0.5を変更せず、読み取り専用センサー、保存的予算、物理エフェクタ、死組織返却の化学身体APIを追加する",
-    "acceptance_gate": "神経未接続時に0.5とロックステップ一致",
+    "canonical_source": "src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py",
+    "body_port_contract_file": "docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md",
+    "port_schema_file": "docs/SOMA_CELL_0_6_P0_PORT_SCHEMA.json",
+    "release_archive": "releases/SOMA_CELL_0_6_P0_GOLD_20260801.zip",
     "validation": {
       "passed": 22,
       "total": 22
     },
-    "candidate_source_sha256": "0568ff6b64c7409aeaf11c906699f150a08a520ea2bd7b717801abd66f4980c9",
-    "candidate_build": "SOMA-CELL 0.6-P0.0",
-    "candidate_source": "src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py",
-    "candidate_release": "releases/SOMA_CELL_0_6_P0_GOLD_20260801.zip",
     "validation_result_file": "results/SOMA_CELL_0_6_P0_VALIDATION_RESULTS.txt",
     "experiment_report_file": "results/SOMA_CELL_0_6_P0_EXPERIMENT_REPORT.txt",
     "comparison_trials": 15,
     "port_schema": "0.6-P0.2",
     "known_max_port_material_residual": 3.553e-15,
     "known_max_world_final_mass_residual": 5.421e-06,
-    "pythonista_scene": "device_pending",
-    "candidate_release_sha256": "b6e23a881e96ec2d3f1b9e6b731a2d7d4796e2cd663917e46ebc8b7358813e5c"
+    "source_sha256": "0568ff6b64c7409aeaf11c906699f150a08a520ea2bd7b717801abd66f4980c9",
+    "release_sha256": "06363458033afe5097dfdc533455fd8a7cea512524dcd07d6c06451e27763617",
+    "parent_baseline": "SOMA-CELL 0.5.0",
+    "pythonista_scene": "device_pending"
+  },
+  "next_milestone": {
+    "name": "SOMA-CELL 0.6-P1",
+    "status": "planned_not_started",
+    "purpose": "P0化学身体ポートだけを通る1個のゲノム由来物質神経細胞を、同量・同費用の非情報処理ダミーと比較する",
+    "acceptance_gate": "少なくとも一つの非定常環境で情報処理神経の純身体利益が等費用ダミーを上回り、安定環境で恒常的な大損失を出さない",
+    "required_regressions": [
+      "P0 22/22 contract validation",
+      "0.5 physical lockstep through P0 unattached mode"
+    ]
   },
   "phase_plan": [
     {
       "phase": "0.6-P0",
-      "status": "implemented_validated_pending_promotion",
+      "status": "frozen_baseline",
       "focus": "chemical body API and budget ledger"
     },
     {
       "phase": "0.6-P1",
-      "status": "blocked_by_P0_promotion",
-      "focus": "one material neuron vs equal-cost dummy"
+      "status": "next",
+      "focus": "one gene-built material neuron vs equal-cost dummy"
     },
     {
       "phase": "0.6-P2",
@@ -72,7 +70,8 @@
     "dead neural tissue is returned to material/corpse pools"
   ],
   "canonical_precedence": [
-    "src/baseline/SOMA_CELL_0_5_pythonista.py",
+    "src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py",
+    "docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md",
     "00_MANDATORY_STARTUP_GATE_JA.md",
     "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md",
     "PROJECT_STATE.json",
@@ -80,10 +79,11 @@
     "conversation"
   ],
   "open_risks": [
-    "Pythonista 0.5 exact Scene/FPS/thermal long-run not yet confirmed",
-    "natural multigenerational HGT fixation not demonstrated",
-    "0.4 stable meaning reversal not demonstrated",
-    "neural information processing may not repay its chemical cost",
+    "Pythonista P0 exact Scene/FPS/thermal long-run not yet confirmed on iPhone",
+    "P1 neural information processing may not repay its chemical cost",
+    "P0 private Python attributes are an API discipline boundary rather than a security sandbox",
+    "natural multigenerational HGT fixation remains undemonstrated",
+    "0.4 stable meaning reversal remains undemonstrated",
     "chemical grammar and material classes remain designer-defined"
   ],
   "completion_definition": {
@@ -104,7 +104,7 @@
     "machine_rule_file": "MANDATORY_WORKFLOW.json",
     "preflight_script": "scripts/soma_preflight.py",
     "required_ack": "READ_LATEST_SOURCES_AND_CONTRACTS",
-    "receipt_pattern": "work_sessions/*_PREFLIGHT.json",
+    "receipt_pattern": "work_sessions/*_(PREFLIGHT|TRANSITION).json",
     "no_implementation_without_receipt": true,
     "restore_sources": [
       "local Git checkpoint",
@@ -114,6 +114,10 @@
     "drive_folder_id": "1G8dNFo4nGJVWJ2zpgPnowJLtNriaeInW",
     "receipt_must_match_current_git_head": true,
     "receipt_must_match_next_milestone": true,
-    "clean_worktree_required_before_start": true
+    "clean_worktree_required_before_start": true,
+    "p1_must_read_body_port_contract": true,
+    "p1_primary_control": "equal-material equal-maintenance non-informational dummy",
+    "transition_receipt": "work_sessions/20260801T143944Z_SOMA_CELL_0_6_P0_TRANSITION.json",
+    "next_action": "P1 implementation requires a fresh preflight receipt on the post-transition Git HEAD"
   }
 }

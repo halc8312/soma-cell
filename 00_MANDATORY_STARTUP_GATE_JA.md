@@ -12,7 +12,7 @@
 2. `CURRENT_BASELINE.txt` を読めない。
 3. `docs/SOMA_CONTEXT_HANDOFF_JA.md` を読めない。
 4. `docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md` を読めない。
-5. `src/baseline/SOMA_CELL_0_5_pythonista.py` と基準検証結果を読めない。
+5. `PROJECT_STATE.json`が指す現在の基準ソース、固有契約、基準検証結果を読めない。
 6. SHA-256照合に失敗する。
 7. 現在のマイルストーンと作業目的が一致しない。
 8. 前版の既知の失敗・未解決事項を確認していない。
@@ -28,9 +28,10 @@
 4. `docs/SOMA_CONTEXT_HANDOFF_JA.md`
 5. `docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md`
 6. 現在の基準ソース
-7. 現在の基準版の検証結果・実験レポート
-8. 次マイルストーンのロードマップ
-9. 移植対象となる旧SOMAの基準ソースと検証結果
+7. 現在の基準版に固有の凍結契約（P1ではP0身体ポート契約）
+8. 現在の基準版の検証結果・実験レポート
+9. 次マイルストーンのロードマップ
+10. 移植対象となる旧SOMAの基準ソースと検証結果
 
 ## 実装開始前の機械的確認
 
@@ -112,3 +113,7 @@ python3 scripts/soma_preflight.py transition \
 ```
 
 `*_TRANSITION.json`は、宣言済みの基準版と次マイルストーンへ進める一回のコミットだけを許可する。別の遷移先や証拠改変は拒否される。遷移コミット後はGit HEADが変わるため証跡は古くなり、次マイルストーンの実装前に最新版を再読して新しい`*_PREFLIGHT.json`を発行しなければならない。
+
+## P0昇格後のP1追加ゲート
+
+SOMA-CELL 0.6-P1を始める際は、`docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md`を必ず読み、神経組織がP0ポート以外から身体へアクセスしないことを確認する。同量・同維持費の非情報処理ダミーを主対照とし、P0の22契約検証と0.5ロックステップを回帰試験として維持する。
