@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "session_id": "20260801T130400Z-SOMA_CELL_0_6_P0",
+  "completed_utc": "2026-08-01T13:05:21Z",
+  "milestone": "SOMA-CELL 0.6-P0 governance prerequisite",
+  "baseline_commit": "00c2c1a875d31fb048c0b2eeda98f84911953821",
+  "result_commit": "9da9dd390490c28a230ce38b8975f56036cd9cf8",
+  "tests": {
+    "passed": 6,
+    "failed": 0,
+    "not_run": 0
+  },
+  "validation_file": "results/SOMA_RULELOCK_VALIDATION_RESULTS.txt",
+  "mass_ledger_max_abs_residual": null,
+  "save_restore_deterministic": null,
+  "negative_results": [],
+  "open_risks": [
+    "preflight can verify reading targets and hashes, but cannot prove semantic comprehension"
+  ],
+  "artifacts": [
+    "00_MANDATORY_STARTUP_GATE_JA.md",
+    "MANDATORY_WORKFLOW.json",
+    "scripts/soma_preflight.py",
+    ".githooks/pre-commit"
+  ],
+  "drive_archive_ids": []
+}
