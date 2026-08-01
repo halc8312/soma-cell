@@ -1,0 +1,47 @@
+SOMA-CELL 0.6-P0 deterministic contract validation
+build: SOMA-CELL 0.6-P0.0
+port schema: 0.6-P0.1
+result: 21/21 PASS
+
+[PASS] build_and_frozen_baseline
+  observed: build=SOMA-CELL 0.6-P0.0, baseline_sha256=5f37ac140e5a5e5cbf0e2f48597e3366ea3710a112f35940de35aae1e1931459
+[PASS] unattached_exact_lockstep
+  observed: 3 seeds x 240 steps exact: 101:3543f5751b49, 202:6e0254d6c1a5, 303:e02cd9ebd275
+[PASS] null_attachment_physical_lockstep
+  observed: null metadata is physically inert: 111:1, 222:1, 333:1
+[PASS] sensor_readonly_rng_neutral_no_privileged_labels
+  observed: state/RNG unchanged; immutable; no privileged keys (autopoietic_margin,cell_age,correct_action,fitness,food_direction,position,reward,world_age)
+[PASS] sensor_schema_physical_shapes
+  observed: membrane=(36,), transporters=(36, 4), ligands=(8, 36), pools=(13,)
+[PASS] port_disabled_fails_closed
+  observed: 2/2 port operations rejected while disabled
+[PASS] invalid_budget_requests_fail_closed
+  observed: 4/4 malformed requests rejected without physical mutation
+[PASS] budget_capped_reserves_and_nonnegative
+  observed: grant={'atp': 0.006, 'protein': 0.003, 'membrane': 0.0018, 'signal': 0.0016} reserves maintained
+[PASS] budget_transfer_and_return_conserve_material
+  observed: allocated/returned={'atp': 0.09, 'protein': 0.04, 'membrane': 0.025, 'signal': 0.018} residual=+0.000e+00
+[PASS] multiple_tissues_share_finite_body_budget
+  observed: a={'atp': 0.4, 'protein': 0.37903225806451607, 'membrane': 0.15, 'signal': 0.37903225806451607}, b={'atp': 0.16000000000000003, 'protein': 0.0, 'membrane': 0.0, 'signal': 0.0}, remaining_ATP=0
+[PASS] material_commit_is_paid_conservative_and_cannot_mint
+  observed: built={'functional_protein': np.float64(0.035), 'damaged_protein': np.float64(0.010000000000000002), 'aggregate': np.float64(0.005000000000000001), 'membrane': np.float64(0.03), 'signal': np.float64(0.02), 'atp_spent': 0.0322, 'material_residual': 0.0} ATP spent=0.0322
+[PASS] forbidden_effector_rewrites_fail_closed
+  observed: 5/5 direct or unknown rewrites rejected
+[PASS] motor_effector_is_paid_bounded_and_indirect
+  observed: force=0.0144689, ATP=0.00111962, indirect displacement=0.000304245
+[PASS] transporter_polarity_conserves_channel_material
+  observed: movement=0.00056462, max channel residual=4.163e-17
+[PASS] repair_and_quiescence_are_paid_physical_requests
+  observed: repair gain=0.14, quiescence=0.54, ATP=0.00014625
+[PASS] dead_tissue_return_is_conservative
+  observed: material=0.083, ATP dissipated=0.07796, residual=+0.000e+00
+[PASS] host_death_routes_tissue_into_spatial_corpse
+  observed: tissue=0.071, corpse=4.1077, ledger=-1.776e-15
+[PASS] division_recycles_tissue_without_free_inheritance
+  observed: replication steps=271, tissue recycled=0.071, division residual=+8.882e-16
+[PASS] pure_05_state_migrates_without_physical_change
+  observed: baseline=818b1420611abf92, migrated=818b1420611abf92
+[PASS] save_restore_exact_with_attachment_state
+  observed: save and 180-step continuation are exact
+[PASS] logger_noninterfering_and_budget_stress_finite
+  observed: logger-neutral; finite 240-step budget/effector stress; max port residual=3.553e-15

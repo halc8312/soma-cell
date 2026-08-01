@@ -204,3 +204,17 @@ SOMA-1の4通貨は抽象値のまま持ち込まない。
 6. `canonical/SOMA_5R_pythonista.py`以降
 
 会話中の口頭説明とソースが矛盾した場合、検証済み基準ソースと本契約を優先する。
+
+## 追補 2026-08-01 — P0身体ポートの凍結
+
+SOMA-CELL 0.6-P0.0の`ChemicalBodyPort`と契約版`0.6-P0.1`は、P1以降の身体接続境界として凍結する。詳細は`SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md`を参照する。
+
+P1以降の神経組織は次を守る。
+
+1. `raw_sensor_fluxes()`以外から意味済み入力や身体内部参照を取得しない。
+2. `allocate_budget()`で配分されたATP・材料を超えて活動・組立しない。
+3. `apply_effector_fluxes()`以外から身体位置、膜、輸送体、休眠を変更しない。
+4. 組織死・宿主死・分裂前には`return_dead_tissue()`相当の保存的返却を行う。
+5. P0で除外されたreward、fitness、autopoietic_margin、正解行動を復活させない。
+6. P1の1神経細胞は同量・同費用のダミー組織と比較する。
+7. P0の21契約検証と0.5ロックステップを、P1統合後も回帰検査として維持する。

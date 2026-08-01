@@ -1,0 +1,41 @@
+SOMA-CELL 0.6-P0.0 — START HERE
+================================
+
+この版は神経をまだ追加しない「化学身体API凍結版」です。
+
+Pythonistaでの実行
+------------------
+1. ZIP内の全Pythonファイルを同じ新規フォルダへ置く。
+2. SOMA_CELL_0_6_P0_pythonista.py を実行する。
+3. 左上に SOMA-CELL 0.6-P0.0 と表示されることを確認する。
+
+必要ファイル
+------------
+SOMA_CELL_0_1_pythonista.py
+SOMA_CELL_0_2_pythonista.py
+SOMA_CELL_0_3_pythonista.py
+SOMA_CELL_0_4_pythonista.py
+SOMA_CELL_0_5_pythonista.py
+SOMA_CELL_0_6_P0_pythonista.py
+
+操作
+----
+膜をタップ      : 局所穿孔
+空所をタップ    : 資源雲を投入
+上部をタップ    : 一時停止／再開
+ダブルタップ    : 保存削除＋新規世界
+
+重要
+----
+* P0にはニューラルネットワークも学習もありません。
+* Null接続は契約検査用で、物理・乱数・身体状態を変えません。
+* 神経未接続時は凍結SOMA-CELL 0.5と完全に同じ軌道を保つ設計です。
+* 既存の0.5保存状態は読み込めます。
+* 完全な新規試験では soma_cell_0_6_p0.pkl 等を削除してください。
+
+検証
+----
+SOMA_CELL_0_6_P0_validation.py : 21/21 PASS
+SOMA_CELL_0_6_P0_experiment.py : 3 seed x 5条件 = 15試行
+
+次はSOMA-CELL 0.6-P1で、同量物質のダミーを対照に1個の物質神経細胞を実装します。

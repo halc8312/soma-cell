@@ -1,0 +1,18 @@
+SOMA-CELL 0.6-P0 engineering comparison
+build: SOMA-CELL 0.6-P0.0
+seeds: 101, 202, 303
+seconds per trial: 5.0
+trials: 15
+
+P0 contains no neuron. Scripted actuation is an external interface stress harness.
+
+frozen_05: n=3, margin=0.97121383, exact=3/3, rng=3/3, finite=3/3, maxResidual=5.386e-06, effectorCalls=0.0, spentATP=0.000000
+p0_unattached: n=3, margin=0.97121383, exact=3/3, rng=3/3, finite=3/3, maxResidual=5.386e-06, effectorCalls=0.0, spentATP=0.000000
+p0_null_attachment: n=3, margin=0.97121383, exact=3/3, rng=3/3, finite=3/3, maxResidual=5.386e-06, effectorCalls=0.0, spentATP=0.000000
+p0_budget_roundtrip: n=3, margin=0.97121383, exact=3/3, rng=3/3, finite=3/3, maxResidual=5.386e-06, effectorCalls=0.0, spentATP=0.000000
+p0_paid_effector_stress: n=3, margin=0.97175303, exact=0/3, rng=0/3, finite=3/3, maxResidual=5.421e-06, effectorCalls=180.0, spentATP=0.164327
+
+Interpretation:
+- unattached, Null-attached and round-trip conditions should remain exact 0.5 physical twins;
+- paid stress is expected to diverge because it deliberately spends ATP/signal and actuates the body;
+- no adaptive-intelligence claim is made from this experiment.

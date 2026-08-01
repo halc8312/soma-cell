@@ -1,0 +1,25 @@
+SOMA-CELL 0.6-P0.0 RELEASE MANIFEST
+===================================
+Release date: 2026-08-01
+Build: SOMA-CELL 0.6-P0.0
+Port schema: 0.6-P0.1
+Frozen dependency: SOMA-CELL 0.5.0
+Frozen 0.5 SHA-256: 5f37ac140e5a5e5cbf0e2f48597e3366ea3710a112f35940de35aae1e1931459
+
+Purpose:
+Pre-neural chemical-body contract. Adds read-only physical sensing,
+finite conservative ATP/material budgets, paid physical effectors,
+conservative dead-tissue return, save migration and exact 0.5 lockstep.
+
+Claims deliberately NOT made:
+- no neuron or recurrent network in P0
+- no learning or causal audit in P0
+- no evidence of adaptive neural benefit
+- no claim of life, consciousness or open-ended evolution
+
+Verification:
+- deterministic contract validation: 21/21 PASS
+- lockstep: 3 seeds x 240 steps, unattached and Null-attached
+- engineering comparison: 3 seeds x 5 conditions = 15 trials
+- passive/API-neutral conditions: exact 0.5 state and RNG in 3/3
+- paid physical effector condition: finite 3/3 and intentionally divergent

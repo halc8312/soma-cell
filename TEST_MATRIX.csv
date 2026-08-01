@@ -1,14 +1,21 @@
 id,phase,test,status,acceptance
 BASE-001,0.5,20 deterministic validation checks,PASS,20/20
 BASE-002,0.5,comparison experiment count,PASS,42 trials
-P0-001,0.6-P0,null neural attachment lockstep vs 0.5,PLANNED,bitwise or explicit tolerance identity
-P0-002,0.6-P0,sensor API read-only and RNG-neutral,PLANNED,no state or RNG change
-P0-003,0.6-P0,budget allocation cap,PLANNED,grant never exceeds available matter/ATP
-P0-004,0.6-P0,effector conservation,PLANNED,mass residual within tolerance
-P0-005,0.6-P0,dead tissue return,PLANNED,no anonymous material deletion
-P0-006,0.6-P0,save restore determinism,PLANNED,post-restore lockstep
-P0-007,0.6-P0,Pythonista build marker,PLANNED,scene shows SOMA-CELL 0.6-P0
-P1-001,0.6-P1,one neuron material cost,PLANNED,ATP/protein/signals charged
+P0-001,0.6-P0,unattached exact lockstep vs frozen 0.5,PASS,3 seeds x 240 steps exact state and RNG
+P0-002,0.6-P0,Null attachment physical lockstep,PASS,3 seeds x 240 steps exact physical state and RNG
+P0-003,0.6-P0,sensor API read-only and RNG-neutral,PASS,64 reads no state or RNG change and immutable return
+P0-004,0.6-P0,sensor semantics contain no privileged answer labels,PASS,no reward fitness correct action position or age
+P0-005,0.6-P0,budget allocation cap and body reserves,PASS,grant never exceeds request rate available matter ATP or reserve floor
+P0-006,0.6-P0,budget allocate-return conservation,PASS,material residual zero and physical twins exact in 3/3 engineering trials
+P0-007,0.6-P0,ATP-paid tissue assembly,PASS,no tissue minting and assembly ATP charged
+P0-008,0.6-P0,physical effector conservation and direct-write rejection,PASS,allowed effectors paid and bounded; 5/5 forbidden rewrites rejected
+P0-009,0.6-P0,dead tissue return and host corpse routing,PASS,no anonymous material deletion; corpse ledger within floating error
+P0-010,0.6-P0,division has no free neural inheritance,PASS,tissue recycled before split and daughters receive no attachment object
+P0-011,0.6-P0,save restore determinism,PASS,immediate and 180-step continuation exact
+P0-012,0.6-P0,logger non-interference and finite stress,PASS,240-step paired stress exact and finite
+P0-013,0.6-P0,engineering comparison,PASS,3 seeds x 5 conditions = 15 trials
+P0-014,0.6-P0,Pythonista build marker,DEVICE_PENDING,source and Scene marker SOMA-CELL 0.6-P0.0 present; iPhone display not yet observed
+P1-001,0.6-P1,one neuron material cost,PLANNED,ATP protein membrane and signals charged
 P1-002,0.6-P1,one neuron vs equal-cost dummy,PLANNED,net benefit in at least one nonstationary environment
 P1-003,0.6-P1,stable environment cost,PLANNED,no persistent catastrophic loss
 P2-001,0.6-P2,eight-cell recurrent tissue,PLANNED,finite stable activity and material budget
@@ -16,13 +23,14 @@ P2-002,0.6-P2,local prediction and plasticity,PLANNED,prediction learning and co
 P2-003,0.6-P2,no free memory inheritance,PLANNED,only explicit material states inherited
 F06-001,0.6,common-random twin net benefit,PLANNED,positive net body benefit in at least one changing environment
 F06-002,0.6,ABBA/BAAB causal audit,PLANNED,calibration above chance
-F06-003,0.6,neural corpse and HGT,PLANNED,translation/development required before function
+F06-003,0.6,neural corpse and HGT,PLANNED,translation and development required before function
 GOV-001,governance,mandatory startup gate files,PASS,gate and machine-readable rule present
 GOV-002,governance,preflight clean checkpoint verification,PASS,required sources and hashes verified
 GOV-003,governance,wrong acknowledgement and milestone fail closed,PASS,no valid receipt issued
-GOV-004,governance,hash tamper detection,PASS,modified baseline rejected
+GOV-004,governance,hash tamper detection,PASS,modified canonical source rejected
 GOV-005,governance,durable preflight receipt,PASS,work_sessions receipt exists
 GOV-006,governance,Git pre-commit rule lock,PASS,hook present and executable
 GOV-007,governance,receipt freshness bound to current Git HEAD,PASS,stale receipt rejected
 GOV-008,governance,receipt milestone bound to PROJECT_STATE,PASS,wrong milestone rejected
 GOV-009,governance,clean worktree required at session start,PASS,dirty Git start rejected by design
+GOV-010,governance,single-commit milestone transition receipt,PASS,declared baseline and target only; stale after transition commit

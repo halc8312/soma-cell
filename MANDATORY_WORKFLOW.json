@@ -1,9 +1,9 @@
 {
-  "schema_version": "1.1",
+  "schema_version": "1.2",
   "rule_id": "SOMA-RULELOCK-20260801-R2",
   "mandatory": true,
   "fail_closed": true,
-  "core_rule": "No implementation or modification may begin until the latest project state, canonical source, handoff, integration contract, validation results, and roadmap have been actually read and their hashes verified.",
+  "core_rule": "No implementation, modification, evaluation, or milestone transition may begin until the latest project state, canonical source, handoff, integration contract, measured results, and roadmap have been actually read and their hashes verified.",
   "required_read_order": [
     "00_MANDATORY_STARTUP_GATE_JA.md",
     "PROJECT_STATE.json",
@@ -26,7 +26,16 @@
   "on_failure": "STOP. Restore from canonical archive or Google Drive; otherwise report the missing or inconsistent item to the user. Never infer missing implementation details.",
   "receipt_freshness": {
     "required": true,
-    "rule": "Newest preflight receipt must match current Git HEAD and PROJECT_STATE next milestone.",
+    "rule": "Newest receipt must match current Git HEAD and PROJECT_STATE. Preflight receipts bind work to the current milestone; transition receipts authorize one declared promotion commit and then become stale.",
     "precommit_enforced": true
+  },
+  "milestone_transition": {
+    "mandatory": true,
+    "command": "scripts/soma_preflight.py transition",
+    "required_ack": "COMPLETE_CURRENT_MILESTONE_AND_ADVANCE",
+    "clean_worktree_required": true,
+    "evidence_hashes_required": true,
+    "single_commit_only": true,
+    "fresh_preflight_required_after_commit": true
   }
 }

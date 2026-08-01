@@ -1,0 +1,43 @@
+{
+  "schema": "0.6-P0.1",
+  "build": "SOMA-CELL 0.6-P0.0",
+  "phase": "pre-neural chemical body contract",
+  "baseline": {
+    "name": "SOMA-CELL 0.5.0",
+    "sha256": "5f37ac140e5a5e5cbf0e2f48597e3366ea3710a112f35940de35aae1e1931459"
+  },
+  "sensor_contract": {
+    "read_only": true,
+    "rng_neutral": true,
+    "top_level": ["schema", "cell_id", "velocity", "membrane", "external", "flux", "internal"],
+    "forbidden_semantic_labels": [
+      "reward", "fitness", "correct_action", "food_direction",
+      "autopoietic_margin", "position", "world_age", "cell_age"
+    ]
+  },
+  "budget_categories": {
+    "atp": {"material": false, "rate_limited": true, "body_reserve": true},
+    "protein": {"material": true, "rate_limited": true, "body_reserve": true},
+    "membrane": {"material": true, "rate_limited": true, "body_reserve": true},
+    "signal": {"material": true, "rate_limited": true, "body_reserve": true}
+  },
+  "assembly_atp_per_material": {
+    "protein": 0.44,
+    "membrane": 0.18,
+    "signal": 0.24
+  },
+  "allowed_effectors": [
+    "motor", "transporter_polarity", "repair_polarity", "quiescence"
+  ],
+  "forbidden_direct_writes": [
+    "position", "pos", "velocity", "vel", "membrane", "membrane_mass",
+    "atp", "pools", "dna", "genome", "genomes", "sequence", "cell_id"
+  ],
+  "inheritance": {
+    "neural_tissue_copied_to_daughters": false,
+    "learned_state_copied_to_daughters": false,
+    "pre_division_action": "conservative tissue return to host chemistry"
+  },
+  "p0_neural_processing": false,
+  "fail_closed": true
+}

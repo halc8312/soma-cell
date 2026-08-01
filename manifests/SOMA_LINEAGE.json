@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "created_utc": "2026-08-01T06:45:00Z",
+  "created_utc": "2026-08-01T14:20:00Z",
   "project": "SOMA artificial life / SOMA-CELL material lineage",
-  "current_target": "SOMA-CELL 0.5.0 GOLD 20260801",
+  "current_target": "SOMA-CELL 0.6-P0.0 completed; baseline transition pending",
   "future_integration_target": "SOMA-CELL 0.6",
   "canonical_policy": "canonical/ and the integration contract override conversational recollection. SOMA 5-7 without R are superseded.",
   "stages": [
@@ -133,12 +133,30 @@
       "status": "current",
       "sha256": "5f37ac140e5a5e5cbf0e2f48597e3366ea3710a112f35940de35aae1e1931459",
       "bytes": 78525
+    },
+    {
+      "id": "SOMA-CELL-0.6-P0",
+      "file": "src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py",
+      "role": "pre-neural chemical body contract: read-only sensing, finite budgets, bounded physical effectors and conservative tissue return",
+      "status": "completed-awaiting-baseline-transition",
+      "sha256": "3f2b5b726dfb7b8c7f23fb18e440df8e8f1306a223fac780e9bb88e65b4f8b19",
+      "bytes": 66119,
+      "validation": "21/21 PASS",
+      "comparison_trials": 15
     }
   ],
   "roadmap": [
     {
+      "id": "SOMA-CELL-0.6-P1",
+      "goal": "one gene-built material neuron versus an equal-cost non-informational dummy"
+    },
+    {
+      "id": "SOMA-CELL-0.6-P2",
+      "goal": "eight-cell recurrent locally predictive and plastic material tissue"
+    },
+    {
       "id": "SOMA-CELL-0.6",
-      "goal": "material reintegration of SOMA neural, causal-audit and falsification systems into the 0.5 chemical body"
+      "goal": "causal audit, calibration, change gate, neural corpse chemistry and neural-gene HGT"
     }
   ],
   "required_docs": [
