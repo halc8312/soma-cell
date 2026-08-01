@@ -1,0 +1,19 @@
+id,phase,test,status,acceptance
+BASE-001,0.5,20 deterministic validation checks,PASS,20/20
+BASE-002,0.5,comparison experiment count,PASS,42 trials
+P0-001,0.6-P0,null neural attachment lockstep vs 0.5,PLANNED,bitwise or explicit tolerance identity
+P0-002,0.6-P0,sensor API read-only and RNG-neutral,PLANNED,no state or RNG change
+P0-003,0.6-P0,budget allocation cap,PLANNED,grant never exceeds available matter/ATP
+P0-004,0.6-P0,effector conservation,PLANNED,mass residual within tolerance
+P0-005,0.6-P0,dead tissue return,PLANNED,no anonymous material deletion
+P0-006,0.6-P0,save restore determinism,PLANNED,post-restore lockstep
+P0-007,0.6-P0,Pythonista build marker,PLANNED,scene shows SOMA-CELL 0.6-P0
+P1-001,0.6-P1,one neuron material cost,PLANNED,ATP/protein/signals charged
+P1-002,0.6-P1,one neuron vs equal-cost dummy,PLANNED,net benefit in at least one nonstationary environment
+P1-003,0.6-P1,stable environment cost,PLANNED,no persistent catastrophic loss
+P2-001,0.6-P2,eight-cell recurrent tissue,PLANNED,finite stable activity and material budget
+P2-002,0.6-P2,local prediction and plasticity,PLANNED,prediction learning and cost accounting
+P2-003,0.6-P2,no free memory inheritance,PLANNED,only explicit material states inherited
+F06-001,0.6,common-random twin net benefit,PLANNED,positive net body benefit in at least one changing environment
+F06-002,0.6,ABBA/BAAB causal audit,PLANNED,calibration above chance
+F06-003,0.6,neural corpse and HGT,PLANNED,translation/development required before function

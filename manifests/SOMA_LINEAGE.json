@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-08-01T06:45:00Z",
+  "project": "SOMA artificial life / SOMA-CELL material lineage",
+  "current_target": "SOMA-CELL 0.5.0 GOLD 20260801",
+  "future_integration_target": "SOMA-CELL 0.6",
+  "canonical_policy": "canonical/ and the integration contract override conversational recollection. SOMA 5-7 without R are superseded.",
+  "stages": [
+    {
+      "id": "SOMA-0",
+      "file": "canonical/SOMA_0_pythonista.py",
+      "role": "single embodied recurrent learner",
+      "status": "historical-canonical",
+      "sha256": "95f5b30537b805b648a762c1008b025eb1c75cda73d77adb743981e97259e0c5",
+      "bytes": 29138
+    },
+    {
+      "id": "SOMA-1",
+      "file": "canonical/SOMA_1_pythonista.py",
+      "role": "causal trophic neural tissue",
+      "status": "integration-source",
+      "sha256": "f23ddf8eb53b9abd46edb93acc0593aa961ab35c6f4d9d7476cf6a0bae9cf897",
+      "bytes": 67875
+    },
+    {
+      "id": "SOMA-2",
+      "file": "canonical/SOMA_2_pythonista.py",
+      "role": "causal audit and morphogenesis",
+      "status": "integration-source",
+      "sha256": "8410b1a159350d2b231f7060865f4574aa058fd69dc95b05b7f14db351060d88",
+      "bytes": 80787
+    },
+    {
+      "id": "SOMA-2.1",
+      "file": "canonical/SOMA_2_1_pythonista.py",
+      "role": "symmetric audits and revocable leases",
+      "status": "integration-source",
+      "sha256": "6306e11ac19383d66e558b174c99c5379536bce711ea72c88fc3bb570bfaceda",
+      "bytes": 71099
+    },
+    {
+      "id": "SOMA-3",
+      "file": "canonical/SOMA_3_pythonista.py",
+      "role": "endogenous experimental questions",
+      "status": "later-integration-source",
+      "sha256": "ee0fc97d41b74cc83cf92244ef4ed2561a7076b231d2620d694c742f766731fb",
+      "bytes": 30332
+    },
+    {
+      "id": "SOMA-4",
+      "file": "canonical/SOMA_4_pythonista.py",
+      "role": "falsification compiler",
+      "status": "integration-source",
+      "sha256": "79090331f0c0be5aaab2d163c9abd0a13b313bab3a760591aca8c82baf991973",
+      "bytes": 73416
+    },
+    {
+      "id": "SOMA-4.1",
+      "file": "canonical/SOMA_4_1_pythonista.py",
+      "role": "counterfactual twin laboratory",
+      "status": "evaluation-source",
+      "sha256": "22640392a5cac918a0a4cb83993addb45521c05a610e3f69acd3435437189240",
+      "bytes": 89438
+    },
+    {
+      "id": "SOMA-4.2",
+      "file": "canonical/SOMA_4_2_pythonista.py",
+      "role": "change sentinel and causal calibration",
+      "status": "primary-neural-integration-source",
+      "sha256": "e641209b642c5a6b0c783babb26802ffba462d38a872f4883c0606e29de2bb1c",
+      "bytes": 54217
+    },
+    {
+      "id": "SOMA-5R",
+      "file": "canonical/SOMA_5R_pythonista.py",
+      "role": "state-dependent internal planning and concepts",
+      "status": "deferred-until-0.6.x",
+      "sha256": "71c4a4da8ffafe55aba8a6bbb0f2e36fe20707cb233c8d5a8e329fe8a7690cea",
+      "bytes": 63637
+    },
+    {
+      "id": "SOMA-6R",
+      "file": "canonical/SOMA_6R_pythonista.py",
+      "role": "shared world and verified cultural hypotheses",
+      "status": "deferred-until-0.6.x",
+      "sha256": "2e8a01dd06ebc436ac6045c2ef2c1562867f6dd88e4c558336f12cebc83d0bdd",
+      "bytes": 48042
+    },
+    {
+      "id": "SOMA-7R-1.0.2",
+      "file": "canonical/SOMA_7R_1_0_2_pythonista.py",
+      "role": "resource-resilient ecology and lineage",
+      "status": "later-ecology-source",
+      "sha256": "a8fd09451492737e715fdc21604561f623e846cd1e525885a01f878c5ae151d2",
+      "bytes": 82915
+    },
+    {
+      "id": "SOMA-CELL-0.1",
+      "file": "canonical/SOMA_CELL_0_1_pythonista.py",
+      "role": "material self-production core",
+      "status": "material-foundation",
+      "sha256": "77c197718b32326e292427535af52a86cebda99630d939c0dabb0aff09c1caa1",
+      "bytes": 84768
+    },
+    {
+      "id": "SOMA-CELL-0.2",
+      "file": "canonical/SOMA_CELL_0_2_pythonista.py",
+      "role": "material variable-length heredity and evolvable reactions",
+      "status": "material-heredity-foundation",
+      "sha256": "0cc46bf44dd93ade8749b362d30780dd013ba2673af1c867b98a73dbec4098d6",
+      "bytes": 94505
+    },
+    {
+      "id": "SOMA-CELL-0.3",
+      "file": "canonical/SOMA_CELL_0_3_pythonista.py",
+      "role": "material damage, paid repair, fidelity and evolvable life history",
+      "status": "material-life-history-foundation",
+      "sha256": "0d7800d9cae666c7c2b4e050be0cc471ae0fc0a028970464f4ca797a4292b80c",
+      "bytes": 95819
+    },
+    {
+      "id": "SOMA-CELL-0.4",
+      "file": "canonical/SOMA_CELL_0_4_pythonista.py",
+      "role": "gene-built material sensing, ATP-paid primitive motility and autopoietic lifetime plasticity",
+      "status": "material-sensorimotor-foundation",
+      "sha256": "ac45cd9787ad2a675abc4116848f1d15820d4f6ea51804f2d4ab03ff1bc8a49b",
+      "bytes": 95691
+    },
+    {
+      "id": "SOMA-CELL-0.5",
+      "file": "canonical/SOMA_CELL_0_5_pythonista.py",
+      "role": "corpse chemistry, environmental DNA, material horizontal heredity and mobile-element ecology",
+      "status": "current",
+      "sha256": "5f37ac140e5a5e5cbf0e2f48597e3366ea3710a112f35940de35aae1e1931459",
+      "bytes": 78525
+    }
+  ],
+  "roadmap": [
+    {
+      "id": "SOMA-CELL-0.6",
+      "goal": "material reintegration of SOMA neural, causal-audit and falsification systems into the 0.5 chemical body"
+    }
+  ],
+  "required_docs": [
+    "README_FIRST.txt",
+    "RESTORE_INSTRUCTIONS_JA.txt",
+    "docs/SOMA_CONTEXT_HANDOFF_JA.md",
+    "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md",
+    "docs/SOMA_LINEAGE_INDEX_JA.md",
+    "SHA256SUMS.txt"
+  ]
+}

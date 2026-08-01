@@ -1,0 +1,64 @@
+SOMA-CELL 0.5 deterministic validation
+build: SOMA-CELL 0.5.0
+result: 20/20 PASS
+
+[PASS] material_genome_encodes_ecology_without_seeded_mobile_element
+  observed: length=480, counts=[1, 1, 1, 1, 1, 1, 1, 0]
+  criterion: competence through vesicle genes are present, mobile-element gene is absent
+[PASS] death_becomes_spatial_conserved_corpse
+  observed: cell=4.12467303421, corpse=4.12467303421, ledger=-1.776e-15
+  criterion: dead-cell material persists in one spatial corpse without free creation or loss
+[PASS] immediate_recycling_ablation_has_no_corpse_or_edna
+  observed: corpses=0, eDNA=0, field_gain=4.12467303
+  criterion: the comparator returns dead matter anonymously to particles instead of retaining a body
+[PASS] corpse_decomposition_releases_matter_and_hereditary_fragments
+  observed: corpse 4.1252087->3.0812507, field +0.65035804, fragments=14, ledger=0.000e+00
+  criterion: dead-body hydrolysis and genome release move conserved matter into environmental pools
+[PASS] edna_decay_returns_polymer_matter_to_environment
+  observed: eDNA 0.05248->0, field +0.05248, symbols=64, ledger=0.000e+00
+  criterion: every eroded DNA symbol becomes material debris in the shared field
+[PASS] dna_uptake_requires_competence_and_atp
+  observed: no_comp=True, no_ATP=True, enabled_uptake=1
+  criterion: the same nearby polymer is imported only with competence enabled and an ATP budget
+[PASS] recombination_ablation_digests_imported_dna
+  observed: genome=480, digestions=1, nucleotide=0.38312
+  criterion: imported polymer becomes nucleotide pool rather than hereditary sequence when recombination is disabled
+[PASS] physical_hgt_inserts_exact_foreign_symbols_conservatively
+  observed: length 464->480, novel=True, ledger=0.000e+00
+  criterion: the environmental polymer becomes recipient genome matter without free sequence copying
+[PASS] transferred_gene_is_expressed_by_material_translation
+  observed: reaction 0->0.050110847, path=True
+  criterion: fuel, mineral, ATP and translator activity turn the integrated sequence into a functional catalyst
+[PASS] hgt_gene_persists_through_replication_and_division
+  observed: replication_steps=229, daughters=2, division_residual=-1.776e-15
+  criterion: an acquired sequence is copied with monomer/ATP cost and inherited by both material daughters
+[PASS] restriction_system_reduces_foreign_integration_frequency
+  observed: unrestricted=52/120, restricted=34/120
+  criterion: the encoded restriction apparatus suppresses actual foreign-sequence integration
+[PASS] necrophagy_transfers_corpse_matter_with_atp_cost
+  observed: consumed=0.57860301, ATP 0.56->0.43270734, ledger=-1.776e-15
+  criterion: corpse substrate becomes intracellular fuel/mineral while the scavenger pays an energetic handling cost
+[PASS] detox_apparatus_reduces_necrotoxin_uptake
+  observed: detox=0.016691611, no_detox=0.034716181, feed=0.34716181/0.34716181
+  criterion: for comparable corpse consumption, encoded detoxification lowers reactive matter entering the cell
+[PASS] mobile_element_export_is_material_and_atp_paid
+  observed: exports=1, nucleotide 0.8->0.78688, ATP 0.8->0.776, ledger=0.000e+00
+  criterion: a selfish gene buds an extracellular copy only by consuming real monomer and energy
+[PASS] mobile_element_can_enter_a_separate_material_genome
+  observed: infected=True, mobile_genes=1, ledger=0.000e+00
+  criterion: a physically exported polymer becomes a heritable recipient sequence rather than a copied metadata flag
+[PASS] donor_corpse_can_transfer_a_functional_gene_to_recipient
+  observed: fragment_found=True, integrated=True, novel=True, ledger=0.000e+00
+  criterion: the actual donor polymer survives corpse release and becomes recipient hereditary material
+[PASS] edna_ablation_recycles_genome_matter_without_information_persistence
+  observed: recycled_genomes=1, eDNA=0, ledger=0.000e+00
+  criterion: the ablation removes environmental heredity but returns its material to mineral debris
+[PASS] full_ecological_cell_reaches_material_g1_division
+  observed: division_age=347.55555555550876, cells=2, max_ledger=8.789e-06
+  criterion: corpse/HGT apparatus costs do not prevent one complete material growth-replication-division cycle
+[PASS] save_restore_preserves_corpse_edna_and_future_exactly
+  observed: saved_equal=True, continued_equal=True
+  criterion: pickle restoration resumes the identical corpse, DNA, cell and RNG trajectory
+[PASS] logger_is_noninterfering_and_state_remains_finite
+  observed: state_equal=True, finite=True, ledger=-6.018e-06
+  criterion: long-run telemetry consumes no ecological randomness and changes no simulated state

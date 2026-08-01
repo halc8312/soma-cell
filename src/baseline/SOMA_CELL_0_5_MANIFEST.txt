@@ -1,0 +1,50 @@
+SOMA-CELL 0.5 RELEASE MANIFEST
+================================
+Build: SOMA-CELL 0.5.0 GOLD 20260801
+Generated: 2026-08-01 UTC
+Primary target: Pythonista 3 / iPhone
+Headless verification: CPython 3.13 / NumPy
+
+CORE CLAIM
+----------
+Dead protocells remain spatially explicit conserved bodies containing matter,
+toxic compounds and material genomes. Genome polymers can enter a degradable
+environmental-DNA pool, be ATP-dependently imported, digested or integrated,
+translated, physically replicated and inherited. A deliberately limited mobile
+element can spread as material DNA, while imposing measurable host costs.
+
+VERIFICATION
+------------
+- Python syntax compilation: PASS
+- Deterministic mechanism validation: 20/20 PASS
+- Official comparisons: 42 trials (3 seeds x 14 conditions)
+- Full 0.5 physical first division: PASS; seed 101 about 347.6 simulated seconds
+- Controlled corpse-to-recipient gene recovery: 3/3 with full machinery
+- HGT recovery with no eDNA / no recombination / no competence: 0/3 each
+- Controlled mobile-element spread: 3/3 with export, 0/3 with export disabled
+- Maximum final |matter residual| in official trials: 5.666e-06
+- Save/reload continuation with corpse and eDNA: bit-exact in validation
+- Logger non-interference: PASS
+
+IMPORTANT NEGATIVE RESULTS
+--------------------------
+- HGT machinery did not improve short-term self-production margin in every
+  comparison; uptake, recombination, expression and genome length have costs.
+- The mobile element spread to all cells in every controlled export trial, but
+  mean self-production margin fell from 0.631971 (export off) to 0.513016, and
+  mean genome length rose from 485.33 to 593.78.
+- Removing restriction increased mobile export/genome saturation and lowered
+  mean margin further to 0.466639.
+- Corpse feeding is context-dependent and co-transfers toxic matter; detox
+  reduced toxin uptake but does not make corpse use universally beneficial.
+
+NOT VERIFIED HERE
+-----------------
+- Pythonista Scene rendering, touch handling, FPS, heat and long-run iPhone stability
+- Natural multi-generation fixation of rare horizontally acquired genes
+- Open-ended evolution or an unrestricted chemical alphabet
+- Biological life, consciousness, or academic/patent novelty
+
+FILES / SHA-256
+----------------
+Generated in SHA256SUMS.txt.

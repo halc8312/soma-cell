@@ -1,0 +1,13 @@
+添付したSOMAプロジェクトチェックポイントを正本として作業を再開してください。
+
+必ず最初に次を読むこと:
+1. PROJECT_STATE.json
+2. CURRENT_BASELINE.txt
+3. docs/SOMA_CONTEXT_HANDOFF_JA.md
+4. docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md
+5. planning/ROADMAP_0_6_JA.md
+
+現在の基準はSOMA-CELL 0.5.0。次の作業はSOMA-CELL 0.6-P0。
+0.5の物質公理を変更せず、神経未接続時のロックステップ一致を最初の合格条件にする。
+旧SOMA-5〜7（Rなし）は統合元に使わない。
+会話の記憶とファイルが矛盾した場合、基準ソース・統合契約・PROJECT_STATE.jsonを優先する。

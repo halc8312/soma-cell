@@ -1,0 +1,33 @@
+SOMA-CELL 0.5 comparative experiment report
+build: SOMA-CELL 0.5.0
+trials: 42 (3 seeds x 14 conditions)
+
+CORPSE RESOURCE ASSAY (45 s)
+clean_full                 margin=0.584632 necrophagy=2.570290 toxin=0.043060 damage=0.015682
+clean_no_nutrition         margin=0.550742 necrophagy=0.000000 toxin=0.000000 damage=0.008920
+clean_immediate_recycle    margin=0.443474 necrophagy=0.000000 toxin=0.000000 damage=0.026418
+toxic_full                 margin=0.553275 necrophagy=2.100413 toxin=0.079108 damage=0.024595
+toxic_no_detox             margin=0.549929 necrophagy=2.404532 toxin=0.151083 damage=0.031327
+toxic_no_nutrition         margin=0.454759 necrophagy=0.000000 toxin=0.000000 damage=0.019528
+
+CONTROLLED CORPSE-TO-RECIPIENT HGT ASSAY (25 s)
+hgt_full                   path_success=1.000 integrations=4.667 digestions=1.333 genome=538.67
+hgt_no_edna                path_success=0.000 integrations=0.000 digestions=0.000 genome=464.00
+hgt_no_recombination       path_success=0.000 integrations=0.000 digestions=6.000 genome=464.00
+hgt_no_competence          path_success=0.000 integrations=0.000 digestions=0.000 genome=464.00
+hgt_no_restriction         path_success=1.000 integrations=4.333 digestions=1.667 genome=533.33
+
+CONTROLLED MOBILE-ELEMENT ASSAY (45 s)
+mobile_export_on           exports=43.667 carriers=3.000 spread_rate=1.000 margin=0.513016 genome=593.78
+mobile_export_off          exports=0.000 carriers=1.000 spread_rate=0.000 margin=0.631971 genome=485.33
+mobile_no_restriction      exports=58.000 carriers=3.000 spread_rate=1.000 margin=0.466639 genome=620.44
+
+ACCOUNTING
+max final |matter residual|: 5.665759e-06
+max observed |matter residual|: 5.665759e-06
+
+Interpretation limits:
+- n=3 per condition is a mechanism comparison, not a statistical proof.
+- The HGT donor deliberately carries six copies of one missing gene.
+- The mobile-element donor begins with a controlled material inoculum and pre-existing mobile protein composition.
+- Reaction grammar and integration rules remain human-defined; this is not open-ended evolution.

@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "checkpoint_id": "SOMA-20260801-CELL05-TO-06P0",
+  "updated_utc": "2026-08-01T08:07:45Z",
+  "user_goal": "iPhone/Pythonistaで、教師ラベルや固定データセットに依存せず、物質的自己生産・遺伝・学習・因果監査を統合した人工生命研究系を段階的に構築する",
+  "current_baseline": {
+    "name": "SOMA-CELL 0.5.0",
+    "status": "frozen",
+    "canonical_source": "src/baseline/SOMA_CELL_0_5_pythonista.py",
+    "release_archive": "releases/SOMA_CELL_0_5_GOLD_20260801.zip",
+    "validation": {"passed": 20, "total": 20},
+    "comparison_trials": 42,
+    "known_max_final_mass_residual": 5.665759e-06
+  },
+  "next_milestone": {
+    "name": "SOMA-CELL 0.6-P0",
+    "status": "planned_not_started",
+    "purpose": "0.5を変更せず、読み取り専用センサー、保存的予算、物理エフェクタ、死組織返却の化学身体APIを追加する",
+    "acceptance_gate": "神経未接続時に0.5とロックステップ一致"
+  },
+  "phase_plan": [
+    {"phase": "0.6-P0", "status": "next", "focus": "chemical body API and budget ledger"},
+    {"phase": "0.6-P1", "status": "blocked_by_P0", "focus": "one material neuron vs equal-cost dummy"},
+    {"phase": "0.6-P2", "status": "blocked_by_P1", "focus": "eight-cell recurrent locally plastic tissue"},
+    {"phase": "0.6", "status": "blocked_by_P2", "focus": "causal audit, calibration, change gate, neural corpse/HGT"}
+  ],
+  "frozen_invariants": [
+    "membrane boundary arises from local membrane material",
+    "inside/outside transport asymmetry",
+    "genome replication requires monomers ATP and replicase",
+    "death is structural collapse not a health threshold",
+    "all neural activity memory and tissue have material and ATP cost",
+    "mass ledger includes division death leakage corpse decomposition and eDNA",
+    "no external reward or teacher label as top-level objective",
+    "no free inheritance of learned weights or genes",
+    "neural output cannot directly rewrite position membrane ATP or DNA",
+    "dead neural tissue is returned to material/corpse pools"
+  ],
+  "canonical_precedence": [
+    "src/baseline/SOMA_CELL_0_5_pythonista.py",
+    "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md",
+    "PROJECT_STATE.json",
+    "docs/SOMA_CONTEXT_HANDOFF_JA.md",
+    "conversation"
+  ],
+  "open_risks": [
+    "Pythonista 0.5 exact Scene/FPS/thermal long-run not yet confirmed",
+    "natural multigenerational HGT fixation not demonstrated",
+    "0.4 stable meaning reversal not demonstrated",
+    "neural information processing may not repay its chemical cost",
+    "chemical grammar and material classes remain designer-defined"
+  ],
+  "completion_definition": {
+    "engineering": "versioned source, deterministic save/restore, ledgers, validation, ablations, Pythonista instructions and checkpoint update",
+    "science": "results may be positive or negative; claims are limited to measured evidence",
+    "not_guaranteed": ["life status", "consciousness", "open-ended evolution", "neural adaptive advantage"]
+  }
+}

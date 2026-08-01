@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+soma_cell_*.pkl
+soma_cell_*_longrun.csv
+soma_cell_*_report.txt
+soma_cell_*_sessions.csv
