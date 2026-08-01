@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.1",
+  "receipt_type": "preflight",
+  "session_id": "20260801T144446Z_SOMA_CELL_0_6_P1_PREFLIGHT",
+  "started_utc": "2026-08-01T14:44:46Z",
+  "actor": "ChatGPT GPT-5.6 Pro",
+  "purpose": "SOMA-CELL 0.6-P0昇格後のContinuity Vault・配布チェックポイント・Google Drive保全を最終化する。P1神経コードはまだ実装しない",
+  "acknowledgement": "READ_LATEST_SOURCES_AND_CONTRACTS",
+  "rule_id": "SOMA-RULELOCK-20260801-R2",
+  "checkpoint_id": "SOMA-20260801-CELL06P0-BASELINE-TO-06P1-RULELOCK2",
+  "baseline": "SOMA-CELL 0.6-P0.0",
+  "canonical_source": "src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py",
+  "git_commit": "2dd6e4f09b58865dc913a56bb0cbd5289b870f5c",
+  "git_status_at_start": "",
+  "required_sources_read_and_hash_checked": {
+    "00_MANDATORY_STARTUP_GATE_JA.md": {
+      "sha256": "af93bd80edc411acdd62d639f21b3d887666311ecc15b9941a812b27a7216ab1",
+      "size": 6007
+    },
+    "MANDATORY_WORKFLOW.json": {
+      "sha256": "4c0003985f3f2a3811e114917c497cf79d932952a29f6837f7890ab1d25cb9f5",
+      "size": 2192
+    },
+    "PROJECT_STATE.json": {
+      "sha256": "0c66c2b89160267c12f1807789bdb33d301ca891a6891e3c6b034778d5489e4d",
+      "size": 5497
+    },
+    "CURRENT_BASELINE.txt": {
+      "sha256": "8f177d3cd603ee038a471d38459ae01311425ef45a70b3a685d81e28b097064e",
+      "size": 312
+    },
+    "docs/SOMA_CONTEXT_HANDOFF_JA.md": {
+      "sha256": "ad4507f60e65accac4b22b2fcd4e4e180c2e9bc4fcaa9c9366ed7f3f4911be77",
+      "size": 12377
+    },
+    "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md": {
+      "sha256": "454ed94f1a263d7e6f6fe3f60acf88ae8a07d160f0ef6982e8cc84cacf2083ca",
+      "size": 11515
+    },
+    "planning/ROADMAP_0_6_JA.md": {
+      "sha256": "56f18bb6b0d161249de4a34c7679fc5e525fd56a79295c1ee993aa8f93a9b44f",
+      "size": 2679
+    },
+    "docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md": {
+      "sha256": "fb2403fece7be7bbe2235823d171a8d93c040fe802483fa381dff0a4bc870e83",
+      "size": 2565
+    },
+    "src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py": {
+      "sha256": "0568ff6b64c7409aeaf11c906699f150a08a520ea2bd7b717801abd66f4980c9",
+      "size": 67319
+    },
+    "results/SOMA_CELL_0_6_P0_VALIDATION_RESULTS.txt": {
+      "sha256": "328eaa637d15ba1b27e97c388cc4d47419f1ec76c42d2aa0722f062705939e97",
+      "size": 3310
+    },
+    "results/SOMA_CELL_0_6_P0_EXPERIMENT_REPORT.txt": {
+      "sha256": "081ab82dff51241e41d033c75aa2c97cf53afcd15addd77eee05a152235b775e",
+      "size": 1156
+    }
+  },
+  "declared_reviews": [
+    "latest PROJECT_STATE",
+    "current canonical source",
+    "context handoff",
+    "0.6 integration contract",
+    "current baseline validation and experiment results",
+    "known failures and open risks",
+    "next milestone roadmap"
+  ],
+  "fail_closed": true,
+  "milestone": "SOMA-CELL 0.6-P1"
+}
