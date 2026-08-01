@@ -1,0 +1,85 @@
+SOMA-CELL 0.6-P1.0 MANIFEST
+=============================
+
+Build: SOMA-CELL 0.6-P1.0
+P1 tissue schema: 0.6-P1.1
+Frozen body port: SOMA-CELL 0.6-P0.2
+Parent baseline: SOMA-CELL 0.6-P0.0
+Date: 2026-08-01
+
+Purpose
+-------
+One gene-built material neural compartment, compared against an equal-target,
+equal-maintenance, equal-command-magnitude non-informational dummy.
+
+Canonical source
+----------------
+SOMA_CELL_0_6_P1_pythonista.py
+SHA-256: 9e3ce9c59cb81157baea2d57049339c322e450930bc2ed0292fc1f2ffdfba86c
+
+Frozen P0 source
+----------------
+SOMA_CELL_0_6_P0_pythonista.py
+SHA-256: 0568ff6b64c7409aeaf11c906699f150a08a520ea2bd7b717801abd66f4980c9
+
+Validation
+----------
+P0 regression: 22/22 PASS
+P1 deterministic validation: 18/18 PASS
+Engineering comparison: 3 seeds x 8 conditions = 24 trials
+P1 moving-patch acceptance: PASS in 3/3 paired seeds
+Maximum P1 validation world material residual: 1.129e-05
+Maximum P1 validation port residual: 3.553e-15
+Save/restore: exact immediately and after 120 steps
+Pythonista Scene: implemented, iPhone device validation pending
+
+Measured moving-patch result
+----------------------------
+One material neuron mean margin: 0.607724
+Equal-cost dummy mean margin: 0.471533
+Mean paired margin gain: +0.136191
+One material neuron mean uptake: 1.475465
+Equal-cost dummy mean uptake: 0.130273
+Mean paired uptake gain: +1.345193
+
+Important negative result
+-------------------------
+The local predictor learned its target sequence, but disabling prediction did
+not reduce mean body margin in the 24-trial comparison.  Predictor net benefit
+is not established and must remain an ablation in P2.
+
+Included flat Pythonista dependencies
+-------------------------------------
+SOMA_CELL_0_1_pythonista.py
+SOMA_CELL_0_2_pythonista.py
+SOMA_CELL_0_3_pythonista.py
+SOMA_CELL_0_4_pythonista.py
+SOMA_CELL_0_5_pythonista.py
+SOMA_CELL_0_6_P0_pythonista.py
+SOMA_CELL_0_6_P1_pythonista.py
+
+P1 support files
+----------------
+SOMA_CELL_0_6_P1_validation.py
+SOMA_CELL_0_6_P1_experiment.py
+SOMA_CELL_0_6_P1_report.py
+SOMA_CELL_0_6_P1_README_JA.md
+SOMA_CELL_0_6_P1_START_HERE.txt
+SOMA_CELL_0_6_P1_TISSUE_CONTRACT.md
+SOMA_CELL_0_6_P1_TISSUE_SCHEMA.json
+SOMA_CELL_0_6_P1_VALIDATION_RESULTS.txt
+SOMA_CELL_0_6_P1_EXPERIMENT_REPORT.txt
+soma_cell_0_6_p1_validation.csv
+soma_cell_0_6_p1_experiment_results.csv
+soma_cell_0_6_p1_experiment_summary.csv
+SHA256SUMS.txt
+
+Known limits
+------------
+* One neural compartment only; no recurrence.
+* No three-factor sensorimotor plasticity.
+* No causal audit, calibration, change gate or falsification compiler.
+* n=3 seeds is mechanism confirmation, not statistical generalisation.
+* Controlled patch world is small and deterministic.
+* Learned state is not inherited; gene and material composition only.
+* Life, consciousness and open-ended evolution are not established.

@@ -1,0 +1,42 @@
+SOMA-CELL 0.6-P1 deterministic validation
+build: SOMA-CELL 0.6-P1.0
+P1 schema: 0.6-P1.1
+P0 port schema: 0.6-P0.2
+result: 18/18 PASS
+
+[PASS] build_and_frozen_p0
+  observed: build=SOMA-CELL 0.6-P1.0, P0=0.6-P0.2, sha=0568ff6b64c7409aeaf11c906699f150a08a520ea2bd7b717801abd66f4980c9
+[PASS] no_cassette_exact_p0_lockstep
+  observed: 3 seeds x 240 steps exact: 101:15a04242d365, 202:34a2b81f60fc, 303:ef0cc1177659
+[PASS] costless_tissue_is_rejected
+  observed: unmetered neural tissue fails closed
+[PASS] cassette_is_material_and_required
+  observed: gene symbols=16, explicit founder matter=0.03824
+[PASS] gene_driven_tissue_development
+  observed: mature in 18 steps; material=[0.0270006, 0.01, 0.01, 4e-06, 1e-06, 0.0]
+[PASS] equal_material_dummy_before_action_divergence
+  observed: equal material/stores/cost with effectors disabled; spent=0.0184330222
+[PASS] physical_gradient_controls_neuron_direction
+  observed: right dx=0.9962, left dx=-0.9962
+[PASS] dummy_direction_is_sensor_independent
+  observed: direction=[0.330465, 0.943818] unchanged after physical field displacement
+[PASS] equal_magnitude_action_has_near_equal_paid_cost
+  observed: equal command norm; paid cost neuron=0.00040139944, dummy=0.00040147943
+[PASS] local_predictor_reduces_replay_error
+  observed: prediction RMS early=0.447203, late=0.143617, updates=403
+[PASS] no_effector_has_no_neural_motor_flux
+  observed: predictor updates=343, motor force=0
+[PASS] activity_wear_turnover_is_conservative
+  observed: damaged mass=0.02 returned; ledger=-2.540e-06
+[PASS] host_death_routes_neural_matter_to_corpse
+  observed: neural matter=0.0482056, corpse=4.12819
+[PASS] division_recycles_state_and_gene_remains_material
+  observed: copy steps=264, tissue recycled=0.0482056, daughters retain gene not state
+[PASS] save_restore_exact
+  observed: checkpoint and 120-step continuation exact
+[PASS] logger_is_noninterfering
+  observed: logger-neutral 120-step continuation
+[PASS] moving_patch_information_value_vs_equal_dummy
+  observed: margin/uptake gains: 101:+0.1456/+1.404
+[PASS] finite_and_material_ledger_stress
+  observed: 360 steps finite; world max=1.129e-05, port max=3.553e-15

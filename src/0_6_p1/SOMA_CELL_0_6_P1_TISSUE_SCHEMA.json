@@ -1,0 +1,43 @@
+{
+  "schema": "0.6-P1.1",
+  "build": "SOMA-CELL 0.6-P1.0",
+  "body_port": "0.6-P0.2",
+  "tissue_id": "p1-one-neuron",
+  "modes": ["neuron", "dummy", "no_prediction", "no_effector", "none"],
+  "gene": {
+    "material": true,
+    "length_symbols": 16,
+    "localisation": "reserved_effector",
+    "free_daughter_copy": false
+  },
+  "target_material": {
+    "functional_protein": 0.032,
+    "membrane": 0.010,
+    "signal": 0.010
+  },
+  "physical_inputs": [
+    "membrane_ligand_profile",
+    "last_ligand_uptake",
+    "internal_atp",
+    "internal_reactive",
+    "membrane_closure",
+    "internal_retention"
+  ],
+  "forbidden_inputs": [
+    "reward",
+    "fitness",
+    "correct_action",
+    "food_direction",
+    "autopoietic_margin",
+    "absolute_position",
+    "world_age",
+    "cell_age"
+  ],
+  "effectors": ["motor", "transporter_polarity"],
+  "predict_targets": ["ligand_concentration", "gradient_x", "gradient_y", "uptake"],
+  "recurrence": false,
+  "three_factor_plasticity": false,
+  "causal_audit": false,
+  "inherit_learned_state": false,
+  "costless_mode": "forbidden"
+}

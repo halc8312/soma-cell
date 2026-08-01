@@ -1,8 +1,8 @@
 id,phase,test,status,acceptance
 BASE-001,0.5,20 deterministic validation checks,PASS,20/20
 BASE-002,0.5,comparison experiment count,PASS,42 trials
-P1-002,0.6-P1,one neuron vs equal-cost dummy,PLANNED,net benefit in at least one nonstationary environment
-P1-003,0.6-P1,stable environment cost,PLANNED,no persistent catastrophic loss
+P1-002,0.6-P1,one neuron vs equal-cost dummy,PASS,moving patch 3/3 paired seeds positive margin and uptake gains
+P1-003,0.6-P1,stable environment cost,PASS,3/3 survive; neuron mean margin 0.633884 vs dummy 0.446906
 P2-001,0.6-P2,eight-cell recurrent tissue,PLANNED,finite stable activity and material budget
 P2-002,0.6-P2,local prediction and plasticity,PLANNED,prediction learning and cost accounting
 P2-003,0.6-P2,no free memory inheritance,PLANNED,only explicit material states inherited
@@ -33,4 +33,15 @@ P0-011,0.6-P0,division has no free neural inheritance,PASS,tissue recycled befor
 P0-012,0.6-P0,save restore determinism,PASS,immediate and 180-step continuation exact
 P0-013,0.6-P0,logger non-interference and finite stress,PASS,240-step paired stress exact and finite
 P0-014,0.6-P0,engineering comparison,PASS,3 seeds x 5 conditions = 15 trials
-P1-001,0.6-P1,one neuron material cost,PLANNED,ATP protein membrane and signals charged
+P1-001,0.6-P1,one neuron material cost,PASS,ATP protein membrane signal and wear charged; unmetered mode rejected
+P1-004,0.6-P1,no-cassette P0 regression,PASS,3 seeds x 240 steps exact state and RNG
+P1-005,0.6-P1,gene-built tissue development,PASS,16-symbol material cassette and mature paid compartment
+P1-006,0.6-P1,physical gradient response,PASS,right/left ligand placements produce signed directional response
+P1-007,0.6-P1,equal-material dummy control,PASS,effectors-off body material stores and costs exact
+P1-008,0.6-P1,local prediction learning,PASS,controlled RMS 0.447203 to 0.143617
+P1-009,0.6-P1,predictor net behavioural value,FAIL,learning occurs but no-prediction mean margin exceeds full P1 in 24-trial study
+P1-010,0.6-P1,tissue turnover conservation,PASS,damaged compartment returned without material mint/deletion
+P1-011,0.6-P1,no free learned-state inheritance,PASS,tissue recycled before division; gene retained through material genomes
+P1-012,0.6-P1,save restore and logger determinism,PASS,120-step continuation exact and logger-neutral
+P1-013,0.6-P1,full deterministic validation,PASS,18/18
+P1-014,0.6-P1,engineering comparison,PASS,3 seeds x 8 conditions = 24 trials
