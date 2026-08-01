@@ -196,14 +196,17 @@ SOMA-1の4通貨は抽象値のまま持ち込まない。
 
 ## 14. ソースの優先順位
 
-1. `src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py`
-2. `docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md`
-3. `canonical/SOMA_CELL_0_5_pythonista.py`
-4. 本契約
-5. `docs/SOMA_CONTEXT_HANDOFF_JA.md`
-6. `canonical/SOMA_4_2_pythonista.py`
-7. `canonical/SOMA_1_pythonista.py`
-8. `canonical/SOMA_5R_pythonista.py`以降
+1. `src/0_6_p1/SOMA_CELL_0_6_P1_pythonista.py`
+2. `docs/SOMA_CELL_0_6_P1_TISSUE_CONTRACT.md`
+3. `docs/SOMA_CELL_0_6_P1_TISSUE_SCHEMA.json`
+4. `src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py`
+5. `docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md`
+6. `canonical/SOMA_CELL_0_5_pythonista.py`
+7. 本契約
+8. `docs/SOMA_CONTEXT_HANDOFF_JA.md`
+9. `canonical/SOMA_4_2_pythonista.py`
+10. `canonical/SOMA_1_pythonista.py`
+11. `canonical/SOMA_5R_pythonista.py`以降
 
 会話中の口頭説明とソースが矛盾した場合、検証済み基準ソースと本契約を優先する。
 
@@ -221,3 +224,19 @@ P1以降の神経組織は次を守る。
 6. P1の1神経細胞は同量・同費用のダミー組織と比較する。
 7. P0の22契約検証と0.5ロックステップを、P1統合後も回帰検査として維持する。
 8. ポートの私的`_cell`／`_world`参照や内部attachment辞書へアクセスせず、公開APIだけを利用する。
+
+
+## 追補 2026-08-01 — P1物質神経区画の凍結
+
+SOMA-CELL 0.6-P1.0と組織契約`0.6-P1.1`をP2の直接親として凍結する。
+
+P2は次を守る。
+
+1. 8細胞を一度にフル機能化せず、等物質固定組織、再帰、予測、可塑性の順で段階導入する。
+2. P1の同物質・同維持費ダミーという比較原理を、8細胞固定組織へ拡張する。
+3. P1予測器の身体利益は未証明であるため、予測機構を価値ある前提として扱わない。
+4. 再帰接続は有限シグナル分子、受容体タンパク質、ATP、損傷費を持つ。
+5. 適格度トレースと学習状態は有限寿命の物質修飾へ写像し、無料数値記憶にしない。
+6. 組織刈り込み、損傷交換、宿主死、分裂前回収で物質を匿名削除しない。
+7. P0 22/22、P1 18/18、P1 no-cassetteロックステップ、P1等費用ダミー比較を回帰検査として維持する。
+8. P2の合格は、少なくとも一つの変化環境で可塑性8細胞組織が等物質固定組織を費用込みで上回り、再帰・予測・可塑性の寄与を分離できた場合に限る。

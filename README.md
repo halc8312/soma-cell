@@ -15,31 +15,33 @@ python3 scripts/soma_preflight.py start \
 
 ---
 
-# SOMA Project Checkpoint — SOMA-CELL 0.6-P0 baseline
+# SOMA Project Checkpoint — SOMA-CELL 0.6-P1 baseline
 
-現在の凍結基準版は **SOMA-CELL 0.6-P0.0**、次の未実装マイルストーンは **SOMA-CELL 0.6-P1**。
+現在の凍結基準版は **SOMA-CELL 0.6-P1.0**、次の未実装マイルストーンは **SOMA-CELL 0.6-P2**。
 
-## P0 canonical artifacts
+## P1 canonical artifacts
 
-- Runtime: `src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py`
-- Frozen body-port contract: `docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md`
-- Detailed API: `docs/SOMA_CELL_0_6_P0_API_CONTRACT.md`
-- Port schema: `docs/SOMA_CELL_0_6_P0_PORT_SCHEMA.json` (`0.6-P0.2`)
-- Detailed README: `docs/SOMA_CELL_0_6_P0_README_JA.md`
-- Validation: `results/SOMA_CELL_0_6_P0_VALIDATION_RESULTS.txt` — 22/22 PASS
-- Engineering experiment: `results/SOMA_CELL_0_6_P0_EXPERIMENT_REPORT.txt` — 15 trials
-- Pythonista release: `releases/SOMA_CELL_0_6_P0_GOLD_20260801.zip`
+- Runtime: `src/0_6_p1/SOMA_CELL_0_6_P1_pythonista.py`
+- Frozen tissue contract: `docs/SOMA_CELL_0_6_P1_TISSUE_CONTRACT.md`
+- Tissue schema: `docs/SOMA_CELL_0_6_P1_TISSUE_SCHEMA.json` (`0.6-P1.1`)
+- Frozen body-port contract: `docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md` (`0.6-P0.2`)
+- Detailed README: `docs/SOMA_CELL_0_6_P1_README_JA.md`
+- Validation: `results/SOMA_CELL_0_6_P1_VALIDATION_RESULTS.txt` — 18/18 PASS
+- P0 regression: 22/22 PASS
+- Engineering experiment: `results/SOMA_CELL_0_6_P1_EXPERIMENT_REPORT.txt` — 24 trials
+- Pythonista release: `releases/SOMA_CELL_0_6_P1_GOLD_20260801.zip`
 - Integration contract: `docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md`
 - Machine state: `PROJECT_STATE.json`
 
-P0 contains no information-processing neuron. It freezes read-only physical sensing, finite chemical budgets, bounded physical effectors, conservative tissue return, a non-mutable public port surface, and exact 0.5 compatibility for P1.
+P1 contains one gene-built material neural compartment and an equal-material, equal-maintenance non-informational dummy. In moving-patch tests, the informational compartment beat the dummy in 3/3 paired seeds. The local predictor learned its series but did not establish positive net behavioural value; P2 must preserve the no-prediction ablation.
 
 ## Authority order
 
-1. Validated canonical source and measured results
-2. Frozen P0 body-port contract
-3. `00_MANDATORY_STARTUP_GATE_JA.md`
-4. `docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md`
-5. `PROJECT_STATE.json`
-6. `docs/SOMA_CONTEXT_HANDOFF_JA.md`
-7. Conversation memory and summaries
+1. Validated P1 canonical source and measured results
+2. Frozen P1 tissue contract
+3. Frozen P0 body-port contract
+4. `00_MANDATORY_STARTUP_GATE_JA.md`
+5. `docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md`
+6. `PROJECT_STATE.json`
+7. `docs/SOMA_CONTEXT_HANDOFF_JA.md`
+8. Conversation memory and summaries

@@ -8,10 +8,15 @@
 4. `CURRENT_BASELINE.txt`
 5. `docs/SOMA_CONTEXT_HANDOFF_JA.md`
 6. `docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md`
-7. `docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md`（P1以降）
-8. 現在の基準ソース
-9. 基準版の検証結果・実験レポート
-10. `planning/ROADMAP_0_6_JA.md`
+7. `docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md`
+8. `docs/SOMA_CELL_0_6_P1_TISSUE_CONTRACT.md`
+9. `docs/SOMA_CELL_0_6_P1_TISSUE_SCHEMA.json`
+10. `src/0_6_p1/SOMA_CELL_0_6_P1_pythonista.py`
+11. P1検証結果・P1実験レポート
+12. `planning/ROADMAP_0_6_JA.md`
+13. P2で移植する旧SOMA-1／4.2の基準ソース
+
+P1の重要な負の結果も確認してください。局所予測器は予測誤差を下げましたが、予測なし条件より身体利益を上げたとは示されていません。P2では予測なしを必須アブレーションとして維持します。
 
 その後、SHA-256を確認し、次を成功させて作業開始証跡を作ってください。
 
@@ -19,11 +24,11 @@
 python3 scripts/soma_preflight.py verify
 python3 scripts/soma_preflight.py start \
   --actor "ChatGPT" \
-  --purpose "今回の具体的作業" \
-  --milestone "PROJECT_STATE.jsonのnext_milestone.name" \
+  --purpose "SOMA-CELL 0.6-P2の具体的作業" \
+  --milestone "SOMA-CELL 0.6-P2" \
   --ack "READ_LATEST_SOURCES_AND_CONTRACTS"
 ```
 
-プリフライトが失敗した場合、推測で続行せず、Git/Continuity Vault/Google Driveから復元するか、不足ファイルをユーザーへ報告してください。
+プリフライトが失敗した場合、推測で続行せず、Git、Continuity Vault、Google Driveから復元するか、不足ファイルをユーザーへ報告してください。
 
-会話内容とソースが矛盾する場合は、検証済み基準ソース、`00_MANDATORY_STARTUP_GATE_JA.md`、0.6統合契約、`PROJECT_STATE.json`の順で優先してください。
+会話内容とソースが矛盾する場合は、検証済みP1基準ソース、P1組織契約、P0身体ポート契約、必須ゲート、0.6統合契約、`PROJECT_STATE.json`の順で優先してください。
