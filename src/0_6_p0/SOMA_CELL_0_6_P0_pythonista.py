@@ -43,7 +43,7 @@ s4 = s5.s4
 BUILD = 'SOMA-CELL 0.6-P0.0'
 BUILD_LONG = 'SOMA-CELL 0.6-P0.0 Chemical Body Contract Layer'
 SAVE_VERSION = 60
-PORT_SCHEMA_VERSION = '0.6-P0.1'
+PORT_SCHEMA_VERSION = '0.6-P0.2'
 BASE_DIR = os.path.dirname(__file__)
 SAVE_FILE = os.path.join(BASE_DIR, 'soma_cell_0_6_p0.pkl')
 LOG_FILE = os.path.join(BASE_DIR, 'soma_cell_0_6_p0_longrun.csv')
@@ -393,45 +393,68 @@ class NullNeuralTissue(object):
 class ChemicalBodyPort(object):
     """The sole supported boundary between the 0.5 body and future tissue."""
 
+    __slots__ = ('_world', '_cell')
+
     def __init__(self, world, cell):
-        self.world = world
-        self.cell = cell
+        # The body and world are intentionally not exposed as public
+        # attributes.  This is an API discipline boundary, not a security
+        # sandbox, but it prevents ordinary P1 tissue code from receiving a
+        # convenient mutable backdoor around the conserved port methods.
+        self._world = world
+        self._cell = cell
 
     def _require_enabled(self):
-        if not getattr(self.world.config, 'neural_body_port', True):
+        if not getattr(self._world.config, 'neural_body_port', True):
             raise RuntimeError('chemical body port is disabled')
-        if not self.cell.alive:
+        if not self._cell.alive:
             raise RuntimeError('host cell is not alive')
 
-    def attachment(self, tissue_id, create=False, kind='null'):
+    def _attachment(self, tissue_id, create=False, kind='null'):
         tissue_id = str(tissue_id)
-        state = self.cell.neural_attachments.get(tissue_id)
+        state = self._cell.neural_attachments.get(tissue_id)
         if state is None and create:
             state = NeuralAttachmentState(
-                tissue_id=tissue_id, kind=kind, created_age=self.world.age,
+                tissue_id=tissue_id, kind=kind, created_age=self._world.age,
             )
-            self.cell.neural_attachments[tissue_id] = state
-            self.cell.neural_attachment_events += 1
+            self._cell.neural_attachments[tissue_id] = state
+            self._cell.neural_attachment_events += 1
         return state
 
     def attach(self, tissue_id, kind='null'):
         self._require_enabled()
-        state = self.attachment(tissue_id, create=True, kind=kind)
+        state = self._attachment(tissue_id, create=True, kind=kind)
         state.attached = True
         state.active = True
-        return state
+        return self.attachment_status(tissue_id)
+
+    def attachment_status(self, tissue_id):
+        """Return an immutable diagnostic copy, never mutable escrow state."""
+        state = self._attachment(tissue_id)
+        if state is None:
+            raise KeyError('unknown tissue_id: {}'.format(tissue_id))
+        return _readonly_mapping({
+            'tissue_id': state.tissue_id,
+            'kind': state.kind,
+            'attached': state.attached,
+            'active': state.active,
+            'stores': state.stores,
+            'tissue_material': state.tissue_material,
+            'cumulative_effects': state.cumulative_effects,
+            'cumulative_rejections': state.cumulative_rejections,
+            'last_effect': state.last_effect,
+        })
 
     def raw_sensor_fluxes(self, tissue_id=None):
         """Return copies of physical chemistry only, without RNG or mutation."""
         self._require_enabled()
-        cell = self.cell
-        if tissue_id is not None and self.attachment(tissue_id) is None:
+        cell = self._cell
+        if tissue_id is not None and self._attachment(tissue_id) is None:
             raise KeyError('unknown tissue_id: {}'.format(tissue_id))
 
         # These helpers are deterministic and allocate fresh arrays.  They do
         # not update receptor adaptation, learning traces, or the RNG.
-        particle_profiles = cell._particle_ligand_profiles(self.world.field)
-        ligand_profiles = cell._all_ligand_profiles(self.world)
+        particle_profiles = cell._particle_ligand_profiles(self._world.field)
+        ligand_profiles = cell._all_ligand_profiles(self._world)
         snapshot = {
             'schema': PORT_SCHEMA_VERSION,
             # Routing metadata is deliberately minimal.  Absolute world
@@ -451,7 +474,7 @@ class ChemicalBodyPort(object):
             'external': {
                 'particle_profiles': _readonly_array(particle_profiles),
                 'ligand_profiles': _readonly_array(ligand_profiles),
-                'stress_profile': _readonly_array(self.world.stress_profile(cell)),
+                'stress_profile': _readonly_array(self._world.stress_profile(cell)),
                 'corpse_signal': float(cell.last_corpse_signal),
                 'edna_signal': float(cell.last_edna_signal),
                 'necrotoxin_signal': float(cell.last_necrotoxin_signal),
@@ -486,7 +509,7 @@ class ChemicalBodyPort(object):
     def allocate_budget(self, tissue_id, requests, dt):
         """Move finite body resources into tissue escrow without creating any."""
         self._require_enabled()
-        state = self.attachment(tissue_id)
+        state = self._attachment(tissue_id)
         if state is None or not state.attached or not state.active:
             raise KeyError('active attachment required: {}'.format(tissue_id))
         dt = _strict_dt(dt, 'budget.dt')
@@ -499,7 +522,7 @@ class ChemicalBodyPort(object):
             _strict_nonnegative(requests.get(name, 0.0), 'budget.' + name)
             for name in BUDGET_NAMES
         ], dtype=float)
-        config = self.world.config
+        config = self._world.config
         capped = np.minimum(requested, np.asarray([
             max(0.0, config.neural_atp_rate) * dt,
             max(0.0, config.neural_protein_rate) * dt,
@@ -507,16 +530,16 @@ class ChemicalBodyPort(object):
             max(0.0, config.neural_signal_rate) * dt,
         ], dtype=float))
 
-        before_material = self.world.total_material()
+        before_material = self._world.total_material()
         grant = np.zeros(BUDGET_COUNT, dtype=float)
 
         # ATP is energy escrow, not counted as material in the 0.5 ledger.
         available_atp = max(
             0.0,
-            float(self.cell.pools[s5.POOL_ATP]) - max(0.0, config.neural_atp_reserve),
+            float(self._cell.pools[s5.POOL_ATP]) - max(0.0, config.neural_atp_reserve),
         )
         grant[BUDGET_ATP] = min(capped[BUDGET_ATP], available_atp)
-        self.cell.pools[s5.POOL_ATP] -= grant[BUDGET_ATP]
+        self._cell.pools[s5.POOL_ATP] -= grant[BUDGET_ATP]
 
         # Protein substrate and finite signal precursor share fuel/mineral.
         protein = capped[BUDGET_PROTEIN]
@@ -531,11 +554,11 @@ class ChemicalBodyPort(object):
         )
         fuel_available = max(
             0.0,
-            float(self.cell.pools[s5.POOL_FUEL]) - max(0.0, config.neural_fuel_reserve),
+            float(self._cell.pools[s5.POOL_FUEL]) - max(0.0, config.neural_fuel_reserve),
         )
         mineral_available = max(
             0.0,
-            float(self.cell.pools[s5.POOL_MINERAL]) - max(0.0, config.neural_mineral_reserve),
+            float(self._cell.pools[s5.POOL_MINERAL]) - max(0.0, config.neural_mineral_reserve),
         )
         scale = 1.0
         if fuel_need > 0.0:
@@ -547,42 +570,42 @@ class ChemicalBodyPort(object):
         signal *= scale
         grant[BUDGET_PROTEIN] = protein
         grant[BUDGET_SIGNAL] = signal
-        self.cell.pools[s5.POOL_FUEL] -= (
+        self._cell.pools[s5.POOL_FUEL] -= (
             PROTEIN_FUEL_FRACTION * protein
             + SIGNAL_FUEL_FRACTION * signal
         )
-        self.cell.pools[s5.POOL_MINERAL] -= (
+        self._cell.pools[s5.POOL_MINERAL] -= (
             PROTEIN_MINERAL_FRACTION * protein
             + SIGNAL_MINERAL_FRACTION * signal
         )
 
         membrane_available = max(
             0.0,
-            float(self.cell.pools[s5.POOL_MEM_PRECURSOR])
+            float(self._cell.pools[s5.POOL_MEM_PRECURSOR])
             - max(0.0, config.neural_membrane_reserve),
         )
         grant[BUDGET_MEMBRANE] = min(capped[BUDGET_MEMBRANE], membrane_available)
-        self.cell.pools[s5.POOL_MEM_PRECURSOR] -= grant[BUDGET_MEMBRANE]
+        self._cell.pools[s5.POOL_MEM_PRECURSOR] -= grant[BUDGET_MEMBRANE]
 
         state.stores += grant
-        self.cell.neural_budget_ledger.note_allocation(requested, grant)
-        self.world.p0_budget_calls += 1
-        self.world.p0_allocated_atp += float(grant[BUDGET_ATP])
-        self.world.p0_allocated_material += float(np.sum(grant[1:]))
-        after_material = self.world.total_material()
+        self._cell.neural_budget_ledger.note_allocation(requested, grant)
+        self._world.p0_budget_calls += 1
+        self._world.p0_allocated_atp += float(grant[BUDGET_ATP])
+        self._world.p0_allocated_material += float(np.sum(grant[1:]))
+        after_material = self._world.total_material()
         residual = after_material - before_material
-        self.cell.neural_budget_ledger.maximum_material_residual = max(
-            self.cell.neural_budget_ledger.maximum_material_residual,
+        self._cell.neural_budget_ledger.maximum_material_residual = max(
+            self._cell.neural_budget_ledger.maximum_material_residual,
             abs(float(residual)),
         )
         return {name: float(grant[index]) for index, name in enumerate(BUDGET_NAMES)}
 
     def return_unused_budget(self, tissue_id, amounts=None):
         self._require_enabled()
-        state = self.attachment(tissue_id)
+        state = self._attachment(tissue_id)
         if state is None:
             raise KeyError('unknown tissue_id: {}'.format(tissue_id))
-        before_material = self.world.total_material()
+        before_material = self._world.total_material()
         if amounts is None:
             returned = state.stores.copy()
         else:
@@ -599,23 +622,23 @@ class ChemicalBodyPort(object):
                 for index, name in enumerate(BUDGET_NAMES)
             ], dtype=float)
         state.stores -= returned
-        self.cell.pools[s5.POOL_ATP] += returned[BUDGET_ATP]
-        self.cell.pools[s5.POOL_FUEL] += (
+        self._cell.pools[s5.POOL_ATP] += returned[BUDGET_ATP]
+        self._cell.pools[s5.POOL_FUEL] += (
             PROTEIN_FUEL_FRACTION * returned[BUDGET_PROTEIN]
             + SIGNAL_FUEL_FRACTION * returned[BUDGET_SIGNAL]
         )
-        self.cell.pools[s5.POOL_MINERAL] += (
+        self._cell.pools[s5.POOL_MINERAL] += (
             PROTEIN_MINERAL_FRACTION * returned[BUDGET_PROTEIN]
             + SIGNAL_MINERAL_FRACTION * returned[BUDGET_SIGNAL]
         )
-        self.cell.pools[s5.POOL_MEM_PRECURSOR] += returned[BUDGET_MEMBRANE]
-        self.cell.neural_budget_ledger.note_return(returned)
-        self.world.p0_budget_return_calls += 1
-        self.world.p0_returned_atp += float(returned[BUDGET_ATP])
-        self.world.p0_returned_material += float(np.sum(returned[1:]))
-        residual = self.world.total_material() - before_material
-        self.cell.neural_budget_ledger.maximum_material_residual = max(
-            self.cell.neural_budget_ledger.maximum_material_residual,
+        self._cell.pools[s5.POOL_MEM_PRECURSOR] += returned[BUDGET_MEMBRANE]
+        self._cell.neural_budget_ledger.note_return(returned)
+        self._world.p0_budget_return_calls += 1
+        self._world.p0_returned_atp += float(returned[BUDGET_ATP])
+        self._world.p0_returned_material += float(np.sum(returned[1:]))
+        residual = self._world.total_material() - before_material
+        self._cell.neural_budget_ledger.maximum_material_residual = max(
+            self._cell.neural_budget_ledger.maximum_material_residual,
             abs(float(residual)),
         )
         return {name: float(returned[index]) for index, name in enumerate(BUDGET_NAMES)}
@@ -629,7 +652,7 @@ class ChemicalBodyPort(object):
         into a free cell membrane/protein stock.
         """
         self._require_enabled()
-        state = self.attachment(tissue_id)
+        state = self._attachment(tissue_id)
         if state is None or not state.attached or not state.active:
             raise KeyError('active attachment required: {}'.format(tissue_id))
         protein = min(state.stores[BUDGET_PROTEIN], _strict_nonnegative(protein, 'commit.protein'))
@@ -652,7 +675,7 @@ class ChemicalBodyPort(object):
         signal *= scale
         atp_spent = atp_required * scale
 
-        before_material = self.world.total_material()
+        before_material = self._world.total_material()
         state.stores[BUDGET_ATP] -= atp_spent
         state.stores[BUDGET_PROTEIN] -= protein
         state.stores[BUDGET_MEMBRANE] -= membrane
@@ -665,14 +688,14 @@ class ChemicalBodyPort(object):
         state.tissue_material[TISSUE_SIGNAL] += signal
 
         if atp_spent > 0.0:
-            self.world.dissipated_energy += atp_spent
+            self._world.dissipated_energy += atp_spent
             spent = np.zeros(BUDGET_COUNT, dtype=float)
             spent[BUDGET_ATP] = atp_spent
-            self.cell.neural_budget_ledger.note_spend(spent)
-            self.world.p0_spent_atp += float(atp_spent)
-        residual = self.world.total_material() - before_material
-        self.cell.neural_budget_ledger.maximum_material_residual = max(
-            self.cell.neural_budget_ledger.maximum_material_residual,
+            self._cell.neural_budget_ledger.note_spend(spent)
+            self._world.p0_spent_atp += float(atp_spent)
+        residual = self._world.total_material() - before_material
+        self._cell.neural_budget_ledger.maximum_material_residual = max(
+            self._cell.neural_budget_ledger.maximum_material_residual,
             abs(float(residual)),
         )
         return {
@@ -694,26 +717,26 @@ class ChemicalBodyPort(object):
             signal_requested,
         )
         state.stores[BUDGET_ATP] -= atp_paid
-        self.world.dissipated_energy += atp_paid
+        self._world.dissipated_energy += atp_paid
         # Use free signal escrow first, then assembled finite signal matter.
         free = min(float(state.stores[BUDGET_SIGNAL]), signal_paid)
         state.stores[BUDGET_SIGNAL] -= free
         assembled = signal_paid - free
         if assembled > 0.0:
             state.tissue_material[TISSUE_SIGNAL] -= assembled
-        self.cell.pools[s5.POOL_WASTE] += signal_paid
+        self._cell.pools[s5.POOL_WASTE] += signal_paid
         spent = np.zeros(BUDGET_COUNT, dtype=float)
         spent[BUDGET_ATP] = atp_paid
         spent[BUDGET_SIGNAL] = signal_paid
-        self.cell.neural_budget_ledger.note_spend(spent)
-        self.world.p0_spent_atp += float(atp_paid)
-        self.world.p0_spent_signal += float(signal_paid)
+        self._cell.neural_budget_ledger.note_spend(spent)
+        self._world.p0_spent_atp += float(atp_paid)
+        self._world.p0_spent_signal += float(signal_paid)
         return atp_paid, signal_paid
 
     def apply_effector_fluxes(self, tissue_id, fluxes, dt):
         """Route requests through existing membrane physics; never rewrite pose."""
         self._require_enabled()
-        state = self.attachment(tissue_id)
+        state = self._attachment(tissue_id)
         if state is None or not state.active:
             raise KeyError('active attachment required: {}'.format(tissue_id))
         if not isinstance(fluxes, dict):
@@ -722,18 +745,18 @@ class ChemicalBodyPort(object):
         forbidden = keys & FORBIDDEN_EFFECTOR_KEYS
         if forbidden:
             state.cumulative_rejections += 1
-            self.cell.neural_effector_rejections += 1
-            self.world.p0_effector_rejections += 1
+            self._cell.neural_effector_rejections += 1
+            self._world.p0_effector_rejections += 1
             raise ValueError('direct body rewrite is forbidden: {}'.format(sorted(forbidden)))
         unknown = keys - ALLOWED_EFFECTOR_KEYS
-        if unknown and getattr(self.world.config, 'neural_strict_effectors', True):
+        if unknown and getattr(self._world.config, 'neural_strict_effectors', True):
             state.cumulative_rejections += 1
-            self.cell.neural_effector_rejections += 1
-            self.world.p0_effector_rejections += 1
+            self._cell.neural_effector_rejections += 1
+            self._world.p0_effector_rejections += 1
             raise ValueError('unknown effector requests: {}'.format(sorted(unknown)))
         dt = _strict_dt(dt, 'effector.dt')
-        before_position = self.cell.pos.copy()
-        before_material = self.world.total_material()
+        before_position = self._cell.pos.copy()
+        before_material = self._world.total_material()
         report = {
             'motor_force': 0.0,
             'transporter_movement': 0.0,
@@ -742,12 +765,12 @@ class ChemicalBodyPort(object):
             'atp_spent': 0.0,
             'signal_spent': 0.0,
         }
-        config = self.world.config
+        config = self._world.config
         cost_scale = max(0.0, config.neural_effector_cost_scale)
 
         if 'motor' in fluxes:
             command, magnitude = _normalised_vector(fluxes['motor'])
-            activity, geometry = self.cell._effector_activity(
+            activity, geometry = self._cell._effector_activity(
                 s4.EFFECT_MOTOR, s4.CONTROL_MOTOR
             )
             if activity > 1e-8 and magnitude > 1e-10:
@@ -763,24 +786,24 @@ class ChemicalBodyPort(object):
                 force = (
                     0.0105 * activity * magnitude * afford
                     * config.neural_motor_gain_scale
-                    / max(0.72, self.cell.radius / s5.BASE_RADIUS)
+                    / max(0.72, self._cell.radius / s5.BASE_RADIUS)
                 )
-                self.cell.surface_flux += command * force
-                self.cell.neural_last_motor_command = command.copy()
-                self.cell.neural_last_motor_force = force
+                self._cell.surface_flux += command * force
+                self._cell.neural_last_motor_command = command.copy()
+                self._cell.neural_last_motor_force = force
                 converted = min(
-                    self.cell.pools[s5.POOL_WASTE],
+                    self._cell.pools[s5.POOL_WASTE],
                     atp_paid * (0.035 + 0.020 * abs(geometry)),
                 )
-                self.cell.pools[s5.POOL_WASTE] -= converted
-                self.cell.pools[s5.POOL_REACTIVE] += converted
+                self._cell.pools[s5.POOL_WASTE] -= converted
+                self._cell.pools[s5.POOL_REACTIVE] += converted
                 report['motor_force'] = float(force)
                 report['atp_spent'] += float(atp_paid)
                 report['signal_spent'] += float(signal_paid)
 
         if 'transporter_polarity' in fluxes:
             direction, magnitude = _normalised_vector(fluxes['transporter_polarity'])
-            activity, geometry = self.cell._effector_activity(
+            activity, geometry = self._cell._effector_activity(
                 s4.EFFECT_TRANSPORT_POLARITY, s4.CONTROL_MOTOR
             )
             if activity > 1e-8 and magnitude > 1e-10:
@@ -795,19 +818,19 @@ class ChemicalBodyPort(object):
                 front /= float(np.sum(front))
                 rear /= float(np.sum(rear))
                 blend = clamp(dt * 0.040 * activity * magnitude, 0.0, 0.16)
-                proposals = self.cell.transporters.copy()
+                proposals = self._cell.transporters.copy()
                 movement = 0.0
                 for channel in range(s4.CHANNEL_COUNT):
-                    total = float(np.sum(self.cell.transporters[:, channel]))
+                    total = float(np.sum(self._cell.transporters[:, channel]))
                     if total <= 1e-12:
                         continue
                     target = rear if channel == s4.CHANNEL_WASTE else front
                     proposed = (
-                        (1.0 - blend) * self.cell.transporters[:, channel]
+                        (1.0 - blend) * self._cell.transporters[:, channel]
                         + blend * total * target
                     )
                     movement += 0.5 * float(np.sum(np.abs(
-                        proposed - self.cell.transporters[:, channel]
+                        proposed - self._cell.transporters[:, channel]
                     )))
                     proposals[:, channel] = proposed
                 atp_request = movement * 0.42 * cost_scale
@@ -819,8 +842,8 @@ class ChemicalBodyPort(object):
                     atp_paid / max(atp_request, 1e-12),
                     signal_paid / max(signal_request, 1e-12),
                 ) if movement > 0.0 else 0.0
-                self.cell.transporters += afford * (proposals - self.cell.transporters)
-                self.cell.transporters = np.maximum(self.cell.transporters, 0.0)
+                self._cell.transporters += afford * (proposals - self._cell.transporters)
+                self._cell.transporters = np.maximum(self._cell.transporters, 0.0)
                 report['transporter_movement'] = float(movement * afford)
                 report['atp_spent'] += float(atp_paid)
                 report['signal_spent'] += float(signal_paid)
@@ -845,8 +868,8 @@ class ChemicalBodyPort(object):
                     signal_paid / max(signal_request, 1e-12),
                 )
                 blend = clamp(dt * 1.4 * magnitude * afford, 0.0, 0.22)
-                self.cell.repair_polarity = (
-                    (1.0 - blend) * self.cell.repair_polarity + blend * target
+                self._cell.repair_polarity = (
+                    (1.0 - blend) * self._cell.repair_polarity + blend * target
                 )
                 report['repair_polarity_gain'] = float(blend)
                 report['atp_spent'] += float(atp_paid)
@@ -868,32 +891,32 @@ class ChemicalBodyPort(object):
                     signal_paid / max(signal_request, 1e-12),
                 )
                 level = clamp(0.72 * scalar * afford, 0.0, 0.72)
-                self.cell.behavioural_quiescence = max(
-                    float(self.cell.behavioural_quiescence), level
+                self._cell.behavioural_quiescence = max(
+                    float(self._cell.behavioural_quiescence), level
                 )
                 report['quiescence'] = float(level)
                 report['atp_spent'] += float(atp_paid)
                 report['signal_spent'] += float(signal_paid)
 
-        if not np.array_equal(before_position, self.cell.pos):
+        if not np.array_equal(before_position, self._cell.pos):
             raise AssertionError('effector port changed position directly')
-        residual = self.world.total_material() - before_material
-        self.cell.neural_budget_ledger.maximum_material_residual = max(
-            self.cell.neural_budget_ledger.maximum_material_residual,
+        residual = self._world.total_material() - before_material
+        self._cell.neural_budget_ledger.maximum_material_residual = max(
+            self._cell.neural_budget_ledger.maximum_material_residual,
             abs(float(residual)),
         )
         state.cumulative_effects += 1
         state.last_effect = dict(report)
-        self.cell.neural_effector_calls += 1
-        self.world.p0_effector_calls += 1
+        self._cell.neural_effector_calls += 1
+        self._world.p0_effector_calls += 1
         return report
 
     def return_dead_tissue(self, tissue_id, reason='tissue-failure', remove=True):
         """Return only matter already held by the attachment; never mint products."""
-        state = self.attachment(tissue_id)
+        state = self._attachment(tissue_id)
         if state is None:
             raise KeyError('unknown tissue_id: {}'.format(tissue_id))
-        before_material = self.world.total_material()
+        before_material = self._world.total_material()
         returned_material = state.material_mass()
         returned_atp = state.atp()
 
@@ -914,40 +937,40 @@ class ChemicalBodyPort(object):
         toxic = state.tissue_material[TISSUE_TOXIC]
 
         if protein > 0.0:
-            self.cell.damaged_proteins[NEURAL_DEBRIS_FINGERPRINT] = (
-                self.cell.damaged_proteins.get(NEURAL_DEBRIS_FINGERPRINT, 0.0)
+            self._cell.damaged_proteins[NEURAL_DEBRIS_FINGERPRINT] = (
+                self._cell.damaged_proteins.get(NEURAL_DEBRIS_FINGERPRINT, 0.0)
                 + protein
             )
-        self.cell.pools[s5.POOL_AGGREGATE] += aggregate
-        self.cell.pools[s5.POOL_MEM_PRECURSOR] += membrane
-        self.cell.pools[s5.POOL_WASTE] += signal
-        self.cell.pools[s5.POOL_REACTIVE] += toxic
-        self.cell._sync_damage_pool()
-        self.world.dissipated_energy += returned_atp
+        self._cell.pools[s5.POOL_AGGREGATE] += aggregate
+        self._cell.pools[s5.POOL_MEM_PRECURSOR] += membrane
+        self._cell.pools[s5.POOL_WASTE] += signal
+        self._cell.pools[s5.POOL_REACTIVE] += toxic
+        self._cell._sync_damage_pool()
+        self._world.dissipated_energy += returned_atp
 
         spent = np.zeros(BUDGET_COUNT, dtype=float)
         spent[BUDGET_ATP] = returned_atp
         if returned_atp > 0.0:
-            self.cell.neural_budget_ledger.note_spend(spent)
+            self._cell.neural_budget_ledger.note_spend(spent)
         state.stores[:] = 0.0
         state.tissue_material[:] = 0.0
         state.active = False
         state.attached = False
         state.metadata['return_reason'] = str(reason)
-        state.metadata['returned_age'] = float(self.world.age)
-        self.cell.neural_tissue_returns += 1
-        self.cell.neural_returned_material += returned_material
-        self.cell.neural_returned_atp += returned_atp
-        self.world.p0_tissue_returns += 1
-        self.world.p0_returned_material += float(returned_material)
-        self.world.p0_spent_atp += float(returned_atp)
-        self.world.p0_tissue_atp_dissipated += float(returned_atp)
+        state.metadata['returned_age'] = float(self._world.age)
+        self._cell.neural_tissue_returns += 1
+        self._cell.neural_returned_material += returned_material
+        self._cell.neural_returned_atp += returned_atp
+        self._world.p0_tissue_returns += 1
+        self._world.p0_returned_material += float(returned_material)
+        self._world.p0_spent_atp += float(returned_atp)
+        self._world.p0_tissue_atp_dissipated += float(returned_atp)
         if remove:
-            del self.cell.neural_attachments[str(tissue_id)]
+            del self._cell.neural_attachments[str(tissue_id)]
 
-        residual = self.world.total_material() - before_material
-        self.cell.neural_budget_ledger.maximum_material_residual = max(
-            self.cell.neural_budget_ledger.maximum_material_residual,
+        residual = self._world.total_material() - before_material
+        self._cell.neural_budget_ledger.maximum_material_residual = max(
+            self._cell.neural_budget_ledger.maximum_material_residual,
             abs(float(residual)),
         )
         return {
@@ -957,18 +980,18 @@ class ChemicalBodyPort(object):
         }
 
     def detach(self, tissue_id, return_unused=True):
-        state = self.attachment(tissue_id)
+        state = self._attachment(tissue_id)
         if state is None:
             return False
         if return_unused and np.any(state.stores > 1e-12):
             self.return_unused_budget(tissue_id)
-            state = self.attachment(tissue_id)
+            state = self._attachment(tissue_id)
         # Committed tissue cannot be treated as unused substrate.  It is
         # conservatively dismantled into the host's degradation pools.
         if state is not None and (state.material_mass() > 1e-12 or state.atp() > 1e-12):
             self.return_dead_tissue(tissue_id, reason='forced-detach')
             return True
-        self.cell.neural_attachments.pop(str(tissue_id), None)
+        self._cell.neural_attachments.pop(str(tissue_id), None)
         return True
 
 

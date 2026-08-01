@@ -1,7 +1,7 @@
 {
-  "schema_version": "1.2",
-  "checkpoint_id": "SOMA-20260801-CELL05-TO-06P0-RULELOCK2",
-  "updated_utc": "2026-08-01T13:09:12Z",
+  "schema_version": "1.3",
+  "checkpoint_id": "SOMA-20260801-CELL06P0-CANDIDATE-RULELOCK2",
+  "updated_utc": "2026-08-01T14:34:30Z",
   "user_goal": "iPhone/Pythonistaで、教師ラベルや固定データセットに依存せず、物質的自己生産・遺伝・学習・因果監査を統合した人工生命研究系を段階的に構築する",
   "current_baseline": {
     "name": "SOMA-CELL 0.5.0",
@@ -17,19 +17,35 @@
   },
   "next_milestone": {
     "name": "SOMA-CELL 0.6-P0",
-    "status": "planned_not_started",
+    "status": "implemented_validated_pending_promotion",
     "purpose": "0.5を変更せず、読み取り専用センサー、保存的予算、物理エフェクタ、死組織返却の化学身体APIを追加する",
-    "acceptance_gate": "神経未接続時に0.5とロックステップ一致"
+    "acceptance_gate": "神経未接続時に0.5とロックステップ一致",
+    "validation": {
+      "passed": 22,
+      "total": 22
+    },
+    "candidate_source_sha256": "0568ff6b64c7409aeaf11c906699f150a08a520ea2bd7b717801abd66f4980c9",
+    "candidate_build": "SOMA-CELL 0.6-P0.0",
+    "candidate_source": "src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py",
+    "candidate_release": "releases/SOMA_CELL_0_6_P0_GOLD_20260801.zip",
+    "validation_result_file": "results/SOMA_CELL_0_6_P0_VALIDATION_RESULTS.txt",
+    "experiment_report_file": "results/SOMA_CELL_0_6_P0_EXPERIMENT_REPORT.txt",
+    "comparison_trials": 15,
+    "port_schema": "0.6-P0.2",
+    "known_max_port_material_residual": 3.553e-15,
+    "known_max_world_final_mass_residual": 5.421e-06,
+    "pythonista_scene": "device_pending",
+    "candidate_release_sha256": "b6e23a881e96ec2d3f1b9e6b731a2d7d4796e2cd663917e46ebc8b7358813e5c"
   },
   "phase_plan": [
     {
       "phase": "0.6-P0",
-      "status": "next",
+      "status": "implemented_validated_pending_promotion",
       "focus": "chemical body API and budget ledger"
     },
     {
       "phase": "0.6-P1",
-      "status": "blocked_by_P0",
+      "status": "blocked_by_P0_promotion",
       "focus": "one material neuron vs equal-cost dummy"
     },
     {

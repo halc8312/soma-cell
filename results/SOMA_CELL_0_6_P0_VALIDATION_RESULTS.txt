@@ -1,7 +1,7 @@
 SOMA-CELL 0.6-P0 deterministic contract validation
 build: SOMA-CELL 0.6-P0.0
-port schema: 0.6-P0.1
-result: 21/21 PASS
+port schema: 0.6-P0.2
+result: 22/22 PASS
 
 [PASS] build_and_frozen_baseline
   observed: build=SOMA-CELL 0.6-P0.0, baseline_sha256=5f37ac140e5a5e5cbf0e2f48597e3366ea3710a112f35940de35aae1e1931459
@@ -11,6 +11,8 @@ result: 21/21 PASS
   observed: null metadata is physically inert: 111:1, 222:1, 333:1
 [PASS] sensor_readonly_rng_neutral_no_privileged_labels
   observed: state/RNG unchanged; immutable; no privileged keys (autopoietic_margin,cell_age,correct_action,fitness,food_direction,position,reward,world_age)
+[PASS] port_surface_hides_mutable_body_and_attachment_state
+  observed: no public body/world/state backdoor; immutable diagnostic attachment status
 [PASS] sensor_schema_physical_shapes
   observed: membrane=(36,), transporters=(36, 4), ligands=(8, 36), pools=(13,)
 [PASS] port_disabled_fails_closed

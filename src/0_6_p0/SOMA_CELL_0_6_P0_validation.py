@@ -196,6 +196,30 @@ def test_sensor_readonly_rng_neutral_no_privileged_labels():
     )
 
 
+def test_port_surface_hides_mutable_body_and_attachment_state():
+    world = p0_world(4041, initial_cells=1)
+    cell = first_cell(world)
+    port = world.port_for(cell.cell_id)
+    status = port.attach('privacy-probe', kind='contract-probe')
+    assert not hasattr(port, 'cell')
+    assert not hasattr(port, 'world')
+    assert not hasattr(port, 'attachment')
+    assert status['tissue_id'] == 'privacy-probe'
+    assert status['kind'] == 'contract-probe'
+    try:
+        status['active'] = False
+        raise AssertionError('attachment status mapping was mutable')
+    except TypeError:
+        pass
+    try:
+        status['stores'][0] = 99.0
+        raise AssertionError('attachment stores escaped as mutable state')
+    except ValueError:
+        pass
+    assert np.all(cell.neural_attachments['privacy-probe'].stores == 0.0)
+    return 'no public body/world/state backdoor; immutable diagnostic attachment status'
+
+
 def test_sensor_schema_physical_shapes():
     world = p0_world(405, initial_cells=1)
     cell = first_cell(world)
@@ -301,7 +325,8 @@ def test_budget_transfer_and_return_conserve_material():
     world = p0_world(507, initial_cells=1, config=high_budget_config())
     cell = first_cell(world)
     port = world.port_for(cell.cell_id)
-    state = port.attach('budget-roundtrip')
+    port.attach('budget-roundtrip')
+    state = cell.neural_attachments['budget-roundtrip']
     physical_before = cell.pools.copy()
     total_before = world.total_material()
     grant = port.allocate_budget(
@@ -343,7 +368,8 @@ def test_material_commit_is_paid_conservative_and_cannot_mint():
     world = p0_world(509, initial_cells=1, config=high_budget_config())
     cell = first_cell(world)
     port = world.port_for(cell.cell_id)
-    state = port.attach('assembly')
+    port.attach('assembly')
+    state = cell.neural_attachments['assembly']
     port.allocate_budget(
         'assembly',
         {'atp': 0.10, 'protein': 0.05, 'membrane': 0.03, 'signal': 0.02},
@@ -374,7 +400,8 @@ def test_forbidden_effector_rewrites_fail_closed():
     world = p0_world(601, initial_cells=1, config=high_budget_config())
     cell = first_cell(world)
     port = world.port_for(cell.cell_id)
-    state = port.attach('effector-forbidden')
+    port.attach('effector-forbidden')
+    state = cell.neural_attachments['effector-forbidden']
     port.allocate_budget('effector-forbidden', {'atp': 0.08, 'signal': 0.05}, 0.1)
     position = cell.pos.copy()
     membrane = cell.membrane.copy()
@@ -403,7 +430,8 @@ def test_motor_effector_is_paid_bounded_and_indirect():
     world = p0_world(602, initial_cells=1, config=high_budget_config())
     cell = first_cell(world)
     port = world.port_for(cell.cell_id)
-    state = port.attach('motor')
+    port.attach('motor')
+    state = cell.neural_attachments['motor']
     port.allocate_budget('motor', {'atp': 0.10, 'signal': 0.08}, 0.1)
     position_before = cell.pos.copy()
     flux_before = cell.surface_flux.copy()
@@ -452,7 +480,8 @@ def test_repair_and_quiescence_are_paid_physical_requests():
     world = p0_world(604, initial_cells=1, config=high_budget_config())
     cell = first_cell(world)
     port = world.port_for(cell.cell_id)
-    state = port.attach('regulation')
+    port.attach('regulation')
+    state = cell.neural_attachments['regulation']
     port.allocate_budget('regulation', {'atp': 0.10, 'signal': 0.08}, 0.1)
     atp_before = state.atp()
     repair_before = cell.repair_polarity.copy()
@@ -475,7 +504,8 @@ def test_dead_tissue_return_is_conservative():
     world = p0_world(605, initial_cells=1, config=high_budget_config())
     cell = first_cell(world)
     port = world.port_for(cell.cell_id)
-    state = port.attach('dead-tissue')
+    port.attach('dead-tissue')
+    state = cell.neural_attachments['dead-tissue']
     port.allocate_budget(
         'dead-tissue', {'atp': 0.09, 'protein': 0.04, 'membrane': 0.025, 'signal': 0.018}, 0.1
     )
@@ -501,7 +531,8 @@ def test_host_death_routes_tissue_into_spatial_corpse():
     world = p0_world(606, initial_cells=1, config=high_budget_config())
     cell = first_cell(world)
     port = world.port_for(cell.cell_id)
-    state = port.attach('host-death')
+    port.attach('host-death')
+    state = cell.neural_attachments['host-death']
     port.allocate_budget(
         'host-death', {'atp': 0.08, 'protein': 0.035, 'membrane': 0.02, 'signal': 0.016}, 0.1
     )
@@ -533,7 +564,8 @@ def test_division_recycles_tissue_without_free_inheritance():
         steps += 1
     assert len(cell.genomes) >= 2
     port = world.port_for(cell.cell_id)
-    state = port.attach('pre-division')
+    port.attach('pre-division')
+    state = cell.neural_attachments['pre-division']
     port.allocate_budget(
         'pre-division', {'atp': 0.08, 'protein': 0.035, 'membrane': 0.02, 'signal': 0.016}, 0.1
     )
@@ -640,6 +672,7 @@ TESTS = (
     ('unattached_exact_lockstep', test_unattached_exact_lockstep),
     ('null_attachment_physical_lockstep', test_null_attachment_physical_lockstep),
     ('sensor_readonly_rng_neutral_no_privileged_labels', test_sensor_readonly_rng_neutral_no_privileged_labels),
+    ('port_surface_hides_mutable_body_and_attachment_state', test_port_surface_hides_mutable_body_and_attachment_state),
     ('sensor_schema_physical_shapes', test_sensor_schema_physical_shapes),
     ('port_disabled_fails_closed', test_port_disabled_fails_closed),
     ('invalid_budget_requests_fail_closed', test_invalid_budget_requests_fail_closed),

@@ -1,5 +1,5 @@
 {
-  "schema": "0.6-P0.1",
+  "schema": "0.6-P0.2",
   "build": "SOMA-CELL 0.6-P0.0",
   "phase": "pre-neural chemical body contract",
   "baseline": {
@@ -9,17 +9,47 @@
   "sensor_contract": {
     "read_only": true,
     "rng_neutral": true,
-    "top_level": ["schema", "cell_id", "velocity", "membrane", "external", "flux", "internal"],
+    "top_level": [
+      "schema",
+      "cell_id",
+      "velocity",
+      "membrane",
+      "external",
+      "flux",
+      "internal"
+    ],
     "forbidden_semantic_labels": [
-      "reward", "fitness", "correct_action", "food_direction",
-      "autopoietic_margin", "position", "world_age", "cell_age"
+      "reward",
+      "fitness",
+      "correct_action",
+      "food_direction",
+      "autopoietic_margin",
+      "position",
+      "world_age",
+      "cell_age"
     ]
   },
   "budget_categories": {
-    "atp": {"material": false, "rate_limited": true, "body_reserve": true},
-    "protein": {"material": true, "rate_limited": true, "body_reserve": true},
-    "membrane": {"material": true, "rate_limited": true, "body_reserve": true},
-    "signal": {"material": true, "rate_limited": true, "body_reserve": true}
+    "atp": {
+      "material": false,
+      "rate_limited": true,
+      "body_reserve": true
+    },
+    "protein": {
+      "material": true,
+      "rate_limited": true,
+      "body_reserve": true
+    },
+    "membrane": {
+      "material": true,
+      "rate_limited": true,
+      "body_reserve": true
+    },
+    "signal": {
+      "material": true,
+      "rate_limited": true,
+      "body_reserve": true
+    }
   },
   "assembly_atp_per_material": {
     "protein": 0.44,
@@ -27,11 +57,25 @@
     "signal": 0.24
   },
   "allowed_effectors": [
-    "motor", "transporter_polarity", "repair_polarity", "quiescence"
+    "motor",
+    "transporter_polarity",
+    "repair_polarity",
+    "quiescence"
   ],
   "forbidden_direct_writes": [
-    "position", "pos", "velocity", "vel", "membrane", "membrane_mass",
-    "atp", "pools", "dna", "genome", "genomes", "sequence", "cell_id"
+    "position",
+    "pos",
+    "velocity",
+    "vel",
+    "membrane",
+    "membrane_mass",
+    "atp",
+    "pools",
+    "dna",
+    "genome",
+    "genomes",
+    "sequence",
+    "cell_id"
   ],
   "inheritance": {
     "neural_tissue_copied_to_daughters": false,
@@ -39,5 +83,11 @@
     "pre_division_action": "conservative tissue return to host chemistry"
   },
   "p0_neural_processing": false,
-  "fail_closed": true
+  "fail_closed": true,
+  "port_reference_policy": {
+    "public_body_reference": false,
+    "public_world_reference": false,
+    "mutable_attachment_state_returned": false,
+    "attachment_status_read_only_copy": true
+  }
 }

@@ -1,6 +1,6 @@
 # SOMA-CELL 0.6-P0 化学身体API契約
 
-契約版: `0.6-P0.1`  
+契約版: `0.6-P0.2`  
 実装版: `SOMA-CELL 0.6-P0.0`
 
 この文書は、P1以降の物質神経組織が0.5化学身体へ接続するときの、失敗閉鎖インターフェースを定める。P0自体には情報処理神経、学習、因果監査、外部報酬はない。
@@ -15,6 +15,7 @@
 6. 位置、速度、膜量、ATP、DNA、ゲノムを直接書き換えない。
 7. 組織物質を削除しない。死亡・切離し・宿主死・分裂前に保存的に分解プールへ返す。
 8. 学習済み状態や組織を娘へ無料コピーしない。
+9. ポートは可変な身体・世界・エスクロー状態への公開参照を返さない。`attach()`と`attachment_status()`は不変の診断コピーだけを返す。
 
 ## 2. `raw_sensor_fluxes(tissue_id=None)`
 
@@ -29,6 +30,10 @@
 - `velocity`: 現在の物理速度
 
 次は渡さない: `reward`, `fitness`, `correct_action`, `food_direction`, `autopoietic_margin`, 絶対位置、世界時刻、細胞年齢。
+
+## 2.1 `attach()` / `attachment_status()`
+
+組織接続の返値は、接続状態・有限ストア・組織物質の**読み取り専用コピー**である。ポートは公開`cell`／`world`属性や、可変な`NeuralAttachmentState`を返さない。実装内の私的参照はAPIではなく、P1組織から利用してはならない。
 
 ## 3. `allocate_budget(tissue_id, requests, dt)`
 

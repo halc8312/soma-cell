@@ -24,7 +24,7 @@ SOMA-CELL 0.6-P0.0 has been implemented and validated as the **pre-neural chemic
 - Runtime: `src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py`
 - API contract: `docs/SOMA_CELL_0_6_P0_API_CONTRACT.md`
 - Detailed README: `docs/SOMA_CELL_0_6_P0_README_JA.md`
-- Validation: `results/SOMA_CELL_0_6_P0_VALIDATION_RESULTS.txt` — 21/21 PASS
+- Validation: `results/SOMA_CELL_0_6_P0_VALIDATION_RESULTS.txt` — 22/22 PASS
 - Engineering experiment: `results/SOMA_CELL_0_6_P0_EXPERIMENT_REPORT.txt` — 15 trials
 - Pythonista release: `releases/SOMA_CELL_0_6_P0_GOLD_20260801.zip`
 - Integration contract: `docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md`

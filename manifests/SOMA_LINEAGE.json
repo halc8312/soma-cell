@@ -2,7 +2,7 @@
   "schema_version": 1,
   "created_utc": "2026-08-01T14:20:00Z",
   "project": "SOMA artificial life / SOMA-CELL material lineage",
-  "current_target": "SOMA-CELL 0.6-P0.0 completed; baseline transition pending",
+  "current_target": "SOMA-CELL 0.6-P0.0 validated (22/22); baseline transition pending",
   "future_integration_target": "SOMA-CELL 0.6",
   "canonical_policy": "canonical/ and the integration contract override conversational recollection. SOMA 5-7 without R are superseded.",
   "stages": [
@@ -139,10 +139,11 @@
       "file": "src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py",
       "role": "pre-neural chemical body contract: read-only sensing, finite budgets, bounded physical effectors and conservative tissue return",
       "status": "completed-awaiting-baseline-transition",
-      "sha256": "3f2b5b726dfb7b8c7f23fb18e440df8e8f1306a223fac780e9bb88e65b4f8b19",
-      "bytes": 66119,
-      "validation": "21/21 PASS",
-      "comparison_trials": 15
+      "sha256": "0568ff6b64c7409aeaf11c906699f150a08a520ea2bd7b717801abd66f4980c9",
+      "bytes": 67319,
+      "validation": "22/22 PASS",
+      "comparison_trials": 15,
+      "port_schema": "0.6-P0.2"
     }
   ],
   "roadmap": [

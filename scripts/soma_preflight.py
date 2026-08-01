@@ -106,6 +106,7 @@ def dynamic_required(state: dict) -> List[Path]:
     baseline = state.get("current_baseline", {})
     paths = list(STATIC_REQUIRED)
     for key, fallback in (
+        ("body_port_contract_file", None),
         ("canonical_source", None),
         ("validation_result_file", "results/SOMA_CELL_0_5_VALIDATION_RESULTS.txt"),
         ("experiment_report_file", "results/SOMA_CELL_0_5_EXPERIMENT_REPORT.txt"),

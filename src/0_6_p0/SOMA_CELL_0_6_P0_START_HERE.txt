@@ -35,7 +35,7 @@ SOMA_CELL_0_6_P0_pythonista.py
 
 検証
 ----
-SOMA_CELL_0_6_P0_validation.py : 21/21 PASS
+SOMA_CELL_0_6_P0_validation.py : 22/22 PASS
 SOMA_CELL_0_6_P0_experiment.py : 3 seed x 5条件 = 15試行
 
 次はSOMA-CELL 0.6-P1で、同量物質のダミーを対照に1個の物質神経細胞を実装します。

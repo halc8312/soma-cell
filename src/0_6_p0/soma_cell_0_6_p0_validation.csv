@@ -3,6 +3,7 @@ build_and_frozen_baseline,1,"build=SOMA-CELL 0.6-P0.0, baseline_sha256=5f37ac140
 unattached_exact_lockstep,1,"3 seeds x 240 steps exact: 101:3543f5751b49, 202:6e0254d6c1a5, 303:e02cd9ebd275",
 null_attachment_physical_lockstep,1,"null metadata is physically inert: 111:1, 222:1, 333:1",
 sensor_readonly_rng_neutral_no_privileged_labels,1,"state/RNG unchanged; immutable; no privileged keys (autopoietic_margin,cell_age,correct_action,fitness,food_direction,position,reward,world_age)",
+port_surface_hides_mutable_body_and_attachment_state,1,no public body/world/state backdoor; immutable diagnostic attachment status,
 sensor_schema_physical_shapes,1,"membrane=(36,), transporters=(36, 4), ligands=(8, 36), pools=(13,)",
 port_disabled_fails_closed,1,2/2 port operations rejected while disabled,
 invalid_budget_requests_fail_closed,1,4/4 malformed requests rejected without physical mutation,
