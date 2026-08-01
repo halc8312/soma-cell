@@ -75,6 +75,7 @@ SOMA-7R 1.0.1の実機長時間ログで、資源量0から再生不能になる
 - 死体化学・環境DNA・水平遺伝: `canonical/SOMA_CELL_0_5_pythonista.py`
 - 凍結化学身体ポート: `src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py`
 - 1物質神経区画: `src/0_6_p1/SOMA_CELL_0_6_P1_pythonista.py`
+- 8細胞物質再帰組織: `src/0_6_p2/SOMA_CELL_0_6_P2_pythonista.py`
 
 旧SOMA-5〜7（Rなし）は統合元に使わない。
 
@@ -205,3 +206,32 @@ P0回帰22/22、P1検証18/18がPASS。moving-patchの3 seedすべてで、神�
 ### P1配布リビジョンR1
 
 初回配布ZIPのSHA256SUMS自己参照と検証スクリプトの配置依存を修正した。ユーザー向け正本は`releases/SOMA_CELL_0_6_P1_GOLD_20260801_R1.zip`。ランタイム本体、18/18検証結果、24試行結果は不変。旧配布ZIPは遷移証拠のハッシュを保つため履歴として残す。
+
+## 追補 2026-08-02 — SOMA-CELL 0.6-P2完了
+
+SOMA-CELL 0.6-P2.0を凍結基準版へ昇格した。
+
+- 128記号の物質発生カセットから8神経区画を形成
+- 20本の有限・有料・摩耗付き疎な再帰
+- 12物理入力、6局所予測特徴
+- 適格度トレースと4物理負債の三因子可塑性
+- 34秒の発達安定期間
+- 分子エピソードと最大急性害記憶
+- 成熟、再可塑化、保存的再編・区画回収
+- ステップ番号由来の共通外乱ツイン
+
+P0回帰22/22、P1回帰18/18、P2検証22/22がPASS。36試行を実施した。
+
+主結果は、規則反転時点からの同一状態ツインで、全機構が等物質固定8区画をholdout 6 seed中5 seedで上回り、平均累積身体余裕AUC差が+1.872678だったこと。ただし、開発seedは試験環境の調整に使っており、平均正でも1/3のみ正だった。
+
+機構別には、可塑性は限定的な正信号を示した。一方、局所予測は誤差を低下させるが正味身体価値が未確立で、再帰効果も極小だった。正式0.6でも`no_prediction`と`no_recurrence`を必須対照に残す。
+
+現在の正本:
+
+- `src/0_6_p2/SOMA_CELL_0_6_P2_pythonista.py`
+- `docs/SOMA_CELL_0_6_P2_TISSUE_CONTRACT.md`
+- `docs/SOMA_CELL_0_6_P2_TISSUE_SCHEMA.json`
+- `results/SOMA_CELL_0_6_P2_VALIDATION_RESULTS.txt`
+- `results/SOMA_CELL_0_6_P2_EXPERIMENT_REPORT.txt`
+
+次は正式SOMA-CELL 0.6で、物質的ABBA/BAAB実停止監査、偽対照、証拠品質、因果校正、変化感受性再可塑化、小型反証、神経死体・神経遺伝子HGTを段階導入する。

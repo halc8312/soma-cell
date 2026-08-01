@@ -3,12 +3,12 @@ BASE-001,0.5,20 deterministic validation checks,PASS,20/20
 BASE-002,0.5,comparison experiment count,PASS,42 trials
 P1-002,0.6-P1,one neuron vs equal-cost dummy,PASS,moving patch 3/3 paired seeds positive margin and uptake gains
 P1-003,0.6-P1,stable environment cost,PASS,3/3 survive; neuron mean margin 0.633884 vs dummy 0.446906
-P2-001,0.6-P2,eight-cell recurrent tissue,PLANNED,finite stable activity and material budget
-P2-002,0.6-P2,local prediction and plasticity,PLANNED,prediction learning and cost accounting
-P2-003,0.6-P2,no free memory inheritance,PLANNED,only explicit material states inherited
-F06-001,0.6,common-random twin net benefit,PLANNED,positive net body benefit in at least one changing environment
-F06-002,0.6,ABBA/BAAB causal audit,PLANNED,calibration above chance
-F06-003,0.6,neural corpse and HGT,PLANNED,translation and development required before function
+P2-001,0.6-P2,eight-cell material tissue development,PASS,eight gene-built paid compartments mature; founder matter explicit
+P2-002,0.6-P2,finite sparse recurrence,PASS,20 directed finite-signal edges; no-recurrence messages zero
+P2-003,0.6-P2,local prediction learning,PASS,prediction RMS 0.015574 to 0.006452
+F06-001,0.6,material ABBA/BAAB causal audit,PLANNED,reversible signal/ATP gating with sham and evidence quality
+F06-002,0.6,causal calibration,PLANNED,predicted and measured intervention effects above chance
+F06-003,0.6,change-gated replasticity net benefit,PLANNED,positive net body benefit in at least one changing environment without stable-world chronic loss
 GOV-001,governance,mandatory startup gate files,PASS,gate and machine-readable rule present
 GOV-002,governance,preflight clean checkpoint verification,PASS,required sources and hashes verified
 GOV-003,governance,wrong acknowledgement and milestone fail closed,PASS,no valid receipt issued
@@ -47,3 +47,20 @@ P1-013,0.6-P1,full deterministic validation,PASS,18/18
 P1-014,0.6-P1,engineering comparison,PASS,3 seeds x 8 conditions = 24 trials
 P1-015,0.6-P1,R1 flat release SHA256 verification,PASS,all listed files verify; checksum does not self-reference
 P1-016,0.6-P1,R1 flat release validation,PASS,18/18 from freshly extracted flat archive
+F06-004,0.6,small falsification compiler,PLANNED,bounded physical interventions with explicit ATP/material/safety cost
+F06-005,0.6,neural corpse and HGT,PLANNED,real eDNA transfer; translation/development required before neural function
+P2-004,0.6-P2,predictor net body value,FAIL,full vs no-prediction paired AUC mean -0.174359; not established
+P2-005,0.6-P2,three-factor plasticity sign,PASS,same eligibility changes opposite directions for physical improvement/deterioration
+P2-006,0.6-P2,developmental warm-up,PASS,34-second warm-up blocks long-term plasticity while baseline/prediction form
+P2-007,0.6-P2,molecular episode acute-harm memory,PASS,positive and deteriorating physical outcomes produce opposite ligand updates
+P2-008,0.6-P2,conservative rewiring and cell turnover,PASS,edge count conserved; ATP/wear charged; pruned/damaged matter returned
+P2-009,0.6-P2,no free learned-state inheritance,PASS,learned arrays recycled before division; only material genes retained
+P2-010,0.6-P2,save restore and logger determinism,PASS,120-step continuation exact; logger neutral
+P2-011,0.6-P2,common disturbance tape exactness,PASS,same-mode twins exact for 120 taped steps
+P2-012,0.6-P2,full vs equal-material fixed holdout,PASS,5/6 paired seeds positive; mean post-switch margin AUC +1.872678
+P2-013,0.6-P2,plasticity paired contribution,PASS_WITH_LIMITS,development mean AUC +1.056054; 2/3 positive; holdout ablation not run
+P2-014,0.6-P2,recurrence paired contribution,UNRESOLVED,development mean AUC +0.016963; effect too small to establish necessity
+P2-015,0.6-P2,full deterministic validation,PASS,22/22
+P2-016,0.6-P2,P0/P1 regression,PASS,P0 22/22 and P1 18/18
+P2-017,0.6-P2,engineering comparison,PASS,36 jobs with separate calibrated development and six holdout seeds
+P2-018,0.6-P2,flat Pythonista release validation,PASS,"P2 22/22, P0 22/22, P1 18/18 from packaged flat release"

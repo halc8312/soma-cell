@@ -1,17 +1,22 @@
 {
-  "schema_version": "1.5",
-  "checkpoint_id": "SOMA-20260801-CELL06P1-BASELINE-TO-06P2-RULELOCK2",
-  "updated_utc": "2026-08-01T16:05:00Z",
+  "schema_version": "1.6",
+  "checkpoint_id": "SOMA-20260802-CELL06P2-BASELINE-TO-FORMAL06-RULELOCK2",
+  "updated_utc": "2026-08-02T00:00:00Z",
   "user_goal": "iPhone/Pythonistaで、教師ラベルや固定データセットに依存せず、物質的自己生産・遺伝・学習・因果監査を統合した人工生命研究系を段階的に構築する",
   "current_baseline": {
-    "name": "SOMA-CELL 0.6-P1.0",
+    "name": "SOMA-CELL 0.6-P2.0",
     "status": "frozen",
-    "canonical_source": "src/0_6_p1/SOMA_CELL_0_6_P1_pythonista.py",
-    "tissue_contract_file": "docs/SOMA_CELL_0_6_P1_TISSUE_CONTRACT.md",
-    "tissue_schema_file": "docs/SOMA_CELL_0_6_P1_TISSUE_SCHEMA.json",
+    "canonical_source": "src/0_6_p2/SOMA_CELL_0_6_P2_pythonista.py",
+    "tissue_contract_file": "docs/SOMA_CELL_0_6_P2_TISSUE_CONTRACT.md",
+    "tissue_schema_file": "docs/SOMA_CELL_0_6_P2_TISSUE_SCHEMA.json",
+    "parent_tissue_contract_file": "docs/SOMA_CELL_0_6_P1_TISSUE_CONTRACT.md",
     "body_port_contract_file": "docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md",
-    "release_archive": "releases/SOMA_CELL_0_6_P1_GOLD_20260801_R1.zip",
+    "release_archive": "releases/SOMA_CELL_0_6_P2_GOLD_20260802.zip",
     "validation": {
+      "passed": 22,
+      "total": 22
+    },
+    "p1_regression": {
       "passed": 18,
       "total": 18
     },
@@ -19,64 +24,85 @@
       "passed": 22,
       "total": 22
     },
-    "validation_result_file": "results/SOMA_CELL_0_6_P1_VALIDATION_RESULTS.txt",
-    "experiment_report_file": "results/SOMA_CELL_0_6_P1_EXPERIMENT_REPORT.txt",
-    "comparison_trials": 24,
-    "tissue_schema": "0.6-P1.1",
+    "validation_result_file": "results/SOMA_CELL_0_6_P2_VALIDATION_RESULTS.txt",
+    "experiment_report_file": "results/SOMA_CELL_0_6_P2_EXPERIMENT_REPORT.txt",
+    "regression_result_file": "results/SOMA_CELL_0_6_P2_REGRESSION_RESULTS.txt",
+    "comparison_trials": 36,
+    "tissue_schema": "0.6-P2.2",
+    "parent_tissue_schema": "0.6-P1.1",
     "port_schema": "0.6-P0.2",
-    "known_max_port_material_residual": 3.553e-15,
-    "known_max_world_material_residual": 1.129e-05,
-    "source_sha256": "9e3ce9c59cb81157baea2d57049339c322e450930bc2ed0292fc1f2ffdfba86c",
-    "release_sha256": "63c53a0248df2ad37d0d8f4003b5b77e60b78ff8644d3a28bc1408346601d18b",
-    "parent_baseline": "SOMA-CELL 0.6-P0.0",
-    "moving_patch_acceptance": {
-      "status": "PASS",
-      "paired_seeds": 3,
-      "mean_margin_neuron": 0.6077240458888326,
-      "mean_margin_dummy": 0.471532800803649,
-      "mean_margin_gain": 0.13619124508518357,
-      "mean_uptake_neuron": 1.475465170921499,
-      "mean_uptake_dummy": 0.1302726595635574,
-      "mean_uptake_gain": 1.3451925113579415
+    "known_max_port_material_residual": 7.105e-15,
+    "known_max_world_material_residual": 1.499e-05,
+    "source_sha256": "03cd333838f2bee0dde634e8d55ca2b2c7ed285c9104a52a26bcee4a07ce1693",
+    "release_sha256": "25853e22647d298ae9d678b33ab0bd3d036e9ae821a8c0808f4c8fac4c10529b",
+    "parent_baseline": "SOMA-CELL 0.6-P1.0",
+    "holdout_acceptance": {
+      "status": "PASS_WITH_LIMITS",
+      "paired_seeds": 6,
+      "positive_pairs": 5,
+      "mean_post_switch_margin_auc_gain": 1.8726775395344133,
+      "mean_final_margin_gain": 0.11757169368675165,
+      "mean_reward_uptake_gain": 0.3174340034790529,
+      "mean_toxin_uptake_change": -0.01010742182785298,
+      "holdout_seeds": [
+        404,
+        505,
+        606,
+        707,
+        808,
+        909
+      ]
     },
-    "negative_result": "local predictor learns but its net behavioural benefit is not established; no-prediction mean margin was slightly higher",
-    "pythonista_scene": "device_pending",
-    "packaging_revision": "R1",
-    "historical_transition_release": "releases/SOMA_CELL_0_6_P1_GOLD_20260801.zip",
-    "packaging_validation": "SHA256 all targets PASS; flat release validation 18/18 PASS"
+    "development_calibration": {
+      "seeds": [
+        101,
+        202,
+        303
+      ],
+      "full_vs_fixed_mean_auc_gain": 2.094042550837037,
+      "positive_pairs": 1,
+      "note": "physical trap, cue duration and effector scale were calibrated on these seeds; do not treat as holdout"
+    },
+    "module_results": {
+      "plasticity": "limited positive signal: mean paired AUC +1.056054, 2/3 development pairs",
+      "prediction": "predictor learns, but paired net body value negative/unresolved: mean AUC -0.174359, 1/3",
+      "recurrence": "net body value tiny/unresolved: mean AUC +0.016963, 2/3"
+    },
+    "pythonista_scene": "device_pending"
   },
   "next_milestone": {
-    "name": "SOMA-CELL 0.6-P2",
+    "name": "SOMA-CELL 0.6",
     "status": "planned_not_started",
-    "purpose": "P1身体ポートと1区画結果を基準に、8個のゲノム由来物質神経細胞、有限シグナルの疎な再帰結線、局所予測、適格度トレース、三因子可塑性を実装する",
-    "acceptance_gate": "少なくとも一つの変化環境で8細胞可塑性組織が等物質固定組織を費用込みで上回り、予測・再帰・可塑性の各寄与をアブレーションで分離する",
+    "purpose": "P2小型物質神経組織へ、物質的ABBA/BAAB実停止監査、証拠品質、因果校正、変化感受性ゲート、小型反証、神経死体・神経遺伝子HGT検査を段階導入する",
+    "acceptance_gate": "介入予測が実停止効果を偶然以上に校正し、監査・再可塑化の純身体利益が少なくとも一つの非定常環境で費用を上回る。予測・再帰は有用性未確立のまま必須アブレーションに残す",
     "required_regressions": [
       "P0 22/22 contract validation",
       "P1 18/18 deterministic validation",
-      "P1 no-cassette exact P0 lockstep",
-      "P1 equal-material dummy comparison"
+      "P2 22/22 deterministic validation",
+      "P2 holdout full-vs-fixed 5/6 positive paired signal",
+      "no-prediction and no-recurrence ablations remain available"
     ]
   },
   "phase_plan": [
     {
       "phase": "0.6-P0",
-      "status": "frozen_baseline",
+      "status": "frozen_foundation",
       "focus": "chemical body API and budget ledger"
     },
     {
       "phase": "0.6-P1",
-      "status": "frozen_baseline",
-      "focus": "one gene-built material neuron; information-value gate passed; predictor net value unresolved"
+      "status": "frozen_foundation",
+      "focus": "one gene-built material neuron; information value passed; predictor net value unresolved"
     },
     {
       "phase": "0.6-P2",
-      "status": "next",
-      "focus": "eight-cell recurrent locally plastic tissue"
+      "status": "frozen_baseline",
+      "focus": "eight-cell material recurrent tissue; holdout adaptation signal; prediction/recurrence unresolved"
     },
     {
       "phase": "0.6",
-      "status": "blocked_by_P2",
-      "focus": "causal audit, calibration, change gate, neural corpse/HGT"
+      "status": "next",
+      "focus": "material causal audit, calibration, change gate, falsification and neural corpse/HGT"
     }
   ],
   "frozen_invariants": [
@@ -92,8 +118,12 @@
     "dead neural tissue is returned to material/corpse pools"
   ],
   "canonical_precedence": [
+    "src/0_6_p2/SOMA_CELL_0_6_P2_pythonista.py",
+    "docs/SOMA_CELL_0_6_P2_TISSUE_CONTRACT.md",
+    "docs/SOMA_CELL_0_6_P2_TISSUE_SCHEMA.json",
     "src/0_6_p1/SOMA_CELL_0_6_P1_pythonista.py",
     "docs/SOMA_CELL_0_6_P1_TISSUE_CONTRACT.md",
+    "src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py",
     "docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md",
     "00_MANDATORY_STARTUP_GATE_JA.md",
     "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md",
@@ -102,13 +132,15 @@
     "conversation"
   ],
   "open_risks": [
-    "Pythonista P1 exact Scene/FPS/thermal long-run not yet confirmed on iPhone",
-    "P1 local predictor learns but does not show consistent net behavioural benefit",
-    "P2 recurrent tissue may not repay its additional chemical cost",
-    "P0 private Python attributes remain an API discipline boundary rather than a security sandbox",
+    "Pythonista P2 exact Scene/FPS/thermal long-run not yet confirmed on iPhone",
+    "P2 holdout has only six paired seeds; no statistical generalisation claim",
+    "development-seed mean is dominated by calibrated seed 101",
+    "local prediction reduces error but does not establish positive net body value",
+    "recurrence contribution is very small and not established as necessary",
+    "physical microfluidic assay trap is designer-provided environment physics",
     "natural multigenerational neural-gene HGT fixation remains undemonstrated",
-    "0.4 stable meaning reversal remains undemonstrated",
-    "chemical grammar and material classes remain designer-defined"
+    "chemical grammar and material classes remain designer-defined",
+    "life, consciousness and open-ended evolution remain unproved"
   ],
   "completion_definition": {
     "engineering": "versioned source, deterministic save/restore, ledgers, validation, ablations, Pythonista instructions and checkpoint update",
@@ -141,8 +173,8 @@
     "clean_worktree_required_before_start": true,
     "p1_must_read_body_port_contract": true,
     "p1_primary_control": "completed: equal-material equal-maintenance non-informational dummy",
-    "transition_receipt": "work_sessions/20260801T154320Z_SOMA_CELL_0_6_P1_TRANSITION.json",
-    "next_action": "P2 implementation requires a fresh preflight receipt on the post-transition Git HEAD",
+    "transition_receipt": "work_sessions/20260801T233621Z_SOMA_CELL_0_6_P2_TRANSITION.json",
+    "next_action": "formal 0.6 implementation requires a fresh preflight receipt on the post-transition Git HEAD",
     "p1_result": "PASS in moving patch 3/3 paired seeds; predictor net benefit unresolved",
     "p2_must_read_p1_tissue_contract": true,
     "p2_primary_controls": [
@@ -152,6 +184,16 @@
       "no plasticity",
       "no neural tissue"
     ],
-    "packaging_repair_receipt": "work_sessions/20260801T155209Z_SOMA_CELL_0_6_P2_PREFLIGHT.json"
+    "packaging_repair_receipt": "work_sessions/20260801T155209Z_SOMA_CELL_0_6_P2_PREFLIGHT.json",
+    "p2_result": "PASS_WITH_LIMITS: holdout full vs fixed 5/6 positive, mean AUC +1.872678; prediction and recurrence unresolved",
+    "formal_06_must_read_p2_contract": true,
+    "formal_06_primary_controls": [
+      "fixed eight-cell tissue",
+      "no plasticity",
+      "no prediction",
+      "no recurrence",
+      "no tissue",
+      "sham audit"
+    ]
   }
 }

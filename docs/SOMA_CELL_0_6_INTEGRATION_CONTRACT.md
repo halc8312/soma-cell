@@ -196,17 +196,20 @@ SOMA-1の4通貨は抽象値のまま持ち込まない。
 
 ## 14. ソースの優先順位
 
-1. `src/0_6_p1/SOMA_CELL_0_6_P1_pythonista.py`
-2. `docs/SOMA_CELL_0_6_P1_TISSUE_CONTRACT.md`
-3. `docs/SOMA_CELL_0_6_P1_TISSUE_SCHEMA.json`
-4. `src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py`
-5. `docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md`
-6. `canonical/SOMA_CELL_0_5_pythonista.py`
-7. 本契約
-8. `docs/SOMA_CONTEXT_HANDOFF_JA.md`
-9. `canonical/SOMA_4_2_pythonista.py`
-10. `canonical/SOMA_1_pythonista.py`
-11. `canonical/SOMA_5R_pythonista.py`以降
+1. `src/0_6_p2/SOMA_CELL_0_6_P2_pythonista.py`
+2. `docs/SOMA_CELL_0_6_P2_TISSUE_CONTRACT.md`
+3. `docs/SOMA_CELL_0_6_P2_TISSUE_SCHEMA.json`
+4. `src/0_6_p1/SOMA_CELL_0_6_P1_pythonista.py`
+5. `docs/SOMA_CELL_0_6_P1_TISSUE_CONTRACT.md`
+6. `src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py`
+7. `docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md`
+8. `canonical/SOMA_CELL_0_5_pythonista.py`
+9. 本契約
+10. `docs/SOMA_CONTEXT_HANDOFF_JA.md`
+11. `canonical/SOMA_2_1_pythonista.py`
+12. `canonical/SOMA_4_2_pythonista.py`
+13. `canonical/SOMA_1_pythonista.py`
+14. `canonical/SOMA_5R_pythonista.py`以降
 
 会話中の口頭説明とソースが矛盾した場合、検証済み基準ソースと本契約を優先する。
 
@@ -240,3 +243,52 @@ P2は次を守る。
 6. 組織刈り込み、損傷交換、宿主死、分裂前回収で物質を匿名削除しない。
 7. P0 22/22、P1 18/18、P1 no-cassetteロックステップ、P1等費用ダミー比較を回帰検査として維持する。
 8. P2の合格は、少なくとも一つの変化環境で可塑性8細胞組織が等物質固定組織を費用込みで上回り、再帰・予測・可塑性の寄与を分離できた場合に限る。
+
+## 追補 2026-08-02 — P2物質再帰組織の凍結
+
+SOMA-CELL 0.6-P2.0と組織契約`0.6-P2.2`を、正式0.6の直接親として凍結する。
+
+### P2から維持するもの
+
+1. 8個のゲノム由来物質神経区画
+2. P0身体ポート以外から身体へ触れない境界
+3. 有限ATP・タンパク質・膜・信号・損傷費
+4. 20本の有限信号再帰と保存的再編
+5. 局所予測、適格度、三因子可塑性
+6. 34秒の発達安定期間
+7. 分子エピソードと急性害記憶
+8. 学習状態の無料娘継承禁止
+9. 同一状態・共通外乱ツイン
+10. P0/P1/P2全回帰
+
+### P2から持ち越す未確立事項
+
+- 予測器は誤差を下げるが正味身体価値を示していない。
+- 再帰のpaired平均効果は極小で必要性未証明。
+- 可塑性の正信号は限定的で、holdout単独アブレーションは未実施。
+- holdoutは6 seedであり、一般化の証明ではない。
+- マイクロ流体トラップは設計者が与えた試験環境物理である。
+
+### 正式0.6の追加順序
+
+```text
+P2凍結組織
+  ↓
+神経細胞群への信号・ATP流の可逆遮断
+  ↓
+ABBA/BAABと偽対照
+  ↓
+接触汚染・物質費・身体文脈による証拠品質
+  ↓
+介入予測と実測効果の校正
+  ↓
+化学・身体・感染変化時だけ開く再可塑化ゲート
+  ↓
+最大1〜2命令の小型反証
+  ↓
+神経死体化と神経発生遺伝子の実DNA HGT
+```
+
+正式0.6の実停止は、対象神経区画への有限信号分子またはATP配分を可逆的に遮断して行う。神経活動配列を直接0へ書き換えたり、身体位置・ATP・膜・DNAを直接操作したりしない。
+
+正式0.6の合格には、介入予測の校正と監査／再可塑化の純身体利益が必要である。予測・再帰・可塑性・監査なし条件を維持し、負の結果なら機構を縮小または棄却する。
