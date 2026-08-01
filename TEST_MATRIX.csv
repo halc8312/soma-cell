@@ -17,3 +17,9 @@ P2-003,0.6-P2,no free memory inheritance,PLANNED,only explicit material states i
 F06-001,0.6,common-random twin net benefit,PLANNED,positive net body benefit in at least one changing environment
 F06-002,0.6,ABBA/BAAB causal audit,PLANNED,calibration above chance
 F06-003,0.6,neural corpse and HGT,PLANNED,translation/development required before function
+GOV-001,governance,mandatory startup gate files,PASS,gate and machine-readable rule present
+GOV-002,governance,preflight clean checkpoint verification,PASS,required sources and hashes verified
+GOV-003,governance,wrong acknowledgement and milestone fail closed,PASS,no valid receipt issued
+GOV-004,governance,hash tamper detection,PASS,modified baseline rejected
+GOV-005,governance,durable preflight receipt,PASS,work_sessions receipt exists
+GOV-006,governance,Git pre-commit rule lock,PASS,hook present and executable

@@ -1,0 +1,14 @@
+{
+  "session_id": "",
+  "completed_utc": "",
+  "milestone": "",
+  "baseline_commit": "",
+  "result_commit": "",
+  "tests": {"passed": 0, "failed": 0, "not_run": 0},
+  "mass_ledger_max_abs_residual": null,
+  "save_restore_deterministic": null,
+  "negative_results": [],
+  "open_risks": [],
+  "artifacts": [],
+  "drive_archive_ids": []
+}

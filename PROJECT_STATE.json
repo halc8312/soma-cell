@@ -1,14 +1,17 @@
 {
-  "schema_version": "1.0",
-  "checkpoint_id": "SOMA-20260801-CELL05-TO-06P0",
-  "updated_utc": "2026-08-01T08:07:45Z",
+  "schema_version": "1.1",
+  "checkpoint_id": "SOMA-20260801-CELL05-TO-06P0-RULELOCK1",
+  "updated_utc": "2026-08-01T13:02:44Z",
   "user_goal": "iPhone/Pythonistaで、教師ラベルや固定データセットに依存せず、物質的自己生産・遺伝・学習・因果監査を統合した人工生命研究系を段階的に構築する",
   "current_baseline": {
     "name": "SOMA-CELL 0.5.0",
     "status": "frozen",
     "canonical_source": "src/baseline/SOMA_CELL_0_5_pythonista.py",
     "release_archive": "releases/SOMA_CELL_0_5_GOLD_20260801.zip",
-    "validation": {"passed": 20, "total": 20},
+    "validation": {
+      "passed": 20,
+      "total": 20
+    },
     "comparison_trials": 42,
     "known_max_final_mass_residual": 5.665759e-06
   },
@@ -19,10 +22,26 @@
     "acceptance_gate": "神経未接続時に0.5とロックステップ一致"
   },
   "phase_plan": [
-    {"phase": "0.6-P0", "status": "next", "focus": "chemical body API and budget ledger"},
-    {"phase": "0.6-P1", "status": "blocked_by_P0", "focus": "one material neuron vs equal-cost dummy"},
-    {"phase": "0.6-P2", "status": "blocked_by_P1", "focus": "eight-cell recurrent locally plastic tissue"},
-    {"phase": "0.6", "status": "blocked_by_P2", "focus": "causal audit, calibration, change gate, neural corpse/HGT"}
+    {
+      "phase": "0.6-P0",
+      "status": "next",
+      "focus": "chemical body API and budget ledger"
+    },
+    {
+      "phase": "0.6-P1",
+      "status": "blocked_by_P0",
+      "focus": "one material neuron vs equal-cost dummy"
+    },
+    {
+      "phase": "0.6-P2",
+      "status": "blocked_by_P1",
+      "focus": "eight-cell recurrent locally plastic tissue"
+    },
+    {
+      "phase": "0.6",
+      "status": "blocked_by_P2",
+      "focus": "causal audit, calibration, change gate, neural corpse/HGT"
+    }
   ],
   "frozen_invariants": [
     "membrane boundary arises from local membrane material",
@@ -38,6 +57,7 @@
   ],
   "canonical_precedence": [
     "src/baseline/SOMA_CELL_0_5_pythonista.py",
+    "00_MANDATORY_STARTUP_GATE_JA.md",
     "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md",
     "PROJECT_STATE.json",
     "docs/SOMA_CONTEXT_HANDOFF_JA.md",
@@ -53,6 +73,28 @@
   "completion_definition": {
     "engineering": "versioned source, deterministic save/restore, ledgers, validation, ablations, Pythonista instructions and checkpoint update",
     "science": "results may be positive or negative; claims are limited to measured evidence",
-    "not_guaranteed": ["life status", "consciousness", "open-ended evolution", "neural adaptive advantage"]
+    "not_guaranteed": [
+      "life status",
+      "consciousness",
+      "open-ended evolution",
+      "neural adaptive advantage"
+    ]
+  },
+  "workflow_guard": {
+    "rule_id": "SOMA-RULELOCK-20260801",
+    "mandatory": true,
+    "fail_closed": true,
+    "startup_gate_file": "00_MANDATORY_STARTUP_GATE_JA.md",
+    "machine_rule_file": "MANDATORY_WORKFLOW.json",
+    "preflight_script": "scripts/soma_preflight.py",
+    "required_ack": "READ_LATEST_SOURCES_AND_CONTRACTS",
+    "receipt_pattern": "work_sessions/*_PREFLIGHT.json",
+    "no_implementation_without_receipt": true,
+    "restore_sources": [
+      "local Git checkpoint",
+      "Continuity Vault",
+      "Google Drive/SOMA Project Archive"
+    ],
+    "drive_folder_id": "1G8dNFo4nGJVWJ2zpgPnowJLtNriaeInW"
   }
 }

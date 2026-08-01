@@ -12,3 +12,13 @@
 - 0.4: 物質感覚運動と局所可塑性
 - 0.5: 死体化学、環境DNA、HGT、可動配列
 - 次: 0.6-P0 化学身体API凍結
+
+## 2026-08-01 — Project Rule Lock 1
+
+- `00_MANDATORY_STARTUP_GATE_JA.md`を追加。
+- `MANDATORY_WORKFLOW.json`を追加。
+- `scripts/soma_preflight.py`を追加し、必須ファイル・SHA-256・マイルストーンを失敗閉鎖で検査。
+- `work_sessions/*_PREFLIGHT.json`による作業開始証跡を導入。
+- `.githooks/pre-commit`を追加し、実装変更にプリフライト証跡を要求。
+- `PROJECT_STATE.json`へ`workflow_guard`を追加。
+- READMEと復元手順へプリフライトを最優先として追記。

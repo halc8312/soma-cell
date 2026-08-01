@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "rule_id": "SOMA-RULELOCK-20260801",
+  "mandatory": true,
+  "fail_closed": true,
+  "core_rule": "No implementation or modification may begin until the latest project state, canonical source, handoff, integration contract, validation results, and roadmap have been actually read and their hashes verified.",
+  "required_read_order": [
+    "00_MANDATORY_STARTUP_GATE_JA.md",
+    "PROJECT_STATE.json",
+    "CURRENT_BASELINE.txt",
+    "docs/SOMA_CONTEXT_HANDOFF_JA.md",
+    "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md",
+    "src/baseline/SOMA_CELL_0_5_pythonista.py",
+    "results/SOMA_CELL_0_5_VALIDATION_RESULTS.txt",
+    "results/SOMA_CELL_0_5_EXPERIMENT_REPORT.txt",
+    "planning/ROADMAP_0_6_JA.md"
+  ],
+  "required_before_edit": [
+    "sha256_verification_passed",
+    "milestone_matches_project_state",
+    "known_failures_reviewed",
+    "preflight_receipt_created"
+  ],
+  "required_ack": "READ_LATEST_SOURCES_AND_CONTRACTS",
+  "receipt_directory": "work_sessions",
+  "on_failure": "STOP. Restore from canonical archive or Google Drive; otherwise report the missing or inconsistent item to the user. Never infer missing implementation details."
+}

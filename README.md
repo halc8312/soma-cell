@@ -1,3 +1,16 @@
+# STOP — Mandatory preflight before any SOMA work
+
+Do not implement, modify, or evaluate SOMA from memory alone. First read `00_MANDATORY_STARTUP_GATE_JA.md`, then run:
+
+```bash
+python3 scripts/soma_preflight.py verify
+python3 scripts/soma_preflight.py start --actor "<name>" --purpose "<work>" --milestone "SOMA-CELL 0.6-P0" --ack "READ_LATEST_SOURCES_AND_CONTRACTS"
+```
+
+If verification fails or no preflight receipt is created, stop. Restore the latest checkpoint from the project archive rather than inferring missing details.
+
+---
+
 # SOMA Project Checkpoint — 2026-08-01
 
 This repository is the continuity source of truth for the SOMA artificial-life project at the transition from **SOMA-CELL 0.5** to **SOMA-CELL 0.6-P0**.

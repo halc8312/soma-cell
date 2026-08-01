@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+ROOT=$(git rev-parse --show-toplevel)
+python3 "$ROOT/scripts/soma_preflight.py" verify
+
+if git diff --cached --name-only | grep -Eq '^(src/|planning/|docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT\.md)'; then
+  if ! find "$ROOT/work_sessions" -maxdepth 1 -name '*_PREFLIGHT.json' -type f | grep -q .; then
+    echo 'ERROR: implementation change staged without a work_sessions/*_PREFLIGHT.json receipt.' >&2
+    exit 1
+  fi
+fi
