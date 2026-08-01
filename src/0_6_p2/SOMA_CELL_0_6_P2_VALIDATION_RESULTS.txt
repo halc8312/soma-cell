@@ -1,0 +1,50 @@
+SOMA-CELL 0.6-P2 deterministic validation
+build: SOMA-CELL 0.6-P2.0
+P2 schema: 0.6-P2.2
+P1 baseline: SOMA-CELL 0.6-P1.0
+result: 22/22 PASS
+
+[PASS] build_and_frozen_p1
+  observed: build=SOMA-CELL 0.6-P2.0, schema=0.6-P2.2, P1 sha=9e3ce9c59cb81157baea2d57049339c322e450930bc2ed0292fc1f2ffdfba86c
+[PASS] no_cassette_exact_p1_lockstep
+  observed: 3 seeds x 240 steps exact: 101:e185e157d675, 202:0bb764fcfde4, 303:4d29bfd57b5e
+[PASS] unmetered_and_assisted_tissue_rejected
+  observed: unmetered tissue and runtime assistance fail closed
+[PASS] cassette_is_material_and_required
+  observed: eight indexed genes, explicit founder matter=0.24192
+[PASS] gene_driven_eight_cell_development
+  observed: all 8 material compartments mature in 19 steps
+[PASS] full_and_fixed_share_initial_material_targets
+  observed: equal material/stores through development; 19 steps
+[PASS] physical_gradient_controls_tissue_direction
+  observed: right dx=0.0091, left dx=-0.0626
+[PASS] recurrence_gate_and_finite_messages
+  observed: full recurrent max=0.06080; ablation=0; messages=20
+[PASS] local_predictor_reduces_error
+  observed: prediction RMS 0.015574 -> 0.006452
+[PASS] developmental_warmup_blocks_plasticity
+  observed: active age 10.06; no long-term update
+[PASS] three_factor_update_has_opposite_signs
+  observed: base=0.090000, positive=0.090194, negative=0.089806
+[PASS] episode_outcome_changes_ligand_sign
+  observed: positive=+0.026050, deterioration=-0.085000
+[PASS] rewiring_preserves_edge_count_and_charges_wear
+  observed: edges=20 preserved; rewire count=1
+[PASS] force_prune_returns_material_conservatively
+  observed: returned cell material=0.01136094
+[PASS] damage_turnover_is_conservative
+  observed: damaged mass 0.0052 returned
+[PASS] host_death_routes_eight_cell_matter_to_corpse
+  observed: eight-cell matter=0.09088756, corpse matter=4.363467
+[PASS] division_recycles_learned_state_and_retains_genes
+  observed: copy steps=319, learned arrays recycled; genes retained
+[PASS] save_restore_exact
+  observed: checkpoint and 120-step continuation exact
+[PASS] logger_is_noninterfering
+  observed: logger-neutral 120-step continuation
+[PASS] common_disturbance_same_mode_is_exact
+  observed: same-mode twin exact for 120 taped steps
+[PASS] cue_reversal_full_vs_equal_fixed_twin
+  observed: post-switch margin AUC gain=+6.367373, reward difference=+0.694145
+[PASS] finite_and_material_ledger_stress
+  observed: 420 steps finite; world max=1.499e-05, port max=7.105e-15

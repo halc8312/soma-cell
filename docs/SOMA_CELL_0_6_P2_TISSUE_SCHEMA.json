@@ -1,0 +1,97 @@
+{
+  "schema": "0.6-P2.2",
+  "build": "SOMA-CELL 0.6-P2.0",
+  "body_port": "0.6-P0.2",
+  "parent_tissue": "0.6-P1.1",
+  "tissue_id_prefix": "p2-material-neuron-",
+  "cell_count": 8,
+  "sensor_features": 12,
+  "physical_debt_channels": 4,
+  "predict_features": 6,
+  "external_ligands": 4,
+  "modes": [
+    "full",
+    "fixed",
+    "no_recurrence",
+    "no_prediction",
+    "no_plasticity",
+    "no_effector",
+    "none"
+  ],
+  "environments": [
+    "native",
+    "moving_patch",
+    "cue_reversal",
+    "meaning_reversal"
+  ],
+  "gene": {
+    "material": true,
+    "genes": 8,
+    "symbols_per_gene": 16,
+    "total_symbols": 128,
+    "free_daughter_copy": false,
+    "learned_state_inherited": false
+  },
+  "per_cell_target_material": {
+    "functional_protein": 0.0075,
+    "membrane": 0.0025,
+    "signal": 0.0025
+  },
+  "per_cell_maturity_minimum": {
+    "functional_protein": 0.006,
+    "membrane": 0.0018,
+    "signal": 0.0014
+  },
+  "recurrence": {
+    "directed_edges": 20,
+    "finite_signal": true,
+    "atp_paid": true,
+    "wear_paid": true,
+    "rewire_interval_steps": 420,
+    "edge_count_conserved_during_rewire": true
+  },
+  "prediction": {
+    "local_only": true,
+    "backpropagation": false,
+    "net_body_value_established": false
+  },
+  "plasticity": {
+    "eligibility_tau_seconds": 6.5,
+    "third_factor": "change in four physical debt channels",
+    "development_warmup_seconds": 34.0,
+    "molecular_episode_window_seconds": 8.0,
+    "acute_harm_memory": 1.25,
+    "external_reward": false
+  },
+  "physical_inputs": [
+    "membrane_ligand_profiles",
+    "last_uptake_by_ligand",
+    "internal_atp",
+    "internal_reactive",
+    "membrane_closure",
+    "internal_retention",
+    "protein_damage",
+    "aggregates"
+  ],
+  "forbidden_inputs": [
+    "reward",
+    "fitness",
+    "correct_action",
+    "food_direction",
+    "cue_direction",
+    "target_direction",
+    "autopoietic_margin",
+    "absolute_position",
+    "world_age",
+    "cell_age",
+    "switch_time_label"
+  ],
+  "effectors": [
+    "motor",
+    "transporter_polarity"
+  ],
+  "costless_mode": "forbidden",
+  "runtime_external_assistance": "forbidden",
+  "common_random_tape": true,
+  "material_recycling_on_prune_death_division": true
+}

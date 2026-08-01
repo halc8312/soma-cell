@@ -1,0 +1,102 @@
+SOMA-CELL 0.6-P2.0 MANIFEST
+===============================
+
+Build: SOMA-CELL 0.6-P2.0
+P2 tissue schema: 0.6-P2.2
+Frozen P1 tissue schema: 0.6-P1.1
+Frozen P0 body port: 0.6-P0.2
+Date: 2026-08-02
+
+Purpose
+-------
+Eight gene-built material neural compartments with finite sparse recurrent
+signalling, local prediction, eligibility traces, three-factor plasticity,
+developmental warm-up, maturity/replasticity and conservative rewiring.
+
+Canonical source
+----------------
+SOMA_CELL_0_6_P2_pythonista.py
+SHA-256: 03cd333838f2bee0dde634e8d55ca2b2c7ed285c9104a52a26bcee4a07ce1693
+
+Frozen parent source
+--------------------
+SOMA_CELL_0_6_P1_pythonista.py
+SHA-256: 9e3ce9c59cb81157baea2d57049339c322e450930bc2ed0292fc1f2ffdfba86c
+
+Validation
+----------
+P0 regression: 22/22 PASS
+P1 regression: 18/18 PASS
+P2 deterministic validation: 22/22 PASS
+Engineering comparison: 36 jobs
+Exact-state holdout full-vs-fixed: 5/6 positive pairs
+Holdout mean post-switch margin AUC gain: +1.872678
+Maximum P2 validation world material residual: 1.499e-05
+Maximum P2 validation port residual: 7.105e-15
+Save/restore: exact immediately and after 120 steps
+Pythonista Scene: implemented; iPhone device validation pending
+
+Measured module results
+-----------------------
+Full vs equal-material fixed, holdout:
+  mean AUC gain  +1.872678
+  positive pairs 5/6
+  reward gain    +0.317434
+  toxin change   -0.010107
+
+Full vs no plasticity, development:
+  mean AUC gain  +1.056054
+  positive pairs 2/3
+
+Full vs no prediction, development:
+  mean AUC gain  -0.174359
+  positive pairs 1/3
+
+Full vs no recurrence, development:
+  mean AUC gain  +0.016963
+  positive pairs 2/3
+
+Important negative results
+--------------------------
+* Local prediction reduces prediction error but has no established net body value.
+* Recurrence has only a very small paired effect in the present task.
+* Development-seed full-vs-fixed mean is dominated by seed 101 and has only 1/3 positive pairs.
+* Holdout n=6 is a mechanism signal, not statistical generalisation.
+
+Included flat Pythonista dependencies
+-------------------------------------
+SOMA_CELL_0_1_pythonista.py
+SOMA_CELL_0_2_pythonista.py
+SOMA_CELL_0_3_pythonista.py
+SOMA_CELL_0_4_pythonista.py
+SOMA_CELL_0_5_pythonista.py
+SOMA_CELL_0_6_P0_pythonista.py
+SOMA_CELL_0_6_P1_pythonista.py
+SOMA_CELL_0_6_P2_pythonista.py
+
+P2 support files
+----------------
+SOMA_CELL_0_6_P2_validation.py
+SOMA_CELL_0_6_P2_experiment.py
+SOMA_CELL_0_6_P2_report.py
+SOMA_CELL_0_6_P2_README_JA.md
+SOMA_CELL_0_6_P2_START_HERE.txt
+SOMA_CELL_0_6_P2_TISSUE_CONTRACT.md
+SOMA_CELL_0_6_P2_TISSUE_SCHEMA.json
+SOMA_CELL_0_6_P2_VALIDATION_RESULTS.txt
+SOMA_CELL_0_6_P2_REGRESSION_RESULTS.txt
+SOMA_CELL_0_6_P2_EXPERIMENT_REPORT.txt
+soma_cell_0_6_p2_validation.csv
+soma_cell_0_6_p2_experiment_results.csv
+soma_cell_0_6_p2_experiment_results.json
+soma_cell_0_6_p2_experiment_summary.csv
+SHA256SUMS.txt
+
+Known limits
+------------
+* No material ABBA/BAAB causal audit yet.
+* No causal calibration/change gate/falsification compiler yet.
+* Prediction and recurrence are not established necessities.
+* No natural multigenerational neural-gene HGT fixation.
+* Chemical grammar and material classes remain designer-defined.
+* Life, consciousness and open-ended evolution are not established.

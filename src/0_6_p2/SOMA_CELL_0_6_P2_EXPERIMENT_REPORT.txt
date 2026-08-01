@@ -1,0 +1,87 @@
+SOMA-CELL 0.6-P2 experiment report
+===================================
+Build: SOMA-CELL 0.6-P2.0
+Schema: 0.6-P2.2
+Date: 2026-08-02
+Jobs: 36
+
+DESIGN
+------
+1. Independent whole-life trials:
+   6 modes x development seeds 101/202/303 = 18 runs, 100 simulation seconds.
+2. Exact-state post-switch common-disturbance twins:
+   4 controls x 3 development seeds = 12 pairs.
+3. Full vs fixed holdout twins:
+   seeds 404/505/606/707/808/909 = 6 pairs.
+
+The development seeds were used while calibrating the physical microfluidic
+trap, cue duration and effector scale.  Holdout seeds were not used during that
+calibration and are reported separately.
+
+PRIMARY EXACT-STATE RESULT
+--------------------------
+Full plastic tissue vs equal-material fixed eight-cell tissue:
+
+Development seeds:
+  n                         3
+  mean post-switch AUC gain +2.094043
+  positive pairs            1/3
+  mean reward uptake gain   +0.229419
+  mean toxin uptake change  +0.026873 (worse)
+
+Holdout seeds:
+  n                         6
+  mean post-switch AUC gain +1.872678
+  positive pairs            5/6
+  mean final margin gain    +0.117572
+  mean reward uptake gain   +0.317434
+  mean toxin uptake change  -0.010107 (better)
+
+Holdout per-seed AUC gains:
+  404  -0.011054
+  505  +4.333303
+  606  +3.069714
+  707  +0.769471
+  808  +0.231868
+  909  +2.842764
+
+MODULE ABLATIONS — DEVELOPMENT SEEDS
+------------------------------------
+Full vs no plasticity:
+  mean AUC gain +1.056054; positive 2/3
+
+Full vs no prediction:
+  mean AUC gain -0.174359; positive 1/3
+  Predictor error reduction therefore does not establish net body value.
+
+Full vs no recurrence:
+  mean AUC gain +0.016963; positive 2/3
+  The recurrent contribution is too small to establish necessity.
+
+INDEPENDENT WHOLE-LIFE MEANS
+----------------------------
+mode             lifetime margin   post-switch margin   reward uptake   toxin uptake   neural ATP
+full             0.740940          0.687721             5.954068        0.152967       0.074370
+fixed            0.663827          0.529028             5.036194        0.140174       0.060931
+no_recurrence    0.667569          0.527564             4.794050        0.152166       0.054729
+no_prediction    0.664692          0.530769             4.936647        0.132200       0.060708
+no_plasticity    0.725620          0.654903             5.723346        0.140787       0.073094
+none             0.549168          0.445540             2.033376        0.065548       0.000000
+
+Independent trajectories include development cost and early behavioural
+divergence.  They are not causal substitutes for the exact-state twins.
+
+INTERPRETATION
+--------------
+- The step-indexed common disturbance tape prevents branch-dependent random
+  number consumption from creating unrelated future noise.
+- The main positive evidence is the 5/6 holdout paired result against the
+  equal-material fixed tissue.
+- Plasticity has a limited positive signal in the development ablation.
+- Prediction learns its target but has no established net body value.
+- Recurrence has no established net body value in the present delay task.
+- The microfluidic trap is shared physical assay machinery, but its parameters
+  were calibrated on the development seeds; those results are not holdout.
+- n=6 holdout pairs is a mechanism signal, not statistical generalisation.
+- No result establishes consciousness, life status, open-ended evolution or a
+  general superiority of larger neural tissue.

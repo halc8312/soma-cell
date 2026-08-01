@@ -1,0 +1,21 @@
+SOMA-CELL 0.6-P2 regression report
+===================================
+Date: 2026-08-02
+
+Frozen P0 body-port validation
+------------------------------
+Result: 22/22 PASS
+Source: src/0_6_p0/SOMA_CELL_0_6_P0_validation.py
+
+Frozen P1 one-neuron validation
+-------------------------------
+Result: 18/18 PASS
+Source: src/0_6_p1/SOMA_CELL_0_6_P1_validation.py
+
+P2 deterministic validation
+---------------------------
+Result: 22/22 PASS
+Source: src/0_6_p2/SOMA_CELL_0_6_P2_validation.py
+
+The P2 source therefore retains the frozen P0 body-port contract and P1
+material-neuron contract under their original deterministic suites.
