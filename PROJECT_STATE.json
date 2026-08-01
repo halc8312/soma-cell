@@ -1,7 +1,7 @@
 {
   "schema_version": "1.5",
   "checkpoint_id": "SOMA-20260801-CELL06P1-BASELINE-TO-06P2-RULELOCK2",
-  "updated_utc": "2026-08-01T15:45:00Z",
+  "updated_utc": "2026-08-01T16:05:00Z",
   "user_goal": "iPhone/Pythonistaで、教師ラベルや固定データセットに依存せず、物質的自己生産・遺伝・学習・因果監査を統合した人工生命研究系を段階的に構築する",
   "current_baseline": {
     "name": "SOMA-CELL 0.6-P1.0",
@@ -10,7 +10,7 @@
     "tissue_contract_file": "docs/SOMA_CELL_0_6_P1_TISSUE_CONTRACT.md",
     "tissue_schema_file": "docs/SOMA_CELL_0_6_P1_TISSUE_SCHEMA.json",
     "body_port_contract_file": "docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md",
-    "release_archive": "releases/SOMA_CELL_0_6_P1_GOLD_20260801.zip",
+    "release_archive": "releases/SOMA_CELL_0_6_P1_GOLD_20260801_R1.zip",
     "validation": {
       "passed": 18,
       "total": 18
@@ -27,7 +27,7 @@
     "known_max_port_material_residual": 3.553e-15,
     "known_max_world_material_residual": 1.129e-05,
     "source_sha256": "9e3ce9c59cb81157baea2d57049339c322e450930bc2ed0292fc1f2ffdfba86c",
-    "release_sha256": "20c1ee05c0c27a7d355d4c9cc0f41d01a994c70b67ba5c92657f9a5f86f0f2bc",
+    "release_sha256": "63c53a0248df2ad37d0d8f4003b5b77e60b78ff8644d3a28bc1408346601d18b",
     "parent_baseline": "SOMA-CELL 0.6-P0.0",
     "moving_patch_acceptance": {
       "status": "PASS",
@@ -40,7 +40,10 @@
       "mean_uptake_gain": 1.3451925113579415
     },
     "negative_result": "local predictor learns but its net behavioural benefit is not established; no-prediction mean margin was slightly higher",
-    "pythonista_scene": "device_pending"
+    "pythonista_scene": "device_pending",
+    "packaging_revision": "R1",
+    "historical_transition_release": "releases/SOMA_CELL_0_6_P1_GOLD_20260801.zip",
+    "packaging_validation": "SHA256 all targets PASS; flat release validation 18/18 PASS"
   },
   "next_milestone": {
     "name": "SOMA-CELL 0.6-P2",
@@ -148,6 +151,7 @@
       "no prediction",
       "no plasticity",
       "no neural tissue"
-    ]
+    ],
+    "packaging_repair_receipt": "work_sessions/20260801T155209Z_SOMA_CELL_0_6_P2_PREFLIGHT.json"
   }
 }

@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.1",
+  "receipt_type": "preflight",
+  "session_id": "20260801T155209Z_SOMA_CELL_0_6_P2_PREFLIGHT",
+  "started_utc": "2026-08-01T15:52:09Z",
+  "actor": "ChatGPT GPT-5.6 Pro",
+  "purpose": "P1正式配布物のSHA256自己参照不具合を修正し再検証する。P2実装は開始しない",
+  "acknowledgement": "READ_LATEST_SOURCES_AND_CONTRACTS",
+  "rule_id": "SOMA-RULELOCK-20260801-R2",
+  "checkpoint_id": "SOMA-20260801-CELL06P1-BASELINE-TO-06P2-RULELOCK2",
+  "baseline": "SOMA-CELL 0.6-P1.0",
+  "canonical_source": "src/0_6_p1/SOMA_CELL_0_6_P1_pythonista.py",
+  "git_commit": "00eb9d9aed19b8d34a6ed161de98c27f599ff803",
+  "git_status_at_start": "",
+  "required_sources_read_and_hash_checked": {
+    "00_MANDATORY_STARTUP_GATE_JA.md": {
+      "sha256": "1cb97fed8c9442459b8cf2693cd41d8ec9f50e8b80c01bdcd4751785306c8956",
+      "size": 5441
+    },
+    "MANDATORY_WORKFLOW.json": {
+      "sha256": "7f72d0115cc044051279b71622ebd9b017f8c41d1cb0f5b6ba3e9b555b4e197b",
+      "size": 2786
+    },
+    "PROJECT_STATE.json": {
+      "sha256": "92ffce3ef46db5eb7a1ba9eed323861fb2b86ee7341de6a5cb9631b9c808737a",
+      "size": 6869
+    },
+    "CURRENT_BASELINE.txt": {
+      "sha256": "8a376d63f373d37f7ca4c88b37548634e489fc90609c8982d016c7da5346c90e",
+      "size": 369
+    },
+    "docs/SOMA_CONTEXT_HANDOFF_JA.md": {
+      "sha256": "43629682f693794441a75fcce840e617d9cfcd58d150d96b4d9592a0e081a9d4",
+      "size": 13836
+    },
+    "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md": {
+      "sha256": "4e489d38b5a5bdac1ca2efe68ae245d18e70e2322c12bdf2b9c1171eccb38c94",
+      "size": 12831
+    },
+    "planning/ROADMAP_0_6_JA.md": {
+      "sha256": "6aea540bc5d55cd260a9443fde3d34c2da352867dcb419c8fd9e610a7d17e0a6",
+      "size": 3822
+    },
+    "docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md": {
+      "sha256": "fb2403fece7be7bbe2235823d171a8d93c040fe802483fa381dff0a4bc870e83",
+      "size": 2565
+    },
+    "docs/SOMA_CELL_0_6_P1_TISSUE_CONTRACT.md": {
+      "sha256": "877e804d77ed99c7e8ac14cdf0408ac71733cdb5c7c07ce19b13f360e8456f25",
+      "size": 3880
+    },
+    "docs/SOMA_CELL_0_6_P1_TISSUE_SCHEMA.json": {
+      "sha256": "05c57a6635551741e5a513bd6149f498f5c116b48363d9ba9ea277e553d4a4b3",
+      "size": 1082
+    },
+    "src/0_6_p1/SOMA_CELL_0_6_P1_pythonista.py": {
+      "sha256": "9e3ce9c59cb81157baea2d57049339c322e450930bc2ed0292fc1f2ffdfba86c",
+      "size": 59160
+    },
+    "results/SOMA_CELL_0_6_P1_VALIDATION_RESULTS.txt": {
+      "sha256": "9e61dad41701b522a2811de37288222a7f7d5cc18341683d939507b8198cc656",
+      "size": 2154
+    },
+    "results/SOMA_CELL_0_6_P1_EXPERIMENT_REPORT.txt": {
+      "sha256": "ece7d0aef5199da2b55345ecb7d931a73453e8df9265b3aed1162eefadaedb56",
+      "size": 2041
+    }
+  },
+  "declared_reviews": [
+    "latest PROJECT_STATE",
+    "current canonical source",
+    "context handoff",
+    "0.6 integration contract",
+    "current baseline validation and experiment results",
+    "known failures and open risks",
+    "next milestone roadmap"
+  ],
+  "fail_closed": true,
+  "milestone": "SOMA-CELL 0.6-P2"
+}

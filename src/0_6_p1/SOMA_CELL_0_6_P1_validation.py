@@ -21,6 +21,9 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 P0_DIR = os.path.abspath(os.path.join(HERE, '..', '0_6_p0'))
+P0_SOURCE_PATH = os.path.join(P0_DIR, 'SOMA_CELL_0_6_P0_pythonista.py')
+if not os.path.isfile(P0_SOURCE_PATH):
+    P0_SOURCE_PATH = os.path.join(HERE, 'SOMA_CELL_0_6_P0_pythonista.py')
 BASELINE_DIR = os.path.abspath(os.path.join(HERE, '..', 'baseline'))
 for candidate in (HERE, P0_DIR, BASELINE_DIR):
     if candidate not in sys.path:
@@ -105,8 +108,7 @@ def develop(world, max_steps=240):
 
 
 def test_build_and_frozen_p0():
-    path = os.path.join(P0_DIR, 'SOMA_CELL_0_6_P0_pythonista.py')
-    with open(path, 'rb') as handle:
+    with open(P0_SOURCE_PATH, 'rb') as handle:
         digest = hashlib.sha256(handle.read()).hexdigest()
     assert digest == P0_SHA256
     assert p1.BUILD == 'SOMA-CELL 0.6-P1.0'

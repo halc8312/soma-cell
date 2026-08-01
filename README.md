@@ -29,9 +29,11 @@ python3 scripts/soma_preflight.py start \
 - Validation: `results/SOMA_CELL_0_6_P1_VALIDATION_RESULTS.txt` — 18/18 PASS
 - P0 regression: 22/22 PASS
 - Engineering experiment: `results/SOMA_CELL_0_6_P1_EXPERIMENT_REPORT.txt` — 24 trials
-- Pythonista release: `releases/SOMA_CELL_0_6_P1_GOLD_20260801.zip`
+- Pythonista release: `releases/SOMA_CELL_0_6_P1_GOLD_20260801_R1.zip`
 - Integration contract: `docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md`
 - Machine state: `PROJECT_STATE.json`
+
+Packaging revision R1 passes full flat-folder SHA-256 verification and 18/18 validation. The original transition-evidence archive remains preserved but is superseded for user distribution.
 
 P1 contains one gene-built material neural compartment and an equal-material, equal-maintenance non-informational dummy. In moving-patch tests, the informational compartment beat the dummy in 3/3 paired seeds. The local predictor learned its series but did not establish positive net behavioural value; P2 must preserve the no-prediction ablation.
 

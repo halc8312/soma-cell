@@ -6,6 +6,7 @@ P1 tissue schema: 0.6-P1.1
 Frozen body port: SOMA-CELL 0.6-P0.2
 Parent baseline: SOMA-CELL 0.6-P0.0
 Date: 2026-08-01
+Packaging revision: R1 (SHA256SUMS self-entry removed; flat-release validation path fixed)
 
 Purpose
 -------
