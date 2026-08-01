@@ -1,7 +1,7 @@
 {
-  "schema_version": "1.1",
-  "checkpoint_id": "SOMA-20260801-CELL05-TO-06P0-RULELOCK1",
-  "updated_utc": "2026-08-01T13:02:44Z",
+  "schema_version": "1.2",
+  "checkpoint_id": "SOMA-20260801-CELL05-TO-06P0-RULELOCK2",
+  "updated_utc": "2026-08-01T13:09:12Z",
   "user_goal": "iPhone/Pythonistaで、教師ラベルや固定データセットに依存せず、物質的自己生産・遺伝・学習・因果監査を統合した人工生命研究系を段階的に構築する",
   "current_baseline": {
     "name": "SOMA-CELL 0.5.0",
@@ -81,7 +81,7 @@
     ]
   },
   "workflow_guard": {
-    "rule_id": "SOMA-RULELOCK-20260801",
+    "rule_id": "SOMA-RULELOCK-20260801-R2",
     "mandatory": true,
     "fail_closed": true,
     "startup_gate_file": "00_MANDATORY_STARTUP_GATE_JA.md",
@@ -95,6 +95,9 @@
       "Continuity Vault",
       "Google Drive/SOMA Project Archive"
     ],
-    "drive_folder_id": "1G8dNFo4nGJVWJ2zpgPnowJLtNriaeInW"
+    "drive_folder_id": "1G8dNFo4nGJVWJ2zpgPnowJLtNriaeInW",
+    "receipt_must_match_current_git_head": true,
+    "receipt_must_match_next_milestone": true,
+    "clean_worktree_required_before_start": true
   }
 }

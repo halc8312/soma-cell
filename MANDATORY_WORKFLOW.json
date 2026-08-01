@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.0",
-  "rule_id": "SOMA-RULELOCK-20260801",
+  "schema_version": "1.1",
+  "rule_id": "SOMA-RULELOCK-20260801-R2",
   "mandatory": true,
   "fail_closed": true,
   "core_rule": "No implementation or modification may begin until the latest project state, canonical source, handoff, integration contract, validation results, and roadmap have been actually read and their hashes verified.",
@@ -23,5 +23,10 @@
   ],
   "required_ack": "READ_LATEST_SOURCES_AND_CONTRACTS",
   "receipt_directory": "work_sessions",
-  "on_failure": "STOP. Restore from canonical archive or Google Drive; otherwise report the missing or inconsistent item to the user. Never infer missing implementation details."
+  "on_failure": "STOP. Restore from canonical archive or Google Drive; otherwise report the missing or inconsistent item to the user. Never infer missing implementation details.",
+  "receipt_freshness": {
+    "required": true,
+    "rule": "Newest preflight receipt must match current Git HEAD and PROJECT_STATE next milestone.",
+    "precommit_enforced": true
+  }
 }

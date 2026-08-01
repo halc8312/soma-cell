@@ -184,6 +184,10 @@ def cmd_start(args: argparse.Namespace) -> int:
     if errors:
         print("Fail-closed: no work-session receipt created.", file=sys.stderr)
         return 1
+    if report.get("git_status") not in ("", "unavailable"):
+        print("Refusing to start: Git worktree is not clean. Commit, restore, or explicitly recover first.", file=sys.stderr)
+        print(report.get("git_status"), file=sys.stderr)
+        return 4
 
     state = load_state()
     expected_milestone = state["next_milestone"]["name"]
@@ -232,11 +236,55 @@ def cmd_start(args: argparse.Namespace) -> int:
     return 0
 
 
+def latest_receipt() -> Path | None:
+    receipts = sorted((ROOT / "work_sessions").glob("*_PREFLIGHT.json"))
+    return receipts[-1] if receipts else None
+
+
+def cmd_check_receipt(_: argparse.Namespace) -> int:
+    path = latest_receipt()
+    if path is None:
+        print("No preflight receipt found.", file=sys.stderr)
+        return 1
+    try:
+        receipt = json.loads(path.read_text(encoding="utf-8"))
+        state = load_state()
+    except Exception as exc:
+        print(f"Cannot read receipt/state: {exc}", file=sys.stderr)
+        return 1
+    current_head = git_output("rev-parse", "HEAD")
+    expected_milestone = state.get("next_milestone", {}).get("name")
+    errors = []
+    if current_head != "unavailable" and receipt.get("git_commit") != current_head:
+        errors.append(
+            f"stale receipt: receipt HEAD {receipt.get('git_commit')} != current HEAD {current_head}"
+        )
+    if receipt.get("milestone") != expected_milestone:
+        errors.append(
+            f"receipt milestone {receipt.get('milestone')!r} != PROJECT_STATE {expected_milestone!r}"
+        )
+    if receipt.get("acknowledgement") != ACK:
+        errors.append("receipt acknowledgement is invalid")
+    if not receipt.get("fail_closed"):
+        errors.append("receipt is not fail_closed")
+    if errors:
+        print(f"Receipt check FAIL: {path.relative_to(ROOT)}", file=sys.stderr)
+        for err in errors:
+            print(f"  - {err}", file=sys.stderr)
+        return 1
+    print(f"Receipt check PASS: {path.relative_to(ROOT)}")
+    print(f"  HEAD: {current_head}")
+    print(f"  milestone: {expected_milestone}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="SOMA fail-closed project preflight")
     sub = p.add_subparsers(dest="command", required=True)
     v = sub.add_parser("verify", help="verify required sources and hashes")
     v.set_defaults(func=cmd_verify)
+    c = sub.add_parser("check-receipt", help="require the newest receipt to match the current Git HEAD and milestone")
+    c.set_defaults(func=cmd_check_receipt)
     s = sub.add_parser("start", help="verify and create a durable work-session receipt")
     s.add_argument("--actor", required=True)
     s.add_argument("--purpose", required=True)

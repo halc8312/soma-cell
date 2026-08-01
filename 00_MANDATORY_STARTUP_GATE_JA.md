@@ -80,3 +80,13 @@ python3 scripts/soma_preflight.py start \
 6. 会話上の記憶・要約
 
 この規則自体を会話の記憶へ依存させないため、README、PROJECT_STATE、復元プロンプト、プリフライトスクリプト、Google Driveにも重複保存する。
+
+## ルールロックR2：古い証跡の使い回しを禁止
+
+プリフライト証跡は、単に一つ存在すればよいのではない。最新の`*_PREFLIGHT.json`が、**現在のGit HEAD**および`PROJECT_STATE.json`の**次マイルストーン**と一致しなければならない。
+
+```bash
+python3 scripts/soma_preflight.py check-receipt
+```
+
+Git pre-commitフックは`verify`と`check-receipt`の両方を実行する。したがって、一度コミットした後に次の変更へ進む場合は、その新しいHEADであらためて最新版を読み、プリフライトを作り直す。

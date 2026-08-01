@@ -23,3 +23,6 @@ GOV-003,governance,wrong acknowledgement and milestone fail closed,PASS,no valid
 GOV-004,governance,hash tamper detection,PASS,modified baseline rejected
 GOV-005,governance,durable preflight receipt,PASS,work_sessions receipt exists
 GOV-006,governance,Git pre-commit rule lock,PASS,hook present and executable
+GOV-007,governance,receipt freshness bound to current Git HEAD,PASS,stale receipt rejected
+GOV-008,governance,receipt milestone bound to PROJECT_STATE,PASS,wrong milestone rejected
+GOV-009,governance,clean worktree required at session start,PASS,dirty Git start rejected by design

@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0",
+  "session_id": "20260801T130912Z-SOMA_CELL_0_6_P0",
+  "started_utc": "2026-08-01T13:09:12Z",
+  "actor": "ChatGPT GPT-5.6 Pro",
+  "purpose": "Strengthen rule-lock freshness checks so each commit requires a receipt from the current HEAD",
+  "milestone": "SOMA-CELL 0.6-P0",
+  "acknowledgement": "READ_LATEST_SOURCES_AND_CONTRACTS",
+  "rule_id": "SOMA-RULELOCK-20260801",
+  "checkpoint_id": "SOMA-20260801-CELL05-TO-06P0-RULELOCK1",
+  "baseline": "SOMA-CELL 0.5.0",
+  "git_commit": "547c8321ae319a019a2f340c824a6020f1c35623",
+  "git_status_at_start": "",
+  "required_sources_read_and_hash_checked": {
+    "00_MANDATORY_STARTUP_GATE_JA.md": {
+      "sha256": "02eaa03f7e3df597e39fc35050943d93e6e5612cf47274fd641f311fa5a4d318",
+      "size": 3358
+    },
+    "MANDATORY_WORKFLOW.json": {
+      "sha256": "67b2ad842f8a3ad12696eb4d2062131a9b60665cbbbe8ea657827b20bbcfc088",
+      "size": 1181
+    },
+    "PROJECT_STATE.json": {
+      "sha256": "2f87c9734eaf624a9473a840bbfa2e580cd536a24f68aa981ff64d5cf03d68c7",
+      "size": 3903
+    },
+    "CURRENT_BASELINE.txt": {
+      "sha256": "7284b563fb7bc214b731a0e76bc77698b16dd6630620923e9f41326a913d60fe",
+      "size": 250
+    },
+    "docs/SOMA_CONTEXT_HANDOFF_JA.md": {
+      "sha256": "e94e570eba7df9112da1992fc911ccad20e4ede1b5c15b76fffb57044e721461",
+      "size": 10902
+    },
+    "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md": {
+      "sha256": "5949c869a39e6ce107b630746d697b8b9817bd8004bd7ae426d2be540cbac5d7",
+      "size": 10329
+    },
+    "src/baseline/SOMA_CELL_0_5_pythonista.py": {
+      "sha256": "5f37ac140e5a5e5cbf0e2f48597e3366ea3710a112f35940de35aae1e1931459",
+      "size": 78525
+    },
+    "results/SOMA_CELL_0_5_VALIDATION_RESULTS.txt": {
+      "sha256": "d23581fc498f828f41c67b205dd8e71a856dab3520f8ea2c6f6a2302188870c1",
+      "size": 4604
+    },
+    "results/SOMA_CELL_0_5_EXPERIMENT_REPORT.txt": {
+      "sha256": "e1ebafc41edee945d128503e5b73b56c8389bec203b3871b13eaf13f3d0b9dcc",
+      "size": 2057
+    },
+    "planning/ROADMAP_0_6_JA.md": {
+      "sha256": "b2997ca7c85303127d53fb9a937502751f1fed7ba1636b16d0fbdf9573ed9c7a",
+      "size": 1856
+    }
+  },
+  "declared_reviews": [
+    "latest PROJECT_STATE",
+    "current canonical source",
+    "context handoff",
+    "0.6 integration contract",
+    "baseline validation and experiment results",
+    "known failures and open risks",
+    "next milestone roadmap"
+  ],
+  "fail_closed": true
+}

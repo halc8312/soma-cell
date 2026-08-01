@@ -22,3 +22,11 @@
 - `.githooks/pre-commit`を追加し、実装変更にプリフライト証跡を要求。
 - `PROJECT_STATE.json`へ`workflow_guard`を追加。
 - READMEと復元手順へプリフライトを最優先として追記。
+
+## 2026-08-01 — Project Rule Lock R2
+
+- プリフライト証跡を現在のGit HEADへ結合。
+- `check-receipt`コマンドを追加。
+- pre-commitで`verify`と`check-receipt`を必須化。
+- 作業開始時にクリーンなGit worktreeを要求。
+- 古い証跡の使い回しを防止。

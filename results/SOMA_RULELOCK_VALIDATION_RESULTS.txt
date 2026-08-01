@@ -1,9 +1,11 @@
 SOMA Project Rule Lock Validation
-Passed: 6/6
+Passed: 8/8
 
 PASS | verify_clean_checkpoint | rc=0
 PASS | wrong_ack_fails_without_receipt | rc=2
 PASS | wrong_milestone_fails | rc=3
 PASS | hash_tamper_fails | rc=1
 PASS | valid_receipt_exists | rc=0
+PASS | current_head_receipt_passes | rc=0
+PASS | stale_or_wrong_receipt_fails | rc=1
 PASS | precommit_hook_present_executable | rc=0
