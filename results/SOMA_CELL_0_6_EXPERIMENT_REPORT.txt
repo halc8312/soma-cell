@@ -1,0 +1,32 @@
+SOMA-CELL 0.6 EXPERIMENT REPORT
+Build: SOMA-CELL 0.6.0
+
+Design:
+- 3 seeds x 6 independent formal-controller ablations in a stable moving-patch world.
+- 6 unseen/holdout stable-safety runs for false mechanism-change feedback.
+- 6 known-mechanism positive-control twins.
+- 3 automatic cue-reversal twins (full feedback vs feedback disabled).
+
+Stable safety:
+  max actionable change probability mean: 0.00285735
+  feedback events mean: 0
+  lease reductions mean: 0
+  state-only diagnostic probability may vary without opening the strong gate.
+
+Known-mechanism positive control:
+  margin AUC difference mean: +4.02210282e-05
+  positive margin pairs: 3/6
+  material uptake difference mean: +0.00151459508
+  positive uptake pairs: 5/6
+  This is a controlled verified-counterexample assay, not the natural discovery chain.
+
+Automatic cue-reversal chain:
+  margin AUC difference mean: +0
+  feedback events mean: 0
+  automatic audits/calibration can run even when no high-quality change-gated counterexample is produced.
+
+Interpretation:
+- Source separation prevented routine metabolic state variation from opening strong re-plasticity in the stable holdouts.
+- Correctly targeted material lease withdrawal can improve physical uptake after a known motor-mechanism failure.
+- The fully automatic audit -> counterexample -> feedback -> benefit chain was not established by this short three-seed reversal assay.
+- These are mechanism studies, not proof of life, consciousness, or universal adaptive benefit.

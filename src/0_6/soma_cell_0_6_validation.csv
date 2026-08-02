@@ -1,0 +1,23 @@
+test,pass,observed,criterion
+build_and_frozen_p2,PASS,"build=SOMA-CELL 0.6.0, schema=0.6-F2.0, frozen P2 sha=03cd333838f2bee0dde634e8d55ca2b2c7ed285c9104a52a26bcee4a07ce1693",deterministic criterion satisfied
+no_formal_cassette_exact_p2_lockstep,PASS,"101:exact, 202:exact, 303:exact",deterministic criterion satisfied
+unmetered_formal_controller_rejected,PASS,costless formal control fails closed,deterministic criterion satisfied
+material_gene_and_controller_development,PASS,"extra founder matter=0.03124, mature in 19 steps, gene fp=68681284460",deterministic criterion satisfied
+controller_activity_cost_is_paid_and_conservative,PASS,"ATP=4.3882667e-05, wear=8.976e-05, material delta=3.553e-15",deterministic criterion satisfied
+counterbalanced_audit_and_hard_event_retry,PASS,"effect=0.003, quality=0.62601, retries=1",deterministic criterion satisfied
+natural_audit_completes_and_costs,PASS,"audits=3, audit ATP=0.00024308289, calibration=3",deterministic criterion satisfied
+calibration_improves_heldout_mae,PASS,"heldout raw MAE=0.0025180645, calibrated MAE=2.6461136e-05",deterministic criterion satisfied
+source_separated_change_sentinel_blocks_routine_state_noise,PASS,"routine state max=0.8294, actionable stable=0.0000, mechanism change=0.9602",deterministic criterion satisfied
+sparse_ligand_outcome_reversal_is_environment_evidence,PASS,semantic channel 0.0000->0.7680; events=5,deterministic criterion satisfied
+reliable_audit_surprise_becomes_targeted_change_evidence,PASS,"low=0, high=0.8846, targeted probability=0.8788",deterministic criterion satisfied
+change_gated_feedback_protects_stable_tissue,PASS,"stable gate=0, changed gate=0.159473, maturity loss ratio=4.306e+10, lease loss=0.0734",deterministic criterion satisfied
+small_compiler_and_random_cost_match,PASS,"compiled channel=2, complexity=1, matched random complexity=1",deterministic criterion satisfied
+audit_freezes_fast_learning_state,PASS,14 learned arrays exact during active intervention,deterministic criterion satisfied
+evidence_expires_with_time,PASS,gate 0.947775->0.501318 after 10 half-lives,deterministic criterion satisfied
+controller_matter_routes_to_corpse,PASS,"controller matter=0.016230849, returned=0.1071184, corpse=4.391736",deterministic criterion satisfied
+material_hgt_activates_controller_without_learning_copy,PASS,HGT controller mature in 14 steps; no audit/calibration state copied,deterministic criterion satisfied
+no_hgt_mode_blocks_foreign_phenotype,PASS,foreign gene translated (activity 0.13959) but phenotype stayed blocked,deterministic criterion satisfied
+division_recycles_learning_and_retains_formal_gene,PASS,"copy steps=327, learned arrays recycled; material gene retained",deterministic criterion satisfied
+save_restore_mid_audit_exact,PASS,mid-audit save/restore exact for 120 steps,deterministic criterion satisfied
+common_disturbance_identical_twins_exact,PASS,identical treatment twins remain bit-exact under common tape,deterministic criterion satisfied
+finite_and_material_ledger,PASS,"3 seeds finite, max ledger residual=1.398e-05",deterministic criterion satisfied

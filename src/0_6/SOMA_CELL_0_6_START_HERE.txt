@@ -1,0 +1,54 @@
+SOMA-CELL 0.6.0 — START HERE
+============================
+
+この版は、SOMA-CELL 0.5の物質的自己生産・死体化学・環境DNAの上へ、
+8個の物質神経区画、局所可塑性、物質的因果監査、因果校正、
+変化源別ゲート、小型反証、神経遺伝子HGTを統合した正式0.6です。
+
+Pythonistaでの実行
+------------------
+1. ZIP内の全ファイルを同じ新規フォルダへ置く。
+2. SOMA_CELL_0_6_pythonista.py を実行する。
+3. 左上に SOMA-CELL 0.6.0 と表示されることを確認する。
+
+必要な基盤ファイル
+------------------
+SOMA_CELL_0_1_pythonista.py
+SOMA_CELL_0_2_pythonista.py
+SOMA_CELL_0_3_pythonista.py
+SOMA_CELL_0_4_pythonista.py
+SOMA_CELL_0_5_pythonista.py
+SOMA_CELL_0_6_P0_pythonista.py
+SOMA_CELL_0_6_P1_pythonista.py
+SOMA_CELL_0_6_P2_pythonista.py
+SOMA_CELL_0_6_pythonista.py
+
+操作
+----
+膜をタップ      : 局所穿孔
+空所をタップ    : 資源雲を投入
+画面上部をタップ: 一時停止／再開
+ダブルタップ    : 保存削除＋新規世界
+
+重要な判定
+----------
+* 形式・物質検証は22/22 PASS。P0/P1/P2回帰は62/62 PASS。
+* 安定holdout 6系列では、通常の代謝変動だけで強い再可塑化は発生しなかった。
+* 既知の正しい反証を与えた対照では、物質流入差が平均で正、5/6系列で正だった。
+* ただし短い自然な規則反転試験では、自動監査から反証・再可塑化・身体利益までの
+  全循環は成立しなかった。0.6.1での主要課題として残す。
+* 生命、意識、一般知能、オープンエンド進化を証明した版ではない。
+
+検証（CPython推奨）
+-------------------
+python3 SOMA_CELL_0_6_validation.py --fresh
+python3 SOMA_CELL_0_6_experiment.py --fresh 1
+
+Pythonistaでは重い全比較より、個別のrun_*関数と短時間Scene確認を推奨する。
+
+生成ファイル
+------------
+soma_cell_0_6.pkl
+soma_cell_0_6_longrun.csv
+soma_cell_0_6_report.txt
+soma_cell_0_6_sessions.csv

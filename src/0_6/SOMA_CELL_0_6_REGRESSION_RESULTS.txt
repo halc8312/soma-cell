@@ -1,0 +1,14 @@
+SOMA-CELL 0.6 REGRESSION RESULTS
+================================
+
+P0 ChemicalBodyPort validation : 22/22 PASS
+P1 one-material-neuron validation: 18/18 PASS
+P2 eight-cell-tissue validation : 22/22 PASS
+Formal 0.6 validation           : 22/22 PASS
+---------------------------------------------
+Total inherited + formal checks : 84/84 PASS
+
+P2の一括検証は環境内の長時間実行制約により20件を連続実行後、残り2件を
+新しいインタプリタで個別実行した。`cue_reversal_full_vs_equal_fixed_twin`と
+`finite_and_material_ledger_stress`はいずれもPASS。正式0.6は全22件を
+一テスト一インタプリタのfresh実行で集計した。

@@ -1,0 +1,25 @@
+{
+  "schema": "0.6-F2.0",
+  "build": "SOMA-CELL 0.6.0",
+  "parent_tissue_schema": "0.6-P2.2",
+  "body_port_schema": "0.6-P0.2",
+  "neural_cells": 8,
+  "causal_group_size": 2,
+  "physical_channels": 4,
+  "change_sources": ["state", "mechanism", "semantics", "genome"],
+  "max_falsification_commands": 2,
+  "formal_modes": [
+    "full", "no_audit", "no_calibration", "no_change_gate",
+    "no_feedback", "no_falsification", "no_hgt"
+  ],
+  "inheritance": {
+    "material_gene": true,
+    "translated_controller_required": true,
+    "learned_weights_free_copy": false,
+    "audit_evidence_free_copy": false,
+    "calibration_state_free_copy": false
+  },
+  "effectors_are_requests": true,
+  "privileged_labels_exposed": false,
+  "status": "frozen_pass_with_limits"
+}

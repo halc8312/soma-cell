@@ -1,0 +1,98 @@
+SOMA-CELL 0.6.0 MANIFEST
+========================
+
+Build: SOMA-CELL 0.6.0
+Formal schema: 0.6-F2.0
+Frozen P2 tissue schema: 0.6-P2.2
+Frozen P1 tissue schema: 0.6-P1.1
+Frozen P0 body port: 0.6-P0.2
+Date: 2026-08-02
+Status: engineering PASS / science PASS_WITH_LIMITS
+
+Purpose
+-------
+Materially paid causal auditing, calibration, source-separated change gating,
+small reversible falsification, temporary neural resource leases, neural corpse
+routing and material neural-gene HGT on the frozen P2 eight-cell tissue.
+
+Canonical source
+----------------
+SOMA_CELL_0_6_pythonista.py
+SHA-256: e8f70c67cee16fdc1e90397808783e26b2895552ca3ec26f62c2b137ada08c26
+
+Frozen parent source
+--------------------
+SOMA_CELL_0_6_P2_pythonista.py
+SHA-256: 03cd333838f2bee0dde634e8d55ca2b2c7ed285c9104a52a26bcee4a07ce1693
+
+Validation
+----------
+P0 regression: 22/22 PASS
+P1 regression: 18/18 PASS
+P2 regression: 22/22 PASS
+Formal 0.6 deterministic validation: 22/22 PASS
+Total inherited + formal checks: 84/84 PASS
+Engineering comparison: 33 jobs
+Save/restore: exact mid-audit and for 120 subsequent steps
+Maximum formal validation world material residual: 1.398e-05
+Pythonista Scene: implemented; iPhone device validation pending
+
+Measured results
+----------------
+Stable holdout safety, 6 seeds:
+  mean actionable change probability 0.00285735
+  feedback events 0
+  lease reductions 0
+
+Known-mechanism verified-counterexample twins, 6 seeds:
+  mean action-direction AUC difference +2.337833
+  mean material uptake difference +0.001514595
+  uptake positive 5/6
+  mean body-margin AUC difference +0.000040221
+  body-margin positive 3/6
+
+Automatic cue-reversal twins, 3 development seeds:
+  audits/calibration ran (mean 5.33)
+  high-quality change-gated feedback events 0
+  body-margin AUC difference 0
+
+Important negative / limited results
+------------------------------------
+* The fully automatic audit -> counterexample -> feedback -> body-benefit chain
+  was not established in the short natural reversal assay.
+* Correctly targeted lease withdrawal improved direction and mean uptake, but
+  consistent body-margin benefit was not established.
+* P2 local prediction lowers error but its net body value remains unresolved.
+* P2 recurrence has only a tiny measured paired effect and remains unresolved.
+* These are mechanism studies, not proof of life, consciousness, universal
+  adaptive benefit, or open-ended evolution.
+
+Included flat Pythonista dependencies
+-------------------------------------
+SOMA_CELL_0_1_pythonista.py
+SOMA_CELL_0_2_pythonista.py
+SOMA_CELL_0_3_pythonista.py
+SOMA_CELL_0_4_pythonista.py
+SOMA_CELL_0_5_pythonista.py
+SOMA_CELL_0_6_P0_pythonista.py
+SOMA_CELL_0_6_P1_pythonista.py
+SOMA_CELL_0_6_P2_pythonista.py
+SOMA_CELL_0_6_pythonista.py
+
+Formal support files
+--------------------
+SOMA_CELL_0_6_validation.py
+SOMA_CELL_0_6_experiment.py
+SOMA_CELL_0_6_report.py
+SOMA_CELL_0_6_START_HERE.txt
+SOMA_CELL_0_6_README_JA.md
+SOMA_CELL_0_6_FORMAL_CONTRACT.md
+SOMA_CELL_0_6_FORMAL_SCHEMA.json
+SOMA_CELL_0_6_VALIDATION_RESULTS.txt
+SOMA_CELL_0_6_REGRESSION_RESULTS.txt
+SOMA_CELL_0_6_EXPERIMENT_REPORT.txt
+soma_cell_0_6_validation.csv
+soma_cell_0_6_experiment_results.csv
+soma_cell_0_6_experiment_results.json
+soma_cell_0_6_experiment_summary.csv
+SHA256SUMS.txt
