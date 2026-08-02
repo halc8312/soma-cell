@@ -1,23 +1,19 @@
 # SOMA 必須スタートアップ・ゲート（最優先）
 
-**このファイルは、SOMAの実装・修正・評価を始める前に必ず読む。**
+**実装・修正・評価の前に必ず読む。会話記憶だけから開始しない。**
 
-会話上の記憶、直前の要約、推測だけで作業を開始してはならない。最新のプロジェクト状態、現在の基準ソース、マイルストーン固有契約、実測結果を実際に読み、SHA-256を確認し、作業証跡を作成してから編集する。
+## 失敗閉鎖
 
-## 失敗閉鎖ルール
+次のどれかが欠ける場合は作業を始めない。
 
-次のどれか一つでも満たせない場合、実装を開始しない。
-
-1. `PROJECT_STATE.json`、`CURRENT_BASELINE.txt`、継続ハンドオフ、0.6統合契約を読めない。
-2. `PROJECT_STATE.json`が指す基準ソース、身体ポート契約、神経組織契約、検証結果、実験レポートを読めない。
+1. `PROJECT_STATE.json`、`CURRENT_BASELINE.txt`、継続ハンドオフ、統合契約を読めない。
+2. 現在基準のソース、契約、スキーマ、検証、実験結果を読めない。
 3. SHA-256照合に失敗する。
-4. 現在のマイルストーンと作業目的が一致しない。
-5. 前版の既知の失敗・未解決事項を確認していない。
-6. `work_sessions/`へ当該作業の新鮮なプリフライト証跡を作れない。
+4. 次マイルストーンと目的が一致しない。
+5. 既知の負の結果・未達を確認していない。
+6. 現在Git HEADに結び付くプリフライト証跡を作れない。
 
-不足や矛盾がある場合は推測で補わず、Git、Continuity Vault、Google Driveから復元する。復元できなければ不足をユーザーへ明示して停止する。
-
-## 必須の読み順
+## 必須読み順 — 0.6.1開始時
 
 1. `00_MANDATORY_STARTUP_GATE_JA.md`
 2. `MANDATORY_WORKFLOW.json`
@@ -25,100 +21,59 @@
 4. `CURRENT_BASELINE.txt`
 5. `docs/SOMA_CONTEXT_HANDOFF_JA.md`
 6. `docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md`
-7. `docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md`
-8. `docs/SOMA_CELL_0_6_P1_TISSUE_CONTRACT.md`
-9. `docs/SOMA_CELL_0_6_P2_TISSUE_CONTRACT.md`
-10. `docs/SOMA_CELL_0_6_P2_TISSUE_SCHEMA.json`
-11. `src/0_6_p2/SOMA_CELL_0_6_P2_pythonista.py`
-12. P2検証結果・36試行レポート・P0/P1回帰結果
-13. `planning/ROADMAP_0_6_JA.md`
-14. 因果監査の移植元となるSOMA-2.1、SOMA-4.2の基準ソースと検証結果
+7. `docs/SOMA_CELL_0_6_FORMAL_CONTRACT.md`
+8. `docs/SOMA_CELL_0_6_FORMAL_SCHEMA.json`
+9. `src/0_6/SOMA_CELL_0_6_pythonista.py`
+10. 0.6検証・回帰・33試行レポート
+11. `planning/ROADMAP_0_6_JA.md`
+12. P2/P1/P0契約と基準ソース
+13. 移植元SOMA-2.1、SOMA-4.2
 
-## 実装開始前の機械的確認
+## 機械ゲート
 
 ```bash
 python3 scripts/soma_preflight.py verify
 python3 scripts/soma_preflight.py start \
-  --actor "<作業者名>" \
-  --purpose "<今回の目的>" \
-  --milestone "<PROJECT_STATEのnext_milestone名>" \
+  --actor "<作業者>" \
+  --purpose "<目的>" \
+  --milestone "<PROJECT_STATEのnext_milestone>" \
   --ack "READ_LATEST_SOURCES_AND_CONTRACTS"
 ```
 
-`start`が成功すると、現在のGit HEADと次マイルストーンへ結び付いた`work_sessions/*_PREFLIGHT.json`が生成される。証跡がない作業は正式なSOMA作業として扱わない。
+## 0.6.1の凍結条件
 
-## 正式SOMA-CELL 0.6追加ゲート
+- 0.6の物質的監査・校正・変化源分離・費用・死体/HGTを落とさない。
+- `state`変動だけで強い再可塑化を開かない。
+- 0.6の自動短期反転ではフィードバック0件だった事実を出発点にする。
+- 既知反証の身体余裕利益は3/6・微小であり、成功済みと扱わない。
+- 予測・再帰の正味価値は未確立。アブレーションを残す。
+- 診断行動にもATP・材料・身体危険を課す。
+- 自然な自動循環が費用込みツイン利益を示すまで0.6.1を完成扱いにしない。
 
-正式0.6へ入る前に、P2で確定した次の事実を凍結条件として確認する。
+## 禁止
 
-- P0身体ポート以外から身体へアクセスしない。
-- P2は8個のゲノム由来物質区画、20本の有限再帰、局所予測、三因子可塑性、保存的再編を持つ。
-- holdout全機構対固定8区画は6 seed中5 seedで正、平均累積余裕AUC差は+1.872678だった。
-- 開発seedは物理トラップ、手掛かり時間、運動スケールの調整に使ったためholdoutではない。
-- 局所予測は誤差を下げるが、正味身体価値は未証明である。
-- 再帰の平均paired効果は+0.016963と極小で、必要性は未証明である。
-- 可塑性は限定的な正の信号を示したが、holdout単独アブレーションは未実施である。
-- 正式0.6は予測・再帰を成功済み前提にせず、必ず`no prediction`と`no recurrence`を残す。
-- 因果監査は神経細胞群への信号・ATP流を可逆遮断して行い、位置・ATP・膜・DNAを直接変更しない。
-- ABBA/BAAB順序、偽対照、接触汚染分離、証拠品質、費用台帳を実装する。
-- 因果効果が校正され、監査・再可塑化の純利益が示されるまで正式0.6を完成扱いにしない。
+- 最新版確認なしの旧コードコピー。
+- reward/fitness/正解方向の再導入。
+- 神経出力による位置・ATP・膜・DNA直接変更。
+- 学習状態、神経物質、遺伝子の無料コピー。
+- 安定安全性や負の結果を隠した完成宣言。
+- 生命・意識・新規性の未検証断定。
 
-## 作業中の禁止事項
+## 完了時の必須更新
 
-- 旧コードを最新版確認なしでコピーする。
-- 会話の説明を基準ソースより優先する。
-- 0.5の物質台帳、死体化学、環境DNA、HGT、0.6-P0の身体ポート契約を黙って落とす。
-- P1/P2の負の結果を無視して、予測や再帰を有効と断定する。
-- 神経出力から位置、ATP、膜量、DNAを直接書き換える。
-- 無料の報酬、学習、神経物質、遺伝を追加する。
-- 検証前に「生命」「意識」「新規性」「適応利益」を断定する。
-
-## 作業完了時の必須更新
-
-1. `PROJECT_STATE.json`
-2. `PROJECT_STATUS_JA.md`
-3. `TEST_MATRIX.csv`
-4. `DECISION_LOG_JA.md`
-5. `CHANGELOG_JA.md`
-6. SHA-256とファイル台帳
-7. Gitコミットと版タグ
-8. Continuity Vault
-9. Google DriveのポータブルZIP、Git Bundle、進捗文書
+`PROJECT_STATE.json`、状態文書、テスト行列、判断ログ、変更履歴、SHA-256、Gitコミット・タグ、Continuity Vault、Google Driveアーカイブ。
 
 ## 権威順位
 
-1. 検証済み基準ソースと実測結果
-2. P2神経組織契約、P1神経組織契約、P0身体ポート契約
-3. 本スタートアップ・ゲート
-4. 0.6再統合契約
-5. `PROJECT_STATE.json`
-6. 継続ハンドオフ
-7. 会話上の記憶・要約
+1. 検証済み0.6基準ソースと実測結果
+2. 0.6正式契約・スキーマ
+3. P2/P1/P0凍結契約
+4. 本ゲートと統合契約
+5. PROJECT_STATE、継続ハンドオフ
+6. 会話記憶
 
-## ルールロックR2
+## Rule Lock R2
 
-プリフライト証跡は現在のGit HEADと`PROJECT_STATE.json`の次マイルストーンに一致しなければならない。
+証跡は現在HEADと次マイルストーンに一致する必要がある。pre-commitは`verify`と`check-receipt`を実行し、コミット後は旧証跡が失効する。
 
-```bash
-python3 scripts/soma_preflight.py check-receipt
-```
-
-pre-commitフックは`verify`と`check-receipt`を実行する。一度コミットすると旧証跡は意図的に失効するため、次の作業前に新HEADで最新版を読み直し、新証跡を発行する。
-
-## マイルストーン遷移ゲート
-
-完了版の昇格には、クリーンな完了コミット上で一回限りの遷移証跡を作る。
-
-```bash
-python3 scripts/soma_preflight.py transition \
-  --actor "<作業者名>" \
-  --purpose "<遷移理由>" \
-  --from-milestone "<完了マイルストーン>" \
-  --to-milestone "<次マイルストーン>" \
-  --baseline-after "<昇格後基準名>" \
-  --evidence "<検証結果>" \
-  --evidence "<配布アーカイブ>" \
-  --ack "COMPLETE_CURRENT_MILESTONE_AND_ADVANCE"
-```
-
-遷移コミット後は証跡が失効し、P2実装前にあらためてP2プリフライトが必要である。
+マイルストーン昇格にはクリーンな完了コミット上で`transition`証跡を発行する。

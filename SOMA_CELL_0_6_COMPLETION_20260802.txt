@@ -1,0 +1,28 @@
+SOMA-CELL 0.6.0 COMPLETION RECORD
+=================================
+Date: 2026-08-02
+Build: SOMA-CELL 0.6.0
+Formal schema: 0.6-F2.0
+Status: engineering PASS / scientific PASS_WITH_LIMITS
+Parent: SOMA-CELL 0.6-P2.0
+Next milestone: SOMA-CELL 0.6.1 (not started)
+
+Validation
+----------
+Formal: 22/22 PASS
+P0/P1/P2 regressions: 62/62 PASS
+Total: 84/84 PASS
+Comparison trials: 33
+
+Measured interpretation
+-----------------------
+Stable holdout: false feedback 0 in 6 seeds.
+Verified counterexample: direction improved; mean uptake positive, 5/6 pairs.
+Body-margin benefit: very small, 3/6 pairs positive.
+Automatic short reversal: audits and calibration ran, but feedback 0 and paired benefit 0.
+
+Frozen limitation
+-----------------
+The autonomous natural audit -> counterexample -> feedback -> body-benefit chain is not established.
+Prediction and recurrence net value remain unresolved.
+Pythonista exact device performance remains pending.

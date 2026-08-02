@@ -2,7 +2,7 @@
   "schema_version": 1,
   "created_utc": "2026-08-02T00:00:00Z",
   "project": "SOMA artificial life / SOMA-CELL material lineage",
-  "current_target": "SOMA-CELL 0.6-P2.0 frozen; formal SOMA-CELL 0.6 planned not started",
+  "current_target": "SOMA-CELL 0.6.1 autonomous causal-loop closure",
   "future_integration_target": "SOMA-CELL 0.6",
   "canonical_policy": "canonical/ and the integration contract override conversational recollection. SOMA 5-7 without R are superseded.",
   "stages": [
@@ -161,7 +161,7 @@
       "id": "SOMA-CELL-0.6-P2",
       "file": "src/0_6_p2/SOMA_CELL_0_6_P2_pythonista.py",
       "role": "eight gene-built material neural compartments with finite recurrence, local prediction and three-factor plasticity",
-      "status": "current",
+      "status": "frozen-parent-foundation",
       "sha256": "03cd333838f2bee0dde634e8d55ca2b2c7ed285c9104a52a26bcee4a07ce1693",
       "bytes": 116329,
       "validation": "22/22 PASS; P1 regression 18/18; P0 regression 22/22",
@@ -169,16 +169,29 @@
       "tissue_schema": "0.6-P2.2",
       "holdout_result": "full vs fixed 5/6 positive; mean AUC +1.872678",
       "negative_results": "prediction net value unresolved; recurrence effect tiny"
+    },
+    {
+      "id": "SOMA-CELL-0.6",
+      "file": "src/0_6/SOMA_CELL_0_6_pythonista.py",
+      "role": "material causal audit, calibration, source-separated change gate, bounded falsification and neural corpse/HGT",
+      "status": "current-pass-with-limits",
+      "sha256": "e8f70c67cee16fdc1e90397808783e26b2895552ca3ec26f62c2b137ada08c26",
+      "bytes": 102950,
+      "validation": "22/22 PASS; inherited + formal total 84/84",
+      "comparison_trials": 33,
+      "formal_schema": "0.6-F2.0",
+      "stable_safety": "0 false feedback events in 6 holdout seeds",
+      "limited_result": "verified counterexample uptake 5/6 positive; margin only 3/6; automatic natural chain not established"
     }
   ],
   "roadmap": [
     {
-      "id": "SOMA-CELL-0.6",
-      "goal": "material ABBA/BAAB audit, causal calibration, change-gated replasticity, small falsification and neural corpse/HGT"
+      "id": "SOMA-CELL-0.6.1",
+      "goal": "close the autonomous natural audit-to-counterexample-to-benefit chain while preserving stable safety"
     },
     {
       "id": "SOMA-CELL-0.6.x",
-      "goal": "only after formal 0.6 benefit: internal models, concepts, culture and ecology"
+      "goal": "only after autonomous causal-loop evidence: internal models, concepts, culture and ecology"
     }
   ],
   "required_docs": [
@@ -189,6 +202,6 @@
     "docs/SOMA_LINEAGE_INDEX_JA.md",
     "SHA256SUMS.txt"
   ],
-  "current_baseline": "SOMA-CELL-0.6-P2.0",
-  "next_milestone": "SOMA-CELL-0.6"
+  "current_baseline": "SOMA-CELL-0.6.0",
+  "next_milestone": "SOMA-CELL-0.6.1"
 }

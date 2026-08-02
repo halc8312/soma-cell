@@ -1,22 +1,22 @@
 {
-  "schema_version": "1.5",
+  "schema_version": "1.6",
   "rule_id": "SOMA-RULELOCK-20260801-R2",
   "mandatory": true,
   "fail_closed": true,
   "core_rule": "No implementation, modification, evaluation, or milestone transition may begin until the latest project state, canonical source, handoff, integration contract, milestone-specific frozen contracts, measured results, and roadmap have been actually read and their hashes verified.",
   "required_read_order": [
     "00_MANDATORY_STARTUP_GATE_JA.md",
+    "MANDATORY_WORKFLOW.json",
     "PROJECT_STATE.json",
     "CURRENT_BASELINE.txt",
     "docs/SOMA_CONTEXT_HANDOFF_JA.md",
     "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md",
-    "docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md",
-    "docs/SOMA_CELL_0_6_P1_TISSUE_CONTRACT.md",
-    "docs/SOMA_CELL_0_6_P2_TISSUE_CONTRACT.md",
-    "docs/SOMA_CELL_0_6_P2_TISSUE_SCHEMA.json",
-    "src/0_6_p2/SOMA_CELL_0_6_P2_pythonista.py",
-    "results/SOMA_CELL_0_6_P2_VALIDATION_RESULTS.txt",
-    "results/SOMA_CELL_0_6_P2_EXPERIMENT_REPORT.txt",
+    "docs/SOMA_CELL_0_6_FORMAL_CONTRACT.md",
+    "docs/SOMA_CELL_0_6_FORMAL_SCHEMA.json",
+    "src/0_6/SOMA_CELL_0_6_pythonista.py",
+    "results/SOMA_CELL_0_6_VALIDATION_RESULTS.txt",
+    "results/SOMA_CELL_0_6_REGRESSION_RESULTS.txt",
+    "results/SOMA_CELL_0_6_EXPERIMENT_REPORT.txt",
     "planning/ROADMAP_0_6_JA.md",
     "canonical/SOMA_2_1_pythonista.py",
     "canonical/SOMA_4_2_pythonista.py"
@@ -52,22 +52,21 @@
     "rule": "P2 may extend P1 only through the frozen P0 body port and P1 material-tissue contract. It must preserve the equal-material control logic and keep no-recurrence, no-prediction, no-plasticity, and no-tissue ablations.",
     "known_negative_result": "The P1 predictor learned its local time series but did not establish positive net behavioural value; P2 must not assume prediction is beneficial."
   },
-  "formal_06_specific_guard": {
+  "formal_06_1_specific_guard": {
     "mandatory": true,
-    "p2_tissue_contract": "docs/SOMA_CELL_0_6_P2_TISSUE_CONTRACT.md",
-    "rule": "Formal 0.6 must add causal intervention through reversible material/signal gating only. It must preserve P2 holdout evidence and keep no-prediction and no-recurrence controls because their value is unresolved.",
+    "formal_contract": "docs/SOMA_CELL_0_6_FORMAL_CONTRACT.md",
+    "rule": "0.6.1 may change audit scheduling, evidence acquisition and targeted counterexample selection, but must preserve all material costs, source-separated safety, P0/P1/P2/formal regressions, and no-prediction/no-recurrence controls.",
     "known_negative_results": [
-      "prediction lowers local error but has no established positive net body value",
-      "recurrence has only a tiny mean paired effect in the P2 task",
-      "development seed results are calibrated and not holdout"
+      "automatic short reversal chain produced no feedback events",
+      "verified-counterexample body-margin benefit was small and only 3/6 positive",
+      "prediction and recurrence net value remain unresolved"
     ],
     "required_stages": [
-      "material ABBA/BAAB stop audit",
-      "sham matching and evidence quality",
-      "causal calibration",
-      "change-gated replasticity",
-      "small falsification compiler",
-      "neural corpse/HGT checks"
+      "evidence sufficiency diagnosis",
+      "active but bounded diagnostic exposure",
+      "automatic high-quality counterexample",
+      "common-disturbance no-feedback twin",
+      "stable false-reopening safety"
     ]
   }
 }

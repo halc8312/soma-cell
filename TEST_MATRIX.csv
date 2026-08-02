@@ -6,9 +6,9 @@ P1-003,0.6-P1,stable environment cost,PASS,3/3 survive; neuron mean margin 0.633
 P2-001,0.6-P2,eight-cell material tissue development,PASS,eight gene-built paid compartments mature; founder matter explicit
 P2-002,0.6-P2,finite sparse recurrence,PASS,20 directed finite-signal edges; no-recurrence messages zero
 P2-003,0.6-P2,local prediction learning,PASS,prediction RMS 0.015574 to 0.006452
-F06-001,0.6,material ABBA/BAAB causal audit,PLANNED,reversible signal/ATP gating with sham and evidence quality
-F06-002,0.6,causal calibration,PLANNED,predicted and measured intervention effects above chance
-F06-003,0.6,change-gated replasticity net benefit,PLANNED,positive net body benefit in at least one changing environment without stable-world chronic loss
+F06-001,0.6,material ABBA/BAAB causal audit,PASS,"reversible signal/ATP gating, sham matching, event retry and evidence quality"
+F06-002,0.6,causal calibration,PASS,heldout MAE 0.002518 to 0.0000265 in deterministic assay
+F06-003,0.6,change-gated replasticity net benefit,LIMITED,"stable false feedback 0/6; verified counterexample uptake 5/6 positive, margin only 3/6"
 GOV-001,governance,mandatory startup gate files,PASS,gate and machine-readable rule present
 GOV-002,governance,preflight clean checkpoint verification,PASS,required sources and hashes verified
 GOV-003,governance,wrong acknowledgement and milestone fail closed,PASS,no valid receipt issued
@@ -47,8 +47,8 @@ P1-013,0.6-P1,full deterministic validation,PASS,18/18
 P1-014,0.6-P1,engineering comparison,PASS,3 seeds x 8 conditions = 24 trials
 P1-015,0.6-P1,R1 flat release SHA256 verification,PASS,all listed files verify; checksum does not self-reference
 P1-016,0.6-P1,R1 flat release validation,PASS,18/18 from freshly extracted flat archive
-F06-004,0.6,small falsification compiler,PLANNED,bounded physical interventions with explicit ATP/material/safety cost
-F06-005,0.6,neural corpse and HGT,PLANNED,real eDNA transfer; translation/development required before neural function
+F06-004,0.6,small falsification compiler,PASS,maximum two paid reversible commands with matched random cost control
+F06-005,0.6,neural corpse and HGT,PASS,real eDNA transfer; translation/development required; no learning state copied
 P2-004,0.6-P2,predictor net body value,FAIL,full vs no-prediction paired AUC mean -0.174359; not established
 P2-005,0.6-P2,three-factor plasticity sign,PASS,same eligibility changes opposite directions for physical improvement/deterioration
 P2-006,0.6-P2,developmental warm-up,PASS,34-second warm-up blocks long-term plasticity while baseline/prediction form
@@ -64,3 +64,9 @@ P2-015,0.6-P2,full deterministic validation,PASS,22/22
 P2-016,0.6-P2,P0/P1 regression,PASS,P0 22/22 and P1 18/18
 P2-017,0.6-P2,engineering comparison,PASS,36 jobs with separate calibrated development and six holdout seeds
 P2-018,0.6-P2,flat Pythonista release validation,PASS,"P2 22/22, P0 22/22, P1 18/18 from packaged flat release"
+F06-006,0.6,source-separated stable safety,PASS,"6 holdout seeds, mean actionable probability 0.002857, feedback and lease reduction zero"
+F06-007,0.6,automatic natural audit-to-benefit chain,FAIL,short reversal assay ran audits/calibration but produced zero feedback and zero paired benefit
+F06-008,0.6,formal deterministic validation,PASS,22/22; inherited+formal total 84/84
+F061-001,0.6.1,evidence insufficiency diagnosis,PLANNED,distinguish no change from insufficient causal observations
+F061-002,0.6.1,autonomous diagnostic exposure,PLANNED,bounded ATP/risk intervention yields high-quality counterexample
+F061-003,0.6.1,automatic common-tape net benefit,PLANNED,holdout full beats no-feedback without stable false reopening

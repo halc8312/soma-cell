@@ -1,34 +1,19 @@
-添付またはGoogle Drive上の最新SOMAプロジェクトチェックポイントを正本として再開してください。
+添付した最新SOMAプロジェクトチェックポイントを正本として続行してください。
 
-最初に実装してはいけません。次の順で実際に読み込んでください。
+必ず最初に次を読むこと。
 
-1. `00_MANDATORY_STARTUP_GATE_JA.md`
-2. `MANDATORY_WORKFLOW.json`
-3. `PROJECT_STATE.json`
-4. `CURRENT_BASELINE.txt`
-5. `docs/SOMA_CONTEXT_HANDOFF_JA.md`
-6. `docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md`
-7. `docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md`
-8. `docs/SOMA_CELL_0_6_P1_TISSUE_CONTRACT.md`
-9. `docs/SOMA_CELL_0_6_P1_TISSUE_SCHEMA.json`
-10. `src/0_6_p1/SOMA_CELL_0_6_P1_pythonista.py`
-11. P1検証結果・P1実験レポート
-12. `planning/ROADMAP_0_6_JA.md`
-13. P2で移植する旧SOMA-1／4.2の基準ソース
+1. 00_MANDATORY_STARTUP_GATE_JA.md
+2. MANDATORY_WORKFLOW.json
+3. PROJECT_STATE.json
+4. CURRENT_BASELINE.txt
+5. docs/SOMA_CONTEXT_HANDOFF_JA.md
+6. docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md
+7. docs/SOMA_CELL_0_6_FORMAL_CONTRACT.md
+8. docs/SOMA_CELL_0_6_FORMAL_SCHEMA.json
+9. src/0_6/SOMA_CELL_0_6_pythonista.py
+10. 0.6の検証・回帰・実験結果
+11. planning/ROADMAP_0_6_JA.md
 
-P1の重要な負の結果も確認してください。局所予測器は予測誤差を下げましたが、予測なし条件より身体利益を上げたとは示されていません。P2では予測なしを必須アブレーションとして維持します。
-
-その後、SHA-256を確認し、次を成功させて作業開始証跡を作ってください。
-
-```bash
-python3 scripts/soma_preflight.py verify
-python3 scripts/soma_preflight.py start \
-  --actor "ChatGPT" \
-  --purpose "SOMA-CELL 0.6-P2の具体的作業" \
-  --milestone "SOMA-CELL 0.6-P2" \
-  --ack "READ_LATEST_SOURCES_AND_CONTRACTS"
-```
-
-プリフライトが失敗した場合、推測で続行せず、Git、Continuity Vault、Google Driveから復元するか、不足ファイルをユーザーへ報告してください。
-
-会話内容とソースが矛盾する場合は、検証済みP1基準ソース、P1組織契約、P0身体ポート契約、必須ゲート、0.6統合契約、`PROJECT_STATE.json`の順で優先してください。
+現在の凍結基準はSOMA-CELL 0.6.0、次はSOMA-CELL 0.6.1です。
+0.6では自然な短期規則反転の自動フィードバックが0件だったため、自動因果循環を成功済みとして扱わないでください。
+最新版のSHA-256を確認し、新しいGit HEADでRule Lockプリフライト証跡を発行してから実装してください。
