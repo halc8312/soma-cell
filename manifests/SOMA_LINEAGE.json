@@ -130,7 +130,7 @@
       "id": "SOMA-CELL-0.5",
       "file": "canonical/SOMA_CELL_0_5_pythonista.py",
       "role": "corpse chemistry, environmental DNA, material horizontal heredity and mobile-element ecology",
-      "status": "current",
+      "status": "frozen-parent-foundation",
       "sha256": "5f37ac140e5a5e5cbf0e2f48597e3366ea3710a112f35940de35aae1e1931459",
       "bytes": 78525
     },
@@ -174,7 +174,7 @@
       "id": "SOMA-CELL-0.6",
       "file": "src/0_6/SOMA_CELL_0_6_pythonista.py",
       "role": "material causal audit, calibration, source-separated change gate, bounded falsification and neural corpse/HGT",
-      "status": "current-pass-with-limits",
+      "status": "frozen-parent-foundation",
       "sha256": "e8f70c67cee16fdc1e90397808783e26b2895552ca3ec26f62c2b137ada08c26",
       "bytes": 102950,
       "validation": "22/22 PASS; inherited + formal total 84/84",
@@ -187,7 +187,7 @@
       "id": "SOMA-CELL-0.6.1",
       "file": "src/0_6_1/SOMA_CELL_0_6_1_pythonista.py",
       "role": "evidence sufficiency, paid actuator diagnosis, capped neural escrow and revocable quiescent conservation lease",
-      "status": "current-pass-with-limits",
+      "status": "frozen-parent-foundation",
       "sha256": "784dc26d5cc26154b810f32749945abbf7bb1513b9f4bd7ccb476e6fd3f30b8e",
       "bytes": 169277,
       "validation": "43/43 PASS; inherited 84/84; total 127/127",
@@ -196,16 +196,35 @@
       "implementation_schema": "0.6.1-D1.4",
       "preregistered_result": "stable false lease 0/20; actuator fault confirmed/lease/positive margin AUC 12/12; mean AUC +0.0294916",
       "limited_results": "native short-horizon uptake difference zero; active semantic diagnosis, prediction and recurrence net value unresolved"
+    },
+    {
+      "id": "SOMA-CELL-0.6.2",
+      "file": "src/0_6_2/SOMA_CELL_0_6_2_pythonista.py",
+      "role": "explicit metabolic audit of prediction, recurrence, plasticity, active diagnosis and neural tissue size with conservative retirement",
+      "status": "current-negative-result-with-limits",
+      "sha256": "f3f358aec31a31d082d9617cc7476bf96bae33fbc5c4e4968bd8f3de99ef8ae9",
+      "bytes": 30386,
+      "validation": "24/24 PASS; inherited 127/127; total 151/151",
+      "comparison_trials": 94,
+      "schema": "0.6.2-M1.1",
+      "audit_selection": "no_tissue",
+      "minimal_neural_research_profile": "efficient2",
+      "negative_result": "all tested added neural profiles lost to no_tissue in the preregistered short cue-reversal metabolic audit",
+      "module_decisions": "prediction retained research; recurrence dormant; active semantic diagnosis dormant"
     }
   ],
   "roadmap": [
     {
-      "id": "SOMA-CELL-0.6.2",
-      "goal": "metabolically audit and minimise prediction, recurrence, tissue size and diagnosis modules; retain only cost-positive mechanisms"
+      "id": "SOMA-CELL-0.6.3",
+      "goal": "demand-gated neurogenesis: paid transient 2-to-4-compartment tissue only when expected information value can repay development, maintenance and reabsorption cost"
     },
     {
-      "id": "SOMA-CELL-0.6.x",
-      "goal": "only after minimal cost-positive neural architecture: internal models, concepts, culture and ecology"
+      "id": "SOMA-CELL-0.6.4",
+      "goal": "only after 0.6.3 passes: evolve neurogenesis thresholds, tissue size, duration, prediction and plasticity rules across generations"
+    },
+    {
+      "id": "SOMA-CELL-0.7+",
+      "goal": "only after cost-positive adaptive neurogenesis: shared chemical ecology, internal models, concepts and material culture"
     }
   ],
   "required_docs": [
@@ -216,6 +235,6 @@
     "docs/SOMA_LINEAGE_INDEX_JA.md",
     "SHA256SUMS.txt"
   ],
-  "current_baseline": "SOMA-CELL-0.6.1",
-  "next_milestone": "SOMA-CELL-0.6.2"
+  "current_baseline": "SOMA-CELL-0.6.2",
+  "next_milestone": "SOMA-CELL-0.6.3"
 }

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.7",
+  "schema_version": "1.8",
   "rule_id": "SOMA-RULELOCK-20260801-R2",
   "mandatory": true,
   "fail_closed": true,
@@ -11,17 +11,16 @@
     "CURRENT_BASELINE.txt",
     "docs/SOMA_CONTEXT_HANDOFF_JA.md",
     "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md",
-    "docs/SOMA_CELL_0_6_1_FORMAL_CONTRACT.md",
-    "docs/SOMA_CELL_0_6_1_FORMAL_SCHEMA.json",
-    "src/0_6_1/SOMA_CELL_0_6_1_pythonista.py",
-    "results/SOMA_CELL_0_6_1_VALIDATION_RESULTS.txt",
-    "results/SOMA_CELL_0_6_1_REGRESSION_RESULTS.txt",
-    "results/SOMA_CELL_0_6_1_R2_PREREGISTRATION.json",
-    "results/SOMA_CELL_0_6_1_R2_HOLDOUT_REPORT.txt",
-    "results/SOMA_CELL_0_6_1_EXPERIMENT_REPORT.txt",
+    "docs/SOMA_CELL_0_6_2_FORMAL_CONTRACT.md",
+    "docs/SOMA_CELL_0_6_2_FORMAL_SCHEMA.json",
+    "src/0_6_2/SOMA_CELL_0_6_2_pythonista.py",
+    "results/SOMA_CELL_0_6_2_VALIDATION_RESULTS.txt",
+    "results/SOMA_CELL_0_6_2_REGRESSION_RESULTS.txt",
+    "results/SOMA_CELL_0_6_2_EXPERIMENT_REPORT.txt",
+    "results/SOMA_CELL_0_6_2_R4_RELEASE_RECORD.json",
     "planning/ROADMAP_0_6_JA.md",
-    "docs/SOMA_CELL_0_6_FORMAL_CONTRACT.md",
-    "src/0_6/SOMA_CELL_0_6_pythonista.py",
+    "docs/SOMA_CELL_0_6_1_FORMAL_CONTRACT.md",
+    "src/0_6_1/SOMA_CELL_0_6_1_pythonista.py",
     "canonical/SOMA_2_1_pythonista.py",
     "canonical/SOMA_4_2_pythonista.py"
   ],
@@ -48,30 +47,32 @@
     "single_commit_only": true,
     "fresh_preflight_required_after_commit": true
   },
-  "formal_06_2_specific_guard": {
+  "formal_06_3_specific_guard": {
     "mandatory": true,
-    "parent_contract": "docs/SOMA_CELL_0_6_1_FORMAL_CONTRACT.md",
-    "rule": "0.6.2 is a metabolic audit and minimisation milestone. It may compare, gate, shrink or remove prediction, recurrence, tissue compartments and diagnostic machinery, but it must preserve 0.6.1 material accounting, stable safety, actuator-fault conservation and all inherited controls.",
+    "parent_contract": "docs/SOMA_CELL_0_6_2_FORMAL_CONTRACT.md",
+    "rule": "0.6.3 must not restore a permanently maintained neural organ after 0.6.2 selected no_tissue in the tested task. It may create paid transient tissue only when a physical information-deficit or mechanism-change signal predicts enough value to repay development, maintenance and reabsorption cost.",
     "known_negative_results": [
-      "active semantic diagnosis net value unresolved",
-      "prediction net body value unresolved",
-      "recurrence necessity unresolved",
-      "native short-horizon uptake difference zero"
+      "no_tissue outperformed all tested added neural profiles in screening and confirmation",
+      "recurrence failed the preregistered retain gate",
+      "prediction positive net value remains unproved",
+      "active semantic diagnosis net value remains unresolved"
     ],
     "required_stages": [
-      "cost ledger per neural module",
-      "common-disturbance ablations",
-      "tissue-size sweep",
-      "preregistered stable and nonstationary holdouts",
-      "module retirement or dormancy when net value is non-positive"
+      "material sentinel or non-neural evidence gate",
+      "paid 2-to-4 compartment development",
+      "maintenance lease with measured information value",
+      "conservative reabsorption when value is non-positive",
+      "common-disturbance comparisons against always-neural always-no-neural and cost-matched random development",
+      "stable and multiple nonstationary preregistered holdouts"
     ],
     "required_controls": [
+      "always no_tissue",
+      "always efficient2",
+      "always efficient4",
+      "random cost-matched neurogenesis",
       "no prediction",
-      "no recurrence",
-      "4/2/1 neural compartments",
-      "no tissue",
-      "0.6.1 full baseline",
-      "no conservation feedback"
+      "no plasticity",
+      "no reabsorption"
     ]
   }
 }
