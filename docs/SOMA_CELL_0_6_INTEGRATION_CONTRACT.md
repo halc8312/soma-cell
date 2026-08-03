@@ -196,20 +196,23 @@ SOMA-1の4通貨は抽象値のまま持ち込まない。
 
 ## 14. ソースの優先順位
 
-1. `src/0_6_p2/SOMA_CELL_0_6_P2_pythonista.py`
-2. `docs/SOMA_CELL_0_6_P2_TISSUE_CONTRACT.md`
-3. `docs/SOMA_CELL_0_6_P2_TISSUE_SCHEMA.json`
-4. `src/0_6_p1/SOMA_CELL_0_6_P1_pythonista.py`
-5. `docs/SOMA_CELL_0_6_P1_TISSUE_CONTRACT.md`
-6. `src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py`
-7. `docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md`
-8. `canonical/SOMA_CELL_0_5_pythonista.py`
-9. 本契約
-10. `docs/SOMA_CONTEXT_HANDOFF_JA.md`
-11. `canonical/SOMA_2_1_pythonista.py`
-12. `canonical/SOMA_4_2_pythonista.py`
-13. `canonical/SOMA_1_pythonista.py`
-14. `canonical/SOMA_5R_pythonista.py`以降
+1. `src/0_6_1/SOMA_CELL_0_6_1_pythonista.py`
+2. `docs/SOMA_CELL_0_6_1_FORMAL_CONTRACT.md`
+3. `docs/SOMA_CELL_0_6_1_FORMAL_SCHEMA.json`
+4. `results/SOMA_CELL_0_6_1_R2_PREREGISTRATION.json`
+5. `results/SOMA_CELL_0_6_1_R2_HOLDOUT_REPORT.txt`
+6. `src/0_6/SOMA_CELL_0_6_pythonista.py`
+7. `docs/SOMA_CELL_0_6_FORMAL_CONTRACT.md`
+8. `src/0_6_p2/SOMA_CELL_0_6_P2_pythonista.py`
+9. `docs/SOMA_CELL_0_6_P2_TISSUE_CONTRACT.md`
+10. `src/0_6_p1/SOMA_CELL_0_6_P1_pythonista.py`
+11. `docs/SOMA_CELL_0_6_P1_TISSUE_CONTRACT.md`
+12. `src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py`
+13. `docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md`
+14. `src/baseline/SOMA_CELL_0_5_pythonista.py`
+15. 本契約
+16. `docs/SOMA_CONTEXT_HANDOFF_JA.md`
+17. Continuity Vault内の旧SOMA基準ソース
 
 会話中の口頭説明とソースが矛盾した場合、検証済み基準ソースと本契約を優先する。
 
