@@ -1,0 +1,90 @@
+SOMA-CELL 0.6.1 EXPERIMENT REPORT
+=================================
+Build: SOMA-CELL 0.6.1
+Implementation schema: 0.6.1-D1.4
+Release contract: 0.6.1-R2.0
+
+1. Development history
+----------------------
+R1 preregistration (D1.0) failed. Stable safety passed, but the actuator probe never confirmed
+fault because a raw energy-debt threshold was incompatible with the P2 physical debt scale.
+Those seeds were retired and the failure record remains in the project.
+
+During D1.3, a neural ATP escrow accounting error was found. Small neural repair requests could
+leave unused ATP trapped inside neural attachments. Conservation feedback then appeared more
+beneficial because it returned this excess ATP. Reusable neural/controller ATP was capped and
+assembly ATP was separated from the reusable buffer. The positive-control effect was remeasured
+after this correction.
+
+D1.4 changed target selection from absolute motor magnitude to positive work aligned with the
+tissue's own current motor command. This avoids suppressing antagonistic cells whose removal may
+increase futile drive. No resource coordinate or correct direction is used.
+
+2. R2 preregistration
+---------------------
+Source SHA-256:
+784dc26d5cc26154b810f32749945abbf7bb1513b9f4bd7ccb476e6fd3f30b8e
+
+Unseen seeds were sealed before execution:
+- Stable body-centred bath: 12001-12020 (20)
+- Actuator-fault body-centred twins: 13001-13012 (12)
+- Native-spatial exploratory twins: 14001-14006 (6)
+
+Primary assay:
+Existing particles were repositioned without changing amount or kind. Fuel/mineral were kept
+isotropic around each twin's own body while a neutral directional ALT lobe maintained motor
+demand. Treatment and control shared the same pre-fault state, physical fault, local bath and
+common disturbance; only conservation feedback differed. This isolates physiological motor-cost
+conservation from spatial foraging geometry.
+
+3. Primary results
+------------------
+Stable safety:
+- finite: 20/20
+- false mechanism conservation lease: 0/20
+- false conservation feedback: 0/20
+
+Actuator fault:
+- fault confirmed: 12/12
+- conservation lease issued: 12/12
+- positive cost-inclusive body-margin AUC: 12/12
+- mean body-margin AUC difference: +0.0294915978
+- mean motor ATP difference: -0.0008036444
+- mean dissipated-energy difference: -0.0007746925
+- mean uptake difference: 0 (expected in isotropic body-centred nutrient bath)
+- maximum absolute material-ledger residual: 3.1254e-06
+
+All preregistered primary acceptance checks passed.
+
+4. Exploratory native-spatial result
+------------------------------------
+- leases issued: 6/6
+- positive body-margin AUC: 6/6
+- mean AUC difference: +0.0245880843
+- short-horizon uptake difference: 0
+
+This exploratory result is directionally consistent with the primary assay, but it does not show
+that the lease improves native spatial foraging or material acquisition.
+
+5. Interpretation
+-----------------
+Supported, narrowly:
+After a physically applied actuator loss, the tissue can detect command-to-force loss through
+paid repeated probes and autonomously issue a temporary lease that quiesces positively aligned
+motor neurons. In the preregistered controlled assay this reduced motor ATP and dissipation and
+improved cost-inclusive autopoietic-margin AUC in all 12 pairs.
+
+Not established:
+- universal or long-term adaptive benefit
+- improved native spatial uptake
+- net value of active molecular semantic diagnosis
+- net value of the local predictor
+- necessity of recurrence
+- multigenerational fixation of diagnostic genes
+- life, consciousness or open-ended evolution
+
+6. Validation
+-------------
+- SOMA-CELL 0.6.1 candidate validation: 43/43 PASS
+- P0/P1/P2/formal-0.6 inherited regressions: 84/84 PASS
+- total: 127/127 PASS

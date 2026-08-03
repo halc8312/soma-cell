@@ -1,0 +1,44 @@
+SOMA-CELL 0.6.1 R2 PREREGISTERED HOLDOUT REPORT
+Build: SOMA-CELL 0.6.1 | Schema: 0.6.1-D1.4
+Primary assay: body-centred microfluidic actuator-fault conservation
+Native spatial assay: exploratory only
+
+{
+  "acceptance": {
+    "all_jobs_completed": true,
+    "fault_confirmed": true,
+    "fault_dissipation_reduced": true,
+    "fault_issued": true,
+    "fault_mean_auc": true,
+    "fault_motor_cost_reduced": true,
+    "fault_positive_fraction": true,
+    "material_residual": true,
+    "stable_false_feedback": true,
+    "stable_false_lease": true,
+    "stable_finite": true,
+    "unissued_identical": true
+  },
+  "all_acceptance_pass": true,
+  "build": "SOMA-CELL 0.6.1",
+  "errors": 0,
+  "fault_confirmed": 12,
+  "fault_issued": 12,
+  "fault_mean_auc_issued": 0.029491597788737927,
+  "fault_mean_dissipated_diff": -0.0007746925201821119,
+  "fault_mean_motor_atp_diff": -0.0008036444407543732,
+  "fault_mean_uptake_diff": 0.0,
+  "fault_n": 12,
+  "fault_positive_auc": 12,
+  "fault_unissued_max_abs_auc": 0.0,
+  "max_abs_material_residual": 3.1253227668059935e-06,
+  "native_issued": 6,
+  "native_mean_auc": 0.024588084335046705,
+  "native_n": 6,
+  "native_positive_auc": 6,
+  "schema": "0.6.1-D1.4",
+  "source_sha256": "784dc26d5cc26154b810f32749945abbf7bb1513b9f4bd7ccb476e6fd3f30b8e",
+  "stable_false_feedback": 0,
+  "stable_false_lease": 0,
+  "stable_n": 20,
+  "stable_nonfinite": 0
+}

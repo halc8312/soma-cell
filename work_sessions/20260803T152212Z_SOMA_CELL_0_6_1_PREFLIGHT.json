@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.1",
+  "receipt_type": "preflight",
+  "session_id": "20260803T152212Z_SOMA_CELL_0_6_1_PREFLIGHT",
+  "started_utc": "2026-08-03T15:22:12Z",
+  "actor": "ChatGPT GPT-5.6 Pro",
+  "purpose": "SOMA-CELL 0.6.1 R2: integrate D1.3 escrow/quiescence correction, design true body-centred material-conservative bath, preregister and run stable/fault holdouts, full regressions, packaging and continuity update",
+  "acknowledgement": "READ_LATEST_SOURCES_AND_CONTRACTS",
+  "rule_id": "SOMA-RULELOCK-20260801-R2",
+  "checkpoint_id": "SOMA-20260802-CELL06-FORMAL-BASELINE-TO-061-RULELOCK2",
+  "baseline": "SOMA-CELL 0.6.0",
+  "canonical_source": "src/0_6/SOMA_CELL_0_6_pythonista.py",
+  "git_commit": "877b798a91a6b9d4d63ede3f48071ef638ea09a2",
+  "git_status_at_start": "",
+  "required_sources_read_and_hash_checked": {
+    "00_MANDATORY_STARTUP_GATE_JA.md": {
+      "sha256": "2c454d137a47c2f9d34219f095187231442bcfee0bbe5a77b6590c23479df874",
+      "size": 3130
+    },
+    "MANDATORY_WORKFLOW.json": {
+      "sha256": "a930e192797e744db1b85f992f33f1adfecc6d5d175e6abca180e85eace1fc19",
+      "size": 3675
+    },
+    "PROJECT_STATE.json": {
+      "sha256": "ea4d951f34ce45353a9170c47b2db72e47e35bcd67aea06a524baac993d72221",
+      "size": 9136
+    },
+    "CURRENT_BASELINE.txt": {
+      "sha256": "5e20a9f1930d855595ff858982b55fe783034ea2f7b6736a3420fc65d143420b",
+      "size": 557
+    },
+    "docs/SOMA_CONTEXT_HANDOFF_JA.md": {
+      "sha256": "93c0ead821a3e6eedf850f0afb2b9c25968f0443f8605d905f8200f6a0fe9fbc",
+      "size": 16664
+    },
+    "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md": {
+      "sha256": "2ffebcc17ff35c8c7d399531573309829dc07e0856c38420c0b5ee6b83b9b116",
+      "size": 15620
+    },
+    "planning/ROADMAP_0_6_JA.md": {
+      "sha256": "a38c707b095bf74a4d31b9128ba2057fd0c6572dba43f7a4e0d65d74b925f23d",
+      "size": 1499
+    },
+    "docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md": {
+      "sha256": "fb2403fece7be7bbe2235823d171a8d93c040fe802483fa381dff0a4bc870e83",
+      "size": 2565
+    },
+    "docs/SOMA_CELL_0_6_P2_TISSUE_CONTRACT.md": {
+      "sha256": "535474fe661a7b4e924a10d95d901908029a75b63e5f737aebe25b5190c32e77",
+      "size": 6749
+    },
+    "docs/SOMA_CELL_0_6_FORMAL_CONTRACT.md": {
+      "sha256": "e947d058d60a710c2dd889277fb1cec1063d9aa8fc3e06bcb8464d86ef1e5936",
+      "size": 3410
+    },
+    "docs/SOMA_CELL_0_6_FORMAL_SCHEMA.json": {
+      "sha256": "e18b839e969d540bb134dd74da402132b3ebd90c14e21f1c0e0d6eace719856d",
+      "size": 763
+    },
+    "src/0_6/SOMA_CELL_0_6_pythonista.py": {
+      "sha256": "e8f70c67cee16fdc1e90397808783e26b2895552ca3ec26f62c2b137ada08c26",
+      "size": 102950
+    },
+    "results/SOMA_CELL_0_6_VALIDATION_RESULTS.txt": {
+      "sha256": "71c10a9ae6be04583d17cbbfc44c432fbf3b2175be9a231bde6cbdcaea329024",
+      "size": 3763
+    },
+    "results/SOMA_CELL_0_6_REGRESSION_RESULTS.txt": {
+      "sha256": "93b49e2cc50aeb00376821ec374be0fa2df2cd8a7e5cf3b794589dd329afed67",
+      "size": 682
+    },
+    "results/SOMA_CELL_0_6_EXPERIMENT_REPORT.txt": {
+      "sha256": "927949ab1d06f6c248b9c15def8c27e72b08c9e4b3de4f818aeb371d30b746f1",
+      "size": 1497
+    }
+  },
+  "declared_reviews": [
+    "latest PROJECT_STATE",
+    "current canonical source",
+    "context handoff",
+    "0.6 integration contract",
+    "current baseline validation and experiment results",
+    "known failures and open risks",
+    "next milestone roadmap"
+  ],
+  "fail_closed": true,
+  "milestone": "SOMA-CELL 0.6.1"
+}

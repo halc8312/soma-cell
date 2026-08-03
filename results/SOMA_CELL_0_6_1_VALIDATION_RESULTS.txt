@@ -1,0 +1,135 @@
+SOMA-CELL 0.6.1 VALIDATION RESULTS
+Build: SOMA-CELL 0.6.1
+Schema: 0.6.1-D1.4
+Execution: fresh interpreter per test
+Passed: 43/43
+
+[PASS] build_and_frozen_formal06
+  observed: build=SOMA-CELL 0.6.1, schema=0.6.1-D1.4, frozen 0.6 sha=e8f70c67cee16fdc1e90397808783e26b2895552ca3ec26f62c2b137ada08c26
+  criterion: deterministic criterion satisfied
+[PASS] diagnosis_off_exact_formal06_lockstep
+  observed: 101:exact, 202:exact, 303:exact
+  criterion: deterministic criterion satisfied
+[PASS] costless_diagnosis_rejected
+  observed: unmetered diagnosis fails closed
+  criterion: deterministic criterion satisfied
+[PASS] evidence_ledger_distinguishes_unknown_from_stable
+  observed: unknown -> supported_stable, obs=0.720
+  criterion: deterministic criterion satisfied
+[PASS] evidence_decay_is_time_step_invariant
+  observed: 20s decay invariant, max delta=1.388e-16
+  criterion: deterministic criterion satisfied
+[PASS] channel_resolved_semantic_reversal
+  observed: channel2=1.000, others=[0.0, 0.0, 0.0]
+  criterion: deterministic criterion satisfied
+[PASS] diagnosis_start_safety_defers_crisis
+  observed: unsafe deferred=1, starts=0
+  criterion: deterministic criterion satisfied
+[PASS] active_direction_comes_from_physical_gradient
+  observed: direction=[1.0, -0.0]
+  criterion: deterministic criterion satisfied
+[PASS] random_control_is_command_cost_matched
+  observed: motor norm=0.0500, transporter norm=0.1400
+  criterion: deterministic criterion satisfied
+[PASS] diagnostic_pause_removes_locomotion
+  observed: phase=observe, reason=targeted-audit-started
+  criterion: deterministic criterion satisfied
+[PASS] diagnostic_exposure_metrics_and_material_cost
+  observed: starts=1, ATP=6.12415e-05, exposure=0.0534522
+  criterion: deterministic criterion satisfied
+[PASS] evidence_event_cost_is_paid
+  observed: ATP delta=6.600e-07, wear delta=1.305e-06
+  criterion: deterministic criterion satisfied
+[PASS] targeted_compiler_uses_current_neural_claim
+  observed: raw=0.007, semantic baseline=-0.5
+  criterion: deterministic criterion satisfied
+[PASS] targeted_audit_waits_for_activation_delay
+  observed: audit started after 0.210s visibility
+  criterion: deterministic criterion satisfied
+[PASS] controlled_targeted_audit_can_trigger_material_feedback
+  observed: status=contradicted, quality=0.578, replicated feedback=0.2654
+  criterion: deterministic criterion satisfied
+[PASS] state_noise_does_not_open_strong_feedback
+  observed: state=0.99, actionable gate=0.0, feedback=0
+  criterion: deterministic criterion satisfied
+[PASS] semantic_outcome_quality_uses_physical_dose
+  observed: observation weight=0.754
+  criterion: deterministic criterion satisfied
+[PASS] save_restore_mid_diagnosis_exact
+  observed: 80 steps exact while diagnostic state persisted
+  criterion: deterministic criterion satisfied
+[PASS] save_restore_mid_targeted_audit_exact
+  observed: 80 steps exact from active audit state
+  criterion: deterministic criterion satisfied
+[PASS] common_disturbance_identical_twins_exact
+  observed: 120 common-tape steps exact
+  criterion: deterministic criterion satisfied
+[PASS] no_free_061_learning_state_in_division
+  observed: daughter 0.6.1 ledger fresh; inherited material-division regression PASS
+  criterion: deterministic criterion satisfied
+[PASS] controller_corpse_and_hgt_regressions
+  observed: corpse=controller matter=0.016230849, returned=0.1071184, corpse=4.391736, HGT=HGT controller mature in 14 steps; no audit/calibration state copied
+  criterion: deterministic criterion satisfied
+[PASS] stable_short_run_has_no_false_feedback
+  observed: 421:0, 422:0, 423:0
+  criterion: deterministic criterion satisfied
+[PASS] finite_and_material_ledger
+  observed: 3 seeds finite, max ledger residual=1.193e-05
+  criterion: deterministic criterion satisfied
+[PASS] low_quality_feedback_is_blocked
+  observed: quality 0.03 blocked; leases unchanged
+  criterion: deterministic criterion satisfied
+[PASS] replicated_feedback_gate_accepts_clean_result
+  observed: clean result accepted; inconsistent sign reset
+  criterion: deterministic criterion satisfied
+[PASS] mechanism_gain_requires_paid_probe_replication
+  observed: gain ratio=0.466, replicated probe weight=1.200
+  criterion: deterministic criterion satisfied
+[PASS] mechanism_fault_converts_existing_matter
+  observed: matter residual=0.000e+00, damaged delta=1.680e-04
+  criterion: deterministic criterion satisfied
+[PASS] mechanism_assist_rejects_unexecuted_trial
+  observed: unpaid/null ON rejected
+  criterion: deterministic criterion satisfied
+[PASS] mechanism_assist_accepts_paid_replicated_trial
+  observed: lease=0.620, quality=0.999, uptake effect=1.200e-03
+  criterion: deterministic criterion satisfied
+[PASS] save_restore_mid_mechanism_probe_exact
+  observed: 30 steps exact from active paid probe
+  criterion: deterministic criterion satisfied
+[PASS] neural_escrow_sanitation_prevents_development_overfunding
+  observed: max neural ATP escrow=0.0019996, total=0.0159967
+  criterion: deterministic criterion satisfied
+[PASS] quiescent_budget_proxy_allows_assembly_atp_but_caps_reusable_buffer
+  observed: post-repair ATP buffer=0.0020000
+  criterion: deterministic criterion satisfied
+[PASS] mechanism_conservation_requires_confirmed_failure
+  observed: unconfirmed motor gain cannot issue conservation lease
+  criterion: deterministic criterion satisfied
+[PASS] mechanism_quiescence_returns_real_escrow_and_suppresses_activity
+  observed: returned ATP=0.00219917, hidden 1.4000->0.4940
+  criterion: deterministic criterion satisfied
+[PASS] mechanism_conservation_issues_targeted_revocable_lease
+  observed: targeted cells=[6, 7], scale=0.450, revoked on recovery
+  criterion: deterministic criterion satisfied
+[PASS] mechanism_conservation_targets_positive_motor_work
+  observed: aligned targets=[0, 1], align=[0.62211, 0.56484]
+  criterion: deterministic criterion satisfied
+[PASS] mechanism_conservation_pre_step_is_temporary_not_mutating_lease
+  observed: base resource lease restored exactly after gated pre_step
+  criterion: deterministic criterion satisfied
+[PASS] save_restore_mid_mechanism_conservation_exact
+  observed: 18 steps exact from active conservation lease
+  criterion: deterministic criterion satisfied
+[PASS] stable_short_run_has_no_false_conservation
+  observed: 437:0, 438:0, 439:0
+  criterion: deterministic criterion satisfied
+[PASS] mechanism_safety_uses_joint_crisis_not_raw_energy_debt
+  observed: viable high energy-debt allowed; joint crisis and structural failure blocked
+  criterion: deterministic criterion satisfied
+[PASS] default_probe_schedule_supports_paid_replication_before_joint_crisis
+  observed: two high-quality paid probes confirm within 1.33s schedule
+  criterion: deterministic criterion satisfied
+[PASS] stable_gain_does_not_confirm_fault
+  observed: stable gain ratio=1.001, confirmed=False
+  criterion: deterministic criterion satisfied

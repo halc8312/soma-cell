@@ -1,0 +1,146 @@
+{
+  "acceptance": {
+    "fault_max_mean_dissipated_diff": -1e-06,
+    "fault_max_mean_motor_atp_diff": -1e-06,
+    "fault_min_confirmed": 10,
+    "fault_min_issued": 10,
+    "fault_min_mean_auc": 0.01,
+    "fault_positive_auc_fraction": 0.8,
+    "max_abs_material_residual": 2e-05,
+    "stable_max_false_feedback": 0,
+    "stable_max_false_lease": 0,
+    "unissued_max_abs_auc": 1e-12
+  },
+  "analysis_rule": "All primary checks must pass. Exploratory native results are reported irrespective of sign and are not used to alter the primary decision.",
+  "baseline": "SOMA-CELL 0.6.0",
+  "candidate_build": "SOMA-CELL 0.6.1",
+  "candidate_schema": "0.6.1-D1.4",
+  "exploratory_assay": {
+    "name": "native spatial forward-patch fault twin",
+    "role": "exploratory; cannot rescue primary failure"
+  },
+  "frozen_hashes": {
+    "development_harness": "3d94b305daea1fe06cbe10502102d7229c91dc309e5b829714ab84cc1117b4f4",
+    "holdout_harness": "3c4045c58e814a1b3eb5c831b517ddd5a4c772d3709440fb57c27664837120ac",
+    "model_source": "784dc26d5cc26154b810f32749945abbf7bb1513b9f4bd7ccb476e6fd3f30b8e",
+    "validation": "36ca38ca21bea88c0376e3f42895752d37044bb97fb93c84488c9ac7a7b3cbdb"
+  },
+  "known_limitations": [
+    "body-centred bath is an external controlled assay and does not establish native spatial benefit",
+    "prediction and recurrence net value remain unresolved",
+    "semantic active diagnosis remains experimental and is not the primary R2 claim",
+    "passing this holdout does not prove life, consciousness, open-ended evolution, or universal adaptive benefit"
+  ],
+  "no_tuning_after_seal": true,
+  "preregistration_id": "SOMA-CELL-0.6.1-R2-20260803",
+  "previously_seen_seeds": {
+    "development": [
+      6101,
+      6102,
+      6103,
+      6104,
+      6105,
+      6106,
+      6201,
+      6202,
+      6203
+    ],
+    "failed_R1": [
+      8201,
+      8202,
+      8203,
+      8204,
+      8205,
+      8206,
+      8207,
+      8208,
+      8209,
+      8210,
+      8211,
+      8212,
+      8213,
+      8214,
+      8215,
+      8216,
+      8217,
+      8218,
+      8219,
+      8220,
+      9201,
+      9202,
+      9203,
+      9204,
+      9205,
+      9206,
+      9207,
+      9208,
+      9209,
+      9210,
+      9211,
+      9212
+    ]
+  },
+  "primary_assay": {
+    "control": "same state, fault, bath, and common disturbance; conservation feedback disabled",
+    "matter_rule": "existing particles are repositioned only; no material amount or kind is created or deleted",
+    "name": "body-centred microfluidic actuator-fault conservation twin",
+    "primary_endpoint": "cost-inclusive autopoietic-margin AUC difference among issued leases",
+    "scope": "controlled positive-control for physiology, not native spatial foraging generalisation",
+    "secondary_endpoints": [
+      "motor ATP difference",
+      "dissipated energy difference",
+      "material uptake difference",
+      "ledger residual"
+    ],
+    "treatment": "mechanism probes and conservation feedback enabled"
+  },
+  "primary_question": "After a physically applied actuator loss, can paid replicated mechanism diagnosis autonomously issue an aligned, revocable neural quiescence lease that improves cost-inclusive autopoietic-margin AUC without false issuance in stable worlds?",
+  "schema_version": "1.0",
+  "sealed_utc": "2026-08-03T15:42:23Z",
+  "seeds": {
+    "fault": [
+      13001,
+      13002,
+      13003,
+      13004,
+      13005,
+      13006,
+      13007,
+      13008,
+      13009,
+      13010,
+      13011,
+      13012
+    ],
+    "native_exploratory": [
+      14001,
+      14002,
+      14003,
+      14004,
+      14005,
+      14006
+    ],
+    "stable": [
+      12001,
+      12002,
+      12003,
+      12004,
+      12005,
+      12006,
+      12007,
+      12008,
+      12009,
+      12010,
+      12011,
+      12012,
+      12013,
+      12014,
+      12015,
+      12016,
+      12017,
+      12018,
+      12019,
+      12020
+    ]
+  }
+}

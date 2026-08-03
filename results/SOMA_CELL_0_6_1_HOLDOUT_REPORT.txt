@@ -1,0 +1,32 @@
+SOMA-CELL 0.6.1 PREREGISTERED HOLDOUT REPORT
+Build: SOMA-CELL 0.6.1
+Schema: 0.6.1-D1.0
+
+{
+  "acceptance": {
+    "fault_confirmed_or_issued_n": false,
+    "fault_mean_auc_positive": false,
+    "fault_positive_fraction": false,
+    "material_residual": true,
+    "stable_false_lease": true,
+    "stable_finite": true,
+    "unissued_identical": true
+  },
+  "all_acceptance_pass": false,
+  "build": "SOMA-CELL 0.6.1",
+  "fault_confirmed_n": 0,
+  "fault_issued_n": 0,
+  "fault_max_abs_residual": 2.7172913146245037e-06,
+  "fault_mean_auc_diff": 0.0,
+  "fault_mean_auc_diff_issued": 0.0,
+  "fault_mean_uptake_diff": 0.0,
+  "fault_n": 12,
+  "fault_positive_auc_fraction": 0.0,
+  "fault_positive_auc_n": 0,
+  "fault_unissued_max_abs_auc_diff": 0.0,
+  "schema": "0.6.1-D1.0",
+  "stable_false_lease_total": 0,
+  "stable_max_abs_residual": 2.8710566404299698e-06,
+  "stable_n": 20,
+  "stable_nonfinite_total": 0
+}

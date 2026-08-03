@@ -1,0 +1,44 @@
+test,pass,observed,criterion
+build_and_frozen_formal06,PASS,"build=SOMA-CELL 0.6.1, schema=0.6.1-D1.4, frozen 0.6 sha=e8f70c67cee16fdc1e90397808783e26b2895552ca3ec26f62c2b137ada08c26",deterministic criterion satisfied
+diagnosis_off_exact_formal06_lockstep,PASS,"101:exact, 202:exact, 303:exact",deterministic criterion satisfied
+costless_diagnosis_rejected,PASS,unmetered diagnosis fails closed,deterministic criterion satisfied
+evidence_ledger_distinguishes_unknown_from_stable,PASS,"unknown -> supported_stable, obs=0.720",deterministic criterion satisfied
+evidence_decay_is_time_step_invariant,PASS,"20s decay invariant, max delta=1.388e-16",deterministic criterion satisfied
+channel_resolved_semantic_reversal,PASS,"channel2=1.000, others=[0.0, 0.0, 0.0]",deterministic criterion satisfied
+diagnosis_start_safety_defers_crisis,PASS,"unsafe deferred=1, starts=0",deterministic criterion satisfied
+active_direction_comes_from_physical_gradient,PASS,"direction=[1.0, -0.0]",deterministic criterion satisfied
+random_control_is_command_cost_matched,PASS,"motor norm=0.0500, transporter norm=0.1400",deterministic criterion satisfied
+diagnostic_pause_removes_locomotion,PASS,"phase=observe, reason=targeted-audit-started",deterministic criterion satisfied
+diagnostic_exposure_metrics_and_material_cost,PASS,"starts=1, ATP=6.12415e-05, exposure=0.0534522",deterministic criterion satisfied
+evidence_event_cost_is_paid,PASS,"ATP delta=6.600e-07, wear delta=1.305e-06",deterministic criterion satisfied
+targeted_compiler_uses_current_neural_claim,PASS,"raw=0.007, semantic baseline=-0.5",deterministic criterion satisfied
+targeted_audit_waits_for_activation_delay,PASS,audit started after 0.210s visibility,deterministic criterion satisfied
+controlled_targeted_audit_can_trigger_material_feedback,PASS,"status=contradicted, quality=0.578, replicated feedback=0.2654",deterministic criterion satisfied
+state_noise_does_not_open_strong_feedback,PASS,"state=0.99, actionable gate=0.0, feedback=0",deterministic criterion satisfied
+semantic_outcome_quality_uses_physical_dose,PASS,observation weight=0.754,deterministic criterion satisfied
+save_restore_mid_diagnosis_exact,PASS,80 steps exact while diagnostic state persisted,deterministic criterion satisfied
+save_restore_mid_targeted_audit_exact,PASS,80 steps exact from active audit state,deterministic criterion satisfied
+common_disturbance_identical_twins_exact,PASS,120 common-tape steps exact,deterministic criterion satisfied
+no_free_061_learning_state_in_division,PASS,daughter 0.6.1 ledger fresh; inherited material-division regression PASS,deterministic criterion satisfied
+controller_corpse_and_hgt_regressions,PASS,"corpse=controller matter=0.016230849, returned=0.1071184, corpse=4.391736, HGT=HGT controller mature in 14 steps; no audit/calibration state copied",deterministic criterion satisfied
+stable_short_run_has_no_false_feedback,PASS,"421:0, 422:0, 423:0",deterministic criterion satisfied
+finite_and_material_ledger,PASS,"3 seeds finite, max ledger residual=1.193e-05",deterministic criterion satisfied
+low_quality_feedback_is_blocked,PASS,quality 0.03 blocked; leases unchanged,deterministic criterion satisfied
+replicated_feedback_gate_accepts_clean_result,PASS,clean result accepted; inconsistent sign reset,deterministic criterion satisfied
+mechanism_gain_requires_paid_probe_replication,PASS,"gain ratio=0.466, replicated probe weight=1.200",deterministic criterion satisfied
+mechanism_fault_converts_existing_matter,PASS,"matter residual=0.000e+00, damaged delta=1.680e-04",deterministic criterion satisfied
+mechanism_assist_rejects_unexecuted_trial,PASS,unpaid/null ON rejected,deterministic criterion satisfied
+mechanism_assist_accepts_paid_replicated_trial,PASS,"lease=0.620, quality=0.999, uptake effect=1.200e-03",deterministic criterion satisfied
+save_restore_mid_mechanism_probe_exact,PASS,30 steps exact from active paid probe,deterministic criterion satisfied
+neural_escrow_sanitation_prevents_development_overfunding,PASS,"max neural ATP escrow=0.0019996, total=0.0159967",deterministic criterion satisfied
+quiescent_budget_proxy_allows_assembly_atp_but_caps_reusable_buffer,PASS,post-repair ATP buffer=0.0020000,deterministic criterion satisfied
+mechanism_conservation_requires_confirmed_failure,PASS,unconfirmed motor gain cannot issue conservation lease,deterministic criterion satisfied
+mechanism_quiescence_returns_real_escrow_and_suppresses_activity,PASS,"returned ATP=0.00219917, hidden 1.4000->0.4940",deterministic criterion satisfied
+mechanism_conservation_issues_targeted_revocable_lease,PASS,"targeted cells=[6, 7], scale=0.450, revoked on recovery",deterministic criterion satisfied
+mechanism_conservation_targets_positive_motor_work,PASS,"aligned targets=[0, 1], align=[0.62211, 0.56484]",deterministic criterion satisfied
+mechanism_conservation_pre_step_is_temporary_not_mutating_lease,PASS,base resource lease restored exactly after gated pre_step,deterministic criterion satisfied
+save_restore_mid_mechanism_conservation_exact,PASS,18 steps exact from active conservation lease,deterministic criterion satisfied
+stable_short_run_has_no_false_conservation,PASS,"437:0, 438:0, 439:0",deterministic criterion satisfied
+mechanism_safety_uses_joint_crisis_not_raw_energy_debt,PASS,viable high energy-debt allowed; joint crisis and structural failure blocked,deterministic criterion satisfied
+default_probe_schedule_supports_paid_replication_before_joint_crisis,PASS,two high-quality paid probes confirm within 1.33s schedule,deterministic criterion satisfied
+stable_gain_does_not_confirm_fault,PASS,"stable gain ratio=1.001, confirmed=False",deterministic criterion satisfied

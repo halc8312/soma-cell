@@ -1,0 +1,30 @@
+SOMA-CELL 0.6.1 PREREGISTERED HOLDOUT FAILURE RECORD
+=====================================================
+Date: 2026-08-03
+Candidate schema: 0.6.1-D1.0
+Stable seeds: 8201-8220
+Mechanism-fault seeds: 9201-9212
+
+Result:
+- Stable false conservation leases: 0/20 (safety PASS)
+- Stable finite runs: 20/20
+- Mechanism fault physically applied: 12/12
+- Mechanism failure confirmed: 0/12
+- Conservation lease issued: 0/12
+- Treatment/control AUC difference: exactly 0 in all 12 pairs
+- Max material residual: 2.872e-06
+
+Acceptance gate: FAIL.
+
+Root-cause diagnosis after unblinding:
+- Ordinary command-to-force observations correctly registered an approximately 75% gain loss.
+- The active probe did not start because the generic mechanism safety test required energy debt <0.88.
+- In the P2 physical debt coordinate, viable cells normally have energy debt near 0.993; the threshold was incompatible with the substrate scale.
+- The existing formal 0.6 safety logic already treats crisis as a joint energy/process collapse rather than raw energy debt alone.
+- Even after allowing a viable probe, the 3.0s probe cooldown made two paid replications unlikely before process debt reached crisis.
+
+Decision:
+- Do not promote the D1.0 candidate.
+- Preserve the failed preregistered results.
+- Replace raw energy thresholding with a joint crisis gate and shorten only the replicated probe cooldown.
+- Use development seeds for this repair, then preregister a completely new holdout set.

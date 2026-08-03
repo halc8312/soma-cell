@@ -1,0 +1,11 @@
+Canonical evidence: 43/43 candidate, 84/84 inherited, R2 preregistered gate PASS
+build_and_frozen_formal06: PASS
+costless_diagnosis_rejected: PASS
+evidence_ledger_distinguishes_unknown_from_stable: PASS
+mechanism_gain_requires_paid_probe_replication: PASS
+neural_escrow_sanitation_prevents_development_overfunding: PASS
+mechanism_quiescence_returns_real_escrow_and_suppresses_activity: PASS
+mechanism_conservation_targets_positive_motor_work: PASS
+save_restore_mid_mechanism_conservation_exact: PASS
+IMPORT PASS
+R2 SUMMARY PASS

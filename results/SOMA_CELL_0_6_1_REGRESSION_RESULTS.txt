@@ -1,0 +1,93 @@
+SOMA-CELL 0.6.1 INHERITED REGRESSION RESULTS
+
+p0: 22/22 PASS
+p1: 18/18 PASS
+p2: 22/22 PASS
+formal: 22/22 PASS
+
+TOTAL: 84/84 PASS
+
+[PASS] p0/build_and_frozen_baseline
+[PASS] p0/unattached_exact_lockstep
+[PASS] p0/null_attachment_physical_lockstep
+[PASS] p0/sensor_readonly_rng_neutral_no_privileged_labels
+[PASS] p0/port_surface_hides_mutable_body_and_attachment_state
+[PASS] p0/sensor_schema_physical_shapes
+[PASS] p0/port_disabled_fails_closed
+[PASS] p0/invalid_budget_requests_fail_closed
+[PASS] p0/budget_capped_reserves_and_nonnegative
+[PASS] p0/budget_transfer_and_return_conserve_material
+[PASS] p0/multiple_tissues_share_finite_body_budget
+[PASS] p0/material_commit_is_paid_conservative_and_cannot_mint
+[PASS] p0/forbidden_effector_rewrites_fail_closed
+[PASS] p0/motor_effector_is_paid_bounded_and_indirect
+[PASS] p0/transporter_polarity_conserves_channel_material
+[PASS] p0/repair_and_quiescence_are_paid_physical_requests
+[PASS] p0/dead_tissue_return_is_conservative
+[PASS] p0/host_death_routes_tissue_into_spatial_corpse
+[PASS] p0/division_recycles_tissue_without_free_inheritance
+[PASS] p0/pure_05_state_migrates_without_physical_change
+[PASS] p0/save_restore_exact_with_attachment_state
+[PASS] p0/logger_noninterfering_and_budget_stress_finite
+[PASS] p1/build_and_frozen_p0
+[PASS] p1/no_cassette_exact_p0_lockstep
+[PASS] p1/costless_tissue_is_rejected
+[PASS] p1/cassette_is_material_and_required
+[PASS] p1/gene_driven_tissue_development
+[PASS] p1/equal_material_dummy_before_action_divergence
+[PASS] p1/physical_gradient_controls_neuron_direction
+[PASS] p1/dummy_direction_is_sensor_independent
+[PASS] p1/equal_magnitude_action_has_near_equal_paid_cost
+[PASS] p1/local_predictor_reduces_replay_error
+[PASS] p1/no_effector_has_no_neural_motor_flux
+[PASS] p1/activity_wear_turnover_is_conservative
+[PASS] p1/host_death_routes_neural_matter_to_corpse
+[PASS] p1/division_recycles_state_and_gene_remains_material
+[PASS] p1/save_restore_exact
+[PASS] p1/logger_is_noninterfering
+[PASS] p1/moving_patch_information_value_vs_equal_dummy
+[PASS] p1/finite_and_material_ledger_stress
+[PASS] p2/build_and_frozen_p1
+[PASS] p2/no_cassette_exact_p1_lockstep
+[PASS] p2/unmetered_and_assisted_tissue_rejected
+[PASS] p2/cassette_is_material_and_required
+[PASS] p2/gene_driven_eight_cell_development
+[PASS] p2/full_and_fixed_share_initial_material_targets
+[PASS] p2/physical_gradient_controls_tissue_direction
+[PASS] p2/recurrence_gate_and_finite_messages
+[PASS] p2/local_predictor_reduces_error
+[PASS] p2/developmental_warmup_blocks_plasticity
+[PASS] p2/three_factor_update_has_opposite_signs
+[PASS] p2/episode_outcome_changes_ligand_sign
+[PASS] p2/rewiring_preserves_edge_count_and_charges_wear
+[PASS] p2/force_prune_returns_material_conservatively
+[PASS] p2/damage_turnover_is_conservative
+[PASS] p2/host_death_routes_eight_cell_matter_to_corpse
+[PASS] p2/division_recycles_learned_state_and_retains_genes
+[PASS] p2/save_restore_exact
+[PASS] p2/logger_is_noninterfering
+[PASS] p2/common_disturbance_same_mode_is_exact
+[PASS] p2/cue_reversal_full_vs_equal_fixed_twin
+[PASS] p2/finite_and_material_ledger_stress
+[PASS] formal/build_and_frozen_p2
+[PASS] formal/no_formal_cassette_exact_p2_lockstep
+[PASS] formal/unmetered_formal_controller_rejected
+[PASS] formal/material_gene_and_controller_development
+[PASS] formal/controller_activity_cost_is_paid_and_conservative
+[PASS] formal/counterbalanced_audit_and_hard_event_retry
+[PASS] formal/natural_audit_completes_and_costs
+[PASS] formal/calibration_improves_heldout_mae
+[PASS] formal/source_separated_change_sentinel_blocks_routine_state_noise
+[PASS] formal/sparse_ligand_outcome_reversal_is_environment_evidence
+[PASS] formal/reliable_audit_surprise_becomes_targeted_change_evidence
+[PASS] formal/change_gated_feedback_protects_stable_tissue
+[PASS] formal/small_compiler_and_random_cost_match
+[PASS] formal/audit_freezes_fast_learning_state
+[PASS] formal/evidence_expires_with_time
+[PASS] formal/controller_matter_routes_to_corpse
+[PASS] formal/material_hgt_activates_controller_without_learning_copy
+[PASS] formal/no_hgt_mode_blocks_foreign_phenotype
+[PASS] formal/division_recycles_learning_and_retains_formal_gene
+[PASS] formal/save_restore_mid_audit_exact
+[PASS] formal/common_disturbance_identical_twins_exact
+[PASS] formal/finite_and_material_ledger

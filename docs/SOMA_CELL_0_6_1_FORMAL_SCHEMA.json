@@ -1,0 +1,17 @@
+{
+  "release_contract": "0.6.1-R2.0",
+  "implementation_schema": "0.6.1-D1.4",
+  "build": "SOMA-CELL 0.6.1",
+  "parent": "SOMA-CELL 0.6.0 / 0.6-F2.0",
+  "source_sha256": "784dc26d5cc26154b810f32749945abbf7bb1513b9f4bd7ccb476e6fd3f30b8e",
+  "validation": {"candidate": "43/43", "inherited": "84/84", "total": "127/127"},
+  "primary_supported_loop": "physical actuator loss -> paid replicated gain probe -> aligned revocable neural quiescence lease -> reduced motor ATP/dissipation -> positive cost-inclusive margin AUC",
+  "unsupported_or_limited": [
+    "universal native-spatial uptake benefit",
+    "net value of active semantic diagnosis",
+    "net value of local prediction",
+    "necessity of recurrence",
+    "life or consciousness status",
+    "open-ended evolution"
+  ]
+}

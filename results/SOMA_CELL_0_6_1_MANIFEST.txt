@@ -1,0 +1,8 @@
+SOMA-CELL 0.6.1 RELEASE MANIFEST
+Build: SOMA-CELL 0.6.1
+Implementation schema: 0.6.1-D1.4
+Release contract: 0.6.1-R2.0
+Source SHA-256: 784dc26d5cc26154b810f32749945abbf7bb1513b9f4bd7ccb476e6fd3f30b8e
+Validation: 43/43 + 84/84 = 127/127 PASS
+R2 preregistered gate: PASS
+Pythonista exact device performance: pending
