@@ -1,0 +1,99 @@
+{
+  "build": "SOMA-CELL 0.6.2",
+  "schema": "0.6.2-M1.1",
+  "successful_trials": 94,
+  "screening": {
+    "efficient2": {
+      "n": 4,
+      "mean_margin_auc": 18.40243314386365,
+      "mean_uptake": 0.6569835904165171,
+      "mean_module_atp": 0.0023908906000000008
+    },
+    "efficient4": {
+      "n": 4,
+      "mean_margin_auc": 18.62536765842763,
+      "mean_uptake": 0.6130236945681199,
+      "mean_module_atp": 0.0047520982000000015
+    },
+    "full8": {
+      "n": 4,
+      "mean_margin_auc": 18.102214986260186,
+      "mean_uptake": 0.5014583298985147,
+      "mean_module_atp": 0.010732204800000004
+    },
+    "no_prediction": {
+      "n": 4,
+      "mean_margin_auc": 18.03725934200392,
+      "mean_uptake": 0.4960910746860208,
+      "mean_module_atp": 0.009143989600000003
+    },
+    "no_recurrence": {
+      "n": 4,
+      "mean_margin_auc": 18.221169263030145,
+      "mean_uptake": 0.5278376124323628,
+      "mean_module_atp": 0.009536508800000003
+    },
+    "no_tissue": {
+      "n": 4,
+      "mean_margin_auc": 19.305745814602805,
+      "mean_uptake": 0.6940497544347685,
+      "mean_module_atp": 0.0
+    },
+    "size2": {
+      "n": 4,
+      "mean_margin_auc": 18.39202796562453,
+      "mean_uptake": 0.5610734711638576,
+      "mean_module_atp": 0.002448232800000001
+    },
+    "size4": {
+      "n": 4,
+      "mean_margin_auc": 18.467822380623552,
+      "mean_uptake": 0.6488159730775975,
+      "mean_module_atp": 0.004848544800000002
+    }
+  },
+  "confirmation": {
+    "full8": {
+      "n": 6,
+      "mean_margin_auc": 22.72859845446203,
+      "mean_uptake": 1.094726772027615,
+      "mean_module_atp": 0.014569972800000006
+    },
+    "efficient4": {
+      "n": 6,
+      "mean_margin_auc": 23.023924290114664,
+      "mean_uptake": 1.0633402932276153,
+      "mean_module_atp": 0.006463889600000002
+    },
+    "efficient2": {
+      "n": 6,
+      "mean_margin_auc": 23.159490059641048,
+      "mean_uptake": 1.0068133995977644,
+      "mean_module_atp": 0.0032325074000000014
+    },
+    "no_tissue": {
+      "n": 6,
+      "mean_margin_auc": 23.661982612525268,
+      "mean_uptake": 0.916841564205081,
+      "mean_module_atp": 0.0
+    }
+  },
+  "stable": {
+    "n": 20,
+    "false_lease": 0,
+    "false_feedback": 0
+  },
+  "fault_full8": {
+    "n": 6,
+    "confirmed": 6,
+    "lease": 6,
+    "positive_auc": 6,
+    "mean_auc_diff": 0.0008739772493016792
+  },
+  "audit_selected_profile": "no_tissue",
+  "minimal_neural_research_profile": "efficient2",
+  "prediction": "retained_research",
+  "recurrence": "dormant",
+  "active_semantic_diagnosis": "dormant",
+  "scientific_status": "NEGATIVE_RESULT_WITH_LIMITS"
+}

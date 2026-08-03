@@ -76,3 +76,23 @@ F061-006,0.6.1,R2 preregistered primary holdout,PASS,all acceptance checks passe
 F061-007,0.6.1,native spatial exploratory generalisation,PASS_WITH_LIMITS,6/6 margin AUC positive; short-horizon uptake difference zero
 F061-008,0.6.1,deterministic validation,PASS,43/43
 F061-009,0.6.1,inherited regressions,PASS,84/84; total 127/127
+F062-001,0.6.2,UI1 compact HUD inheritance,PASS,0.6.2 Scene inherits fixed 0.6.1 renderer and safe descendant reset
+F062-002,0.6.2,unmetered module rejection,PASS,normal runtime rejects free prediction/recurrence/plasticity
+F062-003,0.6.2,parent lockstep harness,PASS,full8 explicit external no-meter harness exact with 0.6.1
+F062-004,0.6.2,profile compartment counts,PASS,8/4/2/1/0 active compartments
+F062-005,0.6.2,conservative compartment retirement,PASS,inactive tissue escrow and committed matter returned to body port
+F062-006,0.6.2,prediction module cost,PASS,positive ATP/wear; no-prediction zero
+F062-007,0.6.2,recurrence module cost,PASS,positive ATP/wear; no-recurrence zero
+F062-008,0.6.2,plasticity module cost,PASS,no-plasticity prevents updates and charge
+F062-009,0.6.2,clone and save restore,PASS,derived config field excluded and continuation exact
+F062-010,0.6.2,screening net neural value,FAIL,no_tissue margin AUC 19.305746 exceeds full8 18.102215
+F062-011,0.6.2,confirmation net neural value,FAIL,no_tissue 23.661983 exceeds best neural efficient2 23.159490
+F062-012,0.6.2,prediction retain rule,PASS,no-prediction wins only 1/4
+F062-013,0.6.2,recurrence retain rule,FAIL,full recurrence wins only 2/4; module placed dormant
+F062-014,0.6.2,stable false conservation,PASS,0 false lease and feedback in 20 trials
+F062-015,0.6.2,full8 actuator conservation,PASS,confirmed/lease/positive AUC 6/6
+F062-016,0.6.2,reduced-profile conservation,UNRESOLVED,efficient4/2 issued no lease and produced zero within-profile difference
+F062-017,0.6.2,dedicated validation,PASS,24/24
+F062-018,0.6.2,inherited regressions,PASS,127/127; grand total 151/151
+F062-019,0.6.2,preregistered comparisons,PASS,94 successful trials with disclosed clone-path amendment
+F062-020,0.6.2,scientific status,NEGATIVE_RESULT_WITH_LIMITS,economically selected added neural tissue is zero in tested short task

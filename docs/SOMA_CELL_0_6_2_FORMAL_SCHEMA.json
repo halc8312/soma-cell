@@ -1,0 +1,18 @@
+{
+  "build": "SOMA-CELL 0.6.2",
+  "schema": "0.6.2-M1.1",
+  "parent": "SOMA-CELL 0.6.1",
+  "audit_selected_profile": "no_tissue",
+  "minimal_neural_research_profile": "efficient2",
+  "research_scene_profile": "efficient2",
+  "modules": ["prediction", "recurrence", "plasticity", "active_semantic_diagnosis"],
+  "compartment_counts": [8, 4, 2, 1, 0],
+  "metered_resources": ["ATP", "protein_wear", "finite_signal"],
+  "decisions": {
+    "prediction": "retained_in_research_profile",
+    "recurrence": "dormant_by_default",
+    "active_semantic_diagnosis": "dormant_by_default",
+    "net_neural_tissue_value_in_preregistered_task": "negative"
+  },
+  "scientific_status": "NEGATIVE_RESULT_WITH_LIMITS"
+}

@@ -1,0 +1,97 @@
+SOMA-CELL 0.6.2 EXPERIMENT REPORT
+Build: SOMA-CELL 0.6.2
+Schema: 0.6.2-M1.1
+Status: engineering PASS / scientific NEGATIVE_RESULT_WITH_LIMITS
+
+Design
+------
+Preregistered successful trials: 94
+- screening: 4 seeds x 8 profiles = 32
+- confirmation: 6 seeds x 4 profiles = 24
+- stable safety: 10 seeds x 2 profiles = 20
+- actuator fault: 6 seeds x 3 profiles = 18
+
+Amendment disclosure
+--------------------
+The actuator-fault twin initially failed before producing any result because a derived
+telemetry field (`audit_active_cells`) leaked into config restoration. The clone-only
+serialization bug was fixed and preregistration R3 was issued before any successful
+fault comparison. Screening, confirmation, and stable paths did not use the affected
+clone path. M1.1 then changed release metadata/default UI only; explicit experiment
+profiles were unchanged.
+
+Primary metabolic-audit result
+------------------------------
+Screening mean margin AUC:
+  full8      18.102214986
+  no_tissue  19.305745815
+  difference no_tissue-full8 +1.203530828
+
+Confirmation mean margin AUC:
+  full8      22.728598454
+  efficient4 23.023924290
+  efficient2 23.159490060
+  no_tissue  23.661982613
+
+No tested added neural-tissue profile passed the preregistered net-value gate against
+`no_tissue` in this short cue-reversal task. The metabolic-audit winner is therefore
+`no_tissue`. `efficient2` is retained only as the smallest tested research neural
+profile, not as a demonstrated net-positive organ.
+
+Module decisions
+----------------
+Prediction:
+  no_prediction - full8 paired AUC differences: [-0.40468178805921795, -0.001924975910245763, -0.01695215742274314, 0.16373634436713047]
+  no_prediction wins: 1/4
+  decision: retain in the research neural profile; rejection criterion not met.
+
+Recurrence:
+  full8 - no_recurrence paired AUC differences: [-0.09836742723009806, 0.0004559932953540624, 0.0477622400349027, -0.4256679131799821]
+  full8 wins: 2/4
+  decision: retire/dormant by default; preregistered retain criterion (>=3/4) failed.
+
+Active semantic diagnosis:
+  decision: dormant in efficient profiles. Previous 0.6.1 work did not establish
+  positive net value for active semantic diagnosis.
+
+Stable safety
+-------------
+Stable trials: 20
+False mechanism-conservation leases: 0
+False feedback events: 0
+Maximum absolute material residual: 2.83094758e-06
+
+Actuator fault
+--------------
+Full8 successful twins: 6
+Fault confirmed: 6/6
+Conservation lease issued: 6/6
+Positive treatment-control margin AUC: 6/6
+Mean margin AUC difference: +0.000873977249
+Mean motor ATP difference: -0.00385153341
+
+Efficient4/efficient2 did not issue a conservation lease in this assay and therefore
+produced zero within-profile treatment-control difference. This does not establish
+that reduced tissues are fault-robust; it means the 0.6.1 conservation mechanism was
+not activated in those reduced profiles.
+
+Interpretation
+--------------
+- Explicit ATP/material metering works and conservative cell retirement works.
+- The current added P2/formal neural layer does not repay its material cost in the
+  preregistered short cue-reversal assay.
+- Prediction is not rejected; recurrence is rejected by the predefined screen.
+- Full8 retains the previously validated actuator-fault conservation response, but
+  even that does not make added neural tissue net-positive in the confirmation task.
+- The correct 0.6.2 result is negative: the economically selected amount of *added*
+  neural tissue is zero under the tested conditions.
+- This is not evidence that neural tissue can never be useful. It motivates the next
+  milestone: demand-gated neurogenesis, where neural tissue is built only when its
+  expected information value can repay development and maintenance cost.
+
+Not established
+---------------
+- universal superiority of no neural tissue
+- long-term or multi-generation optimum
+- net value in novel tasks not tested here
+- open-ended evolution, life, consciousness, or subjective experience

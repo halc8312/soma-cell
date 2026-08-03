@@ -1,0 +1,24 @@
+SOMA-CELL 0.6.2 MANIFEST
+========================
+Build: SOMA-CELL 0.6.2
+Schema: 0.6.2-M1.1
+Parent: SOMA-CELL 0.6.1 UI1
+Source SHA-256: f3f358aec31a31d082d9617cc7476bf96bae33fbc5c4e4968bd8f3de99ef8ae9
+
+Validation:
+- 0.6.2 dedicated: 24/24 PASS
+- inherited P0/P1/P2/0.6/0.6.1: 127/127 PASS
+- grand total: 151/151 PASS
+
+Preregistered comparisons: 94 successful trials
+Scientific status: NEGATIVE_RESULT_WITH_LIMITS
+Audit-selected profile: no_tissue
+Minimal neural research profile: efficient2
+Prediction: retained in research profile
+Recurrence: dormant by default
+Active semantic diagnosis: dormant by default
+
+Frozen negative result:
+No tested added neural-tissue profile repaid its ATP/material cost in the
+preregistered short cue-reversal assay. This does not establish universal
+superiority of no neural tissue.

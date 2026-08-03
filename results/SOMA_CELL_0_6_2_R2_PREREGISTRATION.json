@@ -1,0 +1,136 @@
+{
+  "build": "SOMA-CELL 0.6.2",
+  "schema": "0.6.2-M1.0",
+  "created_utc": "2026-08-03T19:45:00Z",
+  "preregistration_revision": "R2_FINAL_BEFORE_HOLDOUT",
+  "source_sha256": "6e37b0cf054b7f21d576b3db8690e424ad775b01e29d646f8c6be426cb716bd7",
+  "purpose": "Meter neural module costs and select the smallest physically paid neural profile that preserves 0.6.1 safety and actuator-fault conservation.",
+  "development_disclosure": {
+    "development_seeds": [
+      101,
+      202,
+      3001,
+      3002,
+      3003,
+      5001,
+      5002,
+      5003,
+      5004,
+      5005,
+      5006
+    ],
+    "development_findings": [
+      "recurrence did not show net value in the short development sweep",
+      "prediction showed a small possible value signal",
+      "smaller tissues improved cost-inclusive margin in development",
+      "active semantic diagnosis remained unresolved",
+      "efficient4 and efficient2 were added before this final preregistration"
+    ],
+    "excluded_from_final_holdout": true
+  },
+  "screening": {
+    "seeds": [
+      6201,
+      6202,
+      6203,
+      6204
+    ],
+    "profiles": [
+      "full8",
+      "no_prediction",
+      "no_recurrence",
+      "size4",
+      "size2",
+      "efficient4",
+      "efficient2",
+      "no_tissue"
+    ],
+    "environment": "cue_reversal",
+    "seconds": 20.0,
+    "switch_age": 10.0,
+    "plasticity_warmup": 5.0,
+    "primary": "cost-inclusive autopoietic margin AUC",
+    "secondary": [
+      "material uptake",
+      "explicit module ATP",
+      "explicit module material wear",
+      "material ledger"
+    ]
+  },
+  "confirmation": {
+    "seeds": [
+      6301,
+      6302,
+      6303,
+      6304,
+      6305,
+      6306
+    ],
+    "profiles": [
+      "full8",
+      "efficient4",
+      "efficient2",
+      "no_tissue"
+    ],
+    "environment": "cue_reversal",
+    "seconds": 26.0,
+    "switch_age": 12.0,
+    "plasticity_warmup": 6.0
+  },
+  "stable_safety": {
+    "seeds": [
+      6501,
+      6502,
+      6503,
+      6504,
+      6505,
+      6506,
+      6507,
+      6508,
+      6509,
+      6510
+    ],
+    "profiles": [
+      "efficient4",
+      "efficient2"
+    ],
+    "seconds": 30.0,
+    "max_false_conservation_leases": 0,
+    "max_false_feedback_events": 0
+  },
+  "actuator_fault": {
+    "seeds": [
+      6401,
+      6402,
+      6403,
+      6404,
+      6405,
+      6406
+    ],
+    "profiles": [
+      "full8",
+      "efficient4",
+      "efficient2"
+    ],
+    "fault_age": 12.0,
+    "seconds": 30.0,
+    "primary": "conservation lease versus no-conservation common-disturbance twin margin AUC",
+    "minimum_positive_fraction": 0.67
+  },
+  "selection_rule": {
+    "prediction": "retain unless no_prediction exceeds full8 margin AUC in at least 3/4 screening seeds and the confirmation profiles do not require prediction",
+    "recurrence": "retain only if full8 exceeds no_recurrence in at least 3/4 screening seeds and mean margin gain exceeds recurrence ATP/material cost signal",
+    "diagnosis": "active semantic diagnosis remains dormant unless it shows positive net value; mechanism-conservation diagnostics remain required",
+    "selected_size": "choose the smallest candidate whose confirmation mean AUC is no more than 0.02 below full8, remains above no_tissue, has no stable false lease, and preserves actuator-fault conservation in at least 4/6 paired seeds",
+    "tie_breaker": "lower module ATP and material wear, then fewer compartments",
+    "module_retirement": "non-positive modules are disabled or placed in dormant profiles; negative findings are preserved"
+  },
+  "inherited_gates": [
+    "0.6.1 validation 43/43",
+    "inherited regression 84/84",
+    "stable false lease 0/20",
+    "fault conservation positive AUC 12/12",
+    "UI1 compact HUD and safe reset retained"
+  ],
+  "max_abs_material_residual": 2e-05
+}

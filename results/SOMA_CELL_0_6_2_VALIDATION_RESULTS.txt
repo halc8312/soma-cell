@@ -1,0 +1,52 @@
+SOMA-CELL 0.6.2 VALIDATION RESULTS
+Build: SOMA-CELL 0.6.2 | Schema: 0.6.2-M1.1
+Passed: 24/24
+
+[PASS] build_schema_and_selection_metadata
+  build/schema and negative audit winner fixed
+[PASS] ui1_inheritance_and_safe_reset_source
+  compact UI1 renderer inherited; reset constructs descendant world
+[PASS] unmetered_fails_closed
+  unmetered runtime rejected
+[PASS] full8_unmetered_harness_parent_lockstep
+  full8 zero-meter explicit harness exact parent lockstep
+[PASS] profile_active_counts_and_no_tissue
+  active profile counts 8/4/2/1/0
+[PASS] inactive_cells_retired_and_material_returned
+  four inactive compartments conservatively retired
+[PASS] prediction_meter_and_ablation
+  prediction has explicit ATP/material cost and no-prediction zeros it
+[PASS] recurrence_meter_and_ablation
+  recurrence has explicit ATP/material cost and ablation zeros it
+[PASS] plasticity_meter_and_ablation
+  plasticity ablation prevents updates and explicit charge
+[PASS] meter_is_materially_paid
+  module ledgers correspond to paid ATP and damaged material
+[PASS] from_state_clone_and_derived_config_field
+  clone exact; derived audit_active_cells does not leak into constructor
+[PASS] save_restore_exact
+  save/restore and subsequent 40-step continuation exact
+[PASS] common_disturbance_tape_exact
+  common disturbance twin exact
+[PASS] module_ledger_roundtrip
+  module ledger roundtrip exact
+[PASS] preregistered_screening_negative_neural_net_value
+  screening no-tissue margin 19.3057 > full8 18.1022
+[PASS] preregistered_confirmation_negative_neural_net_value
+  confirmation no-tissue margin 23.6620 > best neural efficient2 23.1595
+[PASS] prediction_retained_by_preregistered_rule
+  no-prediction wins 1/4; prediction not rejected
+[PASS] recurrence_retired_by_preregistered_rule
+  full recurrence wins 2/4; recurrence fails retain gate
+[PASS] efficient2_is_smallest_neural_profile_not_selected_winner
+  efficient2 best tested neural profile but loses to no_tissue
+[PASS] stable_safety_no_false_lease
+  stable holdout false lease/feedback 0/20
+[PASS] full8_fault_conservation_positive
+  full8 fault conservation confirmed and positive 6/6
+[PASS] small_profiles_make_conservation_redundant_but_unproven
+  reduced profiles issued no conservation lease; robustness benefit not established
+[PASS] finite_and_material_residual
+  four profiles finite; material ledger within 2e-5
+[PASS] summary_contract
+  summary exposes module costs and audit selection

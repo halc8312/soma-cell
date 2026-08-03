@@ -1,0 +1,7 @@
+suite,passed,total
+P0 chemical body port,22,22
+P1 one material neuron,18,18
+P2 eight-cell tissue,22,22
+Formal 0.6 causal audit,22,22
+Formal 0.6.1 diagnosis/conservation,43,43
+0.6.2 dedicated,24,24

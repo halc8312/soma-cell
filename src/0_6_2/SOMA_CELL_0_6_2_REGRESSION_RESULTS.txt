@@ -1,0 +1,17 @@
+SOMA-CELL 0.6.2 INHERITED REGRESSION RESULTS
+=============================================
+Execution: rerun from the 0.6.1 UI1 maintenance checkpoint before 0.6.2 promotion
+
+P0 chemical body port       : 22/22 PASS
+P1 one material neuron      : 18/18 PASS
+P2 eight-cell material tissue: 22/22 PASS
+Formal 0.6 causal audit     : 22/22 PASS
+Formal 0.6.1 diagnosis/conservation: 43/43 PASS
+------------------------------------------------
+Inherited total             : 127/127 PASS
+0.6.2 dedicated             : 24/24 PASS
+Grand total                 : 151/151 PASS
+
+The 0.6.1 UI1 compact HUD and descendant-safe reset are included in the parent
+source used by 0.6.2. 0.6.2 also validates that its Scene inherits this renderer
+and resets to Formal062World rather than a parent summary schema.
