@@ -8,12 +8,12 @@
 4. CURRENT_BASELINE.txt
 5. docs/SOMA_CONTEXT_HANDOFF_JA.md
 6. docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md
-7. docs/SOMA_CELL_0_6_FORMAL_CONTRACT.md
-8. docs/SOMA_CELL_0_6_FORMAL_SCHEMA.json
-9. src/0_6/SOMA_CELL_0_6_pythonista.py
-10. 0.6の検証・回帰・実験結果
+7. docs/SOMA_CELL_0_6_1_FORMAL_CONTRACT.md
+8. docs/SOMA_CELL_0_6_1_FORMAL_SCHEMA.json
+9. src/0_6_1/SOMA_CELL_0_6_1_pythonista.py
+10. 0.6.1検証・回帰・R2事前登録・holdout・実験結果
 11. planning/ROADMAP_0_6_JA.md
 
-現在の凍結基準はSOMA-CELL 0.6.0、次はSOMA-CELL 0.6.1です。
-0.6では自然な短期規則反転の自動フィードバックが0件だったため、自動因果循環を成功済みとして扱わないでください。
+現在の凍結基準はSOMA-CELL 0.6.1、次はSOMA-CELL 0.6.2です。
+0.6.1の主結果は制御された運動器故障での代謝保全です。自然空間の取得改善、能動意味診断、予測、再帰を成功済みとして扱わないでください。
 最新版のSHA-256を確認し、新しいGit HEADでRule Lockプリフライト証跡を発行してから実装してください。

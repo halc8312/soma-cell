@@ -108,6 +108,7 @@ def dynamic_required(state: dict) -> List[Path]:
     for key, fallback in (
         ("body_port_contract_file", None),
         ("parent_tissue_contract_file", None),
+        ("parent_formal_contract_file", None),
         ("tissue_contract_file", None),
         ("tissue_schema_file", None),
         ("formal_contract_file", None),
@@ -115,6 +116,8 @@ def dynamic_required(state: dict) -> List[Path]:
         ("canonical_source", None),
         ("validation_result_file", "results/SOMA_CELL_0_5_VALIDATION_RESULTS.txt"),
         ("regression_result_file", None),
+        ("preregistration_file", None),
+        ("holdout_report_file", None),
         ("experiment_report_file", "results/SOMA_CELL_0_5_EXPERIMENT_REPORT.txt"),
     ):
         value = baseline.get(key, fallback)

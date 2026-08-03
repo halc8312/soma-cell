@@ -67,6 +67,12 @@ P2-018,0.6-P2,flat Pythonista release validation,PASS,"P2 22/22, P0 22/22, P1 18
 F06-006,0.6,source-separated stable safety,PASS,"6 holdout seeds, mean actionable probability 0.002857, feedback and lease reduction zero"
 F06-007,0.6,automatic natural audit-to-benefit chain,FAIL,short reversal assay ran audits/calibration but produced zero feedback and zero paired benefit
 F06-008,0.6,formal deterministic validation,PASS,22/22; inherited+formal total 84/84
-F061-001,0.6.1,evidence insufficiency diagnosis,PLANNED,distinguish no change from insufficient causal observations
-F061-002,0.6.1,autonomous diagnostic exposure,PLANNED,bounded ATP/risk intervention yields high-quality counterexample
-F061-003,0.6.1,automatic common-tape net benefit,PLANNED,holdout full beats no-feedback without stable false reopening
+F061-001,0.6.1,evidence insufficiency diagnosis,PASS,unknown/stable/suspected/confirmed states; time-step-invariant evidence decay
+F061-002,0.6.1,autonomous diagnostic exposure,PASS_WITH_LIMITS,paid bounded exposure implemented; semantic diagnostic net value remains unresolved
+F061-003,0.6.1,automatic common-tape net benefit,PASS_WITH_LIMITS,R2 actuator fault: stable false lease 0/20; fault margin AUC positive 12/12 in controlled bath
+F061-004,0.6.1,neural escrow accounting,PASS,reusable ATP/signals capped; assembly ATP separately paid; material returned conservatively
+F061-005,0.6.1,positive-work target selection,PASS,aligned motor contributors selected over stronger antagonistic cells
+F061-006,0.6.1,R2 preregistered primary holdout,PASS,all acceptance checks passed; mean margin AUC +0.0294916; motor ATP and dissipation reduced
+F061-007,0.6.1,native spatial exploratory generalisation,PASS_WITH_LIMITS,6/6 margin AUC positive; short-horizon uptake difference zero
+F061-008,0.6.1,deterministic validation,PASS,43/43
+F061-009,0.6.1,inherited regressions,PASS,84/84; total 127/127

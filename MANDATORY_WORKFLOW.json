@@ -1,9 +1,9 @@
 {
-  "schema_version": "1.6",
+  "schema_version": "1.7",
   "rule_id": "SOMA-RULELOCK-20260801-R2",
   "mandatory": true,
   "fail_closed": true,
-  "core_rule": "No implementation, modification, evaluation, or milestone transition may begin until the latest project state, canonical source, handoff, integration contract, milestone-specific frozen contracts, measured results, and roadmap have been actually read and their hashes verified.",
+  "core_rule": "No implementation, modification, evaluation, or milestone transition may begin until the latest project state, canonical source, handoff, integration contract, milestone-specific frozen contracts, preregistration, measured results and roadmap have been actually read and their hashes verified.",
   "required_read_order": [
     "00_MANDATORY_STARTUP_GATE_JA.md",
     "MANDATORY_WORKFLOW.json",
@@ -11,13 +11,17 @@
     "CURRENT_BASELINE.txt",
     "docs/SOMA_CONTEXT_HANDOFF_JA.md",
     "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md",
-    "docs/SOMA_CELL_0_6_FORMAL_CONTRACT.md",
-    "docs/SOMA_CELL_0_6_FORMAL_SCHEMA.json",
-    "src/0_6/SOMA_CELL_0_6_pythonista.py",
-    "results/SOMA_CELL_0_6_VALIDATION_RESULTS.txt",
-    "results/SOMA_CELL_0_6_REGRESSION_RESULTS.txt",
-    "results/SOMA_CELL_0_6_EXPERIMENT_REPORT.txt",
+    "docs/SOMA_CELL_0_6_1_FORMAL_CONTRACT.md",
+    "docs/SOMA_CELL_0_6_1_FORMAL_SCHEMA.json",
+    "src/0_6_1/SOMA_CELL_0_6_1_pythonista.py",
+    "results/SOMA_CELL_0_6_1_VALIDATION_RESULTS.txt",
+    "results/SOMA_CELL_0_6_1_REGRESSION_RESULTS.txt",
+    "results/SOMA_CELL_0_6_1_R2_PREREGISTRATION.json",
+    "results/SOMA_CELL_0_6_1_R2_HOLDOUT_REPORT.txt",
+    "results/SOMA_CELL_0_6_1_EXPERIMENT_REPORT.txt",
     "planning/ROADMAP_0_6_JA.md",
+    "docs/SOMA_CELL_0_6_FORMAL_CONTRACT.md",
+    "src/0_6/SOMA_CELL_0_6_pythonista.py",
     "canonical/SOMA_2_1_pythonista.py",
     "canonical/SOMA_4_2_pythonista.py"
   ],
@@ -44,29 +48,30 @@
     "single_commit_only": true,
     "fresh_preflight_required_after_commit": true
   },
-  "p2_specific_guard": {
+  "formal_06_2_specific_guard": {
     "mandatory": true,
-    "body_port_contract": "docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md",
-    "p1_tissue_contract": "docs/SOMA_CELL_0_6_P1_TISSUE_CONTRACT.md",
-    "p1_tissue_schema": "docs/SOMA_CELL_0_6_P1_TISSUE_SCHEMA.json",
-    "rule": "P2 may extend P1 only through the frozen P0 body port and P1 material-tissue contract. It must preserve the equal-material control logic and keep no-recurrence, no-prediction, no-plasticity, and no-tissue ablations.",
-    "known_negative_result": "The P1 predictor learned its local time series but did not establish positive net behavioural value; P2 must not assume prediction is beneficial."
-  },
-  "formal_06_1_specific_guard": {
-    "mandatory": true,
-    "formal_contract": "docs/SOMA_CELL_0_6_FORMAL_CONTRACT.md",
-    "rule": "0.6.1 may change audit scheduling, evidence acquisition and targeted counterexample selection, but must preserve all material costs, source-separated safety, P0/P1/P2/formal regressions, and no-prediction/no-recurrence controls.",
+    "parent_contract": "docs/SOMA_CELL_0_6_1_FORMAL_CONTRACT.md",
+    "rule": "0.6.2 is a metabolic audit and minimisation milestone. It may compare, gate, shrink or remove prediction, recurrence, tissue compartments and diagnostic machinery, but it must preserve 0.6.1 material accounting, stable safety, actuator-fault conservation and all inherited controls.",
     "known_negative_results": [
-      "automatic short reversal chain produced no feedback events",
-      "verified-counterexample body-margin benefit was small and only 3/6 positive",
-      "prediction and recurrence net value remain unresolved"
+      "active semantic diagnosis net value unresolved",
+      "prediction net body value unresolved",
+      "recurrence necessity unresolved",
+      "native short-horizon uptake difference zero"
     ],
     "required_stages": [
-      "evidence sufficiency diagnosis",
-      "active but bounded diagnostic exposure",
-      "automatic high-quality counterexample",
-      "common-disturbance no-feedback twin",
-      "stable false-reopening safety"
+      "cost ledger per neural module",
+      "common-disturbance ablations",
+      "tissue-size sweep",
+      "preregistered stable and nonstationary holdouts",
+      "module retirement or dormancy when net value is non-positive"
+    ],
+    "required_controls": [
+      "no prediction",
+      "no recurrence",
+      "4/2/1 neural compartments",
+      "no tissue",
+      "0.6.1 full baseline",
+      "no conservation feedback"
     ]
   }
 }

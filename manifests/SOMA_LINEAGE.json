@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "created_utc": "2026-08-02T00:00:00Z",
+  "created_utc": "2026-08-03T16:20:00Z",
   "project": "SOMA artificial life / SOMA-CELL material lineage",
-  "current_target": "SOMA-CELL 0.6.1 autonomous causal-loop closure",
-  "future_integration_target": "SOMA-CELL 0.6",
+  "current_target": "SOMA-CELL 0.6.2 neural metabolic audit and minimisation",
+  "future_integration_target": "SOMA-CELL 0.6.x only after minimal paid neural architecture is established",
   "canonical_policy": "canonical/ and the integration contract override conversational recollection. SOMA 5-7 without R are superseded.",
   "stages": [
     {
@@ -182,16 +182,30 @@
       "formal_schema": "0.6-F2.0",
       "stable_safety": "0 false feedback events in 6 holdout seeds",
       "limited_result": "verified counterexample uptake 5/6 positive; margin only 3/6; automatic natural chain not established"
+    },
+    {
+      "id": "SOMA-CELL-0.6.1",
+      "file": "src/0_6_1/SOMA_CELL_0_6_1_pythonista.py",
+      "role": "evidence sufficiency, paid actuator diagnosis, capped neural escrow and revocable quiescent conservation lease",
+      "status": "current-pass-with-limits",
+      "sha256": "784dc26d5cc26154b810f32749945abbf7bb1513b9f4bd7ccb476e6fd3f30b8e",
+      "bytes": 169277,
+      "validation": "43/43 PASS; inherited 84/84; total 127/127",
+      "comparison_trials": 38,
+      "release_contract": "0.6.1-R2.0",
+      "implementation_schema": "0.6.1-D1.4",
+      "preregistered_result": "stable false lease 0/20; actuator fault confirmed/lease/positive margin AUC 12/12; mean AUC +0.0294916",
+      "limited_results": "native short-horizon uptake difference zero; active semantic diagnosis, prediction and recurrence net value unresolved"
     }
   ],
   "roadmap": [
     {
-      "id": "SOMA-CELL-0.6.1",
-      "goal": "close the autonomous natural audit-to-counterexample-to-benefit chain while preserving stable safety"
+      "id": "SOMA-CELL-0.6.2",
+      "goal": "metabolically audit and minimise prediction, recurrence, tissue size and diagnosis modules; retain only cost-positive mechanisms"
     },
     {
       "id": "SOMA-CELL-0.6.x",
-      "goal": "only after autonomous causal-loop evidence: internal models, concepts, culture and ecology"
+      "goal": "only after minimal cost-positive neural architecture: internal models, concepts, culture and ecology"
     }
   ],
   "required_docs": [
@@ -202,6 +216,6 @@
     "docs/SOMA_LINEAGE_INDEX_JA.md",
     "SHA256SUMS.txt"
   ],
-  "current_baseline": "SOMA-CELL-0.6.0",
-  "next_milestone": "SOMA-CELL-0.6.1"
+  "current_baseline": "SOMA-CELL-0.6.1",
+  "next_milestone": "SOMA-CELL-0.6.2"
 }

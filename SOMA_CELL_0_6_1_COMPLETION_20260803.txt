@@ -1,0 +1,46 @@
+SOMA-CELL 0.6.1 COMPLETION RECORD — R2
+========================================
+Date: 2026-08-03
+Build: SOMA-CELL 0.6.1
+Implementation schema: 0.6.1-D1.4
+Release contract: 0.6.1-R2.0
+Status: engineering PASS / scientific PASS_WITH_LIMITS
+Parent: SOMA-CELL 0.6.0
+Next milestone: SOMA-CELL 0.6.2 (not started)
+
+Validation
+----------
+0.6.1 candidate: 43/43 PASS
+P0/P1/P2/formal 0.6 regressions: 84/84 PASS
+Total: 127/127 PASS
+Comparison trials: 38
+
+R2 preregistered primary assay
+------------------------------
+Stable safety: false lease 0/20; false feedback 0/20.
+Actuator fault: confirmed 12/12; lease issued 12/12; positive cost-inclusive margin AUC 12/12.
+Mean margin AUC gain: +0.0294915978.
+Mean motor ATP difference: -0.0008036444.
+Mean dissipated-energy difference: -0.0007746925.
+Mean uptake difference: 0 in isotropic body-centred bath.
+Maximum material residual: 3.1253228e-06.
+
+Exploratory native-spatial assay
+--------------------------------
+Lease 6/6; positive margin AUC 6/6; mean AUC +0.0245880843; short-horizon uptake difference 0.
+
+Frozen limitations
+------------------
+The strongest evidence is controlled actuator-fault physiological conservation.
+Native spatial uptake benefit is not established.
+Active semantic diagnosis, local prediction and recurrence net value remain unresolved.
+Life, consciousness and open-ended evolution are not established.
+Pythonista exact device performance remains pending.
+
+Source SHA-256
+--------------
+784dc26d5cc26154b810f32749945abbf7bb1513b9f4bd7ccb476e6fd3f30b8e
+
+Release SHA-256
+---------------
+10cbb004baebae2f5feb48eea1c8ca2f6c62bc6e97e56977dc8538cbf575d03d
