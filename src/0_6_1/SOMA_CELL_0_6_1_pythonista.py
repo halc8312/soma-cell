@@ -3298,7 +3298,10 @@ def generate_report(log_path=LOG_FILE, report_path=REPORT_FILE, session_path=SES
 
 
 try:
-    from scene import Scene, run, LANDSCAPE, background, fill, rect, text
+    from scene import (
+        Scene, run, LANDSCAPE, background, fill, rect, text,
+        ellipse, line, stroke, stroke_weight,
+    )
 
     class SomaCell061Scene(f06.SomaCellFormalScene):
         def setup(self):
@@ -3326,28 +3329,205 @@ try:
             self.logger.log(self.world, reason='start', force=True)
             self.report_status = 'WAIT'
 
+        def _fresh_world(self):
+            return Formal061World(
+                seed=101, initial_cells=2,
+                config=Formal061Config(p2_environment=p2.P2_ENV_CUE_REVERSAL),
+            )
+
+        def _summary(self):
+            return self.world.summary() if self.world is not None else {}
+
+        def _draw_world_base(self):
+            background(0.010, 0.018, 0.030)
+            left, bottom, width, height = self._world_rect()
+            stroke(0.0, 0.0, 0.0, 0.0)
+            stroke_weight(0.0)
+            fill(0.020, 0.040, 0.055)
+            rect(left, bottom, width, height)
+            try:
+                self._draw_particles()
+                self._draw_corpses()
+                self._draw_edna()
+                for cell in self.world.living_cells():
+                    self._draw_cell(cell)
+            except Exception:
+                pass
+
+        def _draw_p2_overlay(self):
+            try:
+                living = self.world.living_cells()
+            except Exception:
+                living = []
+            cell_count = int(getattr(p2, 'P2_CELL_COUNT', 8))
+            proto_cls = getattr(p2, 'P2ProtoCell', object)
+            for cell in living:
+                tissue = getattr(cell, 'p2_tissue', None) if isinstance(cell, proto_cls) else getattr(cell, 'p2_tissue', None)
+                if tissue is None:
+                    continue
+                x, y = self._screen(cell.pos)
+                base_radius = max(2.0, cell.radius * min(self.size.w, self.size.h) * 0.20)
+                for i in range(cell_count):
+                    angle = 2.0 * math.pi * i / float(max(cell_count, 1))
+                    cx = x + math.cos(angle) * base_radius * 1.65
+                    cy = y + math.sin(angle) * base_radius * 1.65
+                    dev = float(tissue.development[i]) if i < len(tissue.development) else 0.0
+                    hid = float(tissue.hidden[i]) if i < len(tissue.hidden) else 0.0
+                    mat = float(tissue.maturity[i]) if i < len(tissue.maturity) else 0.0
+                    radius = base_radius * (0.34 + 0.16 * dev)
+                    activity = 0.5 + 0.5 * clamp(hid, -1.0, 1.0)
+                    maturity = clamp(mat, 0.0, 1.0)
+                    fill(0.35 + 0.45 * activity, 0.18 + 0.24 * maturity, 0.72 + 0.20 * activity, 0.90)
+                    ellipse(cx - radius, cy - radius, radius * 2.0, radius * 2.0)
+                try:
+                    rec_edges = np.argwhere(tissue.rec_mask)
+                except Exception:
+                    rec_edges = []
+                stroke(0.66, 0.44, 0.94, 0.42)
+                stroke_weight(0.7)
+                for i, j in rec_edges:
+                    ai = 2.0 * math.pi * int(i) / float(max(cell_count, 1))
+                    aj = 2.0 * math.pi * int(j) / float(max(cell_count, 1))
+                    line(
+                        x + math.cos(aj) * base_radius * 1.65,
+                        y + math.sin(aj) * base_radius * 1.65,
+                        x + math.cos(ai) * base_radius * 1.65,
+                        y + math.sin(ai) * base_radius * 1.65,
+                    )
+                action = getattr(tissue, 'last_action', np.zeros(2, dtype=float))
+                stroke(0.95, 0.76, 1.0, 0.90)
+                stroke_weight(1.4)
+                line(
+                    x, y,
+                    x + float(action[0]) * base_radius * 3.2,
+                    y + float(action[1]) * base_radius * 3.2,
+                )
+            stroke(0.0, 0.0, 0.0, 0.0)
+            stroke_weight(0.0)
+
+        def _panel(self, x, y, w, h, alpha=0.90):
+            stroke(0.0, 0.0, 0.0, 0.0)
+            stroke_weight(0.0)
+            fill(0.010, 0.018, 0.030, alpha)
+            rect(x, y, w, h)
+
         def draw(self):
-            super(SomaCell061Scene, self).draw()
-            summary = self.world.summary()
-            fill(0.01, 0.018, 0.03, 0.97)
-            rect(0, 158, self.size.w, 58)
+            self._draw_world_base()
+            self._draw_p2_overlay()
+            s = self._summary()
+            width = float(self.size.w)
+            height = float(self.size.h)
+            top_h = 52.0
+            bottom_h = 86.0
+            mid_h = 42.0
+            self._panel(0.0, height - top_h, width, top_h, 0.96)
+            self._panel(0.0, 0.0, width, bottom_h, 0.94)
+            self._panel(0.0, bottom_h, width, mid_h, 0.90)
+
+            title_x = max(120.0, min(180.0, width * 0.18))
+            fill(0.92, 0.98, 1.0)
+            text('SOMA-CELL 0.6.1', x=title_x, y=height - 26, font_size=18, alignment=4)
+            fill(0.64, 0.78, 0.86)
+            text(
+                '{} | SAVE {} | LOG {} | REPORT {} | {:.1f} fps | x{:.2f}'.format(
+                    s.get('p2_environment', 'cue_reversal'), self.save_status,
+                    getattr(self.logger, 'status', 'WAIT'), self.report_status,
+                    self.fps, self.sim_rate,
+                ),
+                x=width - 18, y=height - 26, font_size=9, alignment=6,
+            )
+
+            fill(0.84, 0.92, 0.97)
+            text(
+                'age {:.1f}s cells {} div {} deaths {} corpses {} DNA {}'.format(
+                    s.get('age', 0.0), s.get('cells', 0), s.get('divisions', 0),
+                    s.get('deaths', 0), s.get('corpses', 0), s.get('edna_fragments', 0),
+                ),
+                x=18, y=bottom_h - 18, font_size=10, alignment=4,
+            )
+            text(
+                'margin {:.3f} ATP {:.3f} tissues {} mature {} ledger {:+.2e}'.format(
+                    s.get('mean_autopoietic_margin', s.get('mean_margin', 0.0)),
+                    s.get('mean_atp', 0.0), s.get('p2_tissues', 0),
+                    s.get('p2_mature_cells', 0), s.get('matter_residual', 0.0),
+                ),
+                x=18, y=bottom_h - 36, font_size=9, alignment=4,
+            )
+            text(
+                'FORMAL audits {} S/C/I {}/{}/{} q {:.2f} cost {:.5f}'.format(
+                    s.get('formal_audits', 0), s.get('formal_audit_supported', 0),
+                    s.get('formal_audit_contradicted', 0), s.get('formal_audit_inconclusive', 0),
+                    s.get('formal_audit_quality', 0.0), s.get('formal_audit_cost_atp', 0.0),
+                ),
+                x=18, y=bottom_h - 54, font_size=9, alignment=4,
+            )
+            text(
+                'CAL {} {:.4g}->{:.4g} change {:.2f} feedback {} gate {:.2f}'.format(
+                    s.get('formal_calibration_updates', 0), s.get('formal_raw_mae', 0.0),
+                    s.get('formal_calibrated_mae', 0.0), s.get('formal_change_probability', 0.0),
+                    s.get('formal_feedback_events', 0), s.get('formal_feedback_gate', 0.0),
+                ),
+                x=18, y=bottom_h - 72, font_size=9, alignment=4,
+            )
+
             fill(0.80, 1.0, 0.93)
             text(
                 'DIAG {} done {} abort {} target {} evidence {:.2f}'.format(
-                    summary['diagnosis_mode'], summary['diagnosis_completed'],
-                    summary['diagnosis_aborted'], summary['diagnosis_targeted_audits'],
-                    summary['diagnosis_max_change_evidence'],
+                    s.get('diagnosis_mode', 'n/a'), s.get('diagnosis_completed', 0),
+                    s.get('diagnosis_aborted', 0), s.get('diagnosis_targeted_audits', 0),
+                    s.get('diagnosis_max_change_evidence', 0.0),
                 ),
-                x=24, y=199, font_size=9, alignment=4,
+                x=18, y=bottom_h + 24, font_size=9, alignment=4,
             )
             text(
                 'obs {:.2f} ATP {:.5f} feedback {} pending {}'.format(
-                    summary['diagnosis_mean_observation_sufficiency'],
-                    summary['diagnosis_atp'], summary['diagnosis_feedback_events'],
-                    summary['diagnosis_pending_audits'],
+                    s.get('diagnosis_mean_observation_sufficiency', 0.0),
+                    s.get('diagnosis_atp', 0.0), s.get('diagnosis_feedback_events', 0),
+                    s.get('diagnosis_pending_audits', 0),
                 ),
-                x=24, y=179, font_size=9, alignment=4,
+                x=18, y=bottom_h + 8, font_size=9, alignment=4,
             )
+
+            if s.get('cells', 0) == 0:
+                fill(1.0, 0.38, 0.32)
+                text(
+                    'POPULATION EXTINCT — chemistry persists',
+                    x=width * 0.5, y=height * 0.52, font_size=15, alignment=5,
+                )
+            if self.paused:
+                fill(1.0, 0.92, 0.45)
+                text('PAUSED', x=width * 0.5, y=height - 26, font_size=13, alignment=5)
+
+        def touch_began(self, touch):
+            now = time.time()
+            if now - self.last_touch_wall < 0.42:
+                try:
+                    if os.path.exists(SAVE_FILE):
+                        os.remove(SAVE_FILE)
+                except Exception:
+                    pass
+                self.world = self._fresh_world()
+                self.logger = LongRunLogger(self.world)
+                self.logger.log(self.world, reason='reset', force=True)
+                self.report_status = 'WAIT'
+                self.save_status = 'NEW'
+                self.accumulator = 0.0
+                self.paused = False
+                self.last_save_age = self.world.age
+                self.last_touch_wall = -10.0
+                gc.collect()
+                return
+            self.last_touch_wall = now
+            if touch.location.y > self.size.h - 60:
+                self.paused = not self.paused
+                self.logger.log(
+                    self.world,
+                    reason='pause' if self.paused else 'resume', force=True,
+                )
+                return
+            position = self._unit_position(touch.location)
+            if not self.world.puncture_nearest(position):
+                self.world.inject_cloud(position)
 
         def stop(self):
             try:

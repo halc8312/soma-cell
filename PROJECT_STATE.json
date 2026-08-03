@@ -12,7 +12,7 @@
     "parent_formal_contract_file": "docs/SOMA_CELL_0_6_FORMAL_CONTRACT.md",
     "parent_tissue_contract_file": "docs/SOMA_CELL_0_6_P2_TISSUE_CONTRACT.md",
     "body_port_contract_file": "docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md",
-    "release_archive": "releases/SOMA_CELL_0_6_1_GOLD_20260803.zip",
+    "release_archive": "releases/SOMA_CELL_0_6_1_VISUALFIX_20260804.zip",
     "validation": {
       "passed": 43,
       "total": 43
@@ -37,8 +37,8 @@
     "parent_tissue_schema": "0.6-P2.2",
     "port_schema": "0.6-P0.2",
     "known_max_world_material_residual": 1.193e-05,
-    "source_sha256": "784dc26d5cc26154b810f32749945abbf7bb1513b9f4bd7ccb476e6fd3f30b8e",
-    "release_sha256": "10cbb004baebae2f5feb48eea1c8ca2f6c62bc6e97e56977dc8538cbf575d03d",
+    "source_sha256": "7188a21e69579d667f074b430de5f250e233728562d59dc02e8f0a811102c5cd",
+    "release_sha256": "36feea7e0eeecc1f5a0f351620def6292b8acf23a02ef19591762d44d7d87ea4",
     "engineering_status": "PASS",
     "scientific_status": "PASS_WITH_LIMITS",
     "stable_safety": {
@@ -74,7 +74,13 @@
       "cause": "raw energy-debt safety threshold incompatible with P2 body scale",
       "seeds_retired": true
     },
-    "pythonista_scene": "device_pending"
+    "pythonista_scene": "visual_reset_hotfix_20260804_device_retest_pending",
+    "maintenance_revision": "UI1",
+    "maintenance_notes": [
+      "compact HUD avoids stacked parent overlays that hid approximately half the world",
+      "scene summary uses safe get lookups during reset/load transitions",
+      "double-tap reset constructs Formal061World rather than an inherited parent world"
+    ]
   },
   "next_milestone": {
     "name": "SOMA-CELL 0.6.2",
