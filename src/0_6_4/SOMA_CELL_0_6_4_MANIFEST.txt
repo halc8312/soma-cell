@@ -1,0 +1,14 @@
+SOMA-CELL 0.6.4 MANIFEST
+Build: SOMA-CELL 0.6.4
+Schema: 0.6.4-AB1.1
+Status: engineering PASS / scientific NEGATIVE_BOUNDARY_RESULT_WITH_LIMITS
+Canonical source SHA-256: 47b58227fc7835e0bdadc0cda4243ea0adc6ac73080f087500f99fa955af5533
+Dedicated validation: 25/25 PASS
+Inherited regression: 177/177 PASS
+Grand total: 202/202 PASS
+Experiment trials: 69
+Minimum feasible early option fraction: 0.95
+Stable false full investments/developments: 0/12, 0/12
+Primary comparison vs option-no-tissue: mean AUC -0.918171; positive 1/6
+Decision: NEGATIVE_BOUNDARY_RESULT
+Next milestone: SOMA-CELL 0.6.5

@@ -1,0 +1,20 @@
+{
+  "schema": "0.6.4-AB1.1",
+  "build": "SOMA-CELL 0.6.4",
+  "parent": "SOMA-CELL 0.6.3",
+  "status": "engineering_pass_scientific_negative_boundary_result",
+  "material_option": {
+    "default_fraction": 0.95,
+    "full_readiness_fraction": 0.94,
+    "components": ["protein_precursor", "membrane_precursor", "finite_signal"]
+  },
+  "registered_trials": 69,
+  "dedicated_validation": "25/25",
+  "inherited_regression": "177/177",
+  "minimum_feasible_option_fraction": 0.95,
+  "stable_false_investments": 0,
+  "stable_false_developments": 0,
+  "performance_gate": false,
+  "decision": "NEGATIVE_BOUNDARY_RESULT",
+  "next": "SOMA-CELL 0.6.5"
+}

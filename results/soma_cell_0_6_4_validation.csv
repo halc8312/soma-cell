@@ -1,0 +1,26 @@
+index,name,status,detail,error,wall_seconds
+0,test_build_schema_and_frozen_defaults,PASS,build/schema and preregistered option boundary defaults fixed,,0.00013065338134765625
+1,test_preregistration_matches_source_hash,PASS,preregistration SHA-256 matches the tested candidate source,,0.00015974044799804688
+2,test_invalid_policy_and_free_gate_fail_closed,PASS,unknown and unmetered conditional policies rejected,,6.67572021484375e-06
+3,test_bare_policy_exact_parent_lockstep,PASS,bare 0.6.4 descendant preserves frozen 0.6.3 trajectory,,0.5038242340087891
+4,test_option_reserve_is_real_material_and_conservative,PASS,early option reserve uses explicit conserved protein/membrane/signal material,,0.25925254821777344
+5,test_option_no_tissue_matches_conditional_early_cost_without_organ,PASS,option-no-tissue is a physically matched early-readiness control,,0.6407902240753174
+6,test_low_option_cannot_fake_full_readiness,PASS,90% option does not pass the 94% physical precursor-transfer threshold,,2.602222204208374
+7,test_ninety_five_percent_option_can_physically_develop,PASS,95% early option permits a paid transient two-cell organ in boundary seed 101,,4.038782596588135
+8,test_authorisation_requires_persistent_physical_evidence,PASS,full preparation follows persistent physical evidence without schedule labels,,0.952399730682373
+9,test_periodic_rule_schedule_changes_physical_law_only,PASS,single physical rule parameter toggles periodically without an organism-facing clock signal,,0.933546781539917
+10,test_release_returns_only_expansion_and_retains_option_floor,PASS,low-demand release returns expansion but conservatively retains the paid option floor,,0.3650181293487549
+11,test_stable_moving_patch_does_not_authorise_or_develop,PASS,stable moving-patch run preserves option but does not expand or develop,,2.522786855697632
+12,test_option_policy_never_develops,PASS,option-no-tissue control never creates a neural organ,,3.019198417663574
+13,test_eager_and_random_controls_remain_paid,PASS,eager and cost-matched random controls retain real readiness and sentinel cost,,2.014486074447632
+14,test_clone_exact_continuation,PASS,clone continues exactly through option/readiness state,,1.5067942142486572
+15,test_save_restore_exact_continuation,PASS,"save/restore preserves periodic law, option reserve and evidence state exactly",,1.5844082832336426
+16,test_no_free_learned_state_in_daughters_regression,PASS,"preparedness evidence remains lifetime control state, not free genomic inheritance",,0.38764142990112305
+17,test_experiment_boundary_and_negative_decision_are_frozen,PASS,registered experiment freezes a 95% feasibility boundary and negative performance decision,,0.00016164779663085938
+18,test_experiment_stable_safety_is_zero_false_expansion,PASS,12/12 stable holdouts had no false full investment or organ development,,5.9604644775390625e-05
+19,test_experiment_pair_gate_failed_without_cherry_picking,PASS,conditional organ lost every mean holdout comparison and failed pair consistency,,6.461143493652344e-05
+20,test_all_registered_trials_finite_and_material_bounded,PASS,all 69 registered trials finite with bounded material residuals,,4.649162292480469e-05
+21,test_summary_exposes_option_and_expansion_without_privileged_answer,PASS,telemetry exposes material readiness accounting but no privileged answer,,0.5362813472747803
+22,test_scene_descendant_safe_reset_and_compact_overlay_source,PASS,Scene inherits compact Visual Fix and resets into Formal064World,,0.00020766258239746094
+23,test_report_generator_smoke,PASS,long-run logger/report works with option-boundary fields,,0.0032777786254882812
+24,test_finite_and_material_ledger_stress,PASS,45-second conditional stress finite; residual=-1.483e-05,,5.826032876968384

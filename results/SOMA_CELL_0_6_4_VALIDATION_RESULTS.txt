@@ -1,0 +1,29 @@
+SOMA-CELL 0.6.4 VALIDATION RESULTS
+Build: SOMA-CELL 0.6.4 / 0.6.4-AB1.1
+Result: 25/25 PASS
+
+01. PASS test_build_schema_and_frozen_defaults — build/schema and preregistered option boundary defaults fixed
+02. PASS test_preregistration_matches_source_hash — preregistration SHA-256 matches the tested candidate source
+03. PASS test_invalid_policy_and_free_gate_fail_closed — unknown and unmetered conditional policies rejected
+04. PASS test_bare_policy_exact_parent_lockstep — bare 0.6.4 descendant preserves frozen 0.6.3 trajectory
+05. PASS test_option_reserve_is_real_material_and_conservative — early option reserve uses explicit conserved protein/membrane/signal material
+06. PASS test_option_no_tissue_matches_conditional_early_cost_without_organ — option-no-tissue is a physically matched early-readiness control
+07. PASS test_low_option_cannot_fake_full_readiness — 90% option does not pass the 94% physical precursor-transfer threshold
+08. PASS test_ninety_five_percent_option_can_physically_develop — 95% early option permits a paid transient two-cell organ in boundary seed 101
+09. PASS test_authorisation_requires_persistent_physical_evidence — full preparation follows persistent physical evidence without schedule labels
+10. PASS test_periodic_rule_schedule_changes_physical_law_only — single physical rule parameter toggles periodically without an organism-facing clock signal
+11. PASS test_release_returns_only_expansion_and_retains_option_floor — low-demand release returns expansion but conservatively retains the paid option floor
+12. PASS test_stable_moving_patch_does_not_authorise_or_develop — stable moving-patch run preserves option but does not expand or develop
+13. PASS test_option_policy_never_develops — option-no-tissue control never creates a neural organ
+14. PASS test_eager_and_random_controls_remain_paid — eager and cost-matched random controls retain real readiness and sentinel cost
+15. PASS test_clone_exact_continuation — clone continues exactly through option/readiness state
+16. PASS test_save_restore_exact_continuation — save/restore preserves periodic law, option reserve and evidence state exactly
+17. PASS test_no_free_learned_state_in_daughters_regression — preparedness evidence remains lifetime control state, not free genomic inheritance
+18. PASS test_experiment_boundary_and_negative_decision_are_frozen — registered experiment freezes a 95% feasibility boundary and negative performance decision
+19. PASS test_experiment_stable_safety_is_zero_false_expansion — 12/12 stable holdouts had no false full investment or organ development
+20. PASS test_experiment_pair_gate_failed_without_cherry_picking — conditional organ lost every mean holdout comparison and failed pair consistency
+21. PASS test_all_registered_trials_finite_and_material_bounded — all 69 registered trials finite with bounded material residuals
+22. PASS test_summary_exposes_option_and_expansion_without_privileged_answer — telemetry exposes material readiness accounting but no privileged answer
+23. PASS test_scene_descendant_safe_reset_and_compact_overlay_source — Scene inherits compact Visual Fix and resets into Formal064World
+24. PASS test_report_generator_smoke — long-run logger/report works with option-boundary fields
+25. PASS test_finite_and_material_ledger_stress — 45-second conditional stress finite; residual=-1.483e-05

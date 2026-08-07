@@ -1,0 +1,35 @@
+SOMA-CELL 0.6.4 EXPERIMENT REPORT
+Build: SOMA-CELL 0.6.4 / 0.6.4-AB1.1
+Decision: NEGATIVE_BOUNDARY_RESULT
+
+Engineering pass: True
+Stable-safety pass: True
+Performance gate pass: False
+Trials: 69 errors: 0
+
+Physical readiness boundary:
+  option 0.25: developed 0/3 mean margin AUC 28.311446
+  option 0.50: developed 0/3 mean margin AUC 28.066535
+  option 0.75: developed 0/3 mean margin AUC 27.623617
+  option 0.85: developed 0/3 mean margin AUC 27.888850
+  option 0.90: developed 0/3 mean margin AUC 28.381612
+  option 0.95: developed 3/3 mean margin AUC 27.216148
+  option 1.00: developed 3/3 mean margin AUC 27.178760
+  minimum feasible option fraction: 0.95
+
+Stable moving-patch safety:
+  false investments: 0
+  false developments: 0
+
+Preregistered holdout comparisons (conditional minus control):
+  vs option_no_tissue: mean -0.91817120, positive 1/6
+  vs always_no_tissue: mean -2.39464025, positive 0/6
+  vs eager: mean -1.13641574, positive 1/6
+  vs always_efficient2: mean -1.79420352, positive 2/6
+  vs random_cost_matched: mean -1.28080057, positive 1/6
+
+Interpretation:
+- Option reserve is real material paid before evidence is available.
+- A high minimum feasible option fraction means late conditional preparation cannot escape early substrate depletion.
+- A negative gate retires or shrinks the grammar by default; it is not a universal proof that neural tissue is useless.
+- These are digital mechanism assays, not proof of life or consciousness.

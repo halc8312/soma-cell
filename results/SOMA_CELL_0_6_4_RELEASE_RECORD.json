@@ -1,0 +1,64 @@
+{
+  "record_version": "0.6.4-R1.0",
+  "build": "SOMA-CELL 0.6.4",
+  "schema": "0.6.4-AB1.1",
+  "date": "2026-08-08",
+  "source": "src/0_6_4/SOMA_CELL_0_6_4_pythonista.py",
+  "source_sha256": "47b58227fc7835e0bdadc0cda4243ea0adc6ac73080f087500f99fa955af5533",
+  "release": "releases/SOMA_CELL_0_6_4_GOLD_20260808.zip",
+  "release_sha256": "see PROJECT_STATE and external artifact SHA-256 after packaging",
+  "engineering_status": "PASS",
+  "scientific_status": "NEGATIVE_BOUNDARY_RESULT_WITH_LIMITS",
+  "dedicated_validation": {
+    "passed": 25,
+    "total": 25
+  },
+  "inherited_regression": {
+    "passed": 177,
+    "total": 177
+  },
+  "grand_total": {
+    "passed": 202,
+    "total": 202
+  },
+  "experiment_trials": 69,
+  "stable_false_full_investments": {
+    "events": 0,
+    "trials": 12
+  },
+  "stable_false_developments": {
+    "events": 0,
+    "trials": 12
+  },
+  "minimum_feasible_option_fraction": 0.95,
+  "comparisons": {
+    "option_no_tissue": {
+      "mean_difference": -0.9181712038737425,
+      "positive_pairs": 1,
+      "pairs": 6
+    },
+    "always_no_tissue": {
+      "mean_difference": -2.3946402469394177,
+      "positive_pairs": 0,
+      "pairs": 6
+    },
+    "eager": {
+      "mean_difference": -1.136415736546547,
+      "positive_pairs": 1,
+      "pairs": 6
+    },
+    "always_efficient2": {
+      "mean_difference": -1.7942035183017133,
+      "positive_pairs": 2,
+      "pairs": 6
+    },
+    "random_cost_matched": {
+      "mean_difference": -1.2808005737007602,
+      "positive_pairs": 1,
+      "pairs": 6
+    }
+  },
+  "max_abs_material_residual": 2.0530307139665638e-05,
+  "next_milestone": "SOMA-CELL 0.6.5",
+  "interpretation": "A two-cell organ required at least 95% of full precursor material to be reserved before evidence, leaving little conditional saving. The conditional organ lost all preregistered mean comparisons; added-neural grammar should be dormant by default and exposed to multigenerational retention/loss selection."
+}

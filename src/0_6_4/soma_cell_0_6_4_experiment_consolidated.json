@@ -1,0 +1,285 @@
+{
+  "boundary": [
+    {
+      "developed": 0,
+      "fraction": 0.25,
+      "mean_margin_auc": 28.311445682964475,
+      "n": 3
+    },
+    {
+      "developed": 0,
+      "fraction": 0.5,
+      "mean_margin_auc": 28.0665348344115,
+      "n": 3
+    },
+    {
+      "developed": 0,
+      "fraction": 0.75,
+      "mean_margin_auc": 27.623616808629247,
+      "n": 3
+    },
+    {
+      "developed": 0,
+      "fraction": 0.85,
+      "mean_margin_auc": 27.888850485451684,
+      "n": 3
+    },
+    {
+      "developed": 0,
+      "fraction": 0.9,
+      "mean_margin_auc": 28.381611860061614,
+      "n": 3
+    },
+    {
+      "developed": 3,
+      "fraction": 0.95,
+      "mean_margin_auc": 27.216148446751152,
+      "n": 3
+    },
+    {
+      "developed": 3,
+      "fraction": 1.0,
+      "mean_margin_auc": 27.17876040386831,
+      "n": 3
+    }
+  ],
+  "build": "SOMA-CELL 0.6.4",
+  "comparisons": [
+    {
+      "control": "option_no_tissue",
+      "differences": [
+        -0.26842591001639704,
+        -3.621516303185011,
+        -0.2568981719073875,
+        -1.4491885271675784,
+        -0.1319711776674275,
+        0.2189728667013462
+      ],
+      "mean_difference": -0.9181712038737425,
+      "metric": "margin_auc",
+      "n": 6,
+      "positive_pairs": 1,
+      "seeds": [
+        6101,
+        6102,
+        6103,
+        6104,
+        6105,
+        6106
+      ],
+      "treatment": "conditional"
+    },
+    {
+      "control": "always_no_tissue",
+      "differences": [
+        -1.3561106395356042,
+        -4.70097466345603,
+        -0.6092243983296868,
+        -3.8895080755344296,
+        -1.8922487161159118,
+        -1.9197749886648445
+      ],
+      "mean_difference": -2.3946402469394177,
+      "metric": "margin_auc",
+      "n": 6,
+      "positive_pairs": 0,
+      "seeds": [
+        6101,
+        6102,
+        6103,
+        6104,
+        6105,
+        6106
+      ],
+      "treatment": "conditional"
+    },
+    {
+      "control": "eager",
+      "differences": [
+        -0.43299830697247543,
+        -3.4755661425803552,
+        -2.029911965453998,
+        -0.3998776729853972,
+        0.007922421871892737,
+        -0.48806275315894965
+      ],
+      "mean_difference": -1.136415736546547,
+      "metric": "margin_auc",
+      "n": 6,
+      "positive_pairs": 1,
+      "seeds": [
+        6101,
+        6102,
+        6103,
+        6104,
+        6105,
+        6106
+      ],
+      "treatment": "conditional"
+    },
+    {
+      "control": "always_efficient2",
+      "differences": [
+        0.021697130772203366,
+        -2.452970112699063,
+        -2.5390570414122067,
+        -3.895222725319144,
+        0.11853125701879463,
+        -2.018199618170865
+      ],
+      "mean_difference": -1.7942035183017133,
+      "metric": "margin_auc",
+      "n": 6,
+      "positive_pairs": 2,
+      "seeds": [
+        6101,
+        6102,
+        6103,
+        6104,
+        6105,
+        6106
+      ],
+      "treatment": "conditional"
+    },
+    {
+      "control": "random_cost_matched",
+      "differences": [
+        -0.37593225614590864,
+        -3.624807199612704,
+        -3.08178172357254,
+        -0.47355990859662,
+        -0.5442880782445414,
+        0.4155657239677524
+      ],
+      "mean_difference": -1.2808005737007602,
+      "metric": "margin_auc",
+      "n": 6,
+      "positive_pairs": 1,
+      "seeds": [
+        6101,
+        6102,
+        6103,
+        6104,
+        6105,
+        6106
+      ],
+      "treatment": "conditional"
+    }
+  ],
+  "decision": "NEGATIVE_BOUNDARY_RESULT",
+  "engineering_pass": true,
+  "error_count": 0,
+  "minimum_feasible_option_fraction": 0.95,
+  "performance_pass": false,
+  "preregistration": {
+    "candidate_source": "src/0_6_4/SOMA_CELL_0_6_4_pythonista.py",
+    "candidate_source_sha256": "47b58227fc7835e0bdadc0cda4243ea0adc6ac73080f087500f99fa955af5533",
+    "claims_excluded": [
+      "universal neural uselessness",
+      "life",
+      "consciousness",
+      "open-ended evolution",
+      "statistical generalisation beyond the registered digital assays"
+    ],
+    "development_boundary_assay": {
+      "option_fractions": [
+        0.25,
+        0.5,
+        0.75,
+        0.85,
+        0.9,
+        0.95,
+        1.0
+      ],
+      "purpose": "measure the minimum early option fraction that physically permits a two-cell organ before substrate depletion; not a holdout performance claim",
+      "seconds": 40.0,
+      "seeds": [
+        101,
+        202,
+        303
+      ]
+    },
+    "frozen_candidate": {
+      "cue_delay": 5.0,
+      "cue_duration": 1.3,
+      "cue_period": 12.0,
+      "cue_visibility": 0.7,
+      "division": false,
+      "environmental_damage": false,
+      "external_inflow": false,
+      "mutation": false,
+      "preparedness_min_persistence": 1.25,
+      "preparedness_option_fraction": 0.95,
+      "preparedness_release_delay": 5.5,
+      "preparedness_release_threshold": 0.065,
+      "preparedness_required_fraction": 0.94,
+      "preparedness_signal_threshold": 0.112,
+      "preparedness_value_rate": 0.024,
+      "reward_duration": 2.4,
+      "rule_change_period": 12.0,
+      "rule_first_change_age": 10.0,
+      "rule_mode": "periodic",
+      "trial_seconds": 60.0
+    },
+    "holdout": {
+      "engineering_gate": "all runs finite and absolute material residual below 3.0e-5",
+      "pairwise_controls": [
+        "option_no_tissue",
+        "always_no_tissue",
+        "eager",
+        "always_efficient2",
+        "random_cost_matched"
+      ],
+      "policies": [
+        "conditional",
+        "option_no_tissue",
+        "always_no_tissue",
+        "eager",
+        "always_efficient2",
+        "random_cost_matched"
+      ],
+      "primary_metric": "margin_auc",
+      "secondary_metric": "uptake_delta",
+      "seeds": [
+        6101,
+        6102,
+        6103,
+        6104,
+        6105,
+        6106
+      ],
+      "success_gate": "conditional must have positive mean margin-AUC difference and at least 4/6 positive pairs versus every listed control"
+    },
+    "implementation_schema": "0.6.4-AB1.1",
+    "milestone": "SOMA-CELL 0.6.4",
+    "negative_release_rule": "If no preregistered region passes, release 0.6.4 as a negative boundary result and set the conditional preparedness/neurogenesis grammar dormant by default for the next milestone rather than tuning on holdout seeds.",
+    "question": "Does an early paid precursor option create any reproducible task region where conditional transient neurogenesis repays the total option, development, activity, damage, and opportunity cost?",
+    "registered_utc": "2026-08-08T00:00:00Z",
+    "schema_version": "1.0",
+    "stable_safety": {
+      "environment": "moving_patch",
+      "gate": "zero conditional preparedness investments and zero neural developments in all 12 runs",
+      "seconds": 30.0,
+      "seeds": [
+        6201,
+        6202,
+        6203,
+        6204,
+        6205,
+        6206,
+        6207,
+        6208,
+        6209,
+        6210,
+        6211,
+        6212
+      ]
+    }
+  },
+  "schema": "0.6.4-AB1.1",
+  "source_sha256": "47b58227fc7835e0bdadc0cda4243ea0adc6ac73080f087500f99fa955af5533",
+  "stable_false_developments": 0,
+  "stable_false_investments": 0,
+  "stable_pass": true,
+  "trial_count": 69
+}

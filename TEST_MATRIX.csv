@@ -112,3 +112,21 @@ F063-013,0.6.3,inherited regressions,PASS,151/151; grand total 177/177
 F063-014,0.6.3,preregistered experiment,PASS_WITH_LIMITS,74 finite trials; max material residual 1.49e-5; scientific status negative
 F063-015,0.6.3,Pythonista compact HUD and descendant-safe reset,PASS,inherited from UI1/0.6.2 and validated in source/flat package
 F063-016,0.6.3,scientific status,NEGATIVE_RESULT_WITH_LIMITS,mechanism works but transient organ does not consistently repay total cost in tested short task
+F064-001,0.6.4,real early precursor option,PASS,protein/membrane/signal material conserved through P0 port
+F064-002,0.6.4,option-no-tissue cost control,PASS,matches conditional early readiness cost without organ
+F064-003,0.6.4,low-option readiness boundary,PASS,0.90 cannot meet 0.94 physical transfer threshold
+F064-004,0.6.4,minimum feasible option fraction,PASS,0.95 develops 3/3; 0.90 and below develop 0/3
+F064-005,0.6.4,persistent physical evidence gate,PASS,no schedule label or external answer exposed
+F064-006,0.6.4,periodic physical-law change,PASS,world parameter changes without organism-facing clock
+F064-007,0.6.4,conservative expansion release,PASS,expansion returned while option floor retained
+F064-008,0.6.4,stable false investment safety,PASS,0 false full investments and 0 false developments in 12
+F064-009,0.6.4,conditional vs option-no-tissue,FAIL,mean AUC -0.918171; positive 1/6
+F064-010,0.6.4,conditional vs bare no-tissue,FAIL,mean AUC -2.394640; positive 0/6
+F064-011,0.6.4,conditional vs eager,FAIL,mean AUC -1.136416; positive 1/6
+F064-012,0.6.4,conditional vs always efficient2,FAIL,mean AUC -1.794204; positive 2/6
+F064-013,0.6.4,conditional vs random cost-matched,FAIL,mean AUC -1.280801; positive 1/6
+F064-014,0.6.4,dedicated validation,PASS,25/25
+F064-015,0.6.4,inherited regression,PASS,177/177; grand total 202/202
+F064-016,0.6.4,registered trial integrity,PASS,69 trials errors 0 all finite material residual <3e-5
+F064-017,0.6.4,compact HUD and descendant-safe reset,PASS,inherited and source-validated
+F064-018,0.6.4,scientific status,NEGATIVE_BOUNDARY_RESULT_WITH_LIMITS,95 percent early reservation required and every mean comparison negative

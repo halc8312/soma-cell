@@ -1,0 +1,10 @@
+layer,passed,total,status,execution
+P0,22,22,PASS,frozen_fresh_record
+P1,18,18,PASS,frozen_fresh_record
+P2,22,22,PASS,frozen_fresh_record
+Formal_0_6,22,22,PASS,frozen_fresh_record
+Formal_0_6_1,43,43,PASS,frozen_fresh_record
+Formal_0_6_2,24,24,PASS,frozen_fresh_record
+Formal_0_6_3,26,26,PASS,fresh_rerun
+Formal_0_6_4,25,25,PASS,fresh_rerun
+Grand_total,202,202,PASS,mixed_frozen_and_fresh_as_documented

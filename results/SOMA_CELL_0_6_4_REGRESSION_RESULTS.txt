@@ -1,0 +1,24 @@
+SOMA-CELL 0.6.4 INHERITED REGRESSION RESULTS
+=============================================
+
+Frozen inherited 0.6.2-and-earlier suite from the 0.6.3 baseline:
+P0 chemical body port                 : 22/22 PASS
+P1 one material neuron                : 18/18 PASS
+P2 eight-cell material tissue         : 22/22 PASS
+Formal 0.6 causal audit               : 22/22 PASS
+Formal 0.6.1 diagnosis/conservation   : 43/43 PASS
+Formal 0.6.2 metabolic audit          : 24/24 PASS
+------------------------------------------------------
+Frozen inherited subtotal             : 151/151 PASS
+
+Fresh parent rerun before 0.6.4 release:
+Formal 0.6.3 transient neurogenesis    : 26/26 PASS
+------------------------------------------------------
+Inherited total                       : 177/177 PASS
+0.6.4 dedicated                       : 25/25 PASS
+Grand total                            : 202/202 PASS
+
+The 0.6.3 validation was rerun from the frozen 0.6.3 source after 0.6.4
+experiments.  The earlier 151 checks remain the frozen, previously fresh-run
+regression record inherited by the signed 0.6.3 checkpoint.  Compact HUD and
+descendant-safe reset are preserved.
