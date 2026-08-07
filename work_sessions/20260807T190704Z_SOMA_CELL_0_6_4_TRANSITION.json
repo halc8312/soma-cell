@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.1",
+  "receipt_type": "transition",
+  "session_id": "20260807T190704Z_SOMA_CELL_0_6_4_TRANSITION",
+  "started_utc": "2026-08-07T19:07:04Z",
+  "actor": "ChatGPT GPT-5.6 Pro",
+  "purpose": "Promote measured SOMA-CELL 0.6.4 negative boundary result and open 0.6.5 multigenerational organ-economy work",
+  "acknowledgement": "COMPLETE_CURRENT_MILESTONE_AND_ADVANCE",
+  "rule_id": "SOMA-RULELOCK-20260801-R2",
+  "checkpoint_id": "SOMA-20260808-CELL063-NEGATIVE-TRANSIENT-BASELINE-TO-064-RULELOCK2",
+  "baseline": "SOMA-CELL 0.6.3",
+  "canonical_source": "src/0_6_3/SOMA_CELL_0_6_3_pythonista.py",
+  "git_commit": "a9472cfc9dfad9788773dad9ce584867b650d362",
+  "git_status_at_start": "",
+  "required_sources_read_and_hash_checked": {
+    "00_MANDATORY_STARTUP_GATE_JA.md": {
+      "sha256": "9a830d90286ee3b70a3524fa8b54aef543222437ee529ec4ac6b35165f3b6ef8",
+      "size": 3259
+    },
+    "MANDATORY_WORKFLOW.json": {
+      "sha256": "e9416c2c2c49323e2760c9457e28141ac61e56b350d40ffaab5acb80a30b5889",
+      "size": 3419
+    },
+    "PROJECT_STATE.json": {
+      "sha256": "7bcd0f78a737b1d4a19bbcf5f3a40f1012aa832e3b507ffed468e38e8131d67b",
+      "size": 12171
+    },
+    "CURRENT_BASELINE.txt": {
+      "sha256": "449f4bfa16f26778ef91c07e8b523a774ebee2341039ea63d36f70bc0de3c055",
+      "size": 831
+    },
+    "docs/SOMA_CONTEXT_HANDOFF_JA.md": {
+      "sha256": "05e81499515a2488a3237af2d09768b50268eb0d0245e1fa39ff45a61022076a",
+      "size": 20494
+    },
+    "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md": {
+      "sha256": "375358c0e76f0c497ce4cb25a53d66a29159ac56ed0b5443af71bf15ff9d2238",
+      "size": 16724
+    },
+    "planning/ROADMAP_0_6_JA.md": {
+      "sha256": "7b429b6eba5321aacb03c6bc4d9818886b7badbc88cf151957e2fffee407d58e",
+      "size": 9391
+    },
+    "docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md": {
+      "sha256": "fb2403fece7be7bbe2235823d171a8d93c040fe802483fa381dff0a4bc870e83",
+      "size": 2565
+    },
+    "docs/SOMA_CELL_0_6_P2_TISSUE_CONTRACT.md": {
+      "sha256": "535474fe661a7b4e924a10d95d901908029a75b63e5f737aebe25b5190c32e77",
+      "size": 6749
+    },
+    "docs/SOMA_CELL_0_6_2_FORMAL_CONTRACT.md": {
+      "sha256": "5e5847bd1240e737a0e3f1a7eeca3b27317ed3d86a7340854db801e9071f052b",
+      "size": 3768
+    },
+    "docs/SOMA_CELL_0_6_3_FORMAL_CONTRACT.md": {
+      "sha256": "cbc312d2cf448b996a7684d895cd133d1d1705cf8d1df010744b17d01f862d49",
+      "size": 2625
+    },
+    "docs/SOMA_CELL_0_6_3_FORMAL_SCHEMA.json": {
+      "sha256": "5580cd872480c9c848bf02eebf1ea172dd43ad6c4ad6402374949e1a533ce61c",
+      "size": 1253
+    },
+    "src/0_6_3/SOMA_CELL_0_6_3_pythonista.py": {
+      "sha256": "212695bf946fecb0a836698cc6e1ab705f6d248502e4bd0f82a69a8090dfe31b",
+      "size": 89568
+    },
+    "results/SOMA_CELL_0_6_3_VALIDATION_RESULTS.txt": {
+      "sha256": "55cb0aa7dafccca8304849dcbb6244dfa08983ee975e7c213021318a6e5eeed7",
+      "size": 3434
+    },
+    "results/SOMA_CELL_0_6_3_REGRESSION_RESULTS.txt": {
+      "sha256": "9356b5a5f9501875f5a2703566025ab494f195ec95152cb94124e161d3690457",
+      "size": 915
+    },
+    "results/SOMA_CELL_0_6_3_PREREGISTRATION.json": {
+      "sha256": "a52248d2ee157462c87fc22a6bd92a33d039727eca98e1dd4cd055bf7c7609e0",
+      "size": 2905
+    },
+    "results/SOMA_CELL_0_6_3_EXPERIMENT_REPORT.txt": {
+      "sha256": "5c9d1975b09411cc5ebb3514b6e740dd19a8a43edc33fe7ef5e61f3740f18ebc",
+      "size": 24068
+    }
+  },
+  "declared_reviews": [
+    "latest PROJECT_STATE",
+    "current canonical source",
+    "context handoff",
+    "0.6 integration contract",
+    "current baseline validation and experiment results",
+    "known failures and open risks",
+    "next milestone roadmap"
+  ],
+  "fail_closed": true,
+  "milestone": "SOMA-CELL 0.6.4",
+  "from_milestone": "SOMA-CELL 0.6.4",
+  "to_milestone": "SOMA-CELL 0.6.5",
+  "baseline_before": "SOMA-CELL 0.6.3",
+  "baseline_after": "SOMA-CELL 0.6.4",
+  "authorization_scope": "one commit promoting the declared completed milestone",
+  "evidence_files_hash_checked": {
+    "results/SOMA_CELL_0_6_4_VALIDATION_RESULTS.txt": {
+      "sha256": "d45aabf1111406b3aac9d61d17faa7cc22a78a5b14e68113a74e449c271b42be",
+      "size": 3400
+    },
+    "results/SOMA_CELL_0_6_4_REGRESSION_RESULTS.txt": {
+      "sha256": "25f36fc6d6ecb63be36c5c8add119e94dbcca5fc86c008eb4cbcf9ecdfc3bda7",
+      "size": 1143
+    },
+    "results/SOMA_CELL_0_6_4_EXPERIMENT_REPORT.txt": {
+      "sha256": "00c028d3000dfb0275974e41b4d23ebff94d6e0415fa12076786413a131c2c38",
+      "size": 1462
+    },
+    "results/SOMA_CELL_0_6_4_PREREGISTRATION.json": {
+      "sha256": "7779b44d9b417f748a7881e36462c2af9fa403cab3b9992f79391e2dfb1ba595",
+      "size": 2925
+    },
+    "results/SOMA_CELL_0_6_4_RELEASE_RECORD.json": {
+      "sha256": "027b87d41573f9e179804acaf39072416efa15e81c34d8cc3936ef1c207533fb",
+      "size": 1968
+    },
+    "releases/SOMA_CELL_0_6_4_GOLD_20260808.zip": {
+      "sha256": "89b577994fd3cb8cbeffc12f61918321a9a0686fa9fdd010bc6130f5da5d0516",
+      "size": 420908
+    }
+  }
+}

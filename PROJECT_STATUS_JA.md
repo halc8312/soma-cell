@@ -4,47 +4,38 @@
 
 ## 現在地
 
-**SOMA-CELL 0.6.3を工学的PASS・科学的NEGATIVE_RESULT_WITH_LIMITSの凍結基準へ昇格します。需要連動の一時神経器官は物質的に発生・監査・再吸収できましたが、事前登録した短い課題では費用を再現性よく回収できませんでした。**
+**SOMA-CELL 0.6.4を工学的PASS・科学的NEGATIVE_BOUNDARY_RESULT_WITH_LIMITSの凍結基準へ昇格。後から2区画神経器官を作るには完全前駆体の95%を需要判明前に予約する必要があり、条件付き器官は全ての事前登録対照へ平均で敗れた。**
 
 ```text
-Baseline: SOMA-CELL 0.6.3
-Canonical: src/0_6_3/SOMA_CELL_0_6_3_pythonista.py
-Schema: 0.6.3-NG1.0
+Baseline: SOMA-CELL 0.6.4
+Canonical: src/0_6_4/SOMA_CELL_0_6_4_pythonista.py
+Schema: 0.6.4-AB1.1
 Engineering: PASS
-Science: NEGATIVE_RESULT_WITH_LIMITS
-Next: SOMA-CELL 0.6.4
+Science: NEGATIVE_BOUNDARY_RESULT_WITH_LIMITS
+Next: SOMA-CELL 0.6.5
 ```
-
-## 実装済み
-
-- 有料の非神経センチネル
-- 実タンパク質・膜・信号前駆体予約
-- 需要スコアと発生費の比較
-- 2〜4区画の発達中計算遮断
-- ACTIVE/DORMANT反転価値監査
-- 監査中の学習凍結
-- 正なら期限付きリース、非正なら保存的再吸収
 
 ## 検証
 
 ```text
-0.6.3専用: 26/26 PASS
-継承回帰: 151/151 PASS
-合計: 177/177 PASS
-事前登録試行: 74
+0.6.4専用: 25/25 PASS
+継承回帰: 177/177 PASS
+合計: 202/202 PASS
+登録試行: 69
 ```
 
 ## 科学結果
 
 ```text
-stable誤発生: 0/12
-需要連動−prepared no-tissue: 平均+0.272332、正1/6（基準4/6をFAIL）
-需要連動−bare no-tissue: 平均-0.621635、正1/6
-物質取得−prepared: 平均+0.064033、正3/6
+最小物理発生オプション: 0.95
+stable誤完全準備/誤発生: 0/12, 0/12
+conditional - option-no-tissue: -0.918171, 正1/6
+conditional - bare: -2.394640, 正0/6
+conditional - eager: -1.136416, 正1/6
+conditional - always-efficient2: -1.794204, 正2/6
+conditional - random: -1.280801, 正1/6
 ```
 
-機構と安全性は成立しましたが、主要な費用込み価値ゲートは不合格です。平均の正値は一つの大きな成功系列に依存しています。
+## 次: SOMA-CELL 0.6.5
 
-## 次: SOMA-CELL 0.6.4
-
-課題継続時間、変化頻度、部分観測性、センチネル／前駆体準備費を事前登録して掃引し、一時器官が費用を回収し始める領域が存在するかを測ります。存在しなければニューロジェネシス文法を縮小または休眠します。
+追加神経文法を既定休眠にし、センチネル、準備率、器官発生、予測、可塑性の物質遺伝子が多世代選択で保持・縮小・欠失するかを測る。神経を有利に調整せず、費用を払えない環境では自然に失われることを許容する。

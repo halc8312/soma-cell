@@ -11,18 +11,17 @@
     "CURRENT_BASELINE.txt",
     "docs/SOMA_CONTEXT_HANDOFF_JA.md",
     "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md",
-    "docs/SOMA_CELL_0_6_2_FORMAL_CONTRACT.md",
-    "docs/SOMA_CELL_0_6_2_FORMAL_SCHEMA.json",
-    "src/0_6_2/SOMA_CELL_0_6_2_pythonista.py",
-    "results/SOMA_CELL_0_6_2_VALIDATION_RESULTS.txt",
-    "results/SOMA_CELL_0_6_2_REGRESSION_RESULTS.txt",
-    "results/SOMA_CELL_0_6_2_EXPERIMENT_REPORT.txt",
-    "results/SOMA_CELL_0_6_2_R4_RELEASE_RECORD.json",
+    "docs/SOMA_CELL_0_6_4_FORMAL_CONTRACT.md",
+    "docs/SOMA_CELL_0_6_4_FORMAL_SCHEMA.json",
+    "src/0_6_4/SOMA_CELL_0_6_4_pythonista.py",
+    "results/SOMA_CELL_0_6_4_PREREGISTRATION.json",
+    "results/SOMA_CELL_0_6_4_VALIDATION_RESULTS.txt",
+    "results/SOMA_CELL_0_6_4_REGRESSION_RESULTS.txt",
+    "results/SOMA_CELL_0_6_4_EXPERIMENT_REPORT.txt",
+    "results/SOMA_CELL_0_6_4_RELEASE_RECORD.json",
     "planning/ROADMAP_0_6_JA.md",
-    "docs/SOMA_CELL_0_6_1_FORMAL_CONTRACT.md",
-    "src/0_6_1/SOMA_CELL_0_6_1_pythonista.py",
-    "canonical/SOMA_2_1_pythonista.py",
-    "canonical/SOMA_4_2_pythonista.py"
+    "docs/SOMA_CELL_0_6_3_FORMAL_CONTRACT.md",
+    "src/0_6_3/SOMA_CELL_0_6_3_pythonista.py"
   ],
   "required_before_edit": [
     "sha256_verification_passed",
@@ -47,31 +46,30 @@
     "single_commit_only": true,
     "fresh_preflight_required_after_commit": true
   },
-  "formal_06_4_specific_guard": {
+  "formal_06_5_specific_guard": {
     "mandatory": true,
-    "parent_contract": "docs/SOMA_CELL_0_6_3_FORMAL_CONTRACT.md",
-    "rule": "0.6.4 must not reinterpret the 0.6.3 preregistered failure as success. It must map task-duration/volatility/readiness-cost boundaries before adding new cognitive mechanisms.",
+    "parent_contract": "docs/SOMA_CELL_0_6_4_FORMAL_CONTRACT.md",
+    "rule": "0.6.5 must keep added-neural grammar dormant by default and test multigenerational retention, shrinkage or deletion without hand-tuning neural benefit.",
     "known_negative_results": [
-      "demand vs prepared positive only 1/6",
-      "demand mean body-margin AUC below bare no-tissue",
-      "uptake positive only 3/6",
-      "prediction and plasticity did not repay cost in screening"
+      "minimum feasible early precursor option was 0.95",
+      "conditional lost every preregistered mean comparison",
+      "option-no-tissue beat conditional in 5/6 pairs",
+      "bare no-tissue beat conditional in 6/6 pairs"
     ],
     "required_stages": [
-      "preregister task duration and volatility axes",
-      "separate bare and prepared no-tissue controls",
-      "measure readiness cost separately from organ cost",
-      "retain random cost-matched development control",
-      "identify an amortization boundary or retire the organ grammar"
+      "material-genome representation of sentinel/readiness/organ modules",
+      "mutation deletion duplication and regulatory dormancy",
+      "stable periodic-change and rare-fault multigenerational environments",
+      "knockout and reintroduction causal tests",
+      "lineage-frequency and material-cost accounting"
     ],
     "required_controls": [
-      "bare no_tissue",
-      "prepared no_tissue",
-      "always efficient2",
-      "demand transient organ",
-      "random cost-matched organ",
-      "no prediction",
-      "no plasticity"
+      "grammar absent",
+      "minimal dormant grammar",
+      "full grammar",
+      "mutation disabled",
+      "HGT disabled",
+      "environment unchanged"
     ]
   }
 }
