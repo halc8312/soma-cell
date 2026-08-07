@@ -1,0 +1,43 @@
+{
+  "record_version": "0.6.3-R1.0",
+  "build": "SOMA-CELL 0.6.3",
+  "schema": "0.6.3-NG1.0",
+  "date": "2026-08-08",
+  "source": "src/0_6_3/SOMA_CELL_0_6_3_pythonista.py",
+  "source_sha256": "212695bf946fecb0a836698cc6e1ab705f6d248502e4bd0f82a69a8090dfe31b",
+  "release": "releases/SOMA_CELL_0_6_3_GOLD_20260808.zip",
+  "release_sha256": "see external artifact checksum / PROJECT_STATE after packaging",
+  "engineering_status": "PASS",
+  "scientific_status": "NEGATIVE_RESULT_WITH_LIMITS",
+  "dedicated_validation": {
+    "passed": 26,
+    "total": 26
+  },
+  "inherited_regression": {
+    "passed": 151,
+    "total": 151
+  },
+  "grand_total": {
+    "passed": 177,
+    "total": 177
+  },
+  "experiment_trials": 74,
+  "preregistered_primary": {
+    "treatment": "demand",
+    "control": "prepared_no_tissue",
+    "metric": "margin_auc",
+    "mean_difference": 0.27233197107743184,
+    "positive_pairs": 1,
+    "pairs": 6,
+    "required_positive_pairs": 4,
+    "passed": false
+  },
+  "stable_false_developments": {
+    "events": 0,
+    "trials": 12
+  },
+  "demand_vs_bare_mean_difference": -0.6216351239652896,
+  "max_abs_material_residual": 1.4896723229185227e-05,
+  "next_milestone": "SOMA-CELL 0.6.4",
+  "interpretation": "Mechanism and safety engineering passed; transient demand-driven neural tissue did not consistently repay readiness/development/maintenance/reabsorption cost in the preregistered short task."
+}

@@ -96,3 +96,19 @@ F062-017,0.6.2,dedicated validation,PASS,24/24
 F062-018,0.6.2,inherited regressions,PASS,127/127; grand total 151/151
 F062-019,0.6.2,preregistered comparisons,PASS,94 successful trials with disclosed clone-path amendment
 F062-020,0.6.2,scientific status,NEGATIVE_RESULT_WITH_LIMITS,economically selected added neural tissue is zero in tested short task
+F063-001,0.6.3,paid non-neural sentinel and precursor reserves,PASS,real protein/membrane/signal/ATP readiness; unmetered path rejected
+F063-002,0.6.3,demand-gated transient organ development,PASS,paid 2-cell organ matures from stored precursors; development-only computation blocked
+F063-003,0.6.3,counterbalanced organ-value probe,PASS,ABBA/BAAB active-dormant probe; learning frozen; positive lease and nonpositive reabsorption tested
+F063-004,0.6.3,conservative reabsorption and archived cost,PASS,ATP/material returned; spent prediction/plasticity cost remains archived
+F063-005,0.6.3,random cost-matched control,PASS,preparedness matched; stateless trigger does not consume world RNG
+F063-006,0.6.3,stable false development safety,PASS,0 false developments in 12 stable moving-patch holdouts
+F063-007,0.6.3,preregistered demand vs prepared primary gate,FAIL,mean AUC +0.272332 but only 1/6 positive; required >=4/6
+F063-008,0.6.3,demand vs bare no-tissue,FAIL,mean AUC -0.621635; positive 1/6
+F063-009,0.6.3,demand uptake consistency,UNRESOLVED,mean +0.064033 vs prepared but positive only 3/6
+F063-010,0.6.3,prediction net value in transient organ,FAIL,screening no-prediction mean AUC exceeds full demand
+F063-011,0.6.3,plasticity net value in transient organ,FAIL,screening no-plasticity mean AUC exceeds full demand
+F063-012,0.6.3,dedicated deterministic validation,PASS,26/26
+F063-013,0.6.3,inherited regressions,PASS,151/151; grand total 177/177
+F063-014,0.6.3,preregistered experiment,PASS_WITH_LIMITS,74 finite trials; max material residual 1.49e-5; scientific status negative
+F063-015,0.6.3,Pythonista compact HUD and descendant-safe reset,PASS,inherited from UI1/0.6.2 and validated in source/flat package
+F063-016,0.6.3,scientific status,NEGATIVE_RESULT_WITH_LIMITS,mechanism works but transient organ does not consistently repay total cost in tested short task

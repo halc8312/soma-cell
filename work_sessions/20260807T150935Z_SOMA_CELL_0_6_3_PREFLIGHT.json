@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.1",
+  "receipt_type": "preflight",
+  "session_id": "20260807T150935Z_SOMA_CELL_0_6_3_PREFLIGHT",
+  "started_utc": "2026-08-07T15:09:35Z",
+  "actor": "ChatGPT GPT-5.6 Pro",
+  "purpose": "SOMA-CELL 0.6.3 demand-driven neurogenesis: paid transient tissue development, measured organ lease, and conservative reabsorption using the frozen 0.6.2 negative result as parent",
+  "acknowledgement": "READ_LATEST_SOURCES_AND_CONTRACTS",
+  "rule_id": "SOMA-RULELOCK-20260801-R2",
+  "checkpoint_id": "SOMA-20260804-CELL062-NEGATIVE-AUDIT-BASELINE-TO-063-RULELOCK2",
+  "baseline": "SOMA-CELL 0.6.2",
+  "canonical_source": "src/0_6_2/SOMA_CELL_0_6_2_pythonista.py",
+  "git_commit": "91c05c23166abfcff251cd09a73e3af6682d8d80",
+  "git_status_at_start": "",
+  "required_sources_read_and_hash_checked": {
+    "00_MANDATORY_STARTUP_GATE_JA.md": {
+      "sha256": "9a830d90286ee3b70a3524fa8b54aef543222437ee529ec4ac6b35165f3b6ef8",
+      "size": 3259
+    },
+    "MANDATORY_WORKFLOW.json": {
+      "sha256": "0d6a19691724d3cf751a668a6b4a2fdcec732685598658dac39bf0c8a15c328b",
+      "size": 3714
+    },
+    "PROJECT_STATE.json": {
+      "sha256": "81208644a1b161893640d05fcc7d9a187d2b586d8962b11657ebc7c423dd0f33",
+      "size": 12621
+    },
+    "CURRENT_BASELINE.txt": {
+      "sha256": "84c7753069b37d09209323e231dfe676266c410c993042fb8e82ec28b5f08069",
+      "size": 831
+    },
+    "docs/SOMA_CONTEXT_HANDOFF_JA.md": {
+      "sha256": "b90b488386e98a8a31e3880214ae713d8e88ebe47440c2298af0089c782e5cd4",
+      "size": 18908
+    },
+    "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md": {
+      "sha256": "375358c0e76f0c497ce4cb25a53d66a29159ac56ed0b5443af71bf15ff9d2238",
+      "size": 16724
+    },
+    "planning/ROADMAP_0_6_JA.md": {
+      "sha256": "45e6181726770ae363760e2bc4a79f2884ab017f69b13a93242f2aaf394bd9e1",
+      "size": 6040
+    },
+    "docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md": {
+      "sha256": "fb2403fece7be7bbe2235823d171a8d93c040fe802483fa381dff0a4bc870e83",
+      "size": 2565
+    },
+    "docs/SOMA_CELL_0_6_P2_TISSUE_CONTRACT.md": {
+      "sha256": "535474fe661a7b4e924a10d95d901908029a75b63e5f737aebe25b5190c32e77",
+      "size": 6749
+    },
+    "docs/SOMA_CELL_0_6_1_FORMAL_CONTRACT.md": {
+      "sha256": "d2c94fec289344000a5b6453ed0d5a14951f1c0a0bc37154fe77b0047597a65c",
+      "size": 4452
+    },
+    "docs/SOMA_CELL_0_6_2_FORMAL_CONTRACT.md": {
+      "sha256": "5e5847bd1240e737a0e3f1a7eeca3b27317ed3d86a7340854db801e9071f052b",
+      "size": 3768
+    },
+    "docs/SOMA_CELL_0_6_2_FORMAL_SCHEMA.json": {
+      "sha256": "e6a466a00e83fcb3f18171891482385c1c27c63d09208c17969b9531711c47ec",
+      "size": 701
+    },
+    "src/0_6_2/SOMA_CELL_0_6_2_pythonista.py": {
+      "sha256": "f3f358aec31a31d082d9617cc7476bf96bae33fbc5c4e4968bd8f3de99ef8ae9",
+      "size": 30386
+    },
+    "results/SOMA_CELL_0_6_2_VALIDATION_RESULTS.txt": {
+      "sha256": "2c555c088085617bb29abb4e4b01bd5258e04af6852cf100d50d62d89b77e107",
+      "size": 2438
+    },
+    "results/SOMA_CELL_0_6_2_REGRESSION_RESULTS.txt": {
+      "sha256": "8aa0e22a7ef1c4ac1ad60dc282dad42184fd052f2c2eca2d72c177dd974039d9",
+      "size": 790
+    },
+    "results/SOMA_CELL_0_6_2_EXPERIMENT_REPORT.txt": {
+      "sha256": "6704d683826b9e27b40857d00c61223fe0a980cbfc29eeae7d8fb8c495dd5906",
+      "size": 3968
+    }
+  },
+  "declared_reviews": [
+    "latest PROJECT_STATE",
+    "current canonical source",
+    "context handoff",
+    "0.6 integration contract",
+    "current baseline validation and experiment results",
+    "known failures and open risks",
+    "next milestone roadmap"
+  ],
+  "fail_closed": true,
+  "milestone": "SOMA-CELL 0.6.3"
+}

@@ -1,0 +1,77 @@
+{
+  "schema": "SOMA-CELL-0.6.3-PREREG-1.0",
+  "created_utc": "2026-08-07T16:20:00Z",
+  "parent_baseline": "SOMA-CELL 0.6.2",
+  "parent_git_head": "91c05c23166abfcff251cd09a73e3af6682d8d80",
+  "candidate_build": "SOMA-CELL 0.6.3",
+  "candidate_schema": "0.6.3-NG1.0",
+  "candidate_source_sha256": "212695bf946fecb0a836698cc6e1ab705f6d248502e4bd0f82a69a8090dfe31b",
+  "scientific_question": "Does paid demand-driven transient neurogenesis improve cost-inclusive body margin over an equal-preparedness non-neural control in a short cue-reversal challenge?",
+  "primary_control": "prepared_no_tissue",
+  "secondary_ceiling": "always_no_tissue",
+  "screening": {
+    "seeds": [8001, 8002, 8003, 8004],
+    "seconds": 26.0,
+    "switch_age": 10.0,
+    "environment_constant": "P2_ENV_CUE_REVERSAL",
+    "policies": [
+      "always_no_tissue",
+      "prepared_no_tissue",
+      "demand",
+      "random_cost_matched",
+      "always_efficient2",
+      "demand_no_reabsorption",
+      "demand_no_prediction",
+      "demand_no_plasticity"
+    ],
+    "role": "development screening; not confirmatory"
+  },
+  "confirmation": {
+    "seeds": [9001, 9002, 9003, 9004, 9005, 9006],
+    "seconds": 26.0,
+    "switch_age": 10.0,
+    "environment_constant": "P2_ENV_CUE_REVERSAL",
+    "policies": [
+      "always_no_tissue",
+      "prepared_no_tissue",
+      "demand",
+      "random_cost_matched",
+      "always_efficient2"
+    ],
+    "primary_metric": "margin_auc",
+    "secondary_metric": "uptake_delta",
+    "role": "unseen paired holdout"
+  },
+  "stable_safety": {
+    "seeds": [9101, 9102, 9103, 9104, 9105, 9106, 9107, 9108, 9109, 9110, 9111, 9112],
+    "seconds": 24.0,
+    "switch_age": 999.0,
+    "environment_constant": "P2_ENV_MOVING_PATCH",
+    "policies": ["demand"],
+    "primary_metric": "neurogenesis_developments"
+  },
+  "acceptance": {
+    "minimum_mean_margin_auc_gain": 0.0,
+    "minimum_positive_margin_pairs": 4,
+    "maximum_stable_false_developments": 1,
+    "material_residual_limit": 2e-5,
+    "interpretation_on_failure": "NEGATIVE_RESULT_WITH_LIMITS"
+  },
+  "frozen_parameters": {
+    "neurogenesis_min_age": 5.5,
+    "neurogenesis_score_threshold": 0.035,
+    "neurogenesis_two_cell_cost_score": 0.025,
+    "organ_settle_duration": 8.0,
+    "organ_plasticity_warmup": 3.0,
+    "organ_probe_phase_duration": 1.15,
+    "organ_probe_repetitions": 2,
+    "organ_probe_freeze_learning": true,
+    "transient_default_recurrence": false
+  },
+  "claim_limits": [
+    "A negative result is valid and must not be tuned away using holdout seeds.",
+    "Prepared-no-tissue is the primary cost-matched control because it pays latent developmental genes, sentinel, and precursor-readiness costs.",
+    "Bare no-tissue is a secondary upper bound with no preparedness cost.",
+    "The assay is short and digital; it does not establish universal neural value, life, consciousness, or open-ended evolution."
+  ]
+}

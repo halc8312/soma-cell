@@ -1,0 +1,19 @@
+SOMA-CELL 0.6.3 INHERITED REGRESSION RESULTS
+=============================================
+Execution: fresh rerun from the frozen 0.6.2 checkpoint before 0.6.3 promotion
+
+P0 chemical body port          : 22/22 PASS
+P1 one material neuron         : 18/18 PASS
+P2 eight-cell material tissue  : 22/22 PASS
+Formal 0.6 causal audit        : 22/22 PASS
+Formal 0.6.1 diagnosis/conservation: 43/43 PASS
+Formal 0.6.2 metabolic audit   : 24/24 PASS
+---------------------------------------------------
+Inherited total                : 151/151 PASS
+0.6.3 dedicated                : 26/26 PASS
+Grand total                    : 177/177 PASS
+
+P2, Formal 0.6 and Formal 0.6.1 were completed with isolated/direct fresh
+interpreter runs where the aggregate runner exceeded the environment time limit.
+Every named test passed. The frozen 0.6.2 source and its compact HUD / descendant-
+safe reset remain the parent of the 0.6.3 Scene.

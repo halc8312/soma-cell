@@ -1,0 +1,12 @@
+SOMA-CELL 0.6.3 MANIFEST
+Build: SOMA-CELL 0.6.3
+Schema: 0.6.3-NG1.0
+Status: engineering PASS / scientific NEGATIVE_RESULT_WITH_LIMITS
+Canonical source SHA-256: 212695bf946fecb0a836698cc6e1ab705f6d248502e4bd0f82a69a8090dfe31b
+Dedicated validation: 26/26 PASS
+Inherited regression: 151/151 PASS
+Grand total: 177/177 PASS
+Experiment trials: 74
+Preregistered primary gate: FAIL (1/6 positive; required >=4/6)
+Stable false developments: 0/12
+Next milestone: SOMA-CELL 0.6.4

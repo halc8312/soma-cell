@@ -1,0 +1,23 @@
+SOMA-CELL 0.6.3 START HERE
+==========================
+
+1. ZIP内の全ファイルを同じPythonistaフォルダへ置く。
+2. SOMA_CELL_0_6_3_pythonista.py を実行する。
+3. 左上に SOMA-CELL 0.6.3 と表示されることを確認する。
+
+操作:
+- 膜をタップ: 局所穿孔
+- 空所をタップ: 資源雲を投入
+- 画面上部をタップ: 一時停止／再開
+- ダブルタップ: 0.6.3世界へ安全にリセット
+
+この版の科学結論:
+需要連動の一時神経器官は物質的に発生・監査・再吸収できたが、
+事前登録holdoutでは費用込み身体利益の一貫性を示せなかった。
+状態は engineering PASS / scientific NEGATIVE_RESULT_WITH_LIMITS。
+
+新しい実験に戻す場合は次を削除:
+soma_cell_0_6_3.pkl
+soma_cell_0_6_3_longrun.csv
+soma_cell_0_6_3_report.txt
+soma_cell_0_6_3_sessions.csv

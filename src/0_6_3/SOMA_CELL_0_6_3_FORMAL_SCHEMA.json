@@ -1,0 +1,40 @@
+{
+  "schema_version": "0.6.3-NG1.0",
+  "build": "SOMA-CELL 0.6.3",
+  "parent": "SOMA-CELL 0.6.2",
+  "engineering_status": "PASS",
+  "scientific_status": "NEGATIVE_RESULT_WITH_LIMITS",
+  "canonical_source": "SOMA_CELL_0_6_3_pythonista.py",
+  "source_sha256": "212695bf946fecb0a836698cc6e1ab705f6d248502e4bd0f82a69a8090dfe31b",
+  "policies": [
+    "demand",
+    "random_cost_matched",
+    "always_no_tissue",
+    "prepared_no_tissue",
+    "always_efficient2",
+    "always_efficient4",
+    "demand_no_reabsorption",
+    "demand_no_prediction",
+    "demand_no_plasticity"
+  ],
+  "primary_control": "prepared_no_tissue",
+  "primary_metric": "margin_auc",
+  "preregistered_gate": {
+    "mean_difference_positive": true,
+    "positive_pairs_min": 4,
+    "stable_false_developments_max": 1
+  },
+  "measured": {
+    "trials": 74,
+    "dedicated_validation": "26/26",
+    "inherited_regression": "151/151",
+    "grand_total": "177/177",
+    "stable_false_developments": "0/12",
+    "primary_mean_difference": 0.27233197107743184,
+    "primary_positive_pairs": "1/6",
+    "demand_vs_bare_mean_difference": -0.6216351239652896,
+    "uptake_positive_pairs": "3/6",
+    "max_abs_material_residual": 1.4896723229185227e-05
+  },
+  "next_milestone": "SOMA-CELL 0.6.4"
+}

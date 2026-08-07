@@ -1,0 +1,58 @@
+SOMA-CELL 0.6.3 VALIDATION RESULTS
+Build: SOMA-CELL 0.6.3
+Schema: 0.6.3-NG1.0
+Execution: fresh interpreter per test
+Passed: 26/26
+
+[PASS] build_schema_and_frozen_defaults
+  observed: build/schema and preregistered early transient-organ defaults fixed
+[PASS] preregistration_matches_source_hash
+  observed: preregistration source SHA-256 matches candidate
+[PASS] unmetered_sentinel_fails_closed
+  observed: unmetered neurogenesis controller rejected
+[PASS] always_none_exact_parent_lockstep
+  observed: always-no-tissue descendant exact 0.6.2 parent lockstep
+[PASS] prepared_control_is_equal_initial_matter_and_no_tissue
+  observed: prepared-no-tissue pays equal initial genetic readiness and real sentinel/reserves
+[PASS] sentinel_reads_only_physical_port_fields
+  observed: sentinel sees physical ligand/flux/body data, not privileged answers
+[PASS] demand_trigger_matures_two_cell_tissue_and_uses_precursors
+  observed: demand creates mature two-cell organ from paid stored precursors
+[PASS] development_only_prevents_premature_computation
+  observed: development-only phase assembles material without neural computation
+[PASS] probe_freezes_learning_in_active_and_dormant_phases
+  observed: organ probe preserves learned weights/updates in both A and B windows
+[PASS] counterbalanced_probe_positive_leases_seed101
+  observed: counterbalanced probe leases positive seed101 organ
+[PASS] nonpositive_probe_reabsorbs_and_archives_cost_seed202
+  observed: nonpositive organ reabsorbed conservatively; spent cost remains archived
+[PASS] no_reabsorption_control_keeps_nonpositive_organ
+  observed: no-reabsorption ablation retains a nonpositive organ
+[PASS] random_control_is_rng_nonconsuming_and_preparedness_matched
+  observed: random control pays same readiness and uses stateless non-RNG trigger
+[PASS] no_prediction_ablation_zeroes_prediction_meter
+  observed: demand-no-prediction develops organ with zero prediction meter
+[PASS] no_plasticity_ablation_zeroes_plasticity_meter
+  observed: demand-no-plasticity develops organ with zero plasticity meter
+[PASS] save_restore_exact_during_probe
+  observed: save/restore exact from active organ-probe state
+[PASS] clone_exact_after_reabsorption
+  observed: archived organ ledger and cooldown clone exactly
+[PASS] no_free_neurogenesis_state_inheritance_and_parent_division_regression
+  observed: daughter neurogenesis ledger is fresh; inherited material division PASS
+[PASS] ui_inherits_compact_visual_fix_and_descendant_reset
+  observed: compact visual-fix chain and descendant-safe double-tap reset inherited
+[PASS] stable_holdout_has_no_false_development
+  observed: stable moving-patch holdout false development 0/12
+[PASS] preregistered_primary_result_is_negative_by_pair_gate
+  observed: primary demand-vs-prepared holdout positive only 1/6 pairs; negative result
+[PASS] demand_loses_to_bare_no_tissue_on_mean_margin
+  observed: demand mean margin below bare no-tissue; 1/6 positive pairs
+[PASS] demand_uptake_signal_is_inconsistent
+  observed: uptake gain is inconsistent: demand positive in 3/6 prepared-control pairs
+[PASS] experiment_rows_are_finite_and_materially_conservative
+  observed: 74 trials finite; max material residual 1.490e-05
+[PASS] precursor_and_archived_cost_telemetry_in_log_contract
+  observed: long-run contract records readiness, precursor use, and archived organ cost
+[PASS] finite_material_stress
+  observed: 32s stress finite; material residual 1.253e-05
