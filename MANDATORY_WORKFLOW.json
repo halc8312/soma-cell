@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.8",
+  "schema_version": "2.0",
   "rule_id": "SOMA-RULELOCK-20260801-R2",
   "mandatory": true,
   "fail_closed": true,
@@ -47,32 +47,31 @@
     "single_commit_only": true,
     "fresh_preflight_required_after_commit": true
   },
-  "formal_06_3_specific_guard": {
+  "formal_06_4_specific_guard": {
     "mandatory": true,
-    "parent_contract": "docs/SOMA_CELL_0_6_2_FORMAL_CONTRACT.md",
-    "rule": "0.6.3 must not restore a permanently maintained neural organ after 0.6.2 selected no_tissue in the tested task. It may create paid transient tissue only when a physical information-deficit or mechanism-change signal predicts enough value to repay development, maintenance and reabsorption cost.",
+    "parent_contract": "docs/SOMA_CELL_0_6_3_FORMAL_CONTRACT.md",
+    "rule": "0.6.4 must not reinterpret the 0.6.3 preregistered failure as success. It must map task-duration/volatility/readiness-cost boundaries before adding new cognitive mechanisms.",
     "known_negative_results": [
-      "no_tissue outperformed all tested added neural profiles in screening and confirmation",
-      "recurrence failed the preregistered retain gate",
-      "prediction positive net value remains unproved",
-      "active semantic diagnosis net value remains unresolved"
+      "demand vs prepared positive only 1/6",
+      "demand mean body-margin AUC below bare no-tissue",
+      "uptake positive only 3/6",
+      "prediction and plasticity did not repay cost in screening"
     ],
     "required_stages": [
-      "material sentinel or non-neural evidence gate",
-      "paid 2-to-4 compartment development",
-      "maintenance lease with measured information value",
-      "conservative reabsorption when value is non-positive",
-      "common-disturbance comparisons against always-neural always-no-neural and cost-matched random development",
-      "stable and multiple nonstationary preregistered holdouts"
+      "preregister task duration and volatility axes",
+      "separate bare and prepared no-tissue controls",
+      "measure readiness cost separately from organ cost",
+      "retain random cost-matched development control",
+      "identify an amortization boundary or retire the organ grammar"
     ],
     "required_controls": [
-      "always no_tissue",
+      "bare no_tissue",
+      "prepared no_tissue",
       "always efficient2",
-      "always efficient4",
-      "random cost-matched neurogenesis",
+      "demand transient organ",
+      "random cost-matched organ",
       "no prediction",
-      "no plasticity",
-      "no reabsorption"
+      "no plasticity"
     ]
   }
 }
