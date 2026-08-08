@@ -1,0 +1,38 @@
+{
+  "build": "SOMA-CELL 0.6.8-GPU",
+  "schema": "0.6.8-GPU-A1.0",
+  "scientific_role": "engineering migration foundation",
+  "authoritative_model": "SOMA-CELL 0.6.6 CPU particle microphysics",
+  "tensor_axes": {
+    "B": "independent worlds",
+    "P": "particle capacity",
+    "C": "cell capacity",
+    "M": 36,
+    "T": 4,
+    "Q": 13,
+    "G": "genome symbol capacity"
+  },
+  "hybrid_integrated": [
+    "particle_diffusion",
+    "particle_ligand_profile"
+  ],
+  "validated_not_integrated": [
+    "circular_smooth",
+    "metabolism_core_reference",
+    "material_ledger"
+  ],
+  "cpu_authoritative": [
+    "surface_exchange",
+    "genome_replication",
+    "translation",
+    "division",
+    "death_corpse_edna_hgt",
+    "neural_causal_system"
+  ],
+  "forbidden_claims": [
+    "full GPU world step",
+    "CUDA performance without CUDA hardware",
+    "new proof of life",
+    "coarse-grained replacement of 0.6.6"
+  ]
+}

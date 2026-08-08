@@ -1,0 +1,9 @@
+SOMA-CELL 0.6.8-GPU A1 INHERITED REGRESSION RESULTS
+====================================================
+
+Parent 0.6.7 dedicated validation rerun: 28 / 28 PASS
+Parent 0.6.7 inherited regression record: 251 / 251 PASS
+----------------------------------------------------
+Inherited total: 279 / 279 PASS
+
+0.6.8-GPU A1 does not modify frozen 0.6.7 or 0.6.6 sources. It adds a separate tensor migration layer and hybrid hooks. No new scientific evolution claim is inherited from the GPU engineering work.

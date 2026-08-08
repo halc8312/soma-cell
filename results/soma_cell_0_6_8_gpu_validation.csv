@@ -1,0 +1,33 @@
+test,status,detail,error,seconds
+test_build_and_schema,PASS,build/schema frozen,,2.384185791015625e-06
+test_environment_report_is_honest,PASS,report exposes partial migration and CPU-authoritative subsystems,,1.6689300537109375e-05
+test_counter_uniform_matches_numpy,PASS,device-neutral xorshift counter stream exact,,0.002077341079711914
+test_counter_normal_is_deterministic,PASS,counter normal repeatable and finite,,0.0009152889251708984
+test_circular_smooth_lockstep,PASS,circular smoothing lockstep,,0.0007388591766357422
+test_diffusion_lockstep_fp64,PASS,particle diffusion/drift lockstep fp64,,0.001027822494506836
+test_diffusion_mask_and_torus,PASS,torus bounds and inactive-particle immobility,,0.00037026405334472656
+test_ligand_profile_lockstep_fp64,PASS,membrane-local particle profiles lockstep fp64,,0.0014240741729736328
+test_ligand_profiles_respect_masks,PASS,masked cells produce zero receptor occupancy,,0.00045490264892578125
+test_adapter_pack_shapes_and_finiteness,PASS,lossless padded tensor schema packs two detailed worlds,,0.028349637985229492
+test_adapter_preserves_full_opaque_state_hash,PASS,full CPU state round-trips through opaque canonical state,,0.05149078369140625
+test_adapter_genome_bytes_are_exact,PASS,variable-length material genomes mirrored byte-for-byte,,0.01343679428100586
+test_adapter_capacity_fails_closed,PASS,particle capacity overflow rejected,,0.006151437759399414
+test_tensor_batch_clone_independence,PASS,tensor clone owns independent storage,,0.014788389205932617
+test_metabolism_core_numpy_torch_lockstep,PASS,standalone core metabolism lockstep against independent NumPy transcription,,0.01431417465209961
+test_metabolism_core_finite_and_nonnegative,PASS,standalone metabolism remains finite and nonnegative,,0.014317512512207031
+test_hybrid_one_step_calls_offloaded_kernels,PASS,hybrid world offloads diffusion/profile while full CPU world stays finite,,0.7091314792633057
+test_hybrid_one_step_cpu_lockstep,PASS,one full 0.6.6 step lockstep with Torch CPU offload,,0.0785531997680664
+test_hybrid_short_event_lockstep,PASS,eight-step event-level lockstep within fp64 tolerance,,0.3936583995819092
+test_hybrid_clone_is_deterministic,PASS,hybrid clone preserves CPU RNG and tensor backend configuration exactly,,0.43741369247436523
+test_hybrid_save_restore_is_deterministic,PASS,hybrid save/restore deterministic,,0.45797157287597656
+test_hybrid_summary_disclaims_full_port,PASS,summary cannot mislabel hybrid as complete GPU world,,0.024955034255981445
+test_batch_worlds_are_independent,PASS,batched worlds have independent tensor slices,,0.0007762908935546875
+test_benchmark_runs_and_reports_capacity,PASS,batched benchmark finite with explicit partial-port flag,,0.0019483566284179688
+test_cuda_request_fails_closed_when_unavailable,PASS,CUDA request rejected by CPU-only build,,1.0728836059570312e-05
+test_fp32_is_explicitly_less_strict_than_fp64,PASS,fp32 tolerance measured rather than claimed bit-exact,,0.0006535053253173828
+test_adapter_memory_estimator_is_positive,PASS,tensor memory/capacity accounting available,,0.045912742614746094
+test_kernel_coverage_table_is_complete_enough_to_fail_closed,PASS,unported life mechanisms remain explicitly CPU-authoritative,,6.4373016357421875e-06
+test_no_external_fitness_added,PASS,GPU migration adds no fitness/reward channel,,0.025107622146606445
+test_material_arrays_are_not_silently_truncated,PASS,variable genome overflow rejected,,0.013518095016479492
+test_state_schema_includes_dead_and_living_cell_slots,PASS,dead cell slots are represented rather than discarded,,0.02735733985900879
+test_all_tensor_fields_are_finite_after_kernel_cycle,PASS,packed detailed worlds remain finite through tensor kernel cycle,,0.055761098861694336

@@ -1,0 +1,28 @@
+{
+  "build": "SOMA-CELL 0.6.8-GPU",
+  "cuda_available": false,
+  "device_count": 0,
+  "numpy": "2.3.5",
+  "ok_for_cpu_validation": true,
+  "ok_for_cuda_execution": false,
+  "port_status": {
+    "circular_smooth": "validated-primitive",
+    "death_corpse_edna_hgt": "cpu-authoritative",
+    "division": "cpu-authoritative",
+    "genome_replication": "cpu-authoritative",
+    "material_ledger": "validated-standalone",
+    "metabolism_core_reference": "validated-standalone-not-integrated",
+    "neural_causal_system": "cpu-authoritative",
+    "particle_diffusion": "hybrid-integrated",
+    "particle_ligand_profile": "hybrid-integrated",
+    "surface_exchange": "planned",
+    "translation": "cpu-authoritative"
+  },
+  "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+  "recommended_throughput_precision": "float32 after fp64 lockstep gates pass",
+  "recommended_validation_precision": "float64",
+  "schema": "0.6.8-GPU-A1.0",
+  "torch": "2.10.0+cpu",
+  "torch_cuda_version": null,
+  "torch_installed": true
+}

@@ -1,0 +1,59 @@
+SOMA-CELL 0.6.8-GPU A1 ENGINEERING REPORT
+==========================================
+
+Build: SOMA-CELL 0.6.8-GPU
+Schema: 0.6.8-GPU-A1.0
+Status: ENGINEERING_FOUNDATION_PASS / FULL_WORLD_GPU_NOT_YET_COMPLETE
+
+目的
+----
+0.6.6の完全粒子世界を粗視化せず、RTX 4060 TiおよびオンラインGPUへ段階移植する。CPU正本とのロックステップを各カーネルで確立してから統合する。
+
+実装済み
+--------
+- 完全0.6.6 state_dictのopaque保存と固定容量tensor mirror
+- 粒子、細胞、36区画膜、輸送体、13内部プール、可変長ゲノムbyte mirror
+- device-neutral counter RNG
+- particle diffusion + patch drift NumPy/Torch lockstep
+- membrane-local ligand profile NumPy/Torch lockstep
+- circular smoothing
+- core metabolism独立NumPy/Torch lockstep
+- frozen 0.6.6 worldへdiffusion/profileだけをoffloadするhybrid runner
+- batched synthetic world kernel benchmark
+
+検証
+----
+- 0.6.8-GPU専用: 32/32 PASS
+- 親0.6.7専用再実行: 28/28 PASS
+- 親継承記録: 251/251 PASS
+- hybrid one-step and eight-step lockstep: PASS (Torch CPU fp64)
+- hybrid clone/save-restore: PASS
+
+開発環境
+--------
+- PyTorch 2.10.0+cpu
+- CUDA available: false
+- CUDA実機速度・一致は未検証
+
+小型CPU kernel benchmark
+------------------------
+- worlds 4
+- particles/world 128
+- cells/world 4
+- steps 5
+- float64
+- 約4278 kernel world-steps/s
+
+注意: diffusion/profileだけの値であり、完全0.6.6 world-stepの速度ではない。
+
+未移植
+------
+- surface exchange全体
+- genome replication / translation
+- division
+- death / corpse / eDNA / HGT
+- neural and causal systems
+
+科学的限定
+----------
+A1は計算基盤であり、新しい生命、進化、神経優位、CUDA性能を主張しない。full GPU world stepはfalseとして固定表示する。

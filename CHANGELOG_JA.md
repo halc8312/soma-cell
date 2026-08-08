@@ -234,3 +234,18 @@
 - R3 12/12行を報告。長期世代・物質ゲートPASS。stable loss、strict HGT rescue、long-delay保持ゲートFAIL。
 - 専用28/28、継承251/251、合計279/279 PASS。
 - 次を0.6.8 regime-shift evolutionary memoryへ変更。
+
+## 2026-08-08 — SOMA-CELL 0.6.8-GPU A1 engineering checkpoint
+
+- 0.6.6完全粒子世界用の固定容量Torch tensor schemaを追加。
+- 粒子、細胞、36区画膜、輸送体、13内部プール、可変長ゲノムbyte mirrorを追加。
+- opaque CPU stateを保持するlossless adapterを追加。
+- device-neutral counter RNGを追加。
+- particle diffusion + patch driftのNumPy/Torch fp64 lockstepを追加。
+- membrane-local particle ligand profileのNumPy/Torch fp64 lockstepを追加。
+- core metabolismの独立NumPy/Torch lockstep版を追加。
+- frozen 0.6.6 worldへdiffusion/profileだけを接続するHybrid066Worldを追加。
+- batched independent-world benchmarkとVRAM容量推定を追加。
+- 0.6.8-GPU専用32/32 PASS、親0.6.7専用28/28 PASS。
+- 開発環境はTorch CPU-onlyであり、CUDA実機性能は未検証として固定。
+- full world-step未移植のため正式0.6.8科学版には昇格せず、A1 engineering checkpointとして保存。

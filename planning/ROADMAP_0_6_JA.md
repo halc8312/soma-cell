@@ -302,3 +302,55 @@ science: NEGATIVE_BOUNDARY_RESULT_WITH_LIMITS
 4. HGT OFF、mutation OFF、no-switch、grammar absentを事前登録。
 5. 再侵入遺伝子をノックアウト／再導入し、保持の因果を確認。
 6. 0.6.7の粗視化結果を0.6.6粒子世界の短い確認実験で交差検証する。
+
+## 0.6.8-GPU — フル詳細GPU移行
+
+ユーザーの計算基盤方針により、0.6.8の主軸を同一系統史の粗視化regime-shiftから、0.6.6完全粒子世界のGPU移行へ変更した。regime-shift仮説はGPU基盤後の詳細モデル試験へ繰り下げる。
+
+### A1 — 凍結候補engineering checkpoint
+
+- full 0.6.6 tensor snapshot schema
+- deterministic counter RNG
+- particle diffusion / patch drift
+- particle ligand profiles
+- circular smoothing
+- standalone core metabolism lockstep
+- hybrid CPU-authoritative world
+- batched kernel benchmark
+
+A1はfull GPU worldではなく、CUDA実機未検証。
+
+### A2
+
+- surface exchange
+- waste export
+- leak
+- radius and motion
+- spatial hash / neighbor list
+
+### A3
+
+- core metabolismのworld.step統合
+- 0.3損傷修復層
+- membrane oxidation / damage segregation
+
+### A4
+
+- ragged genome buffers
+- replication and translation
+- material mutation
+
+### A5
+
+- division / death / corpse / eDNA / HGT
+
+### A6
+
+- neural tissue / causal audit
+- full CPU/GPU event lockstep
+- RTX 4060 Ti and online GPU scaling
+
+### GPU後の科学試験
+
+- 0.6.7で計画した同一系統史regime shift
+- 0.6.6完全粒子物理でloss/re-entry/persistenceを再検証

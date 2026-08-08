@@ -1,0 +1,19 @@
+{
+  "build": "SOMA-CELL 0.6.8-GPU",
+  "cells_per_world": 4,
+  "cuda_available": false,
+  "device": "cpu",
+  "dtype": "torch.float64",
+  "elapsed_seconds": 0.0046751909999329655,
+  "full_world_step_ported": false,
+  "kernel_checksum": 0.09706731073290827,
+  "note": "Kernel benchmark only; full 0.6.6 world-step is not yet GPU-ported.",
+  "particles_per_world": 128,
+  "schema": "0.6.8-GPU-A1.0",
+  "schema_capacity_bytes": 94976,
+  "schema_capacity_gib": 8.845329284667969e-05,
+  "steps": 5,
+  "working_tensor_bytes": 17552,
+  "world_steps_per_second": 4277.900090132524,
+  "worlds": 4
+}

@@ -1,0 +1,34 @@
+SOMA-CELL 0.6.8-GPU A1 — 最初に読む
+====================================
+
+これはフル詳細モデルをGPUへ移すための「移行基盤」です。
+0.6.6の完全粒子世界を粗視化モデルへ置換したものではありません。
+
+PC / RTX 4060 Ti:
+1. CUDAが使えるPyTorch環境を用意する。
+2. 同じフォルダで次を実行する。
+
+   python SOMA_CELL_0_6_8_install_check.py
+   python SOMA_CELL_0_6_8_validation.py
+   python SOMA_CELL_0_6_8_gpu_benchmark.py --device cuda --precision float64 --worlds 8 --particles 512 --cells 8 --steps 20
+
+3. fp64のロックステップ検証を先に通す。
+4. 速度測定ではfp32も試せるが、fp64との誤差を記録してから使う。
+
+現在GPUへ統合済み:
+- 粒子拡散と地球化学パッチドリフト
+- 膜局所の粒子リガンドプロファイル
+
+独立ロックステップ済み・未統合:
+- コア代謝反応ブロック
+
+まだCPU正本:
+- 表面輸送全体
+- 遺伝子複製・翻訳
+- 分裂
+- 死体・環境DNA・HGT
+- 神経・因果監査
+
+Pythonista:
+SOMA_CELL_0_6_8_pythonista.py は0.6.6詳細CPU参照世界の観察用です。
+iPhoneでCUDAを実行するファイルではありません。

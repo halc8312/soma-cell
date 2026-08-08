@@ -155,3 +155,16 @@ F067-007,0.6.7,dedicated validation,PASS,28/28
 F067-008,0.6.7,inherited regression,PASS,251/251; grand total 279/279
 F067-009,0.6.7,flat Pythonista release,PASS,SHA checks import and flat 28/28 validation
 F067-010,0.6.7,scientific status,PARTIAL_LONG_HORIZON_HGT_REENTRY_WITHOUT_PREREGISTERED_LOSS_OR_DELAY_RETENTION,positive reentry but preregistered evolutionary gates failed
+F068G-001,0.6.8-GPU-A1,device-neutral counter RNG,PASS,NumPy/Torch exact uniform stream
+F068G-002,0.6.8-GPU-A1,particle diffusion fp64 lockstep,PASS,exact formula with CPU authoritative noise
+F068G-003,0.6.8-GPU-A1,ligand profile fp64 lockstep,PASS,dense membrane-local scatter and circular smoothing
+F068G-004,0.6.8-GPU-A1,full 0.6.6 tensor adapter,PASS,particles cells membrane pools transporters genomes and opaque state
+F068G-005,0.6.8-GPU-A1,capacity fail-closed,PASS,no particle or variable-genome truncation
+F068G-006,0.6.8-GPU-A1,core metabolism independent lockstep,PASS,NumPy/Torch fp64
+F068G-007,0.6.8-GPU-A1,hybrid one-step lockstep,PASS,frozen 0.6.6 CPU vs Torch CPU offload
+F068G-008,0.6.8-GPU-A1,hybrid short event lockstep,PASS,8 steps within fp64 tolerance and identical event counts
+F068G-009,0.6.8-GPU-A1,clone and save restore,PASS,semantic state equality
+F068G-010,0.6.8-GPU-A1,dedicated validation,PASS,32/32
+F068G-011,0.6.8-GPU-A1,parent validation,PASS,0.6.7 28/28; inherited chain 251/251
+F068G-012,0.6.8-GPU-A1,CUDA execution,NOT_RUN,development PyTorch build is CPU-only
+F068G-013,0.6.8-GPU-A1,full GPU world step,NOT_COMPLETE,division genome death HGT neural remain CPU-authoritative

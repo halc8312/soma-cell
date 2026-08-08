@@ -1,0 +1,37 @@
+SOMA-CELL 0.6.8-GPU VALIDATION RESULTS
+================================================
+32 / 32 PASS
+elapsed 2.427s
+
+PASS: test_build_and_schema - build/schema frozen
+PASS: test_environment_report_is_honest - report exposes partial migration and CPU-authoritative subsystems
+PASS: test_counter_uniform_matches_numpy - device-neutral xorshift counter stream exact
+PASS: test_counter_normal_is_deterministic - counter normal repeatable and finite
+PASS: test_circular_smooth_lockstep - circular smoothing lockstep
+PASS: test_diffusion_lockstep_fp64 - particle diffusion/drift lockstep fp64
+PASS: test_diffusion_mask_and_torus - torus bounds and inactive-particle immobility
+PASS: test_ligand_profile_lockstep_fp64 - membrane-local particle profiles lockstep fp64
+PASS: test_ligand_profiles_respect_masks - masked cells produce zero receptor occupancy
+PASS: test_adapter_pack_shapes_and_finiteness - lossless padded tensor schema packs two detailed worlds
+PASS: test_adapter_preserves_full_opaque_state_hash - full CPU state round-trips through opaque canonical state
+PASS: test_adapter_genome_bytes_are_exact - variable-length material genomes mirrored byte-for-byte
+PASS: test_adapter_capacity_fails_closed - particle capacity overflow rejected
+PASS: test_tensor_batch_clone_independence - tensor clone owns independent storage
+PASS: test_metabolism_core_numpy_torch_lockstep - standalone core metabolism lockstep against independent NumPy transcription
+PASS: test_metabolism_core_finite_and_nonnegative - standalone metabolism remains finite and nonnegative
+PASS: test_hybrid_one_step_calls_offloaded_kernels - hybrid world offloads diffusion/profile while full CPU world stays finite
+PASS: test_hybrid_one_step_cpu_lockstep - one full 0.6.6 step lockstep with Torch CPU offload
+PASS: test_hybrid_short_event_lockstep - eight-step event-level lockstep within fp64 tolerance
+PASS: test_hybrid_clone_is_deterministic - hybrid clone preserves CPU RNG and tensor backend configuration exactly
+PASS: test_hybrid_save_restore_is_deterministic - hybrid save/restore deterministic
+PASS: test_hybrid_summary_disclaims_full_port - summary cannot mislabel hybrid as complete GPU world
+PASS: test_batch_worlds_are_independent - batched worlds have independent tensor slices
+PASS: test_benchmark_runs_and_reports_capacity - batched benchmark finite with explicit partial-port flag
+PASS: test_cuda_request_fails_closed_when_unavailable - CUDA request rejected by CPU-only build
+PASS: test_fp32_is_explicitly_less_strict_than_fp64 - fp32 tolerance measured rather than claimed bit-exact
+PASS: test_adapter_memory_estimator_is_positive - tensor memory/capacity accounting available
+PASS: test_kernel_coverage_table_is_complete_enough_to_fail_closed - unported life mechanisms remain explicitly CPU-authoritative
+PASS: test_no_external_fitness_added - GPU migration adds no fitness/reward channel
+PASS: test_material_arrays_are_not_silently_truncated - variable genome overflow rejected
+PASS: test_state_schema_includes_dead_and_living_cell_slots - dead cell slots are represented rather than discarded
+PASS: test_all_tensor_fields_are_finite_after_kernel_cycle - packed detailed worlds remain finite through tensor kernel cycle
