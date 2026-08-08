@@ -130,3 +130,18 @@ F064-015,0.6.4,inherited regression,PASS,177/177; grand total 202/202
 F064-016,0.6.4,registered trial integrity,PASS,69 trials errors 0 all finite material residual <3e-5
 F064-017,0.6.4,compact HUD and descendant-safe reset,PASS,inherited and source-validated
 F064-018,0.6.4,scientific status,NEGATIVE_BOUNDARY_RESULT_WITH_LIMITS,95 percent early reservation required and every mean comparison negative
+F065-001,0.6.5,material neural grammar modules,PASS,sentinel/readiness/organ/prediction/plasticity are ordinary delimited material-genome genes
+F065-002,0.6.5,whole-gene deletion duplication dormancy reactivation,PASS,sequence-level mutations change real genome material
+F065-003,0.6.5,default added-neural grammar dormant,PASS,live default does not constitutively express added neural organ
+F065-004,0.6.5,stable shrinkage preregistered gate,FAIL,near-dormant grammar only 1/3 replicates; required >=2/3
+F065-005,0.6.5,periodic complex retention,PASS,organ frequency 1.0 and retained 3/3; mean active modules 4.625
+F065-006,0.6.5,long-delay complex retention,PASS,organ frequency 1.0 and retained 3/3; mean active modules 4.625
+F065-007,0.6.5,environment-dependence contrast,PASS,periodic minus stable mean active modules +1.583
+F065-008,0.6.5,sequence knockout causality,PASS,periodic candidate knockout lowers margin AUC 6/6 holdout seeds
+F065-009,0.6.5,full-grammar reintroduction causality,PASS,reintroduction improves over knockout 6/6 holdout seeds
+F065-010,0.6.5,material accounting,PASS,max residual about 5.475e-06 <3e-5
+F065-011,0.6.5,mutation-disabled clonal control,PASS,genome type remains one and no invented loss across environments
+F065-012,0.6.5,dedicated validation,PASS,24/24
+F065-013,0.6.5,inherited regression,PASS,202/202; grand total 226/226
+F065-014,0.6.5,natural-selection claim,LIMITED,accelerated experimenter-side lineage tournament is not yet live shared-population natural selection
+F065-015,0.6.5,scientific status,PARTIAL_ENVIRONMENT_DEPENDENCE_STABLE_LOSS_INCOMPLETE,complex retention and causality supported but stable loss gate failed
