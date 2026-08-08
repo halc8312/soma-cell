@@ -44,3 +44,11 @@ periodicで選ばれた候補ゲノムは、未調整6系列で実配列ノッ�
 ## 次: SOMA-CELL 0.6.6
 
 加速トーナメントをやめ、有限資源を共有する化学生態系で実際の分裂、構造的死、死体、環境DNA、HGTを通して神経文法頻度を追跡する。stableでの欠失が不完全だった理由を解き、complex環境での保持とstableでの縮小が自然集団でも再現するかを検証する。
+
+## 2026-08-08 — SOMA-CELL 0.6.7正式凍結
+
+長期世代用の粗視化物質serial-transfer計器を追加。R3未使用seed 6731〜6733の12/12行を報告し、全条件3/3でgeneration 15以上、generation 20/21も観測した。物質保存・有限値・external fitness 0はPASS。
+
+一方、stable HGT-OFF完全喪失0/3、strict HGT rescue 1/3、long-delay active差+0.388889で、主要進化ゲートはFAIL。HGT再侵入とHGT由来grammar子孫は実在したが、適応的救済とは認定しない。
+
+現在の正式基準は0.6.7、次は0.6.8。同一系統史内のstable burn-in→regime shiftでloss/re-entry/persistenceを検査する。

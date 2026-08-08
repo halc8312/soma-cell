@@ -1,19 +1,8 @@
-添付した最新SOMAプロジェクトチェックポイントを正本として続行してください。
+添付または展開したSOMAプロジェクトを正本として、
+00_MANDATORY_STARTUP_GATE_JA.md、PROJECT_STATE.json、CURRENT_BASELINE.txt、
+docs/SOMA_CONTEXT_HANDOFF_JA.md、docs/SOMA_CELL_0_6_7_FORMAL_CONTRACT.md、
+results/SOMA_CELL_0_6_7_R3_PREREGISTRATION.json、R3_HOLDOUT_REPORT、検証・回帰・実験結果を実際に読み、SHA-256を確認してください。
 
-必ず最初に次を読むこと。
-
-1. 00_MANDATORY_STARTUP_GATE_JA.md
-2. MANDATORY_WORKFLOW.json
-3. PROJECT_STATE.json
-4. CURRENT_BASELINE.txt
-5. docs/SOMA_CONTEXT_HANDOFF_JA.md
-6. docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md
-7. docs/SOMA_CELL_0_6_1_FORMAL_CONTRACT.md
-8. docs/SOMA_CELL_0_6_1_FORMAL_SCHEMA.json
-9. src/0_6_1/SOMA_CELL_0_6_1_pythonista.py
-10. 0.6.1検証・回帰・R2事前登録・holdout・実験結果
-11. planning/ROADMAP_0_6_JA.md
-
-現在の凍結基準はSOMA-CELL 0.6.1、次はSOMA-CELL 0.6.2です。
-0.6.1の主結果は制御された運動器故障での代謝保全です。自然空間の取得改善、能動意味診断、予測、再帰を成功済みとして扱わないでください。
-最新版のSHA-256を確認し、新しいGit HEADでRule Lockプリフライト証跡を発行してから実装してください。
+現在の正式基準はSOMA-CELL 0.6.7、次は0.6.8です。
+0.6.7のstable loss 0/3、strict HGT rescue 1/3、long-delay差+0.388889という失敗を成功済みにしないでください。
+新しいGit HEADでRule Lock preflightを発行してから続行してください。

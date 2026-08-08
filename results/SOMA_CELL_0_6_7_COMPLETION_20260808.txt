@@ -1,0 +1,38 @@
+SOMA-CELL 0.6.7 COMPLETION RECORD
+=================================
+Date: 2026-08-08
+Build: SOMA-CELL 0.6.7
+Schema: 0.6.7-LH1.0
+Scientific release commit: 7b62ee58fa7370bc151c3e3d5f1ecd61c7066370
+Source SHA-256: abfb17257ab795999223296315a60a11777bf33a8c88146e26a8155fb957ec4b
+Release SHA-256: 74d04a14abba5f98f50e9a92967696657108daf104e44f653b64ea275883866a
+
+Status
+------
+Engineering: PASS
+Science: PARTIAL_LONG_HORIZON_HGT_REENTRY_WITHOUT_PREREGISTERED_LOSS_OR_DELAY_RETENTION
+
+Validation
+----------
+Dedicated: 28/28 PASS
+Inherited: 251/251 PASS
+Total: 279/279 PASS
+Flat Pythonista release: checksum/import/28-of-28 PASS
+
+R3 preregistered holdout
+------------------------
+Rows: 12/12
+Seeds: 6731, 6732, 6733
+Long horizon: PASS
+Material/finite/no-external-fitness: PASS
+Stable loss without HGT: FAIL (0/3)
+Strict stable HGT rescue: FAIL (1/3)
+Long-delay expression: FAIL (difference +0.388889; pairwise 2/3)
+
+Measured interpretation
+-----------------------
+Actual material HGT re-entry and HGT-derived grammar-bearing descendants occurred, while preregistered adaptive rescue and environment-specific retention gates failed. 0.6.7 is a coarse-grained long-horizon second instrument, not a replacement for 0.6.6 particle microphysics.
+
+Next milestone
+--------------
+SOMA-CELL 0.6.8 — within-lineage stable burn-in to regime-shift loss/re-entry/persistence assay. Scientific implementation not started at this record.
