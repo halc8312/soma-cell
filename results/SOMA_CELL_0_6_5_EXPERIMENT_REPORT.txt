@@ -1,0 +1,22 @@
+SOMA-CELL 0.6.5 EXPERIMENT REPORT
+Schema: 0.6.5-GE1.0
+Decision: PARTIAL_ENVIRONMENT_DEPENDENCE_STABLE_LOSS_INCOMPLETE
+
+Preregistered lineage assays: 4 environments x 3 seeds = 12
+Standing material variation; 3 generations; population 8; one shared body-world realization per lineage assay.
+
+stable: active 3.042; organ 0.708; retained 2/3; active reps [4.25, 4.75, 0.125]
+periodic: active 4.625; organ 1.000; retained 3/3; active reps [4.25, 4.75, 4.875]
+rare_fault: active 3.042; organ 0.708; retained 2/3; active reps [4.25, 4.75, 0.125]
+long_delay: active 4.625; organ 1.000; retained 3/3; active reps [4.25, 4.75, 4.875]
+
+Candidate retained environment: periodic
+Stable shrinkage <=1.5 active modules: 1/3
+Candidate-stable active-module difference: 1.583
+Causal knockout reduced margin AUC: 6/6
+Full grammar reintroduction improved over knockout: 6/6
+Max material residual: 5.475e-06
+
+Gates: {'stable_shrinkage': False, 'complex_retention': True, 'environment_dependence': True, 'causal_knockout': True, 'causal_reintroduction': True, 'material': True}
+
+Interpretation: complex periodic/long-delay environments retained an expressed neural grammar and the retained periodic genotype passed knockout/reintroduction causality. However the preregistered stable-environment shrinkage gate failed because only one of three stable evolution replicates collapsed to near-dormant grammar. Therefore this is partial environment dependence, not a full selection claim.

@@ -1,0 +1,29 @@
+SOMA-CELL 0.6.5 VALIDATION RESULTS
+=====================================
+
+24 / 24 PASS
+
+PASS: test_accelerated_evolution_uses_standing_material_variation - multigenerational assay begins with explicit genome variants and measured body-world scores
+PASS: test_all_environment_evaluations_finite - full grammar evaluates finitely with conserved material in all registered environments
+PASS: test_build_schema_and_default_dormancy - five material grammar genes exist but are regulatory-dormant by default
+PASS: test_causal_knockout_reintroduction_are_material_sequences - causal knockout/reintroduction controls preserve physical sequence accounting
+PASS: test_clone_exact - clone preserves grammar and chemistry exactly
+PASS: test_environment_mapping_has_no_reward_or_correct_direction - environment-specific expression mapping contains no teacher/correct-direction signal
+PASS: test_finite_headless_trial - headless 0.6.5 live world remains finite and ledger-consistent
+PASS: test_genome_material_budget_rejects_impossible_large_insert - evaluation does not grant free nucleotide mass to oversized neural grammar
+PASS: test_grammar_is_actual_delimited_genome_material - grammar modules are ordinary delimited genes in the material genome
+PASS: test_knockout_evaluations_finite - grammar-absent controls are finite and material-conservative in all environments
+PASS: test_knockout_shortens_real_genome_and_reintroduction_restores_modules - whole-grammar knockout and material reintroduction alter actual genome length
+PASS: test_module_specific_deletion - single neural grammar module can be physically deleted without deleting the rest
+PASS: test_mutation_disabled_clonal_control_is_stable - mutation-disabled clonal full-grammar control cannot invent loss or dormancy
+PASS: test_mutator_can_delete_duplicate_dormancy_reactivate - grammar mutator supports deletion duplication dormancy and reactivation
+PASS: test_no_free_learned_state_in_genetic_controls - genetic causal controls transfer sequence, never learned neural state
+PASS: test_parent_bare_lockstep_when_grammar_not_installed - grammar-disabled descendant preserves frozen 0.6.4 bare trajectory
+PASS: test_prereg_hash_if_present - preregistration binds the tested candidate source SHA-256
+PASS: test_pythonista_descendant_reset_source_contract - compact HUD descendant-safe reset explicitly targets Formal065World
+PASS: test_readiness_and_organ_codes_decode - readiness fraction and organ mode are decoded only from material gene payloads
+PASS: test_regulatory_dormancy_and_reactivation - regulatory dormancy/reactivation changes expression without free gene creation
+PASS: test_save_restore_exact - 0.6.5 save/restore is deterministic
+PASS: test_shared_evaluation_seeds_prevent_genotype_seed_confound - all competing genotypes in one assay share the same body-world evaluation seeds
+PASS: test_stable_dormant_world_has_no_added_tissue - default 0.6.5 live world keeps added neural grammar dormant
+PASS: test_summary_has_five_frequencies - summary exposes lineage-relevant frequencies for all five grammar modules

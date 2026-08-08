@@ -1,0 +1,6 @@
+SOMA-CELL 0.6.5
+1. ZIP内の全ファイルを同じPythonistaフォルダへ置く。
+2. SOMA_CELL_0_6_5_pythonista.py を実行する。
+3. 左上に SOMA-CELL 0.6.5 を確認する。
+4. ダブルタップは0.6.5世界へ安全にリセットする。
+5. 科学結果は PARTIAL_ENVIRONMENT_DEPENDENCE_STABLE_LOSS_INCOMPLETE。生命・意識の証明ではない。

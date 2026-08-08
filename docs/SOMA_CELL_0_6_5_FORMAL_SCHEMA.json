@@ -1,0 +1,10 @@
+{
+  "build": "SOMA-CELL 0.6.5",
+  "schema": "0.6.5-GE1.0",
+  "parent": "SOMA-CELL 0.6.4",
+  "grammar_modules": ["sentinel", "readiness", "organ", "prediction", "plasticity"],
+  "default_expression": "dormant",
+  "mutations": ["whole_gene_deletion", "whole_gene_duplication", "promoter_dormancy", "promoter_reactivation", "payload_regulation"],
+  "environments": ["stable", "periodic", "rare_fault", "long_delay"],
+  "decision": "PARTIAL_ENVIRONMENT_DEPENDENCE_STABLE_LOSS_INCOMPLETE"
+}

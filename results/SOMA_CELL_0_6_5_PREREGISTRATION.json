@@ -1,0 +1,50 @@
+{
+  "schema": "SOMA-CELL-0.6.5-PREREG-1",
+  "candidate_source_sha256": "869a9a737a520cea75889610581a42eefe81f474b7c1db628c9d5d6f5134535b",
+  "frozen_parent": "SOMA-CELL 0.6.4",
+  "purpose": "Test environment-dependent multigenerational retention, regulatory dormancy, duplication and loss of material neural grammar without hand-tuning neural benefit.",
+  "environments": [
+    "stable",
+    "periodic",
+    "rare_fault",
+    "long_delay"
+  ],
+  "evolution_seeds": [
+    4101,
+    4102,
+    4103
+  ],
+  "generations": 3,
+  "population": 8,
+  "body_assay_seconds": 3.5,
+  "standing_variation": true,
+  "mutation": true,
+  "mutation_disabled_control_seed": 4199,
+  "causal_holdout_seeds": [
+    6101,
+    6102,
+    6103,
+    6104,
+    6105,
+    6106
+  ],
+  "causal_seconds": 4.5,
+  "primary_gate": {
+    "stable_shrinkage": "At least 2/3 stable replicates finish with mean active grammar modules <= 1.5.",
+    "complex_retention": "At least one of periodic/long_delay finishes with mean organ frequency >= 0.6 and mean active grammar modules >= 2.5 in at least 2/3 replicates.",
+    "environment_dependence": "The retained complex environment exceeds stable final mean active-module count by >= 1.0.",
+    "causal_knockout": "For the retained environment's best evolved genotype, knockout reduces margin AUC in >= 4/6 holdout pairs.",
+    "causal_reintroduction": "Full grammar reintroduction improves over knockout in >= 4/6 holdout pairs.",
+    "material": "All body assays finite and |material residual| < 3e-5."
+  },
+  "controls": [
+    "grammar absent",
+    "minimal dormant grammar",
+    "full grammar",
+    "mutation disabled clonal full grammar",
+    "HGT absent in accelerated lineage assay",
+    "stable unchanged environment"
+  ],
+  "interpretation_rule": "A negative gate is a valid scientific result. Do not tune post-hoc thresholds or seeds to force neural retention.",
+  "selection_body_realizations_per_lineage_assay": 1
+}

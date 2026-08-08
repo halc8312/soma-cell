@@ -1,0 +1,11 @@
+SOMA-CELL 0.6.5 INHERITED REGRESSION RESULTS
+=============================================
+
+Frozen inherited subtotal through 0.6.3: 177/177 PASS
+Fresh parent 0.6.4 dedicated rerun:          25/25 PASS
+------------------------------------------------------
+Inherited total:                            202/202 PASS
+0.6.5 dedicated:                             24/24 PASS
+Grand engineering checks:                  226/226 PASS
+
+The 0.6.4 dedicated validation suite was freshly rerun from the frozen parent source after 0.6.5 implementation. Earlier 177 checks remain the signed inherited regression record of the 0.6.4 checkpoint.

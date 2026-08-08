@@ -1,0 +1,14 @@
+{
+  "build": "SOMA-CELL 0.6.5",
+  "schema": "0.6.5-GE1.0",
+  "engineering_status": "PASS",
+  "scientific_status": "PARTIAL_ENVIRONMENT_DEPENDENCE_STABLE_LOSS_INCOMPLETE",
+  "dedicated_validation": "24/24 PASS",
+  "inherited_regression": "202/202 PASS",
+  "grand_checks": "226/226 PASS",
+  "evolution_assays": 12,
+  "causal_knockout": "6/6 lower AUC",
+  "causal_reintroduction": "6/6 recovery",
+  "stable_shrinkage_gate": "FAIL 1/3",
+  "complex_retention_gate": "PASS periodic 3/3 and long_delay 3/3"
+}
