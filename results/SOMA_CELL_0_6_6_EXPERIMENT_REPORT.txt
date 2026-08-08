@@ -1,0 +1,26 @@
+SOMA-CELL 0.6.6 EXPERIMENT REPORT
+==================================
+
+Status: NEGATIVE_SHARED_ECOLOGY_RESULT_WITH_LIMITS
+
+Preregistered main holdout: stable / periodic / long_delay, seeds 6601-6603, 80 simulation seconds, mutation ON, HGT ON, no external fitness selection.
+
+MAIN RESULTS
+Stable: mean active modules 1.113095; mean grammar-absent frequency 0.220238; generation>=2 3/3.
+Periodic: mean active modules 1.270370; mean grammar-absent frequency 0.255556; generation>=2 3/3.
+Long-delay: mean active modules 1.270370; mean grammar-absent frequency 0.255556; generation>=2 3/3.
+
+Preregistered stable activity shrinkage gate (<=1.5): PASS.
+Preregistered stable complete-loss gate (absent>=0.45): FAIL.
+Preregistered complex retention gate (>= stable +0.75): FAIL. Periodic and long-delay exceed stable by only 0.157275.
+
+CONTROLS
+Stable mutation OFF: active 0.939153, absent 0.354497.
+Periodic HGT OFF: active 1.125000, absent 0.291667.
+Absent-only founders: active 0.033333, absent 0.859259.
+No main/control run produced a new grammar-HGT acquisition.
+
+INTERPRETATION
+The strong periodic/long-delay grammar retention seen in 0.6.5 did not reproduce after replacing experimenter-side tournament selection with endogenous shared-world birth/death. Stable ecology did suppress expression, but generation 2 was insufficient for reliable physical loss of the grammar. HGT cannot be credited with grammar retention in these registered runs. This is a negative result, not evidence that neural grammar is universally useless.
+
+Maximum material residual across registered/control rows: 6.31183774e-06.

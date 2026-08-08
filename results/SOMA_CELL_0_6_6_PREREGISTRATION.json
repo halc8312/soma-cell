@@ -1,0 +1,25 @@
+{
+  "build": "SOMA-CELL 0.6.6",
+  "schema": "0.6.6-ECO1.0",
+  "created": "2026-08-08",
+  "main_seeds": [6601, 6602, 6603],
+  "seconds": 80.0,
+  "environments": ["stable", "periodic", "long_delay"],
+  "founders": ["full", "dormant", "absent"],
+  "mutation": true,
+  "hgt": true,
+  "external_fitness_events_allowed": 0,
+  "gates": {
+    "real_generation_2": "at least 2/3 replicates in every environment",
+    "material_residual": "all main runs max_abs_material_residual < 3e-5",
+    "stable_active_modules": "mean <= 1.5",
+    "stable_grammar_absent_frequency": "mean >= 0.45",
+    "complex_retention": "periodic or long_delay mean active modules >= stable + 0.75",
+    "hgt_claim": "no grammar-retention claim from HGT unless at least one physical grammar acquisition is observed"
+  },
+  "controls": {
+    "stable_mutation_off": [6701, 6702, 6703],
+    "periodic_hgt_off": [6801, 6802, 6803],
+    "grammar_absent_only": [6901, 6902, 6903]
+  }
+}

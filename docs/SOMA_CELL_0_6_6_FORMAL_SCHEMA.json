@@ -1,0 +1,14 @@
+{
+  "schema": "0.6.6-ECO1.0",
+  "build": "SOMA-CELL 0.6.6",
+  "parent": "0.6.5-GE1.0",
+  "external_fitness": false,
+  "shared_ecology": true,
+  "real_division": true,
+  "corpse_chemistry": true,
+  "environmental_dna": true,
+  "hgt": true,
+  "material_grammar_mutation": true,
+  "learned_state_inherited": false,
+  "scientific_status": "NEGATIVE_SHARED_ECOLOGY_RESULT_WITH_LIMITS"
+}

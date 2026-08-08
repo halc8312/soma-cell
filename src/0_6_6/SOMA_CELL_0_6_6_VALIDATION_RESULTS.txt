@@ -1,0 +1,30 @@
+SOMA-CELL 0.6.6 VALIDATION RESULTS
+=====================================
+
+25 / 25 PASS
+
+PASS: test_absent_only_control_is_physically_absent_at_start - grammar-absent-only control starts with zero grammar genes in all founders
+PASS: test_active_grammar_pays_atp_and_wear_is_material_conversion - active grammar records explicit ATP dissipation and material wear
+PASS: test_build_and_schema - build/schema frozen
+PASS: test_chemostat_is_external_particle_injection - chemostat material enters as accounted environmental particles
+PASS: test_clone_is_deterministic - 0.6.6 clone remains deterministic
+PASS: test_compact_hud_and_descendant_reset_source_contract - 0.6.6 replaces rather than stacks compact HUD and reset targets Formal066World
+PASS: test_daughter_grammar_mutation_is_material_accounted - at least one real daughter grammar mutation occurred with conserved matter
+PASS: test_deletion_returns_nucleotide_material - whole-gene deletion returns polymer matter as nucleotide pool
+PASS: test_dormant_and_absent_have_no_grammar_activity_cost - dormant/absent added grammar does not receive active-module ATP spending
+PASS: test_finite_short_run - all tracked ecology/neural/genetic values remain finite
+PASS: test_founder_g2_prime_is_initial_condition_only - founders begin as explicit G2 initial material before ledger baseline
+PASS: test_generation_two_short_positive_control - endogenous parent→daughter→granddaughter cycle reaches generation 2
+PASS: test_hgt_grammar_acquisition_counter_requires_integration - grammar-HGT counter requires an integration increment plus newly present module
+PASS: test_hgt_off_disables_material_hgt_path - HGT-off control disables eDNA uptake/recombination
+PASS: test_insertion_rejected_without_nucleotide_or_atp - grammar insertion cannot bypass nucleotide/ATP budget
+PASS: test_main_preregistration_exists_and_has_no_posthoc_seed_choice - main seeds, duration and zero-fitness rule are preregistered
+PASS: test_material_ledger_short_run - short shared ecology remains inside material residual gate
+PASS: test_no_external_fitness_channel - shared ecology adds no organism fitness/correct-direction channel
+PASS: test_periodic_motor_law_reverses_without_teacher_signal - periodic physical rule changes; config exposes no correct direction
+PASS: test_real_division_makes_fresh_daughters - physical world split resets learned actuator state and stays inside material ledger gate
+PASS: test_save_restore_is_deterministic - save/restore preserves ecology, genomes and RNG exactly
+PASS: test_stable_motor_law_never_reverses - stable physical actuator law remains fixed
+PASS: test_summary_exposes_ecology_metrics - summary exposes generation, grammar and HGT metrics
+PASS: test_three_material_founders - full/dormant/absent founders are physical genome states
+PASS: test_washout_is_same_step_material_conservative_death - genotype-neutral washout becomes corpse in same ledger step
