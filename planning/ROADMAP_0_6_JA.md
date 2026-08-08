@@ -354,3 +354,23 @@ A1はfull GPU worldではなく、CUDA実機未検証。
 
 - 0.6.7で計画した同一系統史regime shift
 - 0.6.6完全粒子物理でloss/re-entry/persistenceを再検証
+
+### A2 — 表面交換・漏出・半径運動（engineering checkpoint）
+
+- toroidal spatial candidate index
+- fuel/mineral/waste/alt surface exchange
+- ATP有料waste export
+- damage-aware leak plan
+- polymer-aware radius relaxation
+- CPU-authoritative Brownian RNGを保つmotion
+- one/ten/periodic event lockstep
+
+A2は正確性優先の逐次surface scanであり、CPU-onlyでは凍結CPU版より遅い。CUDA性能は未検証。`full_gpu_world_step=false`を維持する。
+
+### A3 — 次
+
+- 0.2 gene-coded metabolismと0.3 damage/repairの完全world-step統合
+- protein dictionariesとaggregate compositionのragged tensor schema
+- membrane oxidation、repair flux、damage segregation
+- metabolism中のexport/leak/radius/motion重複呼出しを防ぐ統合event scheduler
+- fp64 CPU/CUDAロックステップ後にのみfp32 throughputを許可

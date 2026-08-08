@@ -168,3 +168,18 @@ F068G-010,0.6.8-GPU-A1,dedicated validation,PASS,32/32
 F068G-011,0.6.8-GPU-A1,parent validation,PASS,0.6.7 28/28; inherited chain 251/251
 F068G-012,0.6.8-GPU-A1,CUDA execution,NOT_RUN,development PyTorch build is CPU-only
 F068G-013,0.6.8-GPU-A1,full GPU world step,NOT_COMPLETE,division genome death HGT neural remain CPU-authoritative
+F068G-A2-001,0.6.8-GPU-A2,toroidal spatial index,PASS,exact sorted candidates including wrap boundary
+F068G-A2-002,0.6.8-GPU-A2,damage-aware closure and polymer osmosis,PASS,matches detailed cell methods
+F068G-A2-003,0.6.8-GPU-A2,surface exchange NumPy/Torch,PASS,sequential fp64 scan including fuel mineral waste alt
+F068G-A2-004,0.6.8-GPU-A2,sensorimotor surface postprocessing,PASS,matches inherited uptake traces eligibility and contamination
+F068G-A2-005,0.6.8-GPU-A2,waste export,PASS,ATP-paid CPU/Torch lockstep
+F068G-A2-006,0.6.8-GPU-A2,leak plan and emissions,PASS,Torch plan with CPU-authoritative RNG/material emission
+F068G-A2-007,0.6.8-GPU-A2,radius and motion,PASS,polymer osmosis and Brownian RNG lockstep
+F068G-A2-008,0.6.8-GPU-A2,one/ten/periodic event lockstep,PASS,max fp64 discrepancy within tolerance and RNG equal
+F068G-A2-009,0.6.8-GPU-A2,clone save restore,PASS,deterministic
+F068G-A2-010,0.6.8-GPU-A2,material ledger,PASS,detailed residual below 3e-5
+F068G-A2-011,0.6.8-GPU-A2,dedicated validation,PASS,32/32
+F068G-A2-012,0.6.8-GPU-A2,inherited regression,PASS,A1 32/32 plus 279/279 historical
+F068G-A2-013,0.6.8-GPU-A2,CPU performance,LIMITED,hybrid 1.524x CPU runtime due correctness-first scan
+F068G-A2-014,0.6.8-GPU-A2,CUDA execution,NOT_RUN,development PyTorch build is CPU-only
+F068G-A2-015,0.6.8-GPU-A2,full GPU world step,NOT_COMPLETE,metabolism genome division death HGT neural remain CPU-authoritative

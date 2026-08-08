@@ -1,0 +1,58 @@
+SOMA-CELL 0.6.8-GPU A2 ENGINEERING REPORT
+==========================================
+
+Build: SOMA-CELL 0.6.8-GPU A2
+Schema: 0.6.8-GPU-A2.0
+Status: ENGINEERING_CORRECTNESS_PASS / FULL_WORLD_GPU_NOT_YET_COMPLETE
+
+Purpose
+-------
+Migrate the surface/physics layer of the full-detail 0.6.6 particle world without replacing local membrane chemistry, particle transport, leakage or motion with a coarse model.
+
+Hybrid-integrated in A2
+-----------------------
+- exact toroidal cell-particle candidate infrastructure
+- fuel/mineral/waste/alternative-substrate surface exchange
+- ATP-paid waste export
+- membrane-gap leakage planning with CPU-authoritative material emissions/RNG
+- polymer-aware osmotic radius relaxation
+- surface-flux/Brownian motion with CPU-authoritative RNG
+- A1 particle diffusion and local ligand profiles
+
+Validation
+----------
+- A2 dedicated: 32/32 PASS
+- A1 dedicated rerun: 32/32 PASS
+- inherited record before A2: 279/279 PASS
+- one-step, ten-step and periodic/reversal event lockstep: PASS
+- RNG state equality: PASS
+- clone/save-restore: PASS
+- material ledger: PASS
+
+CPU-only engineering benchmark
+------------------------------
+- PyTorch: 2.10.0+cpu
+- CUDA available: false
+- 3 cells, approximately 280 final particles, 20 detailed steps
+- frozen CPU: 0.2577 s
+- A2 Torch-CPU hybrid: 0.3927 s
+- hybrid/CPU ratio: 1.524 (A2 is slower on CPU)
+- max lockstep absolute difference: 1.11e-16
+- material residuals identical: -4.08e-08
+
+Interpretation
+--------------
+The current surface scan intentionally preserves sequential ATP/internal-pool dependencies. It is correctness-first and launches many small tensor operations, so A2 is not a speed result. CUDA/RTX 4060 Ti execution was unavailable and has not been measured.
+
+Still CPU-authoritative
+-----------------------
+- full metabolism/damage integration
+- genome replication
+- translation/expression
+- division
+- death/corpse/eDNA/HGT
+- neural and causal systems
+
+Scientific limitation
+---------------------
+A2 adds no new life/evolution claim. full_gpu_world_step remains false.

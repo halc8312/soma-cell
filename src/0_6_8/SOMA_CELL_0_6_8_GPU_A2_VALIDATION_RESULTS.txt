@@ -1,0 +1,37 @@
+SOMA-CELL 0.6.8-GPU A2 VALIDATION RESULTS
+====================================================
+32 / 32 PASS
+elapsed 4.653s
+
+PASS: test_a2_port_status_complete_and_explicit - A2 coverage table is explicit and fail-closed
+PASS: test_all_arrays_finite_after_cycle - detailed hybrid state finite after full kernel cycle
+PASS: test_backend_stats_count_all_a2_kernels - A2 kernel calls explicitly counted
+PASS: test_build_schema_and_honest_scope - A2 identity frozen; full GPU world explicitly false
+PASS: test_closed_membrane_particle_push - closed membrane geometrically excludes interior particle
+PASS: test_closure_osmolyte_tension_match_cell - damage-aware closure and polymer-aware osmosis exact
+PASS: test_cuda_request_fails_closed_if_unavailable - CUDA request rejected by CPU-only build
+PASS: test_dense_candidate_mask_torch - batched torch candidate mask exact
+PASS: test_fp32_discrepancy_is_measured - fp32 surface discrepancy measured (2.15e-08)
+PASS: test_grid_keys_stable - stable grid keys preserve original-index tie order
+PASS: test_hybrid_clone_deterministic - A2 hybrid clone deterministic
+PASS: test_hybrid_one_step_lockstep - one full 0.6.6 event step lockstep
+PASS: test_hybrid_reversal_lockstep - periodic/reversal hooks remain lockstep
+PASS: test_hybrid_save_restore_deterministic - A2 save/restore deterministic
+PASS: test_hybrid_ten_step_lockstep - ten-step event and RNG lockstep
+PASS: test_leak_original_lockstep_and_rng - material emissions and RNG stream match inherited leakage
+PASS: test_leak_plan_numpy_torch - damage-aware leakage plan lockstep
+PASS: test_material_ledger_remains_small - hybrid material ledger remains within detailed-world tolerance
+PASS: test_motion_numpy_torch_and_original - surface-flux/Brownian motion lockstep
+PASS: test_new_cells_receive_hooks - post-division daughters receive A2 hooks before next step
+PASS: test_no_external_fitness_or_reward - migration introduces no external fitness/reward channel
+PASS: test_parent_a1_environment_still_partial - A1 remains frozen and separate from A2
+PASS: test_radius_numpy_torch_and_original - polymer-aware osmotic radius exact
+PASS: test_spatial_hash_matches_dense - toroidal CPU grid returns exact sorted dense candidates
+PASS: test_spatial_hash_wrap_boundary - spatial grid respects torus boundary
+PASS: test_summary_disclaims_full_gpu - summary fails closed on unported life mechanisms
+PASS: test_surface_numpy_torch_lockstep - sequential surface exchange NumPy/Torch fp64 lockstep
+PASS: test_surface_original_method_lockstep - hybrid surface exchange matches inherited 0.4 post-processing
+PASS: test_surface_transport_off_lockstep - passive gap exchange lockstep when transport disabled
+PASS: test_tensor_schema_still_lossless - A1 lossless tensor mirror preserved
+PASS: test_waste_export_numpy_torch - waste export NumPy/Torch lockstep
+PASS: test_waste_export_original_lockstep - hybrid ATP-paid waste export matches CPU

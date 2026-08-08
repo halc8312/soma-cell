@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.1",
+  "receipt_type": "preflight",
+  "session_id": "20260808T154350Z_SOMA_CELL_0_6_8_GPU_A2_PREFLIGHT",
+  "started_utc": "2026-08-08T15:43:50Z",
+  "actor": "ChatGPT GPT-5.6 Pro",
+  "purpose": "SOMA-CELL 0.6.8-GPU A2: preserve full 0.6.6 particle semantics while migrating surface exchange, waste export, leakage, radius/motion, and spatial-neighbor infrastructure with NumPy/Torch fp64 lockstep; no simplification and no full-GPU claim.",
+  "acknowledgement": "READ_LATEST_SOURCES_AND_CONTRACTS",
+  "rule_id": "SOMA-RULELOCK-20260801-R2",
+  "checkpoint_id": "SOMA-20260808-CELL068-GPU-A1-TO-A2-RULELOCK2",
+  "baseline": "SOMA-CELL 0.6.8-GPU A1",
+  "canonical_source": "src/0_6_8/SOMA_CELL_0_6_8_gpu.py",
+  "git_commit": "23efa020ebddcaa6eb1b400269f803814d3e9092",
+  "git_status_at_start": "",
+  "required_sources_read_and_hash_checked": {
+    "00_MANDATORY_STARTUP_GATE_JA.md": {
+      "sha256": "e0752cd0b1c6e520c169e3dd861941e5fd095f4840a2f9377e22f9fb12194464",
+      "size": 2139
+    },
+    "MANDATORY_WORKFLOW.json": {
+      "sha256": "3ef9f346f2dd5f5d0706767a807a6e18fe94d4fad5f27a9c58c5e04a1f983ba7",
+      "size": 3174
+    },
+    "PROJECT_STATE.json": {
+      "sha256": "a497b497798fe3a38fe36174167382cdaf4f0a4abd2b21b86a4d8a65b76e33fd",
+      "size": 11473
+    },
+    "CURRENT_BASELINE.txt": {
+      "sha256": "98a1aa1d675517ad17cbe9459a53199d9a78935e1f75253e1f936db543d02334",
+      "size": 800
+    },
+    "docs/SOMA_CONTEXT_HANDOFF_JA.md": {
+      "sha256": "9767c3a4c78df127bd327f978a79a674b2a0352e21418968be371b5a082157f7",
+      "size": 22988
+    },
+    "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md": {
+      "sha256": "375358c0e76f0c497ce4cb25a53d66a29159ac56ed0b5443af71bf15ff9d2238",
+      "size": 16724
+    },
+    "planning/ROADMAP_0_6_JA.md": {
+      "sha256": "3d7c082930156671e3bf6855986b4325f97913414f7f9d23152d8046932db882",
+      "size": 12667
+    },
+    "docs/SOMA_CELL_0_6_8_GPU_CONTRACT.md": {
+      "sha256": "b385035a6687bb45a54165216ee403c8a09b18d05aa00a7c26b5f391d2b78555",
+      "size": 3016
+    },
+    "docs/SOMA_CELL_0_6_8_GPU_SCHEMA.json": {
+      "sha256": "6e57efa0b986abd9bdaa6ec1f3b9544fa669253d9e01b0c18fe71205a30ebcdf",
+      "size": 918
+    },
+    "src/0_6_8/SOMA_CELL_0_6_8_gpu.py": {
+      "sha256": "2a59b054edaf54ec5c754b84856558fb28330b552911f72a84566860fa9971b2",
+      "size": 54367
+    },
+    "results/SOMA_CELL_0_6_8_GPU_VALIDATION_RESULTS.txt": {
+      "sha256": "32db4871501171ef7185efbc90f0ae28efe7025f0933c18e4ef9d8a7e872c493",
+      "size": 3211
+    },
+    "results/SOMA_CELL_0_6_8_GPU_REGRESSION_RESULTS.txt": {
+      "sha256": "db6196a06a7321e76d00a552788ad03b64caf362ee265172fc8fcdd8a8090324",
+      "size": 501
+    },
+    "results/SOMA_CELL_0_6_8_GPU_EXPERIMENT_REPORT.txt": {
+      "sha256": "581bcaa69e292d2376d45f219f97abe93e9ee936c54de5163a6c82df6eb5d818",
+      "size": 1833
+    }
+  },
+  "declared_reviews": [
+    "latest PROJECT_STATE",
+    "current canonical source",
+    "context handoff",
+    "0.6 integration contract",
+    "current baseline validation and experiment results",
+    "known failures and open risks",
+    "next milestone roadmap"
+  ],
+  "fail_closed": true,
+  "milestone": "SOMA-CELL 0.6.8-GPU A2"
+}

@@ -1,0 +1,15 @@
+SOMA-CELL 0.6.8-GPU A2
+======================
+
+重要:
+A2は完全GPU版ではありません。表面/物理層までのhybrid checkpointです。
+
+PC:
+1. NVIDIA driverとCUDA対応PyTorchを用意
+2. python SOMA_CELL_0_6_8_install_check.py
+3. python SOMA_CELL_0_6_8_A2_validation.py
+4. python SOMA_CELL_0_6_8_A2_benchmark.py --device cuda --precision float64
+
+Pythonista:
+SOMA_CELL_0_6_8_GPU_A2_pythonista.py は詳細CPU世界の観察用です。
+CUDAやGPU移植性能はPythonistaでは測れません。

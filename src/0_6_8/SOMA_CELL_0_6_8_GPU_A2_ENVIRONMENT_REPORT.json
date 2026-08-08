@@ -1,0 +1,31 @@
+{
+  "a2_note": "surface/physics kernels are integrated in a correctness-first one-cell-at-a-time hybrid; genome/division/death/HGT/neural remain CPU-authoritative",
+  "build": "SOMA-CELL 0.6.8-GPU A2",
+  "cuda_available": false,
+  "device_count": 0,
+  "full_gpu_world_step": false,
+  "numpy": "2.3.5",
+  "port_status": {
+    "circular_smooth": "validated-primitive",
+    "death_corpse_edna_hgt": "cpu-authoritative",
+    "division": "cpu-authoritative",
+    "genome_replication": "cpu-authoritative",
+    "leak_plan": "hybrid-integrated-torch-plan-cpu-material-emission",
+    "material_ledger": "validated-standalone",
+    "metabolism_core_reference": "validated-standalone-not-integrated",
+    "neural_causal_system": "cpu-authoritative",
+    "particle_diffusion": "hybrid-integrated",
+    "particle_ligand_profile": "hybrid-integrated",
+    "radius_relaxation": "hybrid-integrated",
+    "surface_exchange": "hybrid-integrated-correctness-first-sequential-scan",
+    "surface_flux_motion": "hybrid-integrated-cpu-authoritative-rng",
+    "toroidal_spatial_index": "hybrid-integrated-cpu-grid-with-torch-schema",
+    "translation": "cpu-authoritative",
+    "waste_export": "hybrid-integrated"
+  },
+  "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+  "schema": "0.6.8-GPU-A2.0",
+  "torch": "2.10.0+cpu",
+  "torch_cuda_version": null,
+  "torch_installed": true
+}

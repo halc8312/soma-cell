@@ -1,0 +1,12 @@
+SOMA-CELL 0.6.8-GPU A2 INHERITED REGRESSION RESULTS
+=====================================================
+
+A1 dedicated validation rerun: 32 / 32 PASS
+A1 inherited regression record: 279 / 279 PASS
+----------------------------------------------------
+Inherited total before A2: 311 / 311 PASS
+A2 dedicated validation: 32 / 32 PASS
+----------------------------------------------------
+Historical total referenced at A2: 343 / 343 PASS
+
+A2 is a separate extension module. Frozen A1, 0.6.7 and 0.6.6 sources were not edited.

@@ -249,3 +249,18 @@
 - 0.6.8-GPU専用32/32 PASS、親0.6.7専用28/28 PASS。
 - 開発環境はTorch CPU-onlyであり、CUDA実機性能は未検証として固定。
 - full world-step未移植のため正式0.6.8科学版には昇格せず、A1 engineering checkpointとして保存。
+
+## 2026-08-08 — SOMA-CELL 0.6.8-GPU A2 engineering checkpoint
+
+- A1を変更せず、A2 extension moduleを追加。
+- toroidal spatial candidate indexと将来のCUDA segmented scan用grid keyを追加。
+- fuel/mineral/waste/alt surface exchangeをNumPy/Torch fp64へ移植。
+- 0.4 sensorimotor uptake trace、eligibility、contamination後処理までhybrid統合。
+- ATP有料waste exportを移植。
+- damage-aware closureとpolymer-aware osmosisを使うleak planを移植。
+- 漏出粒子生成とRNG順序はCPU正本に保持。
+- polymer-aware radius relaxationとsurface-flux/Brownian motionを移植。
+- 一歩、十歩、周期環境、clone、save/restoreでCPU/Torch event lockstepを確認。
+- A2専用32/32、A1専用32/32再実行、継承279/279を維持。
+- CPU-only benchmarkではA2 hybridが約1.524倍遅く、速度結果ではないことを明記。
+- genome/translation/division/death/eDNA/HGT/neuralはCPU正本のまま、full_gpu_world_step=false。

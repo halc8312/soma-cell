@@ -427,3 +427,21 @@
 **決定:** A1の科学状態を`ENGINEERING_GPU_FOUNDATION_ONLY`とし、`gpu_full_world_step=false`をsummaryへ固定する。
 
 **理由:** CUDA未検証かつworld.step全体未移植の段階で、フルGPU生命体を完成したと誤表示しないため。
+
+## D-20260808-068GPU-A2-01 — 表面交換は正確さ優先の逐次scanで移植
+
+**決定:** fuel/mineral/altの輸送は、内部poolとATPが粒子順序に依存するため、A2では候補粒子を元index順に処理するTorch逐次scanを採用する。
+
+**理由:** 一括vector化で内部濃度・ATP依存を固定すると0.6.6とは別の化学になる。速度最適化はsegmented scan等でイベント一致を証明してから行う。
+
+## D-20260808-068GPU-A2-02 — 漏出乱数はCPU正本に残す
+
+**決定:** leak fraction、gap、対象pool量はTorchへ移すが、環境粒子を生成する順序と乱数消費はCPU正本を維持する。
+
+**理由:** 漏出粒子数はpool状態に依存し、乱数列のずれが後続の分裂・死亡・HGTまで変えるため。
+
+## D-20260808-068GPU-A2-03 — CPUで遅い結果を隠さない
+
+**結果:** 3細胞・約280粒子・20stepのCPU-only benchmarkでA2 hybridは凍結CPU版の約1.524倍の時間を要した。
+
+**決定:** A2を性能向上とは呼ばず、表面/物理層の正確性checkpointとする。RTX/CUDA速度は実機試験まで未判定。

@@ -1,0 +1,33 @@
+test,status,detail
+test_a2_port_status_complete_and_explicit,PASS,A2 coverage table is explicit and fail-closed
+test_all_arrays_finite_after_cycle,PASS,detailed hybrid state finite after full kernel cycle
+test_backend_stats_count_all_a2_kernels,PASS,A2 kernel calls explicitly counted
+test_build_schema_and_honest_scope,PASS,A2 identity frozen; full GPU world explicitly false
+test_closed_membrane_particle_push,PASS,closed membrane geometrically excludes interior particle
+test_closure_osmolyte_tension_match_cell,PASS,damage-aware closure and polymer-aware osmosis exact
+test_cuda_request_fails_closed_if_unavailable,PASS,CUDA request rejected by CPU-only build
+test_dense_candidate_mask_torch,PASS,batched torch candidate mask exact
+test_fp32_discrepancy_is_measured,PASS,fp32 surface discrepancy measured (2.15e-08)
+test_grid_keys_stable,PASS,stable grid keys preserve original-index tie order
+test_hybrid_clone_deterministic,PASS,A2 hybrid clone deterministic
+test_hybrid_one_step_lockstep,PASS,one full 0.6.6 event step lockstep
+test_hybrid_reversal_lockstep,PASS,periodic/reversal hooks remain lockstep
+test_hybrid_save_restore_deterministic,PASS,A2 save/restore deterministic
+test_hybrid_ten_step_lockstep,PASS,ten-step event and RNG lockstep
+test_leak_original_lockstep_and_rng,PASS,material emissions and RNG stream match inherited leakage
+test_leak_plan_numpy_torch,PASS,damage-aware leakage plan lockstep
+test_material_ledger_remains_small,PASS,hybrid material ledger remains within detailed-world tolerance
+test_motion_numpy_torch_and_original,PASS,surface-flux/Brownian motion lockstep
+test_new_cells_receive_hooks,PASS,post-division daughters receive A2 hooks before next step
+test_no_external_fitness_or_reward,PASS,migration introduces no external fitness/reward channel
+test_parent_a1_environment_still_partial,PASS,A1 remains frozen and separate from A2
+test_radius_numpy_torch_and_original,PASS,polymer-aware osmotic radius exact
+test_spatial_hash_matches_dense,PASS,toroidal CPU grid returns exact sorted dense candidates
+test_spatial_hash_wrap_boundary,PASS,spatial grid respects torus boundary
+test_summary_disclaims_full_gpu,PASS,summary fails closed on unported life mechanisms
+test_surface_numpy_torch_lockstep,PASS,sequential surface exchange NumPy/Torch fp64 lockstep
+test_surface_original_method_lockstep,PASS,hybrid surface exchange matches inherited 0.4 post-processing
+test_surface_transport_off_lockstep,PASS,passive gap exchange lockstep when transport disabled
+test_tensor_schema_still_lossless,PASS,A1 lossless tensor mirror preserved
+test_waste_export_numpy_torch,PASS,waste export NumPy/Torch lockstep
+test_waste_export_original_lockstep,PASS,hybrid ATP-paid waste export matches CPU
