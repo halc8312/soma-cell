@@ -1,0 +1,14 @@
+{
+  "build": "SOMA-CELL 0.6.7",
+  "date": "2026-08-08",
+  "dedicated_validation": "28/28 PASS",
+  "engineering_status": "PASS",
+  "inherited_regression": "251/251 PASS",
+  "next": "SOMA-CELL 0.6.8",
+  "r3_overall_primary_gate_pass": false,
+  "r3_rows": 12,
+  "schema": "0.6.7-LH1.0",
+  "scientific_status": "PARTIAL_LONG_HORIZON_HGT_REENTRY_WITHOUT_PREREGISTERED_LOSS_OR_DELAY_RETENTION",
+  "source_sha256": "abfb17257ab795999223296315a60a11777bf33a8c88146e26a8155fb957ec4b",
+  "total": "279/279 PASS"
+}

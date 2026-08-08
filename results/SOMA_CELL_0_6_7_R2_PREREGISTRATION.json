@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0",
+  "registration": "R2",
+  "build": "SOMA-CELL 0.6.7",
+  "implementation_schema": "0.6.7-LH1.0",
+  "source_sha256": "0aadb3611ccb8da9d24d5728324e51867e43cbe54c44c05e71e17fdcd1bb94a4",
+  "registered_utc": "2026-08-08T09:43:00Z",
+  "r1_status": "INVALIDATED_BEFORE_FORMAL_HOLDOUT_COMPLETION_DUE_TO_SOURCE_DRIFT",
+  "development_seeds_excluded": [6701, 6702, 6703, 6704, 6705, 6711, 6712, 6713],
+  "holdout_seeds": [6721, 6722, 6723],
+  "duration_seconds": 480.0,
+  "main_conditions": [
+    {"label": "stable_hgt_on", "environment": "stable", "hgt": true, "mutation": true},
+    {"label": "stable_hgt_off", "environment": "stable", "hgt": false, "mutation": true},
+    {"label": "long_delay_hgt_on", "environment": "long_delay", "hgt": true, "mutation": true},
+    {"label": "long_delay_hgt_off", "environment": "long_delay", "hgt": false, "mutation": true}
+  ],
+  "secondary_conditions": [
+    {"label": "periodic_hgt_on", "environment": "periodic", "hgt": true, "mutation": true},
+    {"label": "stable_mutation_off_hgt_off", "environment": "stable", "hgt": false, "mutation": false}
+  ],
+  "fixed_parameters": {
+    "initial_per_founder": 2,
+    "population_cap": 24,
+    "transfer_target": 12,
+    "transfer_interval": 12.0,
+    "transfer_start": 24.0,
+    "transfer_lysis_fraction": 0.18,
+    "mutation_rate": 0.15,
+    "hgt_probability": 0.020,
+    "external_fitness_selection": false
+  },
+  "primary_gates": {
+    "long_horizon": "Every main condition has at least 2/3 runs at generation >=15, and at least one registered run reaches generation >=20.",
+    "material": "Every registered run is finite, external_fitness_events=0, and max_abs_material_residual < 1e-7.",
+    "stable_loss_without_hgt": "Stable HGT-OFF finishes with grammar_absent_frequency >=0.75 and mean_active_modules <=0.5 in at least 2/3 runs.",
+    "stable_hgt_rescue": "For at least 2/3 paired stable seeds, HGT-ON lowers absent frequency by >=0.30 versus HGT-OFF, records hgt_reentries>=1, and ends with persistent_hgt_reentry_grammar_cells>=1.",
+    "long_delay_expression": "Across HGT-ON holdouts, long-delay mean_active_modules exceeds stable by >=0.50 and is higher in at least 2/3 paired seeds.",
+    "mutation_control": "Mutation-OFF is reported as a mechanistic control and is not used to alter the primary gates.",
+    "all_results": "All listed seeds and conditions are reported regardless of sign."
+  },
+  "claim_limits": [
+    "The long-horizon engine is a coarse-grained material chemostat and not a replacement for the 0.6.6 particle microphysics.",
+    "Mutation re-entry and HGT re-entry are counted separately; HGT rescue requires the HGT-specific counters and persistent HGT descendants.",
+    "No result establishes open-ended evolution, life, consciousness, or universal neural advantage."
+  ]
+}

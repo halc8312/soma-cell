@@ -1,0 +1,768 @@
+{
+  "seed": 6713,
+  "environment": "stable",
+  "seconds": 480.0,
+  "mutation": 1,
+  "hgt": 0,
+  "cells": 12,
+  "divisions": 221,
+  "deaths": 215,
+  "max_generation": 21,
+  "mean_generation": 21.0,
+  "mean_active_modules": 0.0,
+  "mean_expressed_modules": 0.0,
+  "grammar_absent_frequency": 1.0,
+  "lineage_shannon": -0.0,
+  "unique_grammar_signatures": 1,
+  "mutation_events": 11,
+  "hgt_integrations": 0,
+  "grammar_hgt_acquisitions": 0,
+  "grammar_reentries": 0,
+  "persistent_reentry_cells": 0,
+  "reentry_lineage_frequency": 0.0,
+  "transfer_events": 39,
+  "sentinel_frequency": 0.0,
+  "readiness_frequency": 0.0,
+  "organ_frequency": 0.0,
+  "prediction_frequency": 0.0,
+  "plasticity_frequency": 0.0,
+  "first_complete_loss_age": 360.0,
+  "first_reentry_age": null,
+  "material_residual": -1.5006662579253316e-11,
+  "max_abs_material_residual": 1.5006662579253316e-11,
+  "finite": 1,
+  "external_fitness_events": 0,
+  "history": [
+    {
+      "age": 0.25,
+      "cells": 6,
+      "max_generation": 0,
+      "mean_active_modules": 1.6666666666666667,
+      "grammar_absent_frequency": 0.3333333333333333,
+      "lineage_shannon": 1.0986122886681096,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 6.0,
+      "cells": 12,
+      "max_generation": 1,
+      "mean_active_modules": 1.6666666666666667,
+      "grammar_absent_frequency": 0.3333333333333333,
+      "lineage_shannon": 1.0986122886681096,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 12.0,
+      "cells": 12,
+      "max_generation": 1,
+      "mean_active_modules": 1.6666666666666667,
+      "grammar_absent_frequency": 0.3333333333333333,
+      "lineage_shannon": 1.0986122886681096,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 18.0,
+      "cells": 16,
+      "max_generation": 2,
+      "mean_active_modules": 1.25,
+      "grammar_absent_frequency": 0.5,
+      "lineage_shannon": 1.0397207708399179,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 24.0,
+      "cells": 12,
+      "max_generation": 2,
+      "mean_active_modules": 1.25,
+      "grammar_absent_frequency": 0.5,
+      "lineage_shannon": 1.0397207708399179,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 30.0,
+      "cells": 18,
+      "max_generation": 2,
+      "mean_active_modules": 1.6666666666666667,
+      "grammar_absent_frequency": 0.3333333333333333,
+      "lineage_shannon": 1.0986122886681096,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 36.0,
+      "cells": 12,
+      "max_generation": 2,
+      "mean_active_modules": 2.0833333333333335,
+      "grammar_absent_frequency": 0.3333333333333333,
+      "lineage_shannon": 1.0775563270668007,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 42.0,
+      "cells": 16,
+      "max_generation": 3,
+      "mean_active_modules": 1.5625,
+      "grammar_absent_frequency": 0.5,
+      "lineage_shannon": 1.0239287996389363,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 48.0,
+      "cells": 12,
+      "max_generation": 3,
+      "mean_active_modules": 1.6666666666666667,
+      "grammar_absent_frequency": 0.5,
+      "lineage_shannon": 1.0114042647073518,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 54.0,
+      "cells": 17,
+      "max_generation": 3,
+      "mean_active_modules": 2.3529411764705883,
+      "grammar_absent_frequency": 0.35294117647058826,
+      "lineage_shannon": 1.0283941667143721,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 60.0,
+      "cells": 12,
+      "max_generation": 3,
+      "mean_active_modules": 2.0833333333333335,
+      "grammar_absent_frequency": 0.4166666666666667,
+      "lineage_shannon": 1.0281838593329258,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 66.0,
+      "cells": 17,
+      "max_generation": 4,
+      "mean_active_modules": 1.4705882352941178,
+      "grammar_absent_frequency": 0.5882352941176471,
+      "lineage_shannon": 0.923840705630872,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 72.0,
+      "cells": 12,
+      "max_generation": 4,
+      "mean_active_modules": 1.25,
+      "grammar_absent_frequency": 0.6666666666666666,
+      "lineage_shannon": 0.8239592165010823,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 78.0,
+      "cells": 12,
+      "max_generation": 4,
+      "mean_active_modules": 1.25,
+      "grammar_absent_frequency": 0.6666666666666666,
+      "lineage_shannon": 0.8239592165010823,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 84.0,
+      "cells": 12,
+      "max_generation": 4,
+      "mean_active_modules": 1.6666666666666667,
+      "grammar_absent_frequency": 0.5833333333333334,
+      "lineage_shannon": 0.887694275799104,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 90.0,
+      "cells": 20,
+      "max_generation": 5,
+      "mean_active_modules": 1.0,
+      "grammar_absent_frequency": 0.7,
+      "lineage_shannon": 0.8018185525433373,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 96.0,
+      "cells": 12,
+      "max_generation": 5,
+      "mean_active_modules": 1.6666666666666667,
+      "grammar_absent_frequency": 0.5833333333333334,
+      "lineage_shannon": 0.887694275799104,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 102.0,
+      "cells": 12,
+      "max_generation": 5,
+      "mean_active_modules": 1.6666666666666667,
+      "grammar_absent_frequency": 0.5833333333333334,
+      "lineage_shannon": 0.887694275799104,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 108.0,
+      "cells": 12,
+      "max_generation": 5,
+      "mean_active_modules": 1.6666666666666667,
+      "grammar_absent_frequency": 0.5833333333333334,
+      "lineage_shannon": 0.887694275799104,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 114.0,
+      "cells": 23,
+      "max_generation": 6,
+      "mean_active_modules": 1.7391304347826086,
+      "grammar_absent_frequency": 0.6086956521739131,
+      "lineage_shannon": 0.8058274790573101,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 120.0,
+      "cells": 12,
+      "max_generation": 6,
+      "mean_active_modules": 2.0833333333333335,
+      "grammar_absent_frequency": 0.5833333333333334,
+      "lineage_shannon": 0.6791932659915256,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 126.0,
+      "cells": 12,
+      "max_generation": 6,
+      "mean_active_modules": 2.0833333333333335,
+      "grammar_absent_frequency": 0.5833333333333334,
+      "lineage_shannon": 0.6791932659915256,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 132.0,
+      "cells": 12,
+      "max_generation": 6,
+      "mean_active_modules": 2.0833333333333335,
+      "grammar_absent_frequency": 0.5833333333333334,
+      "lineage_shannon": 0.6791932659915256,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 138.0,
+      "cells": 19,
+      "max_generation": 7,
+      "mean_active_modules": 1.3157894736842106,
+      "grammar_absent_frequency": 0.7368421052631579,
+      "lineage_shannon": 0.5763341277567499,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 144.0,
+      "cells": 12,
+      "max_generation": 7,
+      "mean_active_modules": 1.6666666666666667,
+      "grammar_absent_frequency": 0.6666666666666666,
+      "lineage_shannon": 0.6365141682948128,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 150.0,
+      "cells": 12,
+      "max_generation": 7,
+      "mean_active_modules": 1.6666666666666667,
+      "grammar_absent_frequency": 0.6666666666666666,
+      "lineage_shannon": 0.6365141682948128,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 156.0,
+      "cells": 12,
+      "max_generation": 7,
+      "mean_active_modules": 1.6666666666666667,
+      "grammar_absent_frequency": 0.6666666666666666,
+      "lineage_shannon": 0.6365141682948128,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 162.0,
+      "cells": 20,
+      "max_generation": 8,
+      "mean_active_modules": 1.0,
+      "grammar_absent_frequency": 0.8,
+      "lineage_shannon": 0.5004024235381879,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 168.0,
+      "cells": 12,
+      "max_generation": 8,
+      "mean_active_modules": 0.8333333333333334,
+      "grammar_absent_frequency": 0.8333333333333334,
+      "lineage_shannon": 0.45056120886630463,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 174.0,
+      "cells": 14,
+      "max_generation": 8,
+      "mean_active_modules": 1.2857142857142858,
+      "grammar_absent_frequency": 0.7142857142857143,
+      "lineage_shannon": 0.5982695885852573,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 180.0,
+      "cells": 12,
+      "max_generation": 8,
+      "mean_active_modules": 1.5,
+      "grammar_absent_frequency": 0.6666666666666666,
+      "lineage_shannon": 0.6365141682948128,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 186.0,
+      "cells": 20,
+      "max_generation": 9,
+      "mean_active_modules": 0.9,
+      "grammar_absent_frequency": 0.8,
+      "lineage_shannon": 0.5004024235381879,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 192.0,
+      "cells": 12,
+      "max_generation": 9,
+      "mean_active_modules": 1.5,
+      "grammar_absent_frequency": 0.6666666666666666,
+      "lineage_shannon": 0.6365141682948128,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 198.0,
+      "cells": 12,
+      "max_generation": 9,
+      "mean_active_modules": 1.5,
+      "grammar_absent_frequency": 0.6666666666666666,
+      "lineage_shannon": 0.6365141682948128,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 204.0,
+      "cells": 12,
+      "max_generation": 9,
+      "mean_active_modules": 1.4166666666666667,
+      "grammar_absent_frequency": 0.6666666666666666,
+      "lineage_shannon": 0.6365141682948128,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 210.0,
+      "cells": 22,
+      "max_generation": 10,
+      "mean_active_modules": 1.1363636363636365,
+      "grammar_absent_frequency": 0.7272727272727273,
+      "lineage_shannon": 0.5859526183035508,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 216.0,
+      "cells": 12,
+      "max_generation": 10,
+      "mean_active_modules": 1.75,
+      "grammar_absent_frequency": 0.5833333333333334,
+      "lineage_shannon": 0.6791932659915256,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 222.0,
+      "cells": 12,
+      "max_generation": 10,
+      "mean_active_modules": 1.75,
+      "grammar_absent_frequency": 0.5833333333333334,
+      "lineage_shannon": 0.6791932659915256,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 228.0,
+      "cells": 12,
+      "max_generation": 10,
+      "mean_active_modules": 1.75,
+      "grammar_absent_frequency": 0.5833333333333334,
+      "lineage_shannon": 0.6791932659915256,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 234.0,
+      "cells": 20,
+      "max_generation": 11,
+      "mean_active_modules": 1.25,
+      "grammar_absent_frequency": 0.7,
+      "lineage_shannon": 0.6108643020548935,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 240.0,
+      "cells": 12,
+      "max_generation": 11,
+      "mean_active_modules": 1.5,
+      "grammar_absent_frequency": 0.6666666666666666,
+      "lineage_shannon": 0.6365141682948128,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 246.0,
+      "cells": 12,
+      "max_generation": 11,
+      "mean_active_modules": 1.5,
+      "grammar_absent_frequency": 0.6666666666666666,
+      "lineage_shannon": 0.6365141682948128,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 252.0,
+      "cells": 12,
+      "max_generation": 11,
+      "mean_active_modules": 1.5,
+      "grammar_absent_frequency": 0.6666666666666666,
+      "lineage_shannon": 0.6365141682948128,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 258.0,
+      "cells": 12,
+      "max_generation": 11,
+      "mean_active_modules": 1.5,
+      "grammar_absent_frequency": 0.6666666666666666,
+      "lineage_shannon": 0.6365141682948128,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 264.0,
+      "cells": 12,
+      "max_generation": 12,
+      "mean_active_modules": 0.4166666666666667,
+      "grammar_absent_frequency": 0.9166666666666666,
+      "lineage_shannon": 0.2868359830561607,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 270.0,
+      "cells": 13,
+      "max_generation": 12,
+      "mean_active_modules": 0.7692307692307693,
+      "grammar_absent_frequency": 0.8461538461538461,
+      "lineage_shannon": 0.4293230219306162,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 276.0,
+      "cells": 12,
+      "max_generation": 12,
+      "mean_active_modules": 0.8333333333333334,
+      "grammar_absent_frequency": 0.8333333333333334,
+      "lineage_shannon": 0.45056120886630463,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 282.0,
+      "cells": 12,
+      "max_generation": 12,
+      "mean_active_modules": 0.8333333333333334,
+      "grammar_absent_frequency": 0.8333333333333334,
+      "lineage_shannon": 0.45056120886630463,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 288.0,
+      "cells": 12,
+      "max_generation": 13,
+      "mean_active_modules": 0.4166666666666667,
+      "grammar_absent_frequency": 0.9166666666666666,
+      "lineage_shannon": 0.2868359830561607,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 294.0,
+      "cells": 12,
+      "max_generation": 13,
+      "mean_active_modules": 0.4166666666666667,
+      "grammar_absent_frequency": 0.9166666666666666,
+      "lineage_shannon": 0.2868359830561607,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 300.0,
+      "cells": 12,
+      "max_generation": 13,
+      "mean_active_modules": 0.75,
+      "grammar_absent_frequency": 0.8333333333333334,
+      "lineage_shannon": 0.45056120886630463,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 306.0,
+      "cells": 12,
+      "max_generation": 13,
+      "mean_active_modules": 0.75,
+      "grammar_absent_frequency": 0.8333333333333334,
+      "lineage_shannon": 0.45056120886630463,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 312.0,
+      "cells": 12,
+      "max_generation": 14,
+      "mean_active_modules": 0.75,
+      "grammar_absent_frequency": 0.8333333333333334,
+      "lineage_shannon": 0.45056120886630463,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 318.0,
+      "cells": 12,
+      "max_generation": 14,
+      "mean_active_modules": 0.75,
+      "grammar_absent_frequency": 0.8333333333333334,
+      "lineage_shannon": 0.45056120886630463,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 324.0,
+      "cells": 12,
+      "max_generation": 14,
+      "mean_active_modules": 0.75,
+      "grammar_absent_frequency": 0.8333333333333334,
+      "lineage_shannon": 0.45056120886630463,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 330.0,
+      "cells": 14,
+      "max_generation": 14,
+      "mean_active_modules": 1.2857142857142858,
+      "grammar_absent_frequency": 0.7142857142857143,
+      "lineage_shannon": 0.5982695885852573,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 336.0,
+      "cells": 12,
+      "max_generation": 15,
+      "mean_active_modules": 0.75,
+      "grammar_absent_frequency": 0.8333333333333334,
+      "lineage_shannon": 0.45056120886630463,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 342.0,
+      "cells": 12,
+      "max_generation": 15,
+      "mean_active_modules": 0.75,
+      "grammar_absent_frequency": 0.8333333333333334,
+      "lineage_shannon": 0.45056120886630463,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 348.0,
+      "cells": 12,
+      "max_generation": 15,
+      "mean_active_modules": 0.75,
+      "grammar_absent_frequency": 0.8333333333333334,
+      "lineage_shannon": 0.45056120886630463,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 354.0,
+      "cells": 12,
+      "max_generation": 15,
+      "mean_active_modules": 0.75,
+      "grammar_absent_frequency": 0.8333333333333334,
+      "lineage_shannon": 0.45056120886630463,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 360.0,
+      "cells": 12,
+      "max_generation": 16,
+      "mean_active_modules": 0.0,
+      "grammar_absent_frequency": 1.0,
+      "lineage_shannon": -0.0,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 366.0,
+      "cells": 12,
+      "max_generation": 16,
+      "mean_active_modules": 0.0,
+      "grammar_absent_frequency": 1.0,
+      "lineage_shannon": -0.0,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 372.0,
+      "cells": 12,
+      "max_generation": 16,
+      "mean_active_modules": 0.0,
+      "grammar_absent_frequency": 1.0,
+      "lineage_shannon": -0.0,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 378.0,
+      "cells": 12,
+      "max_generation": 16,
+      "mean_active_modules": 0.0,
+      "grammar_absent_frequency": 1.0,
+      "lineage_shannon": -0.0,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 384.0,
+      "cells": 12,
+      "max_generation": 17,
+      "mean_active_modules": 0.0,
+      "grammar_absent_frequency": 1.0,
+      "lineage_shannon": -0.0,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 390.0,
+      "cells": 12,
+      "max_generation": 17,
+      "mean_active_modules": 0.0,
+      "grammar_absent_frequency": 1.0,
+      "lineage_shannon": -0.0,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 396.0,
+      "cells": 12,
+      "max_generation": 17,
+      "mean_active_modules": 0.0,
+      "grammar_absent_frequency": 1.0,
+      "lineage_shannon": -0.0,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 402.0,
+      "cells": 12,
+      "max_generation": 17,
+      "mean_active_modules": 0.0,
+      "grammar_absent_frequency": 1.0,
+      "lineage_shannon": -0.0,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 408.0,
+      "cells": 12,
+      "max_generation": 18,
+      "mean_active_modules": 0.0,
+      "grammar_absent_frequency": 1.0,
+      "lineage_shannon": -0.0,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 414.0,
+      "cells": 12,
+      "max_generation": 18,
+      "mean_active_modules": 0.0,
+      "grammar_absent_frequency": 1.0,
+      "lineage_shannon": -0.0,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 420.0,
+      "cells": 12,
+      "max_generation": 18,
+      "mean_active_modules": 0.0,
+      "grammar_absent_frequency": 1.0,
+      "lineage_shannon": -0.0,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 426.0,
+      "cells": 12,
+      "max_generation": 18,
+      "mean_active_modules": 0.0,
+      "grammar_absent_frequency": 1.0,
+      "lineage_shannon": -0.0,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 432.0,
+      "cells": 12,
+      "max_generation": 19,
+      "mean_active_modules": 0.0,
+      "grammar_absent_frequency": 1.0,
+      "lineage_shannon": -0.0,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 438.0,
+      "cells": 12,
+      "max_generation": 19,
+      "mean_active_modules": 0.0,
+      "grammar_absent_frequency": 1.0,
+      "lineage_shannon": -0.0,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 444.0,
+      "cells": 12,
+      "max_generation": 19,
+      "mean_active_modules": 0.0,
+      "grammar_absent_frequency": 1.0,
+      "lineage_shannon": -0.0,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 450.0,
+      "cells": 12,
+      "max_generation": 19,
+      "mean_active_modules": 0.0,
+      "grammar_absent_frequency": 1.0,
+      "lineage_shannon": -0.0,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 456.0,
+      "cells": 12,
+      "max_generation": 20,
+      "mean_active_modules": 0.0,
+      "grammar_absent_frequency": 1.0,
+      "lineage_shannon": -0.0,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 462.0,
+      "cells": 12,
+      "max_generation": 20,
+      "mean_active_modules": 0.0,
+      "grammar_absent_frequency": 1.0,
+      "lineage_shannon": -0.0,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 468.0,
+      "cells": 12,
+      "max_generation": 20,
+      "mean_active_modules": 0.0,
+      "grammar_absent_frequency": 1.0,
+      "lineage_shannon": -0.0,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 474.0,
+      "cells": 12,
+      "max_generation": 20,
+      "mean_active_modules": 0.0,
+      "grammar_absent_frequency": 1.0,
+      "lineage_shannon": -0.0,
+      "grammar_reentries": 0
+    },
+    {
+      "age": 480.0,
+      "cells": 12,
+      "max_generation": 21,
+      "mean_active_modules": 0.0,
+      "grammar_absent_frequency": 1.0,
+      "lineage_shannon": -0.0,
+      "grammar_reentries": 0
+    }
+  ],
+  "condition": "stable_hgt_off",
+  "wall_seconds": 22.79622769355774
+}

@@ -1,0 +1,91 @@
+{
+  "build": "SOMA-CELL 0.6.7",
+  "claim_limits": [
+    "The 0.6.7 engine is an explicit coarse-grained material chemostat calibrated as a long-horizon instrument; it is not the full 0.6.6 particle microphysics.",
+    "HGT rescue is claimed only when sequence acquisition, re-entry, and persistent descendants are all observed.",
+    "Environment-dependent retention is not open-ended evolution or proof of life.",
+    "Long-delay information is supplied only as an accounted extracellular cue reservoir; cells receive no future niche label or switch-time flag.",
+    "Founder module proteins are explicit initial material; descendants and HGT recipients must synthesize module protein from structural matter and ATP."
+  ],
+  "development_seeds_excluded": [
+    6701,
+    6702,
+    6703,
+    6704
+  ],
+  "duration_seconds": 480.0,
+  "fixed_parameters": {
+    "cue_capacity": 0.6,
+    "cue_decay": 0.08,
+    "cue_inflow": 0.12,
+    "cue_is_material": true,
+    "external_fitness_selection": false,
+    "hgt_probability": 0.02,
+    "initial_per_founder": 2,
+    "module_protein_is_material": true,
+    "mutation_rate": 0.15,
+    "population_cap": 24,
+    "transfer_interval": 12.0,
+    "transfer_lysis_fraction": 0.18,
+    "transfer_start": 24.0,
+    "transfer_target": 12
+  },
+  "frozen_before_main_holdout": true,
+  "implementation_schema": "0.6.7-LH1.0",
+  "main_conditions": [
+    {
+      "environment": "stable",
+      "hgt": true,
+      "mutation": true
+    },
+    {
+      "environment": "stable",
+      "hgt": false,
+      "mutation": true
+    },
+    {
+      "environment": "long_delay",
+      "hgt": true,
+      "mutation": true
+    },
+    {
+      "environment": "long_delay",
+      "hgt": false,
+      "mutation": true
+    }
+  ],
+  "main_holdout_seeds": [
+    6711,
+    6712,
+    6713
+  ],
+  "primary_gates": {
+    "long_delay_expression": "Across HGT-ON holdouts, long-delay mean_active_modules exceeds stable by >=0.50 and is higher in at least 2/3 paired seeds.",
+    "long_horizon": "For every main condition, at least 2/3 runs reach generation >=15; at least one registered run reaches generation >=20.",
+    "material": "Every registered run is finite, external_fitness_events=0, and max_abs_material_residual < 1e-7.",
+    "no_posthoc_seed_selection": "All listed holdout seeds and conditions are reported, including failures.",
+    "stable_hgt_rescue": "In at least 2/3 paired stable seeds, HGT-ON reduces absent frequency by >=0.30 versus HGT-OFF, records >=1 HGT grammar re-entry, and ends with >=1 persistent re-entry-lineage cell that still carries grammar.",
+    "stable_loss_without_hgt": "In stable HGT-OFF, at least 2/3 runs finish with grammar_absent_frequency >=0.75 and mean_active_modules <=0.5."
+  },
+  "purpose": "Test generation-15/20 neural-grammar loss, material HGT re-entry, and long-delay-specific retention without organism-facing fitness or experimenter lineage replacement.",
+  "registered_utc": "2026-08-08T09:33:56Z",
+  "schema_version": "1.1",
+  "secondary_conditions": [
+    {
+      "environment": "periodic",
+      "hgt": true,
+      "mutation": true
+    },
+    {
+      "environment": "stable",
+      "hgt": false,
+      "mutation": false
+    }
+  ],
+  "secondary_periodic_seeds": [
+    6711,
+    6712,
+    6713
+  ],
+  "source_sha256": "23f18de413026424cba95fb7a88359e81784107797abb7382b272e259d618fed"
+}

@@ -225,3 +225,12 @@
 - 死体化学・環境DNA・HGTを共有生態系へ統合。
 - stableの活動縮小はPASSしたが完全文法喪失はFAIL。periodic/long-delayの保持優位もFAIL。
 - 0.6.5の複雑環境保持信号が外部トーナメント選択に依存した可能性を正式な負の結果として凍結。
+
+
+## 2026-08-08 — SOMA-CELL 0.6.7
+- generation 15〜21用の粗視化物質serial-transfer ecologyを追加。
+- genome/copy polymer/module protein/ATP/death/eDNA/HGT/neutral outflowを台帳化。
+- R1/R2/中間登録をsource driftまたはseed再使用で無効化し、R3未使用seed 6731〜6733を事前登録。
+- R3 12/12行を報告。長期世代・物質ゲートPASS。stable loss、strict HGT rescue、long-delay保持ゲートFAIL。
+- 専用28/28、継承251/251、合計279/279 PASS。
+- 次を0.6.8 regime-shift evolutionary memoryへ変更。

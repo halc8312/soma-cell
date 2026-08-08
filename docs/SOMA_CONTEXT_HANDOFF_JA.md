@@ -289,3 +289,8 @@ SOMA-CELL 0.6.2は、0.6.1 UI1のコンパクトHUDと子クラス安全リセ�
 3世代×8個体×3系列の加速アッセイでperiodic/long_delayは3/3保持、stable shrinkageは1/3で事前登録FAIL。periodic候補は実配列ノックアウト6/6低下、再導入6/6回復。科学状態は`PARTIAL_ENVIRONMENT_DEPENDENCE_STABLE_LOSS_INCOMPLETE`。
 
 重要: これは加速トーナメント型系統アッセイであり、共有化学生態系の自然淘汰ではない。0.6.6では実際の分裂・死・有限資源・死体・eDNA/HGTを使うライブ集団へ移行する。会話記憶より0.6.5基準ソース、契約、事前登録、結果を優先する。
+
+
+## 追補 2026-08-08 — SOMA-CELL 0.6.7
+
+0.6.7は0.6.6粒子世界を凍結したまま、generation 15〜21を調べる粗視化物質serial-transfer計器を追加した。R3未使用seed 6731〜6733の12/12行を報告。長期世代と物質保存はPASS。stable完全喪失0/3、strict HGT救済1/3、long-delay active差+0.388889で主要科学ゲートはFAIL。HGT-ON全stable系列では実配列再侵入とgrammarを持つHGT由来子孫を観測した。次は0.6.8で同一系統史内のstable burn-in→regime shiftを検査する。会話より0.6.7ソース、R3事前登録、holdout reportを優先する。

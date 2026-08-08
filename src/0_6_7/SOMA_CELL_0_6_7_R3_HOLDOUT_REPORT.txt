@@ -1,0 +1,42 @@
+SOMA-CELL 0.6.7 R3 PREREGISTERED HOLDOUT REPORT
+=================================================
+
+Build: SOMA-CELL 0.6.7
+Schema: 0.6.7-LH1.0
+Source SHA-256: abfb17257ab795999223296315a60a11777bf33a8c88146e26a8155fb957ec4b
+Seeds: 6731, 6732, 6733
+Duration: 480 simulation seconds
+Main rows: 12 / 12 reported
+
+PREREGISTERED GATES
+-------------------
+Long horizon: PASS
+  Every condition reached generation >=15 in 3/3 runs.
+  At least one registered run reached generation >=20.
+
+Material / finite / no external fitness: PASS
+  12/12 finite, external_fitness_events=0.
+  Maximum observed absolute material residual: 1.770e-11 (condition mean; row maximum remains <1e-7).
+
+Stable grammar loss without HGT: FAIL
+  Required: absent >=0.75 AND active <=0.5 in >=2/3 paired runs.
+  Observed qualifying runs: 0 / 3.
+  Stable HGT-OFF mean absent: 0.388889
+  Stable HGT-OFF mean active: 0.194444
+
+Stable HGT rescue: FAIL
+  Required: absent reduction >=0.30, HGT re-entry, and persistent HGT grammar descendants in >=2/3 pairs.
+  Observed qualifying pairs: 1 / 3.
+  Paired absent-frequency reductions: +0.166667, +0.333333, +0.250000
+  HGT re-entry and persistent grammar descendants nevertheless occurred in all three HGT-ON stable runs.
+
+Long-delay expression: FAIL
+  Required: HGT-ON long-delay active mean >= stable +0.50 and pairwise higher in >=2/3.
+  Observed mean difference: +0.388889
+  Pairwise higher: 2 / 3.
+
+OVERALL PRIMARY GATE: FAIL
+
+MEASURED INTERPRETATION
+-----------------------
+The coarse-grained material ecology successfully extended endogenous parent-to-daughter division to generations 17-21 without organism-facing fitness. Material HGT repeatedly reintroduced grammar sequences, and HGT-derived descendants carrying grammar persisted. However, the preregistered stable-loss, stable-HGT-rescue, and long-delay-retention thresholds were not met. The result supports real material re-entry and long-horizon operation, but not a robust environment-dependent neural-grammar evolutionary advantage.

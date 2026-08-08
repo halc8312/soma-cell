@@ -1,0 +1,53 @@
+{
+  "build": "SOMA-CELL 0.6.7",
+  "canonical_source": "src/0_6_7/SOMA_CELL_0_6_7_pythonista.py",
+  "engineering_status": "PASS",
+  "forbidden": [
+    "organism_fitness",
+    "reward_label",
+    "correct_direction",
+    "switch_time_label",
+    "experimenter_lineage_copy",
+    "free_gene_inheritance",
+    "free_learned_state_inheritance"
+  ],
+  "implementation_schema": "0.6.7-LH1.0",
+  "instrument": "coarse_grained_material_serial_transfer_chemostat",
+  "parent": "SOMA-CELL 0.6.6",
+  "r3": {
+    "gates": {
+      "all_main_rows_reported": true,
+      "long_delay_expression": false,
+      "long_delay_mean_active_difference": 0.38888888888888906,
+      "long_delay_pairwise_higher": 2,
+      "long_horizon": true,
+      "material": true,
+      "stable_hgt_rescue": false,
+      "stable_hgt_rescue_absent_differences": [
+        0.16666666666666669,
+        0.3333333333333333,
+        0.25
+      ],
+      "stable_hgt_rescue_positive_pairs": 1,
+      "stable_loss_positive_pairs": 0,
+      "stable_loss_without_hgt": false
+    },
+    "overall_primary_gate_pass": false,
+    "rows": 12,
+    "seeds": [
+      6731,
+      6732,
+      6733
+    ]
+  },
+  "scientific_status": "PARTIAL_LONG_HORIZON_HGT_REENTRY_WITHOUT_PREREGISTERED_LOSS_OR_DELAY_RETENTION",
+  "source_sha256": "abfb17257ab795999223296315a60a11777bf33a8c88146e26a8155fb957ec4b",
+  "validation": {
+    "dedicated_passed": 28,
+    "dedicated_total": 28,
+    "inherited_passed": 251,
+    "inherited_total": 251,
+    "total": 279,
+    "total_passed": 279
+  }
+}

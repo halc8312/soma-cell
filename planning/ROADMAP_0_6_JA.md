@@ -284,3 +284,21 @@ science: NEGATIVE_BOUNDARY_RESULT_WITH_LIMITS
 - stable / periodic / long-delayを主要環境にする。
 - HGT on/off、mutation off、grammar knockout/reintroductionを必須対照にする。
 - stableで欠失が再現しない場合は、欠失コスト、突然変異供給、世代数、背景感覚運動の強さを分離する。
+
+
+## SOMA-CELL 0.6.7 — 凍結済み・長期物質系統計器
+
+- 粗視化物質チェモスタットでgeneration 15〜21を達成。
+- R3 12/12 finite、external fitness 0、物質残差<1e-7。
+- stable loss 0/3、strict HGT rescue 1/3、long-delay差+0.388889で主要ゲートFAIL。
+- HGT再侵入とHGT由来grammar子孫はHGT-ON stable 3/3で成立。
+- 判定: `PARTIAL_LONG_HORIZON_HGT_REENTRY_WITHOUT_PREREGISTERED_LOSS_OR_DELAY_RETENTION`。
+
+## 次: 0.6.8 — regime shift下の物質的進化記憶
+
+1. stable burn-inを20世代以上継続。
+2. 外部通知なしでlong-delayまたはperiodicへ物理規則を切替。
+3. loss→mutation/HGT re-entry→翻訳→子孫持続を同一系統史で追跡。
+4. HGT OFF、mutation OFF、no-switch、grammar absentを事前登録。
+5. 再侵入遺伝子をノックアウト／再導入し、保持の因果を確認。
+6. 0.6.7の粗視化結果を0.6.6粒子世界の短い確認実験で交差検証する。

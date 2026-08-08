@@ -1,0 +1,18 @@
+SOMA-CELL 0.6.7 R2 / INTERMEDIATE REGISTRATIONS INVALIDATION
+================================================================
+
+The earlier R2 preregistration bound source SHA-256
+0aadb3611ccb8da9d24d5728324e51867e43cbe54c44c05e71e17fdcd1bb94a4.
+
+An intermediate unnumbered registration later bound source SHA-256
+23f18de413026424cba95fb7a88359e81784107797abb7382b272e259d618fed,
+but its listed 6711-6713 seeds had already been used during development and are
+therefore not eligible as formal holdouts.
+
+Before formal R3 registration, the cell finite-state audit was also strengthened
+to include every explicit neural-module protein material pool. The final R3
+source SHA-256 is:
+abfb17257ab795999223296315a60a11777bf33a8c88146e26a8155fb957ec4b
+
+All R1/R2/intermediate runs remain development data and must not be reported as
+preregistered R3 evidence. R3 uses unseen seeds 6731-6733.

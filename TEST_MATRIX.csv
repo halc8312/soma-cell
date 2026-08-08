@@ -145,3 +145,13 @@ F065-012,0.6.5,dedicated validation,PASS,24/24
 F065-013,0.6.5,inherited regression,PASS,202/202; grand total 226/226
 F065-014,0.6.5,natural-selection claim,LIMITED,accelerated experimenter-side lineage tournament is not yet live shared-population natural selection
 F065-015,0.6.5,scientific status,PARTIAL_ENVIRONMENT_DEPENDENCE_STABLE_LOSS_INCOMPLETE,complex retention and causality supported but stable loss gate failed
+F067-001,0.6.7,long-horizon endogenous generations,PASS,all 4 R3 conditions 3/3 generation >=15; generation 20/21 observed
+F067-002,0.6.7,material finite no-external-fitness,PASS,12/12 finite external fitness 0 residual <1e-7
+F067-003,0.6.7,stable grammar loss prereg gate,FAIL,0/3 met absent>=0.75 and active<=0.5
+F067-004,0.6.7,stable HGT rescue strict gate,FAIL,1/3 paired seeds met all criteria
+F067-005,0.6.7,material HGT reentry,PASS,HGT reentry and persistent HGT grammar descendants in all stable HGT-ON runs
+F067-006,0.6.7,long-delay expression prereg gate,FAIL,mean difference +0.388889 below +0.50; pairwise 2/3
+F067-007,0.6.7,dedicated validation,PASS,28/28
+F067-008,0.6.7,inherited regression,PASS,251/251; grand total 279/279
+F067-009,0.6.7,flat Pythonista release,PASS,SHA checks import and flat 28/28 validation
+F067-010,0.6.7,scientific status,PARTIAL_LONG_HORIZON_HGT_REENTRY_WITHOUT_PREREGISTERED_LOSS_OR_DELAY_RETENTION,positive reentry but preregistered evolutionary gates failed

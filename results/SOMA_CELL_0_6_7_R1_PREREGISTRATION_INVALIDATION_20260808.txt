@@ -1,0 +1,16 @@
+SOMA-CELL 0.6.7 R1 PREREGISTRATION INVALIDATION
+=================================================
+
+The first preregistration bound source SHA-256
+033689f128b328de97f37536646344df50c79cb61e0e653bbf54aaa4e32bcb15.
+
+Before the listed 6711-6713 assays were fully completed, the implementation was
+corrected to make translated neural-module protein explicit material, recycle
+that material on dormancy/deletion, separate mutation re-entry from HGT
+re-entry, and invalidate/restart partial genome copies after HGT insertion.
+Those changes altered the source hash. Therefore the 6711-6713 results are
+retained as development data only and may not be reported as preregistered
+holdout evidence.
+
+A new R2 preregistration uses unseen seeds 6721-6723 and the frozen corrected
+source. No R1 seed is reused in R2.

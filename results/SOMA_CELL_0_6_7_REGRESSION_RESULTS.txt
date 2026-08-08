@@ -1,0 +1,9 @@
+SOMA-CELL 0.6.7 INHERITED REGRESSION RESULTS
+================================================
+
+Parent 0.6.6 dedicated validation rerun: 25 / 25 PASS
+Parent 0.6.6 inherited regression record: 226 / 226 PASS
+------------------------------------------------
+Inherited total: 251 / 251 PASS
+
+0.6.7 adds a separate long-horizon instrument and does not modify frozen 0.6.6 source files. The parent dedicated suite was rerun in a fresh interpreter; the earlier inherited chain remains SHA-frozen in the parent release.

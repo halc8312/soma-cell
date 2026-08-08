@@ -1,0 +1,9 @@
+SOMA-CELL 0.6.7 INHERITED REGRESSION RESULTS
+=============================================
+
+Frozen inherited subtotal through 0.6.5: 226/226 PASS
+Fresh parent 0.6.6 dedicated rerun:          25/25 PASS
+------------------------------------------------------
+Inherited total:                            251/251 PASS
+0.6.7 dedicated:                             25/25 PASS
+Grand engineering checks:                  276/276 PASS

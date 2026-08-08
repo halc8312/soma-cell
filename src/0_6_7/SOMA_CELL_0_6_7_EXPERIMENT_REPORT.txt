@@ -1,0 +1,41 @@
+SOMA-CELL 0.6.7 EXPERIMENT REPORT
+=====================================
+
+Build: SOMA-CELL 0.6.7
+Implementation schema: 0.6.7-LH1.0
+Scientific status: PARTIAL_LONG_HORIZON_HGT_REENTRY_WITHOUT_PREREGISTERED_LOSS_OR_DELAY_RETENTION
+
+目的
+----
+0.6.6の完全粒子共有生態系は実世代2まで到達したが、遺伝子完全喪失、再侵入、長期HGTを判定するには短かった。0.6.7は、物質プール、ATP、実ゲノム、実コピー鎖、死体、eDNA、HGT、親→娘分裂を明示した粗視化チェモスタットを、長期世代用の第二実験装置として追加した。0.6.6の粒子物理を置き換えたものではない。
+
+R3事前登録
+-----------
+- 未使用seed: 6731 / 6732 / 6733
+- 4条件: stable HGT ON/OFF、long-delay HGT ON/OFF
+- 480 simulation sec
+- 外部fitness、reward、正解方向、系統コピー: なし
+- 12/12行を符号に関係なく報告
+
+主要結果
+--------
+- 長期世代: PASS。全4条件で3/3がgeneration >=15。登録試験にはgeneration 20/21も含む。
+- 物質保存: PASS。全行finite、external fitness=0、最大残差は1e-7未満。
+- stable HGT-OFFでの完全喪失: FAIL。条件を満たした系列0/3。
+- stable HGT救済: FAIL。厳密なペア条件1/3。ただしHGT再侵入とHGT由来grammar子孫はHGT-ONの3/3で観測。
+- long-delay保持: FAIL。stable HGT-ONとの差は+0.388889で、要求+0.50に届かなかった。ペアでは2/3が高かった。
+
+条件平均
+--------
+stable_hgt_on: gen=19.667, active=0.555556, absent=0.138889, HGT reentry=10.667, persistent HGT grammar=10.000
+stable_hgt_off: gen=21.000, active=0.194444, absent=0.388889, HGT reentry=0.000, persistent HGT grammar=0.000
+long_delay_hgt_on: gen=18.000, active=0.944444, absent=0.055556, HGT reentry=11.000, persistent HGT grammar=9.333
+long_delay_hgt_off: gen=19.333, active=0.000000, absent=0.666667, HGT reentry=0.000, persistent HGT grammar=0.000
+
+限定
+----
+- 長期装置は粗視化チェモスタットであり、0.6.6の完全粒子世界そのものではない。
+- HGT配列取得、再侵入、翻訳後機能化、子孫持続は成立したが、それだけで適応的救済とは言わない。
+- stableでの遺伝子完全喪失は再現性不足。
+- long-delay固有の神経文法保持も事前登録基準未達。
+- 生命、意識、開放進化の証明ではない。
