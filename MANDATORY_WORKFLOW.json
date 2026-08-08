@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.0",
+  "schema_version": "2.1",
   "rule_id": "SOMA-RULELOCK-20260801-R2",
   "mandatory": true,
   "fail_closed": true,
@@ -11,17 +11,17 @@
     "CURRENT_BASELINE.txt",
     "docs/SOMA_CONTEXT_HANDOFF_JA.md",
     "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md",
-    "docs/SOMA_CELL_0_6_5_FORMAL_CONTRACT.md",
-    "docs/SOMA_CELL_0_6_5_FORMAL_SCHEMA.json",
-    "src/0_6_5/SOMA_CELL_0_6_5_pythonista.py",
-    "results/SOMA_CELL_0_6_5_PREREGISTRATION.json",
-    "results/SOMA_CELL_0_6_5_VALIDATION_RESULTS.txt",
-    "results/SOMA_CELL_0_6_5_REGRESSION_RESULTS.txt",
-    "results/SOMA_CELL_0_6_5_EXPERIMENT_REPORT.txt",
-    "results/SOMA_CELL_0_6_5_RELEASE_RECORD.json",
+    "docs/SOMA_CELL_0_6_7_FORMAL_CONTRACT.md",
+    "docs/SOMA_CELL_0_6_7_FORMAL_SCHEMA.json",
+    "src/0_6_7/SOMA_CELL_0_6_7_pythonista.py",
+    "results/SOMA_CELL_0_6_7_R3_PREREGISTRATION.json",
+    "results/SOMA_CELL_0_6_7_R3_HOLDOUT_REPORT.txt",
+    "results/SOMA_CELL_0_6_7_VALIDATION_RESULTS.txt",
+    "results/SOMA_CELL_0_6_7_REGRESSION_RESULTS.txt",
+    "results/SOMA_CELL_0_6_7_EXPERIMENT_REPORT.txt",
     "planning/ROADMAP_0_6_JA.md",
-    "docs/SOMA_CELL_0_6_4_FORMAL_CONTRACT.md",
-    "src/0_6_4/SOMA_CELL_0_6_4_pythonista.py"
+    "docs/SOMA_CELL_0_6_6_FORMAL_CONTRACT.md",
+    "src/0_6_6/SOMA_CELL_0_6_6_pythonista.py"
   ],
   "required_before_edit": [
     "sha256_verification_passed",
@@ -46,34 +46,32 @@
     "single_commit_only": true,
     "fresh_preflight_required_after_commit": true
   },
-  "formal_06_6_specific_guard": {
+  "current_baseline": "SOMA-CELL 0.6.7",
+  "next_milestone": "SOMA-CELL 0.6.8",
+  "formal_06_8_specific_guard": {
     "mandatory": true,
-    "parent_contract": "docs/SOMA_CELL_0_6_5_FORMAL_CONTRACT.md",
-    "rule": "0.6.6 must replace accelerated tournament lineage selection with a live shared chemical ecology before claiming natural multigenerational selection.",
+    "parent_contract": "docs/SOMA_CELL_0_6_7_FORMAL_CONTRACT.md",
+    "rule": "0.6.8 must test loss/re-entry/persistence within one preregistered regime-shift history and may not tune the environment until neural grammar wins.",
     "known_results": [
-      "stable shrinkage gate failed 1/3",
-      "periodic retention 3/3",
-      "long_delay retention 3/3",
-      "periodic candidate knockout loss 6/6",
-      "reintroduction recovery 6/6"
-    ],
-    "required_stages": [
-      "shared finite-resource ecology",
-      "actual cell division and structural death",
-      "lineage tracking without tournament replacement",
-      "HGT on/off comparison",
-      "stable-vs-complex grammar frequency comparison",
-      "sequence-level knockout and reintroduction"
+      "R3 long-horizon/material PASS",
+      "stable loss 0/3",
+      "strict HGT rescue 1/3",
+      "long-delay difference +0.388889 below +0.50"
     ],
     "required_controls": [
+      "HGT OFF",
+      "mutation OFF",
       "grammar absent",
       "dormant grammar",
-      "candidate retained grammar",
-      "HGT disabled",
-      "mutation disabled",
-      "environment unchanged"
+      "no regime switch",
+      "sequence knockout/reintroduction"
+    ],
+    "forbidden": [
+      "external fitness",
+      "correct direction",
+      "switch-time label",
+      "posthoc seed selection",
+      "unreported failed gates"
     ]
-  },
-  "current_baseline": "SOMA-CELL 0.6.6",
-  "next_milestone": "SOMA-CELL 0.6.7"
+  }
 }
