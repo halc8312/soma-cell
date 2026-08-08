@@ -294,3 +294,13 @@ SOMA-CELL 0.6.2は、0.6.1 UI1のコンパクトHUDと子クラス安全リセ�
 ## 追補 2026-08-08 — SOMA-CELL 0.6.7
 
 0.6.7は0.6.6粒子世界を凍結したまま、generation 15〜21を調べる粗視化物質serial-transfer計器を追加した。R3未使用seed 6731〜6733の12/12行を報告。長期世代と物質保存はPASS。stable完全喪失0/3、strict HGT救済1/3、long-delay active差+0.388889で主要科学ゲートはFAIL。HGT-ON全stable系列では実配列再侵入とgrammarを持つHGT由来子孫を観測した。次は0.6.8で同一系統史内のstable burn-in→regime shiftを検査する。会話より0.6.7ソース、R3事前登録、holdout reportを優先する。
+
+## 2026-08-08 — 0.6.8-GPU A1工学チェックポイント
+
+ユーザーは生命機構の簡易化を望まず、RTX 4060 Ti 16GBおよびオンラインGPUで詳細モデルを大規模実行する方針を明示した。これを受け、0.6.8の主軸を粗視化regime-shiftから、0.6.6完全粒子世界のGPU移行へ変更した。
+
+A1で、完全0.6.6 stateのtensor mirror、可変長genome byte mirror、device-neutral RNG、particle diffusion、膜局所ligand profile、core metabolism独立lockstep、hybrid CPU-authoritative runnerを実装した。専用32/32、親0.6.7 28/28 PASS。
+
+ただし開発PyTorchはCPU-onlyでCUDA未検証。surface exchange、genome、division、corpse/eDNA/HGT、神経因果系はCPU正本。`gpu_full_world_step=false`を維持する。
+
+次はA2としてsurface exchange、waste export、leak、radius/motion、spatial hashを移植する。0.6.7の同一系統史regime shiftはGPU詳細基盤後に0.6.6粒子物理で再検証する。

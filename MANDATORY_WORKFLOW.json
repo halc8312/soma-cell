@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.1",
+  "schema_version": "2.2",
   "rule_id": "SOMA-RULELOCK-20260801-R2",
   "mandatory": true,
   "fail_closed": true,
@@ -11,17 +11,17 @@
     "CURRENT_BASELINE.txt",
     "docs/SOMA_CONTEXT_HANDOFF_JA.md",
     "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md",
-    "docs/SOMA_CELL_0_6_7_FORMAL_CONTRACT.md",
-    "docs/SOMA_CELL_0_6_7_FORMAL_SCHEMA.json",
-    "src/0_6_7/SOMA_CELL_0_6_7_pythonista.py",
-    "results/SOMA_CELL_0_6_7_R3_PREREGISTRATION.json",
-    "results/SOMA_CELL_0_6_7_R3_HOLDOUT_REPORT.txt",
-    "results/SOMA_CELL_0_6_7_VALIDATION_RESULTS.txt",
-    "results/SOMA_CELL_0_6_7_REGRESSION_RESULTS.txt",
-    "results/SOMA_CELL_0_6_7_EXPERIMENT_REPORT.txt",
-    "planning/ROADMAP_0_6_JA.md",
+    "docs/SOMA_CELL_0_6_8_GPU_CONTRACT.md",
+    "docs/SOMA_CELL_0_6_8_GPU_SCHEMA.json",
+    "src/0_6_8/SOMA_CELL_0_6_8_gpu.py",
+    "results/SOMA_CELL_0_6_8_GPU_VALIDATION_RESULTS.txt",
+    "results/SOMA_CELL_0_6_8_GPU_REGRESSION_RESULTS.txt",
+    "results/SOMA_CELL_0_6_8_GPU_EXPERIMENT_REPORT.txt",
     "docs/SOMA_CELL_0_6_6_FORMAL_CONTRACT.md",
-    "src/0_6_6/SOMA_CELL_0_6_6_pythonista.py"
+    "src/0_6_6/SOMA_CELL_0_6_6_pythonista.py",
+    "docs/SOMA_CELL_0_6_7_FORMAL_CONTRACT.md",
+    "src/0_6_7/SOMA_CELL_0_6_7_pythonista.py",
+    "planning/ROADMAP_0_6_JA.md"
   ],
   "required_before_edit": [
     "sha256_verification_passed",
@@ -46,32 +46,31 @@
     "single_commit_only": true,
     "fresh_preflight_required_after_commit": true
   },
-  "current_baseline": "SOMA-CELL 0.6.7",
-  "next_milestone": "SOMA-CELL 0.6.8",
-  "formal_06_8_specific_guard": {
+  "current_baseline": "SOMA-CELL 0.6.8-GPU A1",
+  "next_milestone": "SOMA-CELL 0.6.8-GPU A2",
+  "gpu_068_a2_specific_guard": {
     "mandatory": true,
-    "parent_contract": "docs/SOMA_CELL_0_6_7_FORMAL_CONTRACT.md",
-    "rule": "0.6.8 must test loss/re-entry/persistence within one preregistered regime-shift history and may not tune the environment until neural grammar wins.",
+    "parent_contract": "docs/SOMA_CELL_0_6_8_GPU_CONTRACT.md",
+    "rule": "A2 may integrate only kernels that pass independent NumPy/Torch fp64 lockstep and preserve frozen 0.6.6 ordering/material semantics.",
     "known_results": [
-      "R3 long-horizon/material PASS",
-      "stable loss 0/3",
-      "strict HGT rescue 1/3",
-      "long-delay difference +0.388889 below +0.50"
+      "A1 dedicated validation 32/32",
+      "parent 0.6.7 validation 28/28",
+      "CUDA not tested",
+      "full GPU world step false"
     ],
     "required_controls": [
-      "HGT OFF",
-      "mutation OFF",
-      "grammar absent",
-      "dormant grammar",
-      "no regime switch",
-      "sequence knockout/reintroduction"
+      "CPU reference",
+      "Torch CPU fp64",
+      "CUDA fp64 when available",
+      "fp32 discrepancy report",
+      "capacity overflow rejection"
     ],
     "forbidden": [
+      "coarse replacement",
+      "silent truncation",
+      "free material or genes",
       "external fitness",
-      "correct direction",
-      "switch-time label",
-      "posthoc seed selection",
-      "unreported failed gates"
+      "full-GPU claim before all subsystems ported"
     ]
   }
 }
