@@ -4,38 +4,43 @@
 
 ## 現在地
 
-**SOMA-CELL 0.6.4を工学的PASS・科学的NEGATIVE_BOUNDARY_RESULT_WITH_LIMITSの凍結基準へ昇格。後から2区画神経器官を作るには完全前駆体の95%を需要判明前に予約する必要があり、条件付き器官は全ての事前登録対照へ平均で敗れた。**
+**SOMA-CELL 0.6.5を工学的PASS・科学的PARTIAL_ENVIRONMENT_DEPENDENCE_STABLE_LOSS_INCOMPLETEの凍結基準へ昇格。**
 
 ```text
-Baseline: SOMA-CELL 0.6.4
-Canonical: src/0_6_4/SOMA_CELL_0_6_4_pythonista.py
-Schema: 0.6.4-AB1.1
+Baseline: SOMA-CELL 0.6.5
+Canonical: src/0_6_5/SOMA_CELL_0_6_5_pythonista.py
+Schema: 0.6.5-GE1.0
 Engineering: PASS
-Science: NEGATIVE_BOUNDARY_RESULT_WITH_LIMITS
-Next: SOMA-CELL 0.6.5
+Science: PARTIAL_ENVIRONMENT_DEPENDENCE_STABLE_LOSS_INCOMPLETE
+Next: SOMA-CELL 0.6.6
 ```
 
 ## 検証
 
 ```text
-0.6.4専用: 25/25 PASS
-継承回帰: 177/177 PASS
-合計: 202/202 PASS
-登録試行: 69
+0.6.5専用: 24/24 PASS
+継承回帰: 202/202 PASS
+合計: 226/226 PASS
 ```
 
-## 科学結果
+## 0.6.5の科学結果
+
+物質ゲノム上に`sentinel / readiness / organ / prediction / plasticity`の5モジュールを置き、欠失、重複、プロモータ休眠・再活性化、調節変異を許可した。追加神経文法は既定休眠で、学習済み状態は遺伝しない。
+
+3世代×8個体×3系列の加速系統アッセイでは、periodicとlong_delayで発現神経文法が3/3系列保持された。stableでは近休眠まで縮小したのは1/3系列だけで、事前登録したstable shrinkage gateはFAILした。
 
 ```text
-最小物理発生オプション: 0.95
-stable誤完全準備/誤発生: 0/12, 0/12
-conditional - option-no-tissue: -0.918171, 正1/6
-conditional - bare: -2.394640, 正0/6
-conditional - eager: -1.136416, 正1/6
-conditional - always-efficient2: -1.794204, 正2/6
-conditional - random: -1.280801, 正1/6
+stable: active modules mean 3.042, organ freq 0.708, near-dormant 1/3
+periodic: active modules mean 4.625, organ freq 1.000, retained 3/3
+rare_fault: active modules mean 3.042, organ freq 0.708
+long_delay: active modules mean 4.625, organ freq 1.000, retained 3/3
+periodic - stable active modules: +1.583
 ```
 
-## 次: SOMA-CELL 0.6.5
+periodicで選ばれた候補ゲノムは、未調整6系列で実配列ノックアウトにより身体余裕AUCが6/6低下し、完全文法再導入で6/6回復した。最大物質残差は約5.475e-06。
 
-追加神経文法を既定休眠にし、センチネル、準備率、器官発生、予測、可塑性の物質遺伝子が多世代選択で保持・縮小・欠失するかを測る。神経を有利に調整せず、費用を払えない環境では自然に失われることを許容する。
+ただし、これは実験者側の加速系統トーナメントであり、共有世界の自然な分裂・死亡・競争だけによる選択ではない。そのため完全な環境依存自然選択とは主張しない。
+
+## 次: SOMA-CELL 0.6.6
+
+加速トーナメントをやめ、有限資源を共有する化学生態系で実際の分裂、構造的死、死体、環境DNA、HGTを通して神経文法頻度を追跡する。stableでの欠失が不完全だった理由を解き、complex環境での保持とstableでの縮小が自然集団でも再現するかを検証する。

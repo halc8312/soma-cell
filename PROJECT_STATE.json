@@ -1,120 +1,122 @@
 {
   "schema_version": "2.1",
-  "checkpoint_id": "SOMA-20260808-CELL064-NEGATIVE-OPTION-BOUNDARY-TO-065-RULELOCK2",
-  "updated_utc": "2026-08-08T00:00:00Z",
+  "checkpoint_id": "SOMA-20260808-CELL065-PARTIAL-ENVDEPEND-TO-066-RULELOCK2",
+  "updated_utc": "2026-08-08T06:40:00Z",
   "user_goal": "iPhone/Pythonistaで、教師ラベルや固定データセットに依存せず、物質的自己生産・遺伝・学習・因果監査を統合した人工生命研究系を段階的に構築する",
   "current_baseline": {
-    "name": "SOMA-CELL 0.6.4",
-    "status": "frozen_negative_boundary_result_with_limits",
-    "canonical_source": "src/0_6_4/SOMA_CELL_0_6_4_pythonista.py",
-    "formal_contract_file": "docs/SOMA_CELL_0_6_4_FORMAL_CONTRACT.md",
-    "formal_schema_file": "docs/SOMA_CELL_0_6_4_FORMAL_SCHEMA.json",
-    "parent_formal_contract_file": "docs/SOMA_CELL_0_6_3_FORMAL_CONTRACT.md",
+    "name": "SOMA-CELL 0.6.5",
+    "status": "frozen_partial_environment_dependence_stable_loss_incomplete",
+    "canonical_source": "src/0_6_5/SOMA_CELL_0_6_5_pythonista.py",
+    "formal_contract_file": "docs/SOMA_CELL_0_6_5_FORMAL_CONTRACT.md",
+    "formal_schema_file": "docs/SOMA_CELL_0_6_5_FORMAL_SCHEMA.json",
+    "parent_formal_contract_file": "docs/SOMA_CELL_0_6_4_FORMAL_CONTRACT.md",
     "parent_tissue_contract_file": "docs/SOMA_CELL_0_6_P2_TISSUE_CONTRACT.md",
     "body_port_contract_file": "docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md",
-    "release_archive": "releases/SOMA_CELL_0_6_4_GOLD_20260808.zip",
+    "release_archive": "releases/SOMA_CELL_0_6_5_GOLD_20260808.zip",
     "validation": {
-      "passed": 25,
-      "total": 25
+      "passed": 24,
+      "total": 24
     },
     "inherited_regression": {
-      "passed": 177,
-      "total": 177
-    },
-    "total_checks": {
       "passed": 202,
       "total": 202
     },
-    "validation_result_file": "results/SOMA_CELL_0_6_4_VALIDATION_RESULTS.txt",
-    "regression_result_file": "results/SOMA_CELL_0_6_4_REGRESSION_RESULTS.txt",
-    "experiment_report_file": "results/SOMA_CELL_0_6_4_EXPERIMENT_REPORT.txt",
-    "preregistration_file": "results/SOMA_CELL_0_6_4_PREREGISTRATION.json",
-    "release_record_file": "results/SOMA_CELL_0_6_4_RELEASE_RECORD.json",
-    "comparison_trials": 69,
-    "implementation_schema": "0.6.4-AB1.1",
-    "parent_implementation_schema": "0.6.3-NG1.0",
+    "total_checks": {
+      "passed": 226,
+      "total": 226
+    },
+    "validation_result_file": "results/SOMA_CELL_0_6_5_VALIDATION_RESULTS.txt",
+    "regression_result_file": "results/SOMA_CELL_0_6_5_REGRESSION_RESULTS.txt",
+    "experiment_report_file": "results/SOMA_CELL_0_6_5_EXPERIMENT_REPORT.txt",
+    "preregistration_file": "results/SOMA_CELL_0_6_5_PREREGISTRATION.json",
+    "release_record_file": "results/SOMA_CELL_0_6_5_RELEASE_RECORD.json",
+    "registered_lineage_assays": 12,
+    "causal_holdout_seeds": 6,
+    "implementation_schema": "0.6.5-GE1.0",
+    "parent_implementation_schema": "0.6.4-AB1.1",
     "port_schema": "0.6-P0.2",
-    "known_max_world_material_residual": 2.0530307139665638e-05,
-    "source_sha256": "47b58227fc7835e0bdadc0cda4243ea0adc6ac73080f087500f99fa955af5533",
-    "release_sha256": "89b577994fd3cb8cbeffc12f61918321a9a0686fa9fdd010bc6130f5da5d0516",
+    "known_max_world_material_residual": 5.474852436293531e-06,
+    "source_sha256": "869a9a737a520cea75889610581a42eefe81f474b7c1db628c9d5d6f5134535b",
+    "release_sha256": "497db3ec6baf6457e03d3dae153532331c36aea81f9c418da1629494db2e7770",
     "engineering_status": "PASS",
-    "scientific_status": "NEGATIVE_BOUNDARY_RESULT_WITH_LIMITS",
-    "mechanism": {
-      "paid_early_material_option": true,
-      "conditional_full_preparation": true,
-      "conservative_expansion_release": true,
-      "stable_false_investment_guard": true,
-      "periodic_hidden_physical_rule": true,
-      "registered_option_fractions": [
-        0.25,
-        0.5,
-        0.75,
-        0.85,
-        0.9,
-        0.95,
-        1.0
-      ]
+    "scientific_status": "PARTIAL_ENVIRONMENT_DEPENDENCE_STABLE_LOSS_INCOMPLETE",
+    "grammar": {
+      "modules": [
+        "sentinel",
+        "readiness",
+        "organ",
+        "prediction",
+        "plasticity"
+      ],
+      "default_expression": "dormant",
+      "material_genome": true,
+      "whole_gene_deletion": true,
+      "whole_gene_duplication": true,
+      "promoter_dormancy": true,
+      "promoter_reactivation": true,
+      "payload_regulation": true,
+      "learned_state_inherited": false
     },
-    "physical_readiness_boundary": {
-      "minimum_feasible_option_fraction": 0.95,
-      "required_fraction": 0.94,
-      "developed_at_095": 3,
-      "trials_at_095": 3,
-      "developed_at_090": 0,
-      "trials_at_090": 3,
-      "interpretation": "late conditional development required nearly full early substrate reservation"
+    "preregistered_evolution": {
+      "generations": 3,
+      "population": 8,
+      "seeds": [
+        4101,
+        4102,
+        4103
+      ],
+      "stable": {
+        "mean_active_modules": 3.042,
+        "mean_organ_frequency": 0.708,
+        "near_dormant_replicates": 1,
+        "replicates": 3,
+        "gate_passed": false
+      },
+      "periodic": {
+        "mean_active_modules": 4.625,
+        "mean_organ_frequency": 1.0,
+        "retained_replicates": 3,
+        "replicates": 3,
+        "gate_passed": true
+      },
+      "rare_fault": {
+        "mean_active_modules": 3.042,
+        "mean_organ_frequency": 0.708,
+        "retained_replicates": 2,
+        "replicates": 3
+      },
+      "long_delay": {
+        "mean_active_modules": 4.625,
+        "mean_organ_frequency": 1.0,
+        "retained_replicates": 3,
+        "replicates": 3,
+        "gate_passed": true
+      },
+      "candidate_environment": "periodic",
+      "candidate_minus_stable_active_modules": 1.583
     },
-    "stable_safety": {
-      "trials": 12,
-      "false_full_investments": 0,
-      "false_developments": 0
+    "causal_confirmation": {
+      "candidate_environment": "periodic",
+      "knockout_reduced_auc_pairs": 6,
+      "pairs": 6,
+      "reintroduction_improved_over_knockout_pairs": 6
     },
-    "preregistered_comparisons": {
-      "conditional_vs_option_no_tissue": {
-        "mean_margin_auc_difference": -0.9181712038737425,
-        "positive_pairs": 1,
-        "pairs": 6
-      },
-      "conditional_vs_bare": {
-        "mean_margin_auc_difference": -2.3946402469394177,
-        "positive_pairs": 0,
-        "pairs": 6
-      },
-      "conditional_vs_eager": {
-        "mean_margin_auc_difference": -1.136415736546547,
-        "positive_pairs": 1,
-        "pairs": 6
-      },
-      "conditional_vs_always_efficient2": {
-        "mean_margin_auc_difference": -1.7942035183017133,
-        "positive_pairs": 2,
-        "pairs": 6
-      },
-      "conditional_vs_random_cost_matched": {
-        "mean_margin_auc_difference": -1.2808005737007602,
-        "positive_pairs": 1,
-        "pairs": 6
-      },
-      "required_positive_pairs": 4,
-      "passed": false
-    },
-    "decision": "NEGATIVE_BOUNDARY_RESULT",
-    "default_added_neural_grammar": "dormant",
+    "decision": "PARTIAL_ENVIRONMENT_DEPENDENCE_STABLE_LOSS_INCOMPLETE",
     "pythonista_scene": "compact_UI1_inherited__descendant_safe_reset__device_retest_pending"
   },
   "next_milestone": {
-    "name": "SOMA-CELL 0.6.5",
+    "name": "SOMA-CELL 0.6.6",
     "status": "planned_not_started",
-    "purpose": "多世代の器官経済と遺伝的保持・欠失。追加神経文法を既定休眠にし、センチネル、準備率、器官発生、予測、可塑性の遺伝子が環境別選択で保持・縮小・欠失するかを測る。",
-    "acceptance_gate": "未調整の複数世代化学生態系で、神経文法の保持頻度が環境依存に変化し、ノックアウト／再導入で適応差の因果が再現する。費用を払えない環境では欠失または休眠が選択されることを許容する。",
+    "purpose": "加速トーナメント型の系統選択を、実際の分裂・死亡・資源競争・死体化学・環境DNA/HGTを含む共有化学生態系へ置き換え、安定環境での神経文法欠失が不完全だった原因を検証する。",
+    "acceptance_gate": "未調整の共有化学生態系で複数実世代を通し、安定環境では神経文法の休眠/欠失が再現性をもって増え、複雑環境では保持が増える。頻度差をノックアウト/再導入およびHGT on/offで因果確認し、外部トーナメントfitnessを個体へ与えない。",
     "required_regressions": [
-      "0.6.4 dedicated 25/25",
-      "inherited P0-through-0.6.3 177/177",
-      "grand total 202/202",
-      "stable false investment/development 0/12",
-      "0.95 physical readiness boundary",
-      "all preregistered negative comparisons preserved",
-      "no free neural grammar inheritance or expression"
+      "0.6.5 dedicated 24/24",
+      "inherited P0-through-0.6.4 202/202",
+      "grand total 226/226",
+      "stable shrinkage failure 1/3 preserved",
+      "periodic and long_delay retention 3/3 preserved",
+      "causal knockout/reintroduction 6/6 preserved",
+      "no free learned-state inheritance"
     ]
   },
   "phase_plan": [
@@ -160,8 +162,13 @@
     },
     {
       "phase": "0.6.5",
+      "status": "frozen_partial_result_with_limits",
+      "focus": "material neural grammar evolution assay; complex retention and causality positive, stable loss incomplete"
+    },
+    {
+      "phase": "0.6.6",
       "status": "next",
-      "focus": "multigenerational organ economy and genetic retention/shrinkage/loss under environment-dependent selection"
+      "focus": "live shared multigenerational chemical ecology replacing accelerated tournament lineage selection"
     }
   ],
   "frozen_invariants": [
@@ -179,26 +186,16 @@
     "actuator conservation targets positive motor work defined by the tissue own current command, never an external correct direction"
   ],
   "canonical_precedence": [
+    "src/0_6_5/SOMA_CELL_0_6_5_pythonista.py",
+    "docs/SOMA_CELL_0_6_5_FORMAL_CONTRACT.md",
+    "docs/SOMA_CELL_0_6_5_FORMAL_SCHEMA.json",
+    "results/SOMA_CELL_0_6_5_RELEASE_RECORD.json",
+    "results/SOMA_CELL_0_6_5_PREREGISTRATION.json",
+    "results/SOMA_CELL_0_6_5_EXPERIMENT_REPORT.txt",
+    "results/SOMA_CELL_0_6_5_VALIDATION_RESULTS.txt",
+    "results/SOMA_CELL_0_6_5_REGRESSION_RESULTS.txt",
     "src/0_6_4/SOMA_CELL_0_6_4_pythonista.py",
     "docs/SOMA_CELL_0_6_4_FORMAL_CONTRACT.md",
-    "docs/SOMA_CELL_0_6_4_FORMAL_SCHEMA.json",
-    "results/SOMA_CELL_0_6_4_RELEASE_RECORD.json",
-    "results/SOMA_CELL_0_6_4_PREREGISTRATION.json",
-    "results/SOMA_CELL_0_6_4_EXPERIMENT_REPORT.txt",
-    "results/SOMA_CELL_0_6_4_VALIDATION_RESULTS.txt",
-    "results/SOMA_CELL_0_6_4_REGRESSION_RESULTS.txt",
-    "src/0_6_3/SOMA_CELL_0_6_3_pythonista.py",
-    "docs/SOMA_CELL_0_6_3_FORMAL_CONTRACT.md",
-    "src/0_6_2/SOMA_CELL_0_6_2_pythonista.py",
-    "docs/SOMA_CELL_0_6_2_FORMAL_CONTRACT.md",
-    "src/0_6_1/SOMA_CELL_0_6_1_pythonista.py",
-    "docs/SOMA_CELL_0_6_1_FORMAL_CONTRACT.md",
-    "src/0_6/SOMA_CELL_0_6_pythonista.py",
-    "docs/SOMA_CELL_0_6_FORMAL_CONTRACT.md",
-    "src/0_6_p2/SOMA_CELL_0_6_P2_pythonista.py",
-    "docs/SOMA_CELL_0_6_P2_TISSUE_CONTRACT.md",
-    "src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py",
-    "docs/SOMA_CELL_0_6_P0_BODY_PORT_CONTRACT.md",
     "00_MANDATORY_STARTUP_GATE_JA.md",
     "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md",
     "PROJECT_STATE.json",
@@ -206,12 +203,12 @@
     "conversation"
   ],
   "open_risks": [
-    "Pythonista 0.6.4 Scene/FPS/thermal/long-run not yet confirmed on iPhone",
-    "two-cell late organ required 95 percent early precursor reservation in registered body chemistry",
-    "conditional preparation lost every preregistered mean comparison and failed all pair-consistency gates",
-    "added-neural grammar is dormant by default but multigenerational retention/loss is untested",
-    "natural selection of sentinel/readiness/organ genes remains undemonstrated",
-    "prediction, recurrence and active semantic diagnosis net value remain unresolved",
+    "Pythonista 0.6.5 Scene/FPS/thermal/long-run not yet confirmed on iPhone",
+    "accelerated lineage assay is not yet a live shared population ecology",
+    "stable environment shrinkage gate failed: only 1/3 replicates reached near-dormant grammar",
+    "periodic and long-delay retention was strong but based on 3-generation population-8 assays",
+    "rare-fault short assay did not separate from stable",
+    "HGT is absent from the accelerated lineage assay and must be tested in live ecology",
     "chemical grammar and material classes remain designer-defined",
     "life, consciousness and open-ended evolution remain unproved"
   ],
@@ -244,8 +241,8 @@
     "receipt_must_match_current_git_head": true,
     "receipt_must_match_next_milestone": true,
     "clean_worktree_required_before_start": true,
-    "transition_receipt": "work_sessions/20260807T190704Z_SOMA_CELL_0_6_4_TRANSITION.json",
-    "next_action": "SOMA-CELL 0.6.5 requires a fresh preflight receipt on the promoted 0.6.4 Git HEAD",
+    "transition_receipt": "work_sessions/20260808T063758Z_SOMA_CELL_0_6_5_TRANSITION.json",
+    "next_action": "SOMA-CELL 0.6.6 requires a fresh preflight receipt on the promoted 0.6.5 Git HEAD",
     "formal_061_primary_controls": [
       "stable body-centred bath with no actuator fault",
       "same-state same-fault no-conservation-feedback twin",
@@ -260,17 +257,17 @@
       "CURRENT_BASELINE.txt",
       "docs/SOMA_CONTEXT_HANDOFF_JA.md",
       "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md",
-      "docs/SOMA_CELL_0_6_4_FORMAL_CONTRACT.md",
-      "docs/SOMA_CELL_0_6_4_FORMAL_SCHEMA.json",
-      "src/0_6_4/SOMA_CELL_0_6_4_pythonista.py",
-      "results/SOMA_CELL_0_6_4_PREREGISTRATION.json",
-      "results/SOMA_CELL_0_6_4_VALIDATION_RESULTS.txt",
-      "results/SOMA_CELL_0_6_4_REGRESSION_RESULTS.txt",
-      "results/SOMA_CELL_0_6_4_EXPERIMENT_REPORT.txt",
-      "results/SOMA_CELL_0_6_4_RELEASE_RECORD.json",
+      "docs/SOMA_CELL_0_6_5_FORMAL_CONTRACT.md",
+      "docs/SOMA_CELL_0_6_5_FORMAL_SCHEMA.json",
+      "src/0_6_5/SOMA_CELL_0_6_5_pythonista.py",
+      "results/SOMA_CELL_0_6_5_PREREGISTRATION.json",
+      "results/SOMA_CELL_0_6_5_VALIDATION_RESULTS.txt",
+      "results/SOMA_CELL_0_6_5_REGRESSION_RESULTS.txt",
+      "results/SOMA_CELL_0_6_5_EXPERIMENT_REPORT.txt",
+      "results/SOMA_CELL_0_6_5_RELEASE_RECORD.json",
       "planning/ROADMAP_0_6_JA.md",
-      "docs/SOMA_CELL_0_6_3_FORMAL_CONTRACT.md",
-      "src/0_6_3/SOMA_CELL_0_6_3_pythonista.py"
+      "docs/SOMA_CELL_0_6_4_FORMAL_CONTRACT.md",
+      "src/0_6_4/SOMA_CELL_0_6_4_pythonista.py"
     ],
     "formal_062_primary_controls": [
       "full8",
@@ -287,6 +284,7 @@
     ],
     "formal_062_result": "NEGATIVE_RESULT_WITH_LIMITS: no_tissue selected; efficient2 retained only as minimal neural research profile; recurrence dormant.",
     "formal_063_result": "NEGATIVE_RESULT_WITH_LIMITS: mechanism/safety passed; preregistered demand vs prepared gate failed 1/6 positive and demand lost to bare no-tissue on mean.",
-    "formal_064_result": "NEGATIVE_BOUNDARY_RESULT_WITH_LIMITS: minimum feasible early option 0.95; conditional lost every preregistered mean comparison; added-neural grammar dormant by default."
+    "formal_064_result": "NEGATIVE_BOUNDARY_RESULT_WITH_LIMITS: minimum feasible early option 0.95; conditional lost every preregistered mean comparison; added-neural grammar dormant by default.",
+    "formal_065_result": "PARTIAL_ENVIRONMENT_DEPENDENCE_STABLE_LOSS_INCOMPLETE: periodic/long_delay retention 3/3 and causal knockout/reintroduction 6/6; stable shrinkage only 1/3."
   }
 }

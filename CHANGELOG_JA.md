@@ -204,3 +204,15 @@
 - 未調整6系列でconditionalは全5対照との平均身体余裕AUC差が負。主要対照option-no-tissueに対して正1/6。
 - 0.6.4専用25/25、継承177/177、合計202/202 PASS。
 - 科学判定を`NEGATIVE_BOUNDARY_RESULT_WITH_LIMITS`として凍結し、追加神経文法を既定休眠へ移す方針を採用。
+
+## 2026-08-08 — SOMA-CELL 0.6.5
+
+- 0.6.4の負の境界結果を受け、追加神経文法を既定休眠へ移した。
+- sentinel / readiness / organ / prediction / plasticityを通常の物質ゲノム上の区切り遺伝子として実装。
+- whole-gene deletion/duplication、promoter dormancy/reactivation、payload regulationを追加。
+- 3世代×8個体の加速系統選択アッセイと、stable/periodic/rare_fault/long_delay環境を追加。
+- lineage内の競合ゲノムは同一body-world seedで評価し、genotype固有seed混入を防止。
+- periodic/long_delayで3/3保持、stable shrinkageは1/3で事前登録ゲートFAIL。
+- periodic候補の実配列ノックアウト6/6低下、再導入6/6回復。
+- 0.6.5専用24/24、継承202/202、合計226/226 PASS。
+- 科学状態を`PARTIAL_ENVIRONMENT_DEPENDENCE_STABLE_LOSS_INCOMPLETE`として凍結。

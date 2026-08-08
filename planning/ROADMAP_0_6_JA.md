@@ -266,3 +266,21 @@ science: NEGATIVE_BOUNDARY_RESULT_WITH_LIMITS
 - 神経文法が費用を払えない場合は自然に欠失することを許容する
 
 0.6.5では神経を有利にすることを目的とせず、環境依存で保持されるか失われるかを結果として受け入れる。
+
+## 0.6.5 — 凍結済み・神経文法の加速多世代アッセイ
+
+- 5つの神経文法モジュールを物質ゲノム化。
+- 欠失、重複、休眠、再活性化、調節変異を実装。
+- stable / periodic / rare_fault / long_delayで3世代×8個体×3系列を事前登録。
+- periodic/long_delayは3/3保持、stable shrinkageは1/3でFAIL。
+- periodic候補はノックアウト6/6低下、再導入6/6回復。
+- 判定: `PARTIAL_ENVIRONMENT_DEPENDENCE_STABLE_LOSS_INCOMPLETE`。
+
+## 次: 0.6.6 — 共有化学生態系での実多世代選択
+
+- トーナメント世代置換を廃止。
+- 実際の分裂、構造的死、死体、資源競争、環境DNA、HGTを共有世界で用いる。
+- lineage IDと神経文法頻度を長時間追跡。
+- stable / periodic / long-delayを主要環境にする。
+- HGT on/off、mutation off、grammar knockout/reintroductionを必須対照にする。
+- stableで欠失が再現しない場合は、欠失コスト、突然変異供給、世代数、背景感覚運動の強さを分離する。
