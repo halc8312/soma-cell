@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.2",
+  "schema_version": "2.3",
   "rule_id": "SOMA-RULELOCK-20260801-R2",
   "mandatory": true,
   "fail_closed": true,
@@ -11,12 +11,14 @@
     "CURRENT_BASELINE.txt",
     "docs/SOMA_CONTEXT_HANDOFF_JA.md",
     "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md",
+    "docs/SOMA_CELL_0_6_8_GPU_A2_CONTRACT.md",
+    "docs/SOMA_CELL_0_6_8_GPU_A2_SCHEMA.json",
+    "src/0_6_8/SOMA_CELL_0_6_8_gpu_a2.py",
+    "results/SOMA_CELL_0_6_8_GPU_A2_VALIDATION_RESULTS.txt",
+    "results/SOMA_CELL_0_6_8_GPU_A2_REGRESSION_RESULTS.txt",
+    "results/SOMA_CELL_0_6_8_GPU_A2_EXPERIMENT_REPORT.txt",
     "docs/SOMA_CELL_0_6_8_GPU_CONTRACT.md",
-    "docs/SOMA_CELL_0_6_8_GPU_SCHEMA.json",
     "src/0_6_8/SOMA_CELL_0_6_8_gpu.py",
-    "results/SOMA_CELL_0_6_8_GPU_VALIDATION_RESULTS.txt",
-    "results/SOMA_CELL_0_6_8_GPU_REGRESSION_RESULTS.txt",
-    "results/SOMA_CELL_0_6_8_GPU_EXPERIMENT_REPORT.txt",
     "docs/SOMA_CELL_0_6_6_FORMAL_CONTRACT.md",
     "src/0_6_6/SOMA_CELL_0_6_6_pythonista.py",
     "docs/SOMA_CELL_0_6_7_FORMAL_CONTRACT.md",
@@ -46,31 +48,34 @@
     "single_commit_only": true,
     "fresh_preflight_required_after_commit": true
   },
-  "current_baseline": "SOMA-CELL 0.6.8-GPU A1",
-  "next_milestone": "SOMA-CELL 0.6.8-GPU A2",
-  "gpu_068_a2_specific_guard": {
+  "current_baseline": "SOMA-CELL 0.6.8-GPU A2",
+  "next_milestone": "SOMA-CELL 0.6.8-GPU A3",
+  "gpu_068_a3_specific_guard": {
     "mandatory": true,
-    "parent_contract": "docs/SOMA_CELL_0_6_8_GPU_CONTRACT.md",
-    "rule": "A2 may integrate only kernels that pass independent NumPy/Torch fp64 lockstep and preserve frozen 0.6.6 ordering/material semantics.",
+    "parent_contract": "docs/SOMA_CELL_0_6_8_GPU_A2_CONTRACT.md",
+    "rule": "A3 may integrate metabolism/damage only after independent NumPy/Torch fp64 lockstep and exact prevention of duplicate export/leak/radius/motion calls.",
     "known_results": [
-      "A1 dedicated validation 32/32",
-      "parent 0.6.7 validation 28/28",
+      "A2 dedicated 32/32",
+      "A1 dedicated 32/32",
+      "historical inherited 279/279",
       "CUDA not tested",
-      "full GPU world step false"
+      "full GPU world step false",
+      "A2 CPU hybrid slower by 1.524x"
     ],
     "required_controls": [
-      "CPU reference",
+      "frozen 0.6.6 CPU reference",
       "Torch CPU fp64",
       "CUDA fp64 when available",
       "fp32 discrepancy report",
+      "event scheduler duplicate-call guard",
       "capacity overflow rejection"
     ],
     "forbidden": [
       "coarse replacement",
       "silent truncation",
-      "free material or genes",
+      "free repair/material",
       "external fitness",
-      "full-GPU claim before all subsystems ported"
+      "full-GPU claim before all subsystems are ported"
     ]
   }
 }

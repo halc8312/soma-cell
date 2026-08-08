@@ -2,7 +2,7 @@
   "schema_version": 1,
   "created_utc": "2026-08-03T16:20:00Z",
   "project": "SOMA artificial life / SOMA-CELL material lineage",
-  "current_target": "SOMA-CELL 0.6.2 neural metabolic audit and minimisation",
+  "current_target": "SOMA-CELL 0.6.8-GPU A3 metabolism/damage integration",
   "future_integration_target": "SOMA-CELL 0.6.x only after minimal paid neural architecture is established",
   "canonical_policy": "canonical/ and the integration contract override conversational recollection. SOMA 5-7 without R are superseded.",
   "stages": [
@@ -211,6 +211,14 @@
       "minimal_neural_research_profile": "efficient2",
       "negative_result": "all tested added neural profiles lost to no_tissue in the preregistered short cue-reversal metabolic audit",
       "module_decisions": "prediction retained research; recurrence dormant; active semantic diagnosis dormant"
+    },
+    {
+      "id": "SOMA-CELL 0.6.8-GPU A2",
+      "file": "src/0_6_8/SOMA_CELL_0_6_8_gpu_a2.py",
+      "role": "full-detail surface/physics GPU migration checkpoint",
+      "status": "engineering-frozen-full-world-incomplete",
+      "sha256": "44fabca774b1a4eb68c69008ba1aa609a53092f94d19c4528dcdc945f0ea6c23",
+      "bytes": 46499
     }
   ],
   "roadmap": [

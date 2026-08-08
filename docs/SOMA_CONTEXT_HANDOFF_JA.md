@@ -304,3 +304,12 @@ A1で、完全0.6.6 stateのtensor mirror、可変長genome byte mirror、device
 ただし開発PyTorchはCPU-onlyでCUDA未検証。surface exchange、genome、division、corpse/eDNA/HGT、神経因果系はCPU正本。`gpu_full_world_step=false`を維持する。
 
 次はA2としてsurface exchange、waste export、leak、radius/motion、spatial hashを移植する。0.6.7の同一系統史regime shiftはGPU詳細基盤後に0.6.6粒子物理で再検証する。
+
+
+## 追補 2026-08-08 — SOMA-CELL 0.6.8-GPU A2 工学チェックポイント
+
+A2は0.6.6詳細粒子世界のsurface exchange、ATP有料waste export、damage-aware leakage、polymer-aware radius、surface-flux/Brownian motion、toroidal spatial candidatesをA1 tensor基盤へ移植した。A2専用32/32、A1再実行32/32、歴史継承279/279を維持し、1/10step、periodic/reversal、clone、save/restore、RNG、物質台帳がfp64で一致した。
+
+ただし開発環境はTorch 2.10.0+cpuでCUDA未検証。CPU-only benchmarkではA2 hybridは凍結CPU版の約1.524倍遅い。漏出粒子生成とBrownian RNGはイベント順序保持のためCPU正本。metabolism/damage、genome、translation、division、death/eDNA/HGT、neuralはCPU正本で、`full_gpu_world_step=false`。
+
+次はA3でgene-coded metabolismと0.3損傷修復をworld-stepへ統合する。会話よりA2 source、契約、32検証、regression、engineering reportを優先し、新しいA2 HEADでpreflightを発行する。
