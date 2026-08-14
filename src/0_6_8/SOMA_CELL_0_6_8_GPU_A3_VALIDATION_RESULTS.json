@@ -1,0 +1,478 @@
+{
+  "build": "SOMA-CELL 0.6.8-GPU A3",
+  "elapsed_seconds": 45.618403673172,
+  "failed": 0,
+  "fixed_tolerances": {
+    "discrete_rng_keys_orders": "exact",
+    "material_ledger_residual_abs_diff": 5e-10,
+    "pure_fp64_max_abs": 2e-12,
+    "world_fp64_max_abs": 5e-12
+  },
+  "measured_max_abs_differences": {
+    "clone.bit_exact": {
+      "max_abs_diff": 0.0,
+      "numeric_field_count": 864,
+      "structural_or_discrete_mismatch": false
+    },
+    "clone.bit_exact.material_ledger": {
+      "cpu_residual": -2.6779680695199204e-09,
+      "hybrid_residual": -2.6779680695199204e-09,
+      "max_abs_diff": 0.0,
+      "tolerance": 0.0
+    },
+    "pure.aggregate_heavy.cpu.float64": {
+      "max_abs_diff": 0.0,
+      "numeric_field_count": 39,
+      "structural_or_discrete_mismatch": false
+    },
+    "pure.atp_poor.cpu.float64": {
+      "max_abs_diff": 0.0,
+      "numeric_field_count": 39,
+      "structural_or_discrete_mismatch": false
+    },
+    "pure.clean.cpu.float64": {
+      "max_abs_diff": 0.0,
+      "numeric_field_count": 39,
+      "structural_or_discrete_mismatch": false
+    },
+    "pure.oxidized.cpu.float64": {
+      "max_abs_diff": 0.0,
+      "numeric_field_count": 39,
+      "structural_or_discrete_mismatch": false
+    },
+    "pure.repair_disabled.cpu.float64": {
+      "max_abs_diff": 0.0,
+      "numeric_field_count": 39,
+      "structural_or_discrete_mismatch": false
+    },
+    "pure.segregation.cpu.float64": {
+      "max_abs_diff": 0.0,
+      "numeric_field_count": 54,
+      "structural_or_discrete_mismatch": false
+    },
+    "pure.stage.damage.cpu.float64": {
+      "max_abs_diff": 0.0,
+      "numeric_field_count": 39,
+      "structural_or_discrete_mismatch": false
+    },
+    "pure.stage.generic_metabolism.cpu.float64": {
+      "max_abs_diff": 0.0,
+      "numeric_field_count": 39,
+      "structural_or_discrete_mismatch": false
+    },
+    "pure.stage.housekeeping.cpu.float64": {
+      "max_abs_diff": 0.0,
+      "numeric_field_count": 39,
+      "structural_or_discrete_mismatch": false
+    },
+    "pure.stage.maintenance.cpu.float64": {
+      "max_abs_diff": 0.0,
+      "numeric_field_count": 39,
+      "structural_or_discrete_mismatch": false
+    },
+    "pure.stage.precursor_synthesis.cpu.float64": {
+      "max_abs_diff": 0.0,
+      "numeric_field_count": 39,
+      "structural_or_discrete_mismatch": false
+    },
+    "pure.stage.repair.cpu.float64": {
+      "max_abs_diff": 0.0,
+      "numeric_field_count": 39,
+      "structural_or_discrete_mismatch": false
+    },
+    "pure.stage.supplemental_066.cpu.float64": {
+      "max_abs_diff": 0.0,
+      "numeric_field_count": 39,
+      "structural_or_discrete_mismatch": false
+    },
+    "pure.stage.surface_assembly.cpu.float64": {
+      "max_abs_diff": 0.0,
+      "numeric_field_count": 39,
+      "structural_or_discrete_mismatch": false
+    },
+    "pure.stage.translation.cpu.float64": {
+      "max_abs_diff": 0.0,
+      "numeric_field_count": 39,
+      "structural_or_discrete_mismatch": false
+    },
+    "pure.stressed.cpu.float64": {
+      "max_abs_diff": 0.0,
+      "numeric_field_count": 39,
+      "structural_or_discrete_mismatch": false
+    },
+    "pure.stressed.cuda.float32_candidate_vs_numpy_fp64": {
+      "candidate_only": true,
+      "max_abs_diff": 1.8012973546088773e-07,
+      "structural_or_discrete_mismatch": false
+    },
+    "pure.stressed.cuda.float64": {
+      "max_abs_diff": 6.938893903907228e-18,
+      "numeric_field_count": 39,
+      "structural_or_discrete_mismatch": false
+    },
+    "save_restore.bit_exact": {
+      "max_abs_diff": 0.0,
+      "numeric_field_count": 864,
+      "structural_or_discrete_mismatch": false
+    },
+    "save_restore.bit_exact.material_ledger": {
+      "cpu_residual": -2.6757902560348157e-09,
+      "hybrid_residual": -2.6757902560348157e-09,
+      "max_abs_diff": 0.0,
+      "tolerance": 0.0
+    },
+    "world.steps1.seed701.cpu.float64": {
+      "max_abs_diff": 1.1102230246251565e-16,
+      "numeric_field_count": 864,
+      "structural_or_discrete_mismatch": false
+    },
+    "world.steps1.seed701.cpu.float64.material_ledger": {
+      "cpu_residual": -1.06332720406499e-11,
+      "hybrid_residual": -1.06332720406499e-11,
+      "max_abs_diff": 0.0,
+      "tolerance": 5e-10
+    },
+    "world.steps1.seed704.cpu.float64": {
+      "max_abs_diff": 1.7763568394002505e-15,
+      "numeric_field_count": 1192,
+      "structural_or_discrete_mismatch": false
+    },
+    "world.steps1.seed704.cpu.float64.material_ledger": {
+      "cpu_residual": 0.11499999998936872,
+      "hybrid_residual": 0.11499999998936872,
+      "max_abs_diff": 0.0,
+      "tolerance": 5e-10
+    },
+    "world.steps1.seed706.cpu.float64": {
+      "max_abs_diff": 2.220446049250313e-16,
+      "numeric_field_count": 864,
+      "structural_or_discrete_mismatch": false
+    },
+    "world.steps1.seed706.cpu.float64.material_ledger": {
+      "cpu_residual": -1.06332720406499e-11,
+      "hybrid_residual": -1.06332720406499e-11,
+      "max_abs_diff": 0.0,
+      "tolerance": 5e-10
+    },
+    "world.steps1.seed708.cpu.float64": {
+      "max_abs_diff": 1.7763568394002505e-15,
+      "numeric_field_count": 864,
+      "structural_or_discrete_mismatch": false
+    },
+    "world.steps1.seed708.cpu.float64.material_ledger": {
+      "cpu_residual": -7.756736606464246,
+      "hybrid_residual": -7.756736606464244,
+      "max_abs_diff": 1.7763568394002505e-15,
+      "tolerance": 5e-10
+    },
+    "world.steps1.seed709.cpu.float64": {
+      "max_abs_diff": 2.220446049250313e-16,
+      "numeric_field_count": 864,
+      "structural_or_discrete_mismatch": false
+    },
+    "world.steps1.seed709.cpu.float64.material_ledger": {
+      "cpu_residual": -0.005478555412999242,
+      "hybrid_residual": -0.005478555412999242,
+      "max_abs_diff": 0.0,
+      "tolerance": 5e-10
+    },
+    "world.steps10.seed702.cpu.float64": {
+      "max_abs_diff": 2.220446049250313e-16,
+      "numeric_field_count": 864,
+      "structural_or_discrete_mismatch": false
+    },
+    "world.steps10.seed702.cpu.float64.material_ledger": {
+      "cpu_residual": -4.822673815851886e-09,
+      "hybrid_residual": -4.822673815851886e-09,
+      "max_abs_diff": 0.0,
+      "tolerance": 5e-10
+    },
+    "world.steps10.seed705.cpu.float64": {
+      "max_abs_diff": 3.552713678800501e-15,
+      "numeric_field_count": 864,
+      "structural_or_discrete_mismatch": false
+    },
+    "world.steps10.seed705.cpu.float64.material_ledger": {
+      "cpu_residual": -4.841155032409006e-09,
+      "hybrid_residual": -4.841151479695327e-09,
+      "max_abs_diff": 3.552713678800501e-15,
+      "tolerance": 5e-10
+    },
+    "world.steps3.seed703.cpu.float64": {
+      "max_abs_diff": 2.220446049250313e-16,
+      "numeric_field_count": 864,
+      "structural_or_discrete_mismatch": false
+    },
+    "world.steps3.seed703.cpu.float64.material_ledger": {
+      "cpu_residual": 0.3200000000000003,
+      "hybrid_residual": 0.3200000000000003,
+      "max_abs_diff": 0.0,
+      "tolerance": 5e-10
+    }
+  },
+  "not_run": 0,
+  "passed": 36,
+  "rows": [
+    {
+      "detail": "A3 public API present; full GPU claim remains false",
+      "error": "",
+      "seconds": 0.10758154100039974,
+      "status": "PASS",
+      "test": "test_api_build_schema_scope"
+    },
+    {
+      "detail": "source_sha256_map binds core/scheduler/validator/A2/frozen-0.6.6",
+      "error": "",
+      "seconds": 0.0031008590003693826,
+      "status": "PASS",
+      "test": "test_source_sha256_map_covers_authoritative_artifacts"
+    },
+    {
+      "detail": "recursive comparator catches nested discrete mismatch",
+      "error": "",
+      "seconds": 0.0007926099997348501,
+      "status": "PASS",
+      "test": "test_recursive_comparator_covers_nested_discrete_and_float_state"
+    },
+    {
+      "detail": "packed active/damaged/aggregate/lesion state round-trips losslessly",
+      "error": "",
+      "seconds": 0.04675583500011271,
+      "status": "PASS",
+      "test": "test_packed_state_roundtrip_and_invariants"
+    },
+    {
+      "detail": "8 mask/order/tail/mass coverage corruptions fail closed",
+      "error": "",
+      "seconds": 0.013027510999563674,
+      "status": "PASS",
+      "test": "test_packed_schema_rejects_mask_order_and_mass_corruption"
+    },
+    {
+      "detail": "7 backend/device-dtype/gene metadata corruptions fail closed",
+      "error": "",
+      "seconds": 0.06396490399947652,
+      "status": "PASS",
+      "test": "test_packed_schema_rejects_backend_dtype_and_gene_corruption"
+    },
+    {
+      "detail": "active/damaged thresholds and zero/negative aggregate entries fail closed",
+      "error": "",
+      "seconds": 0.01473188999989361,
+      "status": "PASS",
+      "test": "test_pack_rejects_subthreshold_and_invalid_raw_composition"
+    },
+    {
+      "detail": "8 genome mask/tail/total/count/replication corruptions fail closed",
+      "error": "",
+      "seconds": 0.019604443999924115,
+      "status": "PASS",
+      "test": "test_packed_schema_rejects_genome_tail_total_and_replication_corruption"
+    },
+    {
+      "detail": "exact protein capacity passes; capacity+1 fails atomically",
+      "error": "",
+      "seconds": 0.008314722000250185,
+      "status": "PASS",
+      "test": "test_capacity_exact_and_plus_one_atomic_failure"
+    },
+    {
+      "detail": "exact three genomes pass; genome copy capacity+1 fails atomically",
+      "error": "",
+      "seconds": 0.013068315000055009,
+      "status": "PASS",
+      "test": "test_genome_copy_capacity_exact_and_plus_one_atomic_failure"
+    },
+    {
+      "detail": "exact genome symbol capacity passes; length+1 fails atomically",
+      "error": "",
+      "seconds": 0.012939203000314592,
+      "status": "PASS",
+      "test": "test_genome_symbol_capacity_exact_and_plus_one_atomic_failure"
+    },
+    {
+      "detail": "transient lesion count preserved; damage stage alone zero-extends then gains",
+      "error": "",
+      "seconds": 0.013217237999924691,
+      "status": "PASS",
+      "test": "test_transient_genome_lesion_count_preserved_until_damage"
+    },
+    {
+      "detail": "clean NumPy/Torch fp64 parity and pure-input contract",
+      "error": "",
+      "seconds": 0.160518398000022,
+      "status": "PASS",
+      "test": "test_kernel_clean_fp64"
+    },
+    {
+      "detail": "stressed NumPy/Torch fp64 parity and pure-input contract",
+      "error": "",
+      "seconds": 0.09791873100039084,
+      "status": "PASS",
+      "test": "test_kernel_stressed_fp64"
+    },
+    {
+      "detail": "oxidized NumPy/Torch fp64 parity and pure-input contract",
+      "error": "",
+      "seconds": 0.10202124300030846,
+      "status": "PASS",
+      "test": "test_kernel_oxidized_fp64"
+    },
+    {
+      "detail": "aggregate_heavy NumPy/Torch fp64 parity and pure-input contract",
+      "error": "",
+      "seconds": 0.09992263000003732,
+      "status": "PASS",
+      "test": "test_kernel_aggregate_heavy_fp64"
+    },
+    {
+      "detail": "atp_poor NumPy/Torch fp64 parity and pure-input contract",
+      "error": "",
+      "seconds": 0.10046125400003802,
+      "status": "PASS",
+      "test": "test_kernel_atp_poor_fp64"
+    },
+    {
+      "detail": "repair_disabled NumPy/Torch fp64 parity and pure-input contract",
+      "error": "",
+      "seconds": 0.088605902999916,
+      "status": "PASS",
+      "test": "test_kernel_repair_disabled_fp64"
+    },
+    {
+      "detail": "damage segregation plan fp64 parity and non-mutation",
+      "error": "",
+      "seconds": 0.03640922400063573,
+      "status": "PASS",
+      "test": "test_segregation_plan_numpy_torch_fp64"
+    },
+    {
+      "detail": "all public A3 stage pairs preserve inputs and agree in fp64",
+      "error": "",
+      "seconds": 0.22823169299954316,
+      "status": "PASS",
+      "test": "test_all_public_stage_pairs_fp64"
+    },
+    {
+      "detail": "duplicate scheduler claim rejected",
+      "error": "",
+      "seconds": 0.003496277000522241,
+      "status": "PASS",
+      "test": "test_scheduler_duplicate_rejected_before_second_claim"
+    },
+    {
+      "detail": "out-of-order scheduler claim rejected",
+      "error": "",
+      "seconds": 0.0031095329995878274,
+      "status": "PASS",
+      "test": "test_scheduler_out_of_order_rejected"
+    },
+    {
+      "detail": "operations deliberately omitted by the fixture are receipted once as skipped",
+      "error": "",
+      "seconds": 0.004360935000477184,
+      "status": "PASS",
+      "test": "test_scheduler_omitted_receipts_exactly_once"
+    },
+    {
+      "detail": "real duplicate claim fails before generic phase commits cell/world material",
+      "error": "",
+      "seconds": 2.6781839410004977,
+      "status": "PASS",
+      "test": "test_scheduler_claim_failure_precedes_generic_phase_mutation"
+    },
+    {
+      "detail": "frozen CPU vs A3 hybrid one-step full-state/RNG/ledger lockstep",
+      "error": "",
+      "seconds": 0.7639764779996767,
+      "status": "PASS",
+      "test": "test_world_one_step_lockstep"
+    },
+    {
+      "detail": "frozen CPU vs A3 hybrid ten-step full-state/RNG/ledger lockstep",
+      "error": "",
+      "seconds": 7.581581482000729,
+      "status": "PASS",
+      "test": "test_world_ten_step_lockstep"
+    },
+    {
+      "detail": "stressed repair-heavy world lockstep",
+      "error": "",
+      "seconds": 2.1055225789996257,
+      "status": "PASS",
+      "test": "test_world_stressed_repair_heavy_lockstep"
+    },
+    {
+      "detail": "ATP-poor integrated housekeeping observes retained maintenance shortfall",
+      "error": "",
+      "seconds": 0.7305833219998021,
+      "status": "PASS",
+      "test": "test_world_atp_poor_maintenance_shortfall_lockstep"
+    },
+    {
+      "detail": "transport=False still invokes passive A2 surface operation and locksteps",
+      "error": "",
+      "seconds": 0.755352545000278,
+      "status": "PASS",
+      "test": "test_world_transport_disabled_surface_invocation_lockstep"
+    },
+    {
+      "detail": "pre-division detailed state lockstep",
+      "error": "",
+      "seconds": 0.8214042959998551,
+      "status": "PASS",
+      "test": "test_world_predivision_lockstep"
+    },
+    {
+      "detail": "periodic/reversal environment lockstep",
+      "error": "",
+      "seconds": 7.081367970000429,
+      "status": "PASS",
+      "test": "test_world_periodic_reversal_lockstep"
+    },
+    {
+      "detail": "integrated receipt proves A2/A3 stages exactly once",
+      "error": "",
+      "seconds": 0.747376911000174,
+      "status": "PASS",
+      "test": "test_world_receipt_has_no_duplicate_a2_or_a3_events"
+    },
+    {
+      "detail": "A3 clone preserves complete state and RNG",
+      "error": "",
+      "seconds": 9.086542285000178,
+      "status": "PASS",
+      "test": "test_clone_deterministic_full_state"
+    },
+    {
+      "detail": "A3 atomic save/restore preserves complete continuation",
+      "error": "",
+      "seconds": 8.655218406000131,
+      "status": "PASS",
+      "test": "test_save_restore_deterministic_full_state"
+    },
+    {
+      "detail": "CUDA fp64 parity passed before fp32; fp32 max discrepancy 1.8013e-07",
+      "error": "",
+      "seconds": 2.7241896479999923,
+      "status": "PASS",
+      "test": "test_cuda_fp64_gate_then_fp32_discrepancy"
+    },
+    {
+      "detail": "explicit unavailable CUDA request fails without CPU fallback",
+      "error": "",
+      "seconds": 6.852600017737132e-05,
+      "status": "PASS",
+      "test": "test_explicit_cuda_request_fails_closed_without_fallback"
+    }
+  ],
+  "schema": "0.6.8-GPU-A3.0",
+  "source_sha256_map": {
+    "src/0_6_6/SOMA_CELL_0_6_6_pythonista.py": "0afb80ae25fbfaa6621e1af0a4f9f618d8f737f4af773854f0aab7d14c027c17",
+    "src/0_6_8/SOMA_CELL_0_6_8_A3_validation.py": "b5ea1d9575580fd235a44b1179f571a6c6e332f56aabdf19b8d88ac16021db1c",
+    "src/0_6_8/SOMA_CELL_0_6_8_gpu_a2.py": "44fabca774b1a4eb68c69008ba1aa609a53092f94d19c4528dcdc945f0ea6c23",
+    "src/0_6_8/SOMA_CELL_0_6_8_gpu_a3.py": "6ca66378702dabd5a388553ca92279376deae5ba8c39bea9bdbe3488aa41b4f6",
+    "src/0_6_8/SOMA_CELL_0_6_8_gpu_a3_scheduler.py": "5e207f68fd0d9aa674ab054dc43d62247e84c1f3c61fc6c7b455960ff84413aa"
+  },
+  "total": 36
+}

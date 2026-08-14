@@ -367,10 +367,26 @@ A1はfull GPU worldではなく、CUDA実機未検証。
 
 A2は正確性優先の逐次surface scanであり、CPU-onlyでは凍結CPU版より遅い。CUDA性能は未検証。`full_gpu_world_step=false`を維持する。
 
-### A3 — 次
+### A3 — 実装・正確性・正式性能計測完了、Rule Lock昇格待ち
 
-- 0.2 gene-coded metabolismと0.3 damage/repairの完全world-step統合
-- protein dictionariesとaggregate compositionのragged tensor schema
-- membrane oxidation、repair flux、damage segregation
-- metabolism中のexport/leak/radius/motion重複呼出しを防ぐ統合event scheduler
-- fp64 CPU/CUDAロックステップ後にのみfp32 throughputを許可
+- 0.2 gene-coded metabolismと0.3 damage/repairをA2 hybrid world-stepへ統合
+- fingerprintと辞書挿入順を保持するprotein/damaged/typed-aggregate packed schema
+- legacy aggregateを推定せず保持するunresolved ledger
+- membrane oxidation、genome lesion、repair flux、damage segregation pure plan
+- export/leak/radius/motionを含むreceipt付きexactly-once event scheduler
+- 独立NumPy/Torch fp64、strict lossless schema、world 1/10 step、ATP不足、transport無効、stress、pre-division、periodic/reversal、clone、save/restoreを含む36/36 PASS
+- RTX 4060 TiでCUDA fp64 parity PASS。fp32は差分付きcandidateに限定
+- 正式13 spec/65 measurementを約4時間3分で完走。fp64 state最大差3.553e-15、ledger差0、RNG完全一致
+- world軸でCUDA fp64は凍結CPU正本より570.096〜590.276倍遅く、速度向上なし。逐次host loopとobject commitが次の性能課題
+
+A3は`full_gpu_world_step=false`のengineering candidateである。Windows nativeのfresh historical regressionは279/279 PASSし、A3/A2/A1を合わせ379/379 PASSした。WSL/NumPy 2.5.2でのP2 21/22はplatform sensitivityとして保存する。正式benchmarkは最終source hashに結合して完了したが、deterministic releaseとRule Lock transitionが完了するまではA2を正式baselineとして維持する。
+
+### A4 — 次: ragged genome・translation・replication・material mutation
+
+- genome symbolとcopy polymerをdevice-neutral ragged buffer、offset、length、capacityへlosslessに写像
+- variable genome translationとgene cache更新を独立NumPy/Torch fp64で照合し、protein辞書挿入と有料合成順を保持
+- nucleotideとATPを支払うreplication、proofreading、copy completionをCPU正本とlockstep化
+- mutation、whole-gene deletion/duplication、promoter dormancy/reactivationのRNG消費順と物質差を保存
+- genome symbol hydrolysisとreplication/mutationの競合event orderを統合schedulerで一回だけ実行
+- exact-capacityとcapacity+1 atomic failure、clone、save/restore、pre-division、HGT直前状態を検証
+- actual division、death/corpse/eDNA/HGT、neural/causal systemはA5/A6までCPU-authoritativeとし、A4でも`full_gpu_world_step=false`を維持

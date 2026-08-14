@@ -1,0 +1,37 @@
+test,status,detail,error,seconds
+test_api_build_schema_scope,PASS,A3 public API present; full GPU claim remains false,,0.10758154100039974
+test_source_sha256_map_covers_authoritative_artifacts,PASS,source_sha256_map binds core/scheduler/validator/A2/frozen-0.6.6,,0.0031008590003693826
+test_recursive_comparator_covers_nested_discrete_and_float_state,PASS,recursive comparator catches nested discrete mismatch,,0.0007926099997348501
+test_packed_state_roundtrip_and_invariants,PASS,packed active/damaged/aggregate/lesion state round-trips losslessly,,0.04675583500011271
+test_packed_schema_rejects_mask_order_and_mass_corruption,PASS,8 mask/order/tail/mass coverage corruptions fail closed,,0.013027510999563674
+test_packed_schema_rejects_backend_dtype_and_gene_corruption,PASS,7 backend/device-dtype/gene metadata corruptions fail closed,,0.06396490399947652
+test_pack_rejects_subthreshold_and_invalid_raw_composition,PASS,active/damaged thresholds and zero/negative aggregate entries fail closed,,0.01473188999989361
+test_packed_schema_rejects_genome_tail_total_and_replication_corruption,PASS,8 genome mask/tail/total/count/replication corruptions fail closed,,0.019604443999924115
+test_capacity_exact_and_plus_one_atomic_failure,PASS,exact protein capacity passes; capacity+1 fails atomically,,0.008314722000250185
+test_genome_copy_capacity_exact_and_plus_one_atomic_failure,PASS,exact three genomes pass; genome copy capacity+1 fails atomically,,0.013068315000055009
+test_genome_symbol_capacity_exact_and_plus_one_atomic_failure,PASS,exact genome symbol capacity passes; length+1 fails atomically,,0.012939203000314592
+test_transient_genome_lesion_count_preserved_until_damage,PASS,transient lesion count preserved; damage stage alone zero-extends then gains,,0.013217237999924691
+test_kernel_clean_fp64,PASS,clean NumPy/Torch fp64 parity and pure-input contract,,0.160518398000022
+test_kernel_stressed_fp64,PASS,stressed NumPy/Torch fp64 parity and pure-input contract,,0.09791873100039084
+test_kernel_oxidized_fp64,PASS,oxidized NumPy/Torch fp64 parity and pure-input contract,,0.10202124300030846
+test_kernel_aggregate_heavy_fp64,PASS,aggregate_heavy NumPy/Torch fp64 parity and pure-input contract,,0.09992263000003732
+test_kernel_atp_poor_fp64,PASS,atp_poor NumPy/Torch fp64 parity and pure-input contract,,0.10046125400003802
+test_kernel_repair_disabled_fp64,PASS,repair_disabled NumPy/Torch fp64 parity and pure-input contract,,0.088605902999916
+test_segregation_plan_numpy_torch_fp64,PASS,damage segregation plan fp64 parity and non-mutation,,0.03640922400063573
+test_all_public_stage_pairs_fp64,PASS,all public A3 stage pairs preserve inputs and agree in fp64,,0.22823169299954316
+test_scheduler_duplicate_rejected_before_second_claim,PASS,duplicate scheduler claim rejected,,0.003496277000522241
+test_scheduler_out_of_order_rejected,PASS,out-of-order scheduler claim rejected,,0.0031095329995878274
+test_scheduler_omitted_receipts_exactly_once,PASS,operations deliberately omitted by the fixture are receipted once as skipped,,0.004360935000477184
+test_scheduler_claim_failure_precedes_generic_phase_mutation,PASS,real duplicate claim fails before generic phase commits cell/world material,,2.6781839410004977
+test_world_one_step_lockstep,PASS,frozen CPU vs A3 hybrid one-step full-state/RNG/ledger lockstep,,0.7639764779996767
+test_world_ten_step_lockstep,PASS,frozen CPU vs A3 hybrid ten-step full-state/RNG/ledger lockstep,,7.581581482000729
+test_world_stressed_repair_heavy_lockstep,PASS,stressed repair-heavy world lockstep,,2.1055225789996257
+test_world_atp_poor_maintenance_shortfall_lockstep,PASS,ATP-poor integrated housekeeping observes retained maintenance shortfall,,0.7305833219998021
+test_world_transport_disabled_surface_invocation_lockstep,PASS,transport=False still invokes passive A2 surface operation and locksteps,,0.755352545000278
+test_world_predivision_lockstep,PASS,pre-division detailed state lockstep,,0.8214042959998551
+test_world_periodic_reversal_lockstep,PASS,periodic/reversal environment lockstep,,7.081367970000429
+test_world_receipt_has_no_duplicate_a2_or_a3_events,PASS,integrated receipt proves A2/A3 stages exactly once,,0.747376911000174
+test_clone_deterministic_full_state,PASS,A3 clone preserves complete state and RNG,,9.086542285000178
+test_save_restore_deterministic_full_state,PASS,A3 atomic save/restore preserves complete continuation,,8.655218406000131
+test_cuda_fp64_gate_then_fp32_discrepancy,PASS,CUDA fp64 parity passed before fp32; fp32 max discrepancy 1.8013e-07,,2.7241896479999923
+test_explicit_cuda_request_fails_closed_without_fallback,PASS,explicit unavailable CUDA request fails without CPU fallback,,6.852600017737132e-05

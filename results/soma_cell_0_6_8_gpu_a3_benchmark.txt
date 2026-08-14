@@ -1,0 +1,10 @@
+SOMA-CELL 0.6.8-GPU A3 BENCHMARK
+====================================================
+captured_utc: 2026-08-14T01:21:50.481141+00:00
+fp64 gates: True
+measurements complete: True
+measurements: 65
+errors: 0
+full_gpu_world_step: false
+fp32: candidate only after fp64 PASS
+

@@ -1,0 +1,39 @@
+{
+  "build_target": "SOMA-CELL 0.6.8-GPU A3",
+  "captured_utc": "2026-08-13T23:16:52.505669+00:00",
+  "host_timezone": "Asia/Tokyo",
+  "execution_environment": "Ubuntu 24.04 under WSL2; ext4 checkout required because the lineage contains two paths differing only by case",
+  "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "machine": "x86_64",
+  "python": "3.12.3",
+  "numpy": "2.5.2",
+  "torch": "2.13.0+cu130",
+  "torch_cuda_version": "13.0",
+  "cudnn_version": 92000,
+  "cuda_available": true,
+  "cuda_device_count": 1,
+  "cuda_devices": [
+    {
+      "index": 0,
+      "name": "NVIDIA GeForce RTX 4060 Ti",
+      "total_memory_bytes": 17175019520,
+      "total_memory_gib": 15.9954833984375,
+      "compute_capability": [8, 9],
+      "multi_processor_count": 34
+    }
+  ],
+  "driver_version_windows": "581.57",
+  "nvidia_smi_wsl_version": "580.102.01",
+  "cuda_runtime_reported_by_nvidia_smi": "13.0",
+  "allow_tf32_matmul": false,
+  "allow_tf32_cudnn": true,
+  "git_head_at_prebaseline": "0e36608ee5c4d23c573de7de7b60b280b310dc1c",
+  "baseline_tag": "checkpoint-0.6.8-gpu-a2-20260808",
+  "a2_source_sha256": "44fabca774b1a4eb68c69008ba1aa609a53092f94d19c4528dcdc945f0ea6c23",
+  "require_cuda_precheck_passed": true,
+  "require_cuda_precheck_sha256": "4b98465d34f21da88a53593a84e4c17cae77ab0e7f4747c30f9f45500f9ec790",
+  "raw_environment_sha256": "05965362d2917bff79cb4bf0329225f8070a82e29f9b34c33f37c80f1b072f9b",
+  "raw_runs_location": "/home/ser/soma_handoff_a3/runs/a2_baseline_20260813T231652Z",
+  "raw_runs_tracked": false,
+  "full_gpu_world_step": false
+}

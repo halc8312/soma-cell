@@ -1,0 +1,24 @@
+SOMA-CELL 0.6.8-GPU A3
+======================
+
+重要:
+A3 は完全 GPU 世界ではありません。0.6.6 の詳細現象を維持した hybrid correctness checkpoint です。
+
+読む順序:
+1. ../../docs/SOMA_CELL_0_6_8_GPU_A3_CONTRACT.md
+2. ../../docs/SOMA_CELL_0_6_8_GPU_A3_EVENT_ORDER_JA.md
+3. ../../docs/SOMA_CELL_0_6_8_GPU_A3_SCHEMA.json
+4. SOMA_CELL_0_6_8_GPU_A3_README_JA.md
+
+PC / RTX:
+1. CUDA 対応 PyTorch と依存を用意
+2. python SOMA_CELL_0_6_8_install_check.py
+3. python SOMA_CELL_0_6_8_A3_validation.py --require-cuda
+4. python SOMA_CELL_0_6_8_A3_benchmark.py --device cpu --device cuda --precision both --worlds 1 8 32 128 --cell-sweep 1 3 8 --particle-sweep 216 288 360 --capacity-sweep 64 128 256 --steps 1 --world-warmup 1 --world-repeats 2 --other-axis-warmup 0 --other-axis-repeats 1 --correctness-steps 1 10 20
+5. benchmark は fp64 正確性 PASS 後だけ timing と fp32 discrepancy を測る
+
+Pythonista:
+SOMA_CELL_0_6_8_GPU_A3_pythonista.py は詳細 CPU 世界の観察用です。
+CUDA や A3 移植性能は Pythonista では測れません。
+
+full_gpu_world_step=false

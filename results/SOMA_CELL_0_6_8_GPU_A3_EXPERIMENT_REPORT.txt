@@ -1,0 +1,147 @@
+SOMA-CELL 0.6.8-GPU A3 ENGINEERING EXPERIMENT REPORT
+====================================================
+
+Build: SOMA-CELL 0.6.8-GPU A3
+Schema: 0.6.8-GPU-A3.0
+Status: ENGINEERING VALIDATION AND FORMAL BENCHMARK PASS
+Evidence date: 2026-08-14
+full_gpu_world_step: false
+
+Purpose
+-------
+Migrate the 0.6.6 detailed world's gene-coded metabolism and damage/repair
+chemistry into independently comparable NumPy/Torch kernels, then integrate
+them with the A2 surface/physics layer without deleting phenomena or changing
+canonical event and RNG order.
+
+Implemented in the A3 hybrid path
+---------------------------------
+- generic gene reactions and gene-coded ATP generation
+- ATP-paid precursor synthesis, maintenance and surface assembly
+- active protein damage and damaged-protein aggregation
+- typed aggregate composition for new A3 material plus unresolved legacy mass
+- reactive byproducts, membrane oxidation and genome-lesion chemistry
+- antioxidant, chaperone, protease, genome and membrane repair
+- pure damage-segregation planning
+- integrated exactly-once receipts across A2 and A3 cell events
+- strict packed-state mask, order, tail, mass, genome and dtype validation
+
+Correctness evidence
+--------------------
+- A3 dedicated validation: 36 / 36 PASS
+- independent NumPy/Torch fp64 scenarios: clean, stressed, oxidized,
+  aggregate-heavy, ATP-poor and repair-disabled
+- frozen CPU vs hybrid world: one-step, ten-step, stressed repair-heavy,
+  ATP-poor, transport-disabled, pre-division and periodic/reversal lockstep
+- full nested state, RNG, material ledger, clone and save/restore PASS
+- exact protein/genome/symbol capacity PASS; capacity+1 fails atomically
+- duplicate/out-of-order scheduler claims fail before state mutation
+- packed corruptions and mixed backend/device/dtype inputs are rejected
+
+Measured maxima in the final dedicated validation:
+
+- pure CUDA fp64 maximum absolute difference: 6.938893903907228e-18
+- CPU frozen-world fp64 maximum absolute difference: 3.552713678800501e-15
+- CPU/hybrid material-ledger residual difference: 3.552713678800501e-15
+- clone and save/restore continuation: bit exact
+- pure CUDA fp32 candidate difference: 1.8012973546088773e-07
+
+CUDA environment
+----------------
+- GPU: NVIDIA GeForce RTX 4060 Ti
+- VRAM: 17,175,019,520 bytes (about 16 GiB)
+- Python: 3.12.3
+- NumPy: 2.5.2
+- PyTorch: 2.13.0+cu130
+- CUDA reported by PyTorch: 13.0
+- Windows driver: 581.57
+
+Formal A3 benchmark
+-------------------
+The final source-bound benchmark completed in about 4 hours 3 minutes. It
+contains exactly 13 sweep specifications and 65 measurements: worlds
+1/8/32/128, cells 1/3/8, particles 216/288/360 and protein capacity
+64/128/256. The worlds axis used one warmup and two timed repeats; the other
+axes used one timed repeat. CPU and CUDA fp64 correctness probes at 1/10/20
+steps all passed before any fp32 timing was admitted.
+
+World-axis median seconds and slowdown relative to frozen 0.6.6 CPU:
+
+worlds  frozen CPU  A3 CPU fp64       A3 CUDA fp64      A3 CUDA fp32
+1       0.020599    0.941922 (45.727x) 11.743304 (570.096x) 12.002603 (582.684x)
+8       0.164761    7.578641 (45.998x) 96.189753 (583.813x) 94.812362 (575.453x)
+32      0.647278   30.482708 (47.094x) 382.072748 (590.276x) 381.561795 (589.486x)
+128     2.666772  124.666981 (46.748x) 1528.316903 (573.096x) 1528.881696 (573.308x)
+
+There is no speedup. The correctness-first A3 hybrid performs sequential
+per-cell host orchestration, Python object pack/commit work and many small
+kernel launches. CUDA utilisation remained low during the run. The structured
+per-measurement CUDA peaks were 215,552 allocated bytes for fp64 and 190,976
+allocated bytes for fp32, with 2,097,152 reserved bytes for both. External
+polling observed up to about 979 MiB total process/device use; that broader
+observation is not substituted for the allocator fields in the JSON.
+
+The benchmark fp64 full-world maximum state difference was
+3.552713678800501e-15, its material-ledger difference was zero, and RNG and
+discrete structure matched exactly. The fp32 candidate full-world maximum
+state difference was 3.598134365018738e-06 and its maximum ledger difference
+was 1.711311643504132e-06, below the registered candidate bound
+7.62939453125e-06. fp32 is not an equivalence or bit-exactness claim.
+
+Frozen benchmark artifacts:
+
+- results/soma_cell_0_6_8_gpu_a3_benchmark.json
+  SHA-256 b5242eeb5366adae35aed369678f96cbda0fd7f4b72ab31c45245b70777a8bec
+- results/soma_cell_0_6_8_gpu_a3_benchmark.csv
+  SHA-256 0194dc6be6d487e8bb8e17bf3eb67bf649096ab5e5d38e27e728958aa1f43b74
+- results/soma_cell_0_6_8_gpu_a3_benchmark.txt
+  SHA-256 07048dbda61876c29f40bb2e68edfbbb184ad2bebffe905e39aafad0b715de95
+- results/SOMA_CELL_0_6_8_GPU_A3_FP32_DISCREPANCY.json
+  SHA-256 9fb0ed6abc675efc526572855ce6ec8a86c44d2c60fcead8e5ee94c2355d00af
+
+Source binding
+--------------
+The validation and benchmark evidence bind the authoritative sources by
+SHA-256. The core is 6ca66378702dabd5a388553ca92279376deae5ba8c39bea9bdbe3488aa41b4f6,
+the scheduler is 5e207f68fd0d9aa674ab054dc43d62247e84c1f3c61fc6c7b455960ff84413aa,
+the validator is b5ea1d9575580fd235a44b1179f571a6c6e332f56aabdf19b8d88ac16021db1c,
+and the benchmark runner is
+7a79b10bd9599999cab7ab6ff40c19730b6124bf705a742dc4dd3c8cdd815a5b.
+
+Pre-implementation A2 RTX baseline
+----------------------------------
+The frozen A2 baseline on the same RTX 4060 Ti was also slower than the frozen
+CPU path: 0.544381729 s CPU versus 3.780191838 s CUDA hybrid for 20 steps, a
+6.944009390 runtime ratio. A supplemental recursive full-state check covered
+1/10/20 steps with exact RNG/discrete state and equal material residuals. The
+A2 values are retained as pre-A3 evidence, not as an A3 speedup comparison.
+
+Regression status
+-----------------
+- A3: 36 / 36 PASS
+- A2: 32 / 32 PASS
+- A1: 32 / 32 PASS
+- controlled Windows historical chain: 279 / 279 PASS
+- aggregate promotion checks: 379 / 379 PASS
+
+The frozen P2 test is numerically stack-sensitive. Windows CPython 3.12.10 /
+NumPy 2.3.5 passed 22/22 with cue-reversal gain 1.929382; WSL CPython 3.12.3 /
+NumPy 2.5.2 produced 21/22 with gain 0.077189851. Both observations are
+retained; universal cross-platform numerical equivalence is not claimed.
+
+Still CPU-authoritative
+-----------------------
+- variable-genome translation mechanics and dictionary insertion
+- genome replication, proofreading and mutation
+- live-genome symbol-hydrolysis RNG
+- actual division and daughter allocation
+- death, corpse, eDNA and HGT
+- neural/tissue/causal systems
+- particle emission and Brownian RNG
+
+Scientific limitation
+---------------------
+A3 is an engineering correctness checkpoint. It does not establish GPU
+acceleration, life, consciousness or open-ended evolution. Its measured
+performance is substantially slower than the frozen CPU reference, and
+full_gpu_world_step remains false.

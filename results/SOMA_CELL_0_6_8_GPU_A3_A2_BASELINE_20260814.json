@@ -1,0 +1,147 @@
+{
+  "purpose": "frozen A2 pre-implementation baseline for A3",
+  "captured_utc": "2026-08-13T23:16:52.505669+00:00",
+  "build": "SOMA-CELL 0.6.8-GPU A2",
+  "schema": "0.6.8-GPU-A2.0",
+  "git_head": "0e36608ee5c4d23c573de7de7b60b280b310dc1c",
+  "source_sha256": "44fabca774b1a4eb68c69008ba1aa609a53092f94d19c4528dcdc945f0ea6c23",
+  "device": "NVIDIA GeForce RTX 4060 Ti",
+  "vram_bytes": 17175019520,
+  "torch": "2.13.0+cu130",
+  "torch_cuda": "13.0",
+  "a2_validation": {
+    "passed": 32,
+    "total": 32,
+    "status": "PASS"
+  },
+  "cuda_fp64_lockstep": [
+    {
+      "environment": "stable",
+      "seed": 7101,
+      "steps": 10,
+      "max_abs_diff": 4.336808689942018e-19,
+      "rng_equal": true,
+      "material_residual_cpu": -4.8232635663225665e-9,
+      "material_residual_hybrid": -4.8232635663225665e-9,
+      "seconds_combined_cpu_and_hybrid": 1.6219578179999417
+    },
+    {
+      "environment": "periodic",
+      "seed": 7102,
+      "steps": 20,
+      "max_abs_diff": 2.220446049250313e-16,
+      "rng_equal": true,
+      "material_residual_cpu": -2.6648056206113324e-8,
+      "material_residual_hybrid": -2.6648056206113324e-8,
+      "seconds_combined_cpu_and_hybrid": 2.1796123819999593
+    }
+  ],
+  "cuda_fp64_full_state_supplement": {
+    "captured_utc": "2026-08-14T01:17:00Z",
+    "raw_sha256": "25a83adbc8a676cca36e0bf3be35a852842247bcc7a3dda2968e83687f805964",
+    "raw_location": "/home/ser/soma_handoff_a3/runs/a2_baseline_supplement_1_10_20_fullstate.json",
+    "comparator_scope": "recursive complete state_dict including ordered protein/damaged maps, aggregate sidecar when present, genome lesions, discrete structure, RNG and material ledger",
+    "fixed_tolerances": {
+      "full_state_max_abs": 8e-11,
+      "material_residual_abs_diff": 5e-10,
+      "rng_and_discrete": "exact"
+    },
+    "probes": [
+      {
+        "steps": 1,
+        "seed": 7201,
+        "full_state_numeric_field_count": 864,
+        "max_abs_diff": 2.7755575615628914e-17,
+        "structural_or_discrete_mismatch": false,
+        "rng_equal": true,
+        "material_residual_abs_diff": 0.0,
+        "cpu_seconds_separate": 0.014908499999364722,
+        "cuda_hybrid_seconds_separate": 1.4509462890000577
+      },
+      {
+        "steps": 10,
+        "seed": 7210,
+        "full_state_numeric_field_count": 864,
+        "max_abs_diff": 4.440892098500626e-16,
+        "structural_or_discrete_mismatch": false,
+        "rng_equal": true,
+        "material_residual_abs_diff": 0.0,
+        "cpu_seconds_separate": 0.13662488699992537,
+        "cuda_hybrid_seconds_separate": 0.9220698310000444
+      },
+      {
+        "steps": 20,
+        "seed": 7220,
+        "full_state_numeric_field_count": 864,
+        "max_abs_diff": 1.1102230246251565e-16,
+        "structural_or_discrete_mismatch": false,
+        "rng_equal": true,
+        "material_residual_abs_diff": 0.0,
+        "cpu_seconds_separate": 0.2580741110004965,
+        "cuda_hybrid_seconds_separate": 1.8026247859997966
+      }
+    ],
+    "all_pass": true,
+    "performance_interpretation": "correctness supplement; separate single samples are not a warmup/repeated performance claim"
+  },
+  "cuda_fp32_discrepancy": [
+    {
+      "environment": "stable",
+      "seed": 7101,
+      "steps": 10,
+      "max_abs_diff": 1.4452084663441056e-6,
+      "rng_equal": true,
+      "material_residual_cpu": -4.8232635663225665e-9,
+      "material_residual_hybrid": 2.1926221904777776e-7,
+      "seconds_combined_cpu_and_hybrid": 0.9704633349999767
+    },
+    {
+      "environment": "periodic",
+      "seed": 7102,
+      "steps": 20,
+      "max_abs_diff": 5.485399992011253e-7,
+      "rng_equal": true,
+      "material_residual_cpu": -2.6648056206113324e-8,
+      "material_residual_hybrid": 6.929300511160363e-8,
+      "seconds_combined_cpu_and_hybrid": 2.096314743999983
+    }
+  ],
+  "cpu_fp64_benchmark": {
+    "steps": 20,
+    "cells": 3,
+    "particles_final": 280,
+    "frozen_cpu_seconds": 0.5464144490000535,
+    "torch_cpu_hybrid_seconds": 0.7318208610000738,
+    "hybrid_over_cpu_ratio": 1.3393146216014542,
+    "max_lockstep_abs_diff": 1.1102230246251565e-16,
+    "rng_equal": true
+  },
+  "cuda_fp64_benchmark": {
+    "steps": 20,
+    "cells": 3,
+    "particles_final": 280,
+    "frozen_cpu_seconds": 0.5443817289999515,
+    "cuda_hybrid_seconds": 3.7801918379999506,
+    "hybrid_over_cpu_ratio": 6.944009390146684,
+    "max_lockstep_abs_diff": 1.0842021724855044e-18,
+    "rng_equal": true
+  },
+  "cuda_fp32_benchmark": {
+    "steps": 20,
+    "cells": 3,
+    "particles_final": 280,
+    "frozen_cpu_seconds": 0.5567879489999541,
+    "cuda_hybrid_seconds": 3.4027818550000575,
+    "hybrid_over_cpu_ratio": 6.11145025877767,
+    "max_lockstep_abs_diff": 1.2675325182787134e-6,
+    "rng_equal": true
+  },
+  "raw_summary_sha256": "7a81649a534607f16a4c6ad8fd36f6def6dd42f3363ec1bcee9d580190eb7c02",
+  "known_runner_limitations": [
+    "the original prebaseline runner omitted 1 step, combined CPU/hybrid timing, and used a partial comparator",
+    "the supplemental 1/10/20 probes correct the full-state/RNG/ledger coverage and separate timing, but remain single-sample correctness probes without warmup/repeats or peak VRAM",
+    "A2 performance values are retained only as a pre-A3 engineering baseline; the final A3 benchmark supplies repeated timing and VRAM evidence"
+  ],
+  "a3_implementation_gate": "PASS: supplemental A2 CUDA fp64 probes cover 1/10/20 steps with recursive full-state, exact RNG/discrete comparison and equal material residuals",
+  "performance_interpretation": "A2 CUDA hybrid was slower than frozen CPU in these small sequential probes; no speedup claim"
+}

@@ -183,3 +183,20 @@ F068G-A2-012,0.6.8-GPU-A2,inherited regression,PASS,A1 32/32 plus 279/279 histor
 F068G-A2-013,0.6.8-GPU-A2,CPU performance,LIMITED,hybrid 1.524x CPU runtime due correctness-first scan
 F068G-A2-014,0.6.8-GPU-A2,CUDA execution,NOT_RUN,development PyTorch build is CPU-only
 F068G-A2-015,0.6.8-GPU-A2,full GPU world step,NOT_COMPLETE,metabolism genome division death HGT neural remain CPU-authoritative
+F068G-A3-001,0.6.8-GPU-A3,packed protein damage aggregate and lesion state,PASS,lossless fingerprint identity insertion order typed aggregate and unresolved legacy mass
+F068G-A3-002,0.6.8-GPU-A3,protein and genome capacity fail closed,PASS,exact capacity passes and capacity plus one fails atomically
+F068G-A3-003,0.6.8-GPU-A3,gene-coded metabolism NumPy Torch fp64,PASS,generic reactions ATP paid synthesis maintenance assembly and supplemental route
+F068G-A3-004,0.6.8-GPU-A3,damage repair NumPy Torch fp64,PASS,active damage aggregation reactive byproduct oxidation lesions and fixed-order repair
+F068G-A3-005,0.6.8-GPU-A3,damage segregation plan,PASS,NumPy Torch fp64 parity without performing actual division
+F068G-A3-006,0.6.8-GPU-A3,integrated exactly-once scheduler,PASS,duplicate and out-of-order claims fail before mutation and every invoked canonical operation receives one truthful receipt
+F068G-A3-007,0.6.8-GPU-A3,world lockstep,PASS,one ten stressed ATP-poor transport-disabled pre-division and periodic-reversal full-state RNG ledger lockstep
+F068G-A3-008,0.6.8-GPU-A3,clone and save restore,PASS,complete state scheduler sidecar and RNG continuation deterministic
+F068G-A3-009,0.6.8-GPU-A3,dedicated validation,PASS,36/36 including CUDA-required path on RTX 4060 Ti
+F068G-A3-010,0.6.8-GPU-A3,CUDA fp64 correctness,PASS,independent NumPy and Torch fp64 parity before any fp32 candidate measurement
+F068G-A3-011,0.6.8-GPU-A3,CUDA fp32 discrepancy,LIMITED,pure maximum 1.8013e-07 and full-world maximum 3.5982e-06 after fp64 gate; candidate only
+F068G-A3-012,0.6.8-GPU-A3,A1 and A2 rerun,PASS,A1 32/32 and A2 32/32
+F068G-A3-013,0.6.8-GPU-A3,controlled native historical chain,PASS,Windows CPython 3.12.10 NumPy 2.3.5 ran all eleven validators 279/279
+F068G-A3-014,0.6.8-GPU-A3,cross-platform historical sensitivity,LIMITED,same P2 source is Windows 22/22 gain 1.929382 but WSL NumPy 2.5.2 is 21/22 gain 0.077189851
+F068G-A3-015,0.6.8-GPU-A3,final performance benchmark,PASS,13 specs 65 rows complete; CUDA fp64 is 570.096x to 590.276x slower than frozen CPU on world axis and no speedup is claimed
+F068G-A3-016,0.6.8-GPU-A3,deterministic flat release,PENDING,blocked until regression and benchmark evidence contain no unfinished marker
+F068G-A3-017,0.6.8-GPU-A3,full GPU world step,NOT_COMPLETE,translation replication division death corpse eDNA HGT neural and emission RNG remain CPU-authoritative

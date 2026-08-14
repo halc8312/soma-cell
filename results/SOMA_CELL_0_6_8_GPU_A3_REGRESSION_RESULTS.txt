@@ -1,0 +1,71 @@
+SOMA-CELL 0.6.8-GPU A3 REGRESSION RESULTS
+==========================================
+
+Build under test: SOMA-CELL 0.6.8-GPU A3
+Status: PASS WITH RECORDED CROSS-PLATFORM SENSITIVITY
+Evidence date: 2026-08-14
+
+Final A3 validation
+-------------------
+A3 dedicated validation: 36 / 36 PASS
+- independent NumPy/Torch fp64 stages and combined kernels
+- strict lossless mask/order/tail/mass/backend/dtype schema rejection
+- complete CPU frozen world vs A3 hybrid lockstep
+- ATP-poor maintenance-shortfall and transport-disabled surface paths
+- stressed, pre-division and periodic/reversal cases
+- exactly-once scheduler receipts and claim-before-mutation failures
+- clone, save/restore, CUDA fp64, and labelled fp32 discrepancy
+
+Fresh inherited reruns
+----------------------
+A1 dedicated validation: 32 / 32 PASS
+A2 dedicated validation: 32 / 32 PASS
+Historical Windows chain: 279 / 279 PASS
+
+The historical chain comprises eleven validators:
+P0 22, P1 18, P2 22, Formal 0.6 22, 0.6.1 43, 0.6.2 24,
+0.6.3 26, 0.6.4 25, 0.6.5 24, 0.6.6 25, and 0.6.7 28.
+
+Aggregate promotion checks: 379 / 379 PASS
+(A3 36 + A2 32 + A1 32 + historical 279)
+
+Controlled historical environment
+---------------------------------
+Platform: Windows 10
+Python: CPython 3.12.10
+NumPy: 2.3.5
+Git source: 0e36608ee5c4d23c573de7de7b60b280b310dc1c plus the
+uncommitted A3-only files; every historical tracked source remained at HEAD.
+
+Raw machine summary:
+F:\SOMA_CODEX_HANDOFF_20260814\SOMA_CODEX_HANDOFF_20260814\runs\a3_historical_windows_20260814\summary.json
+SHA-256: b38068a167e2ae74aa2e04a29ff464974cdc36c673f1970bb519fba918a0947c
+
+The runner copied every generated historical result to the raw directory,
+restored all 20 tracked outputs to their HEAD blobs, removed the two originally
+untracked 0.6.1 outputs, and ended with a clean Windows project worktree.
+
+Recorded compatibility limitation
+---------------------------------
+The same frozen P2 source/test is numerically stack-sensitive:
+
+- Windows CPython 3.12.10 / NumPy 2.3.5: 22 / 22 PASS; cue-reversal gain
+  1.929382, required > 0.20.
+- WSL CPython 3.12.3 / NumPy 2.5.2: 21 / 22; gain 0.077189851.
+
+The WSL result is retained as negative compatibility evidence. It is not
+rewritten into a pass, and cross-platform numerical equivalence is not
+claimed. The controlled native environment that produced the previously
+frozen historical lineage result passed the complete fresh chain.
+
+Raw evidence locations (not tracked)
+------------------------------------
+/home/ser/soma_handoff_a3/runs/a3_inherited_20260814/
+/home/ser/soma_handoff_a3/runs/a3_historical_20260814/
+F:\SOMA_CODEX_HANDOFF_20260814\SOMA_CODEX_HANDOFF_20260814\runs\a3_historical_windows_20260814\
+
+Interpretation
+--------------
+The A3 and controlled inherited regression gates pass. This is an engineering
+compatibility result; it does not establish life, consciousness, open-ended
+evolution, universal numerical portability, or GPU speedup.

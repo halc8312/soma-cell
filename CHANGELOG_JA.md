@@ -264,3 +264,22 @@
 - A2専用32/32、A1専用32/32再実行、継承279/279を維持。
 - CPU-only benchmarkではA2 hybridが約1.524倍遅く、速度結果ではないことを明記。
 - genome/translation/division/death/eDNA/HGT/neuralはCPU正本のまま、full_gpu_world_step=false。
+
+## 2026-08-14 — SOMA-CELL 0.6.8-GPU A3 engineering candidate
+
+- 0.6.6詳細世界のgene-coded metabolism、ATP生成、有料前駆体合成、維持・組立を独立NumPy/Torch kernelへ移植。
+- active/damaged proteinのfingerprintと辞書挿入順を保持する固定容量packed stateを追加し、容量超過をatomicにfail closed化。
+- damaged-protein aggregateをA3生成分のtyped compositionと、推定禁止のlegacy unresolved量に分離。
+- reactive byproduct、membrane oxidation、genome-lesion chemistry、antioxidant/chaperone/protease/genome/membrane repairをfp64で照合。
+- damage segregationはactual divisionを変更しないpure planとして追加。translation、replication、hydrolysis RNG、actual divisionはCPU正本を維持。
+- A2 surface/export/leak/radius/motionとA3 metabolism/repairをcanonical orderで一度だけ実行するreceipt付きschedulerを追加。
+- `maintenance_shortfall`を含むscalar telemetryのatomic unpackを修正し、ATP不足時の膜・輸送体劣化をCPU正本と統合lockstep化。
+- mask/count/order tail、mass完全被覆、gene/genome/replication、backend/device/dtypeを厳密検査し、隠れたstateとmixed tensorをcommit前に拒否。
+- validation/benchmarkへ正本source SHA-256 mapを付与し、release builderが36 test ID、13 spec/65 measurement、fp32親artifactと現行sourceを独立照合するよう強化。
+- 独立kernel、strict lossless schema、1/10 step、ATP不足、transport無効、stress、pre-division、periodic/reversal、clone、save/restore、schedulerを含むA3専用検証36/36 PASS。
+- RTX 4060 Ti 16GB上でCUDA fp64 kernel parityをPASSし、fp64合格後のfp32最大差1.8013e-07を候補精度として記録。
+- 同一source hashに結合した正式benchmarkを約4時間3分で完走。13 spec/65 measurement、CPU/CUDA fp64 correctness 1/10/20 stepを全て通し、fp64 state最大差3.553e-15、ledger差0、RNG完全一致を記録。
+- world 1/8/32/128でA3 CUDA fp64は凍結CPU正本より約570.096〜590.276倍遅く、CUDA fp32も約573.308〜589.486倍遅かった。速度向上なしという負の性能結果を保存。
+- fp32 full-world最大差3.5982e-06、ledger最大差1.7114e-06をcandidate-onlyとして保存。structured CUDA peak allocatedはfp64 215,552 bytes、fp32 190,976 bytes、reservedは双方2,097,152 bytes。
+- A1 32/32、A2 32/32、Windows nativeの歴史11 validator 279/279を再実行し、合計379/379 PASS。WSL/NumPy 2.5.2だけでP2が21/22となる数値stack感度も負の互換性証拠として保存。
+- 未移植機構が残るため`full_gpu_world_step=false`を維持し、CUDA高速化・生命・意識・オープンエンド進化を主張しない。

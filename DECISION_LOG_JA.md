@@ -445,3 +445,49 @@
 **結果:** 3細胞・約280粒子・20stepのCPU-only benchmarkでA2 hybridは凍結CPU版の約1.524倍の時間を要した。
 
 **決定:** A2を性能向上とは呼ばず、表面/物理層の正確性checkpointとする。RTX/CUDA速度は実機試験まで未判定。
+
+## D-20260814-068GPU-A3-01 — 0.6.6の逐次順序と一時的不整合も正本として移植する
+
+**決定:** gene reaction、protein辞書、damaged辞書、repairの反復順をkey sortや一括reductionへ置換しない。0.6.6 repair内でchaperone後のpool同期がprotease後まで遅れる挙動と、lesion配列がgenome本数より一時的に短い保存状態もロックステップ対象に含める。
+
+**理由:** 数学的に整理された別実装ではなく、凍結CPU参照と同じ現象・イベント・RNGをGPU計算へ移すため。
+
+## D-20260814-068GPU-A3-02 — aggregateの不明な過去組成を推定しない
+
+**決定:** A3以降に生成したaggregateだけをfingerprint別typed compositionに記録し、既存scalar aggregateは`aggregate_unresolved`として保存する。scalarに外部由来の正の増分があった場合もunresolvedへ入れ、負の説明不能差はfail closedとする。
+
+**理由:** 0.6.6 saveに存在しないfingerprint組成を後付けすると、保存状態と物質履歴を捏造するため。
+
+## D-20260814-068GPU-A3-03 — exactly-once receiptをA2/A3統合の正本にする
+
+**決定:** work量が正のときだけ増える旧counterではなく、`(world_step_id, cell_id, event)` receiptでexecuted/skippedを必ず一回記録する。duplicateとpredecessor違反はstate mutation前に例外とし、親monolithic metabolismの二重経路を遮断する。
+
+**理由:** export、leak、radius、motionやrepairの二重実行はATP・材料・RNGを変え、正確なkernel単体照合だけでは検出できないため。
+
+## D-20260814-068GPU-A3-04 — fp64をCUDA正確性gate、fp32を差分付き候補に限定する
+
+**結果:** RTX 4060 Ti上のA3専用検証でCUDA fp64 kernel parityをPASSし、その後に測ったfp32最大差は1.8013e-07だった。
+
+**決定:** fp32を正本やbit-exact実装とは呼ばず、fp64 gateを先に通したbenchmark候補だけにする。性能測定値が確定するまでspeedupを主張しない。
+
+## D-20260814-068GPU-A3-05 — fresh historical regressionをnative正本環境で全件再実行する
+
+**結果:** A3 36/36、A1 32/32、A2 32/32に加え、Windows CPython 3.12.10 / NumPy 2.3.5で歴史11 validatorを279/279再実行し、合計379/379 PASSした。一方、同じP2 source/testはWSL CPython 3.12.3 / NumPy 2.5.2で21/22となり、cue-reversal gainが1.929382対0.077189851へ変化した。
+
+**決定:** 凍結済み279/279だけで代用せずnative環境のfresh 279/279を昇格証拠にする。同時にWSL側の失敗を削除せず、cross-platform数値同等性は未成立という互換性リスクとして保存する。最終benchmarkとdeterministic releaseが同一source hashで揃うまではA2を正式baselineとして維持する。
+
+## D-20260814-068GPU-A3-06 — lossless schemaと証跡を内容hashで失敗閉鎖する
+
+**発見:** 最終静的監査で、ATP不足時の`maintenance_shortfall` unpack漏れ、packed mask/order tailに隠れたmassを置ける検証穴、mixed backend/dtypeを受理できる穴、古いvalidation/benchmark JSONを最終sourceへ結合せずrelease builderが受理できる穴を検出した。
+
+**決定:** species/genome mask、order、未使用tail、mass完全被覆、gene metadata、replication、backend/device/dtypeをatomic commit前に厳密検査する。receiptの`executed`は「canonical operationを実際に呼んだ」、`skipped`は「経路上で意図的に呼ばなかった」と定義し、物量・feature flagはmetadataへ分離する。validationとbenchmarkへ正本source群のSHA-256 mapを保存し、release builderは最終TESTS ID、36全row PASS、13 spec/65 measurement、fp32親artifact、現行source hashを独立再検査する。
+
+**理由:** silent truncationだけでなく、隠れたstate、未測定source、空のmeasurement集合をPASS扱いする経路も、同じく生命機構と負の結果を隠すため。
+
+## D-20260814-068GPU-A3-07 — 正確性checkpointと性能版を分離する
+
+**結果:** RTX 4060 Ti上の正式13 spec/65 measurement benchmarkを約4時間3分で完走した。CPU/CUDA fp64の1/10/20 step correctnessは全てPASSし、fp64 state最大差3.553e-15、ledger差0、RNG完全一致だった。一方、world 1/8/32/128でCUDA fp64 hybridは凍結CPU正本より570.096〜590.276倍遅く、CUDA fp32も573.308〜589.486倍遅かった。GPU utilisationは低く、逐次per-cell host loop、Python object commit、小kernel launchが支配した。
+
+**決定:** A3をfull-fidelity metabolism/damage correctness checkpointとして凍結できるが、GPU性能版または高速化とは呼ばない。fp32 full-world最大差3.5982e-06とledger最大差1.7114e-06はcandidate-onlyとして保存する。A4以降の性能改善は、生命機構やイベント順を削らずragged/batched stateとkernel groupingを導入して再検証する。
+
+**理由:** GPU上で実行できることと、GPUで速いことは別の主張である。負の速度結果を隠して昇格すると、移植の正確性証拠と性能証拠を混同するため。

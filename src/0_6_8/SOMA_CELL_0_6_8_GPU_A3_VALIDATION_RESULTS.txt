@@ -1,0 +1,41 @@
+SOMA-CELL 0.6.8-GPU A3 VALIDATION RESULTS
+====================================================
+36 PASS / 0 FAIL / 0 NOT_RUN / 36 TOTAL
+elapsed 45.617s
+
+PASS: test_api_build_schema_scope - A3 public API present; full GPU claim remains false
+PASS: test_source_sha256_map_covers_authoritative_artifacts - source_sha256_map binds core/scheduler/validator/A2/frozen-0.6.6
+PASS: test_recursive_comparator_covers_nested_discrete_and_float_state - recursive comparator catches nested discrete mismatch
+PASS: test_packed_state_roundtrip_and_invariants - packed active/damaged/aggregate/lesion state round-trips losslessly
+PASS: test_packed_schema_rejects_mask_order_and_mass_corruption - 8 mask/order/tail/mass coverage corruptions fail closed
+PASS: test_packed_schema_rejects_backend_dtype_and_gene_corruption - 7 backend/device-dtype/gene metadata corruptions fail closed
+PASS: test_pack_rejects_subthreshold_and_invalid_raw_composition - active/damaged thresholds and zero/negative aggregate entries fail closed
+PASS: test_packed_schema_rejects_genome_tail_total_and_replication_corruption - 8 genome mask/tail/total/count/replication corruptions fail closed
+PASS: test_capacity_exact_and_plus_one_atomic_failure - exact protein capacity passes; capacity+1 fails atomically
+PASS: test_genome_copy_capacity_exact_and_plus_one_atomic_failure - exact three genomes pass; genome copy capacity+1 fails atomically
+PASS: test_genome_symbol_capacity_exact_and_plus_one_atomic_failure - exact genome symbol capacity passes; length+1 fails atomically
+PASS: test_transient_genome_lesion_count_preserved_until_damage - transient lesion count preserved; damage stage alone zero-extends then gains
+PASS: test_kernel_clean_fp64 - clean NumPy/Torch fp64 parity and pure-input contract
+PASS: test_kernel_stressed_fp64 - stressed NumPy/Torch fp64 parity and pure-input contract
+PASS: test_kernel_oxidized_fp64 - oxidized NumPy/Torch fp64 parity and pure-input contract
+PASS: test_kernel_aggregate_heavy_fp64 - aggregate_heavy NumPy/Torch fp64 parity and pure-input contract
+PASS: test_kernel_atp_poor_fp64 - atp_poor NumPy/Torch fp64 parity and pure-input contract
+PASS: test_kernel_repair_disabled_fp64 - repair_disabled NumPy/Torch fp64 parity and pure-input contract
+PASS: test_segregation_plan_numpy_torch_fp64 - damage segregation plan fp64 parity and non-mutation
+PASS: test_all_public_stage_pairs_fp64 - all public A3 stage pairs preserve inputs and agree in fp64
+PASS: test_scheduler_duplicate_rejected_before_second_claim - duplicate scheduler claim rejected
+PASS: test_scheduler_out_of_order_rejected - out-of-order scheduler claim rejected
+PASS: test_scheduler_omitted_receipts_exactly_once - operations deliberately omitted by the fixture are receipted once as skipped
+PASS: test_scheduler_claim_failure_precedes_generic_phase_mutation - real duplicate claim fails before generic phase commits cell/world material
+PASS: test_world_one_step_lockstep - frozen CPU vs A3 hybrid one-step full-state/RNG/ledger lockstep
+PASS: test_world_ten_step_lockstep - frozen CPU vs A3 hybrid ten-step full-state/RNG/ledger lockstep
+PASS: test_world_stressed_repair_heavy_lockstep - stressed repair-heavy world lockstep
+PASS: test_world_atp_poor_maintenance_shortfall_lockstep - ATP-poor integrated housekeeping observes retained maintenance shortfall
+PASS: test_world_transport_disabled_surface_invocation_lockstep - transport=False still invokes passive A2 surface operation and locksteps
+PASS: test_world_predivision_lockstep - pre-division detailed state lockstep
+PASS: test_world_periodic_reversal_lockstep - periodic/reversal environment lockstep
+PASS: test_world_receipt_has_no_duplicate_a2_or_a3_events - integrated receipt proves A2/A3 stages exactly once
+PASS: test_clone_deterministic_full_state - A3 clone preserves complete state and RNG
+PASS: test_save_restore_deterministic_full_state - A3 atomic save/restore preserves complete continuation
+PASS: test_cuda_fp64_gate_then_fp32_discrepancy - CUDA fp64 parity passed before fp32; fp32 max discrepancy 1.8013e-07
+PASS: test_explicit_cuda_request_fails_closed_without_fallback - explicit unavailable CUDA request fails without CPU fallback
