@@ -2,9 +2,9 @@
   "schema_version": 1,
   "created_utc": "2026-08-03T16:20:00Z",
   "project": "SOMA artificial life / SOMA-CELL material lineage",
-  "current_target": "SOMA-CELL 0.6.8-GPU A3 metabolism/damage integration",
-  "future_integration_target": "SOMA-CELL 0.6.x only after minimal paid neural architecture is established",
-  "canonical_policy": "canonical/ and the integration contract override conversational recollection. SOMA 5-7 without R are superseded.",
+  "current_target": "SOMA-CELL 0.6.8-GPU A4 GPU-primary device-resident ragged genome, translation, replication and material mutation integration",
+  "future_integration_target": "Complete the full-detail 0.6.6 world on device without removing particle, membrane, heredity, damage, ecology or neural mechanisms",
+  "canonical_policy": "PROJECT_STATE.json, CURRENT_BASELINE.txt, the current A3 source/scheduler, measured results and frozen contracts override conversational recollection. canonical/ remains historical lineage evidence; SOMA 5-7 without R are superseded.",
   "stages": [
     {
       "id": "SOMA-0",
@@ -219,6 +219,23 @@
       "status": "engineering-frozen-full-world-incomplete",
       "sha256": "44fabca774b1a4eb68c69008ba1aa609a53092f94d19c4528dcdc945f0ea6c23",
       "bytes": 46499
+    },
+    {
+      "id": "SOMA-CELL 0.6.8-GPU A3",
+      "file": "src/0_6_8/SOMA_CELL_0_6_8_gpu_a3.py",
+      "scheduler_file": "src/0_6_8/SOMA_CELL_0_6_8_gpu_a3_scheduler.py",
+      "role": "full-detail gene-coded metabolism, damage/repair and exactly-once hybrid scheduler GPU migration checkpoint",
+      "status": "engineering-frozen-full-world-incomplete",
+      "sha256": "6ca66378702dabd5a388553ca92279376deae5ba8c39bea9bdbe3488aa41b4f6",
+      "bytes": 119942,
+      "scheduler_sha256": "5e207f68fd0d9aa674ab054dc43d62247e84c1f3c61fc6c7b455960ff84413aa",
+      "scheduler_bytes": 64243,
+      "validation": "36/36 PASS; inherited A2 32/32 plus A1 32/32 plus historical Windows chain 279/279 = 343/343; aggregate 379/379",
+      "cuda": "RTX 4060 Ti CUDA fp64 measured PASS; fp32 candidate only",
+      "benchmark": "13 specifications and 65 measurements complete; CUDA fp64 570.096x to 590.276x slower than frozen 0.6.6 CPU; no speedup",
+      "release": "releases/SOMA_CELL_0_6_8_GPU_A3_CHECKPOINT_20260814.zip",
+      "release_sha256": "24401e678ed0429d29a7ca762bb563a217875ae9dac713c23af0987af41751f2",
+      "full_gpu_world_step": false
     }
   ],
   "roadmap": [
@@ -233,6 +250,10 @@
     {
       "id": "SOMA-CELL-0.7+",
       "goal": "only after cost-positive adaptive neurogenesis: shared chemical ecology, internal models, concepts and material culture"
+    },
+    {
+      "id": "SOMA-CELL 0.6.8-GPU A4",
+      "goal": "GPU-primary device-resident batched execution with lossless ragged genome buffers plus material-paid translation, replication, proofreading, mutation and material mutation integrated through the A3 exactly-once scheduler; CPU retained as semantic oracle"
     }
   ],
   "required_docs": [
@@ -243,6 +264,6 @@
     "docs/SOMA_LINEAGE_INDEX_JA.md",
     "SHA256SUMS.txt"
   ],
-  "current_baseline": "SOMA-CELL-0.6.2",
-  "next_milestone": "SOMA-CELL-0.6.3"
+  "current_baseline": "SOMA-CELL 0.6.8-GPU A3",
+  "next_milestone": "SOMA-CELL 0.6.8-GPU A4"
 }

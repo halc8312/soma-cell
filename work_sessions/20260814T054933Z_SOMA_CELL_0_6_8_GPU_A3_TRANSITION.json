@@ -1,0 +1,123 @@
+{
+  "schema_version": "1.1",
+  "receipt_type": "transition",
+  "session_id": "20260814T054933Z_SOMA_CELL_0_6_8_GPU_A3_TRANSITION",
+  "started_utc": "2026-08-14T05:49:33Z",
+  "actor": "OpenAI Codex on user's RTX 4060 Ti 16GB",
+  "purpose": "Promote completed SOMA-CELL 0.6.8-GPU A3 and advance to A4",
+  "acknowledgement": "COMPLETE_CURRENT_MILESTONE_AND_ADVANCE",
+  "rule_id": "SOMA-RULELOCK-20260801-R2",
+  "checkpoint_id": "SOMA-20260808-CELL068-GPU-A2-TO-A3-RULELOCK2",
+  "baseline": "SOMA-CELL 0.6.8-GPU A2",
+  "canonical_source": "src/0_6_8/SOMA_CELL_0_6_8_gpu_a2.py",
+  "git_commit": "60a3cb4a05c75ff3458437e5841e4c38bac4415e",
+  "git_status_at_start": "",
+  "required_sources_read_and_hash_checked": {
+    "00_MANDATORY_STARTUP_GATE_JA.md": {
+      "sha256": "20c570bc88c5f7408382244d043f4f1d922349c2236cda3e484e946db5ea56e1",
+      "size": 2516
+    },
+    "MANDATORY_WORKFLOW.json": {
+      "sha256": "d0e7c96e4129442dff783d18711fc08800ce814fa166324073f9fc1ce3a26518",
+      "size": 3414
+    },
+    "PROJECT_STATE.json": {
+      "sha256": "59722fdbae5cce13f0ed639d215036f49e592dc2fc4ea6ff32d7405e33e91437",
+      "size": 13936
+    },
+    "CURRENT_BASELINE.txt": {
+      "sha256": "3abbc5b80b354ca9988da38d342c4715d52fa3ce57db15e426de393eefa8f1aa",
+      "size": 871
+    },
+    "docs/SOMA_CONTEXT_HANDOFF_JA.md": {
+      "sha256": "2930b87af18be0924c88d966a149a4049785ba8f46df4d5126bae6c43d6983b2",
+      "size": 24008
+    },
+    "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md": {
+      "sha256": "375358c0e76f0c497ce4cb25a53d66a29159ac56ed0b5443af71bf15ff9d2238",
+      "size": 16724
+    },
+    "planning/ROADMAP_0_6_JA.md": {
+      "sha256": "92f63b62083ead1cbb5b41c52240bc79e3ac7177dfd4c8a31e41a7fdeb44e825",
+      "size": 15501
+    },
+    "docs/SOMA_CELL_0_6_8_GPU_A2_CONTRACT.md": {
+      "sha256": "b2fa0e5207bae1aedc3a3fc9d75a16bdfa54492acd1173524ff7528bb45788d2",
+      "size": 2006
+    },
+    "docs/SOMA_CELL_0_6_8_GPU_A2_SCHEMA.json": {
+      "sha256": "b4464ce782676fa2aa7bf614743f2d193192a9f1b07299a1722f5bf0088579be",
+      "size": 727
+    },
+    "src/0_6_8/SOMA_CELL_0_6_8_gpu_a2.py": {
+      "sha256": "44fabca774b1a4eb68c69008ba1aa609a53092f94d19c4528dcdc945f0ea6c23",
+      "size": 46499
+    },
+    "results/SOMA_CELL_0_6_8_GPU_A2_VALIDATION_RESULTS.txt": {
+      "sha256": "f0e23b0c3c8da8b8d09c3aad7096d43ac6e4f6b3edfdce82c005dd2fe8a75ba0",
+      "size": 2923
+    },
+    "results/SOMA_CELL_0_6_8_GPU_A2_REGRESSION_RESULTS.txt": {
+      "sha256": "2dc03f76688e9ae2f2727f26bf5d3bba4bfb8041cf257d758e027c6b4df6391b",
+      "size": 522
+    },
+    "results/SOMA_CELL_0_6_8_GPU_A2_EXPERIMENT_REPORT.txt": {
+      "sha256": "5fc4b53613bf3d1b711fc74b3a87cfa77b336b730cc6b3d7da64da89a8735e59",
+      "size": 2053
+    }
+  },
+  "declared_reviews": [
+    "latest PROJECT_STATE",
+    "current canonical source",
+    "context handoff",
+    "0.6 integration contract",
+    "current baseline validation and experiment results",
+    "known failures and open risks",
+    "next milestone roadmap"
+  ],
+  "fail_closed": true,
+  "milestone": "SOMA-CELL 0.6.8-GPU A3",
+  "from_milestone": "SOMA-CELL 0.6.8-GPU A3",
+  "to_milestone": "SOMA-CELL 0.6.8-GPU A4",
+  "baseline_before": "SOMA-CELL 0.6.8-GPU A2",
+  "baseline_after": "SOMA-CELL 0.6.8-GPU A3",
+  "authorization_scope": "one commit promoting the declared completed milestone",
+  "evidence_files_hash_checked": {
+    "src/0_6_8/SOMA_CELL_0_6_8_gpu_a3.py": {
+      "sha256": "6ca66378702dabd5a388553ca92279376deae5ba8c39bea9bdbe3488aa41b4f6",
+      "size": 119942
+    },
+    "src/0_6_8/SOMA_CELL_0_6_8_gpu_a3_scheduler.py": {
+      "sha256": "5e207f68fd0d9aa674ab054dc43d62247e84c1f3c61fc6c7b455960ff84413aa",
+      "size": 64243
+    },
+    "results/SOMA_CELL_0_6_8_GPU_A3_VALIDATION_RESULTS.json": {
+      "sha256": "d4af434d1fb7b020bbed3ba2bb07b9d681130ddefea1427721f1bdbb7eaa0d8d",
+      "size": 16034
+    },
+    "results/SOMA_CELL_0_6_8_GPU_A3_VALIDATION_RESULTS.txt": {
+      "sha256": "1eb07a81a286fd571631e9c16efd75233642eab06d24e4be5da52b70b6a838c9",
+      "size": 4173
+    },
+    "results/SOMA_CELL_0_6_8_GPU_A3_REGRESSION_RESULTS.txt": {
+      "sha256": "be6ba49478eb749fb03f40d1e194981718b7152833a58defc093bd3198189a95",
+      "size": 2936
+    },
+    "results/SOMA_CELL_0_6_8_GPU_A3_EXPERIMENT_REPORT.txt": {
+      "sha256": "2d4aa97a5e50df6bb9039708b3e1a93b23d2ab8b92e5d29e517b4eefbfe0258b",
+      "size": 6853
+    },
+    "results/soma_cell_0_6_8_gpu_a3_benchmark.json": {
+      "sha256": "b5242eeb5366adae35aed369678f96cbda0fd7f4b72ab31c45245b70777a8bec",
+      "size": 1684766
+    },
+    "results/SOMA_CELL_0_6_8_GPU_A3_FP32_DISCREPANCY.json": {
+      "sha256": "9fb0ed6abc675efc526572855ce6ec8a86c44d2c60fcead8e5ee94c2355d00af",
+      "size": 1170578
+    },
+    "releases/SOMA_CELL_0_6_8_GPU_A3_CHECKPOINT_20260814.zip": {
+      "sha256": "24401e678ed0429d29a7ca762bb563a217875ae9dac713c23af0987af41751f2",
+      "size": 602135
+    }
+  }
+}

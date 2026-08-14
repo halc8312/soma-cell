@@ -367,7 +367,7 @@ A1はfull GPU worldではなく、CUDA実機未検証。
 
 A2は正確性優先の逐次surface scanであり、CPU-onlyでは凍結CPU版より遅い。CUDA性能は未検証。`full_gpu_world_step=false`を維持する。
 
-### A3 — 実装・正確性・正式性能計測完了、Rule Lock昇格待ち
+### A3 — 凍結済みengineering checkpoint
 
 - 0.2 gene-coded metabolismと0.3 damage/repairをA2 hybrid world-stepへ統合
 - fingerprintと辞書挿入順を保持するprotein/damaged/typed-aggregate packed schema
@@ -379,14 +379,17 @@ A2は正確性優先の逐次surface scanであり、CPU-onlyでは凍結CPU版�
 - 正式13 spec/65 measurementを約4時間3分で完走。fp64 state最大差3.553e-15、ledger差0、RNG完全一致
 - world軸でCUDA fp64は凍結CPU正本より570.096〜590.276倍遅く、速度向上なし。逐次host loopとobject commitが次の性能課題
 
-A3は`full_gpu_world_step=false`のengineering candidateである。Windows nativeのfresh historical regressionは279/279 PASSし、A3/A2/A1を合わせ379/379 PASSした。WSL/NumPy 2.5.2でのP2 21/22はplatform sensitivityとして保存する。正式benchmarkは最終source hashに結合して完了したが、deterministic releaseとRule Lock transitionが完了するまではA2を正式baselineとして維持する。
+A3は`full_gpu_world_step=false`の正式engineering baselineである。Windows nativeのfresh historical regressionは279/279 PASSし、A3/A2/A1を合わせ379/379 PASSした。WSL/NumPy 2.5.2でのP2 21/22はplatform sensitivityとして保存する。deterministic release `SOMA_CELL_0_6_8_GPU_A3_CHECKPOINT_20260814.zip`（SHA-256 `24401e678ed0429d29a7ca762bb563a217875ae9dac713c23af0987af41751f2`）とRule Lock transitionを凍結し、次をA4とする。
 
 ### A4 — 次: ragged genome・translation・replication・material mutation
 
+- GPUを主計算器とし、cell stateとragged genomeをdevice-residentに保つ。CPUは凍結意味論oracleと未移植fallbackに限定
+- per-cell Python pack/commit、host-device往復、小kernel逐次起動をbatch化・kernel統合で削減し、CPU能力へ依存しない
 - genome symbolとcopy polymerをdevice-neutral ragged buffer、offset、length、capacityへlosslessに写像
 - variable genome translationとgene cache更新を独立NumPy/Torch fp64で照合し、protein辞書挿入と有料合成順を保持
 - nucleotideとATPを支払うreplication、proofreading、copy completionをCPU正本とlockstep化
 - mutation、whole-gene deletion/duplication、promoter dormancy/reactivationのRNG消費順と物質差を保存
 - genome symbol hydrolysisとreplication/mutationの競合event orderを統合schedulerで一回だけ実行
 - exact-capacityとcapacity+1 atomic failure、clone、save/restore、pre-division、HGT直前状態を検証
+- CUDA fp64正確性後にdevice residency、transfer、launch、GPU utilization、A3比性能を測り、GPU主経路としての実用性をfail-closed判定
 - actual division、death/corpse/eDNA/HGT、neural/causal systemはA5/A6までCPU-authoritativeとし、A4でも`full_gpu_world_step=false`を維持

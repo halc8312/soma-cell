@@ -313,3 +313,24 @@ A2は0.6.6詳細粒子世界のsurface exchange、ATP有料waste export、damage
 ただし開発環境はTorch 2.10.0+cpuでCUDA未検証。CPU-only benchmarkではA2 hybridは凍結CPU版の約1.524倍遅い。漏出粒子生成とBrownian RNGはイベント順序保持のためCPU正本。metabolism/damage、genome、translation、division、death/eDNA/HGT、neuralはCPU正本で、`full_gpu_world_step=false`。
 
 次はA3でgene-coded metabolismと0.3損傷修復をworld-stepへ統合する。会話よりA2 source、契約、32検証、regression、engineering reportを優先し、新しいA2 HEADでpreflightを発行する。
+
+
+## 追補 2026-08-14 — SOMA-CELL 0.6.8-GPU A3 工学チェックポイント
+
+A3は、0.6.6詳細粒子世界のgene-coded metabolism、ATP有料合成・維持、active protein damage、damaged-protein aggregation、reactive byproduct、膜酸化、antioxidant/chaperone/protease/genome/membrane repair、typed aggregate composition、damage segregation planをA2 tensor基盤へ移植した。A2のsurface/export/leak/radius/motionとA3 phaseは統合exactly-once schedulerで管理し、duplicateおよびpredecessor違反をstate mutation前に拒否する。
+
+A3専用36/36、A2 32/32、A1 32/32、Windows controlled historical chain 279/279、合計379/379 PASS。NumPy/Torch fp64 pure kernel、CPU frozen worldとの1/10 step、stressed、ATP-poor、transport-disabled、pre-division、periodic/reversal、clone、save/restore、RNG、辞書順、material ledger、capacity fail-closedを確認した。
+
+RTX 4060 Ti 16GB、Torch 2.13.0+cu130、CUDA 13.0でCUDA fp64を実測した。pure CUDA fp64最大差は6.938893903907228e-18、CPU world最大差は3.552713678800501e-15、ledger residual差最大は3.552713678800501e-15だった。fp32 pure-kernel最大差1.8012973546088773e-7はcandidate-onlyの測定であり、fp64正本を置き換えない。
+
+正式benchmarkは13 sweep specification・65 measurementを約4時間3分で完走した。world 1/8/32/128のCUDA fp64は凍結0.6.6 CPU正本より570.096〜590.276倍遅く、速度向上はなかった。benchmark fp64 full-world最大差は3.552713678800501e-15、ledger差は0、RNGと離散構造は完全一致した。fp32 candidateのfull-world最大差は3.598134365018738e-6、ledger差最大は1.711311643504132e-6である。逐次cell loop、CPU object commit、host-device transferが残るため、個別条件の結果をGPU高速化一般へ拡張しない。
+
+歴史回帰はWindows 10 / CPython 3.12.10 / NumPy 2.3.5で279/279 PASS。一方、同じ凍結P2はWSL CPython 3.12.3 / NumPy 2.5.2で21/22となった。この負のcross-platform compatibility evidenceも保存し、普遍的数値等価を主張しない。
+
+deterministic releaseは`releases/SOMA_CELL_0_6_8_GPU_A3_CHECKPOINT_20260814.zip`、SHA-256は`24401e678ed0429d29a7ca762bb563a217875ae9dac713c23af0987af41751f2`である。
+
+variable-genome translation mechanics、replication/proofreading/mutation、live-genome symbol-hydrolysis RNG、actual division、death/corpse/eDNA/HGT、neural/tissue/causal system、particle emission/Brownian RNGはCPU-authoritativeである。したがって`full_gpu_world_step=false`を維持する。
+
+次はA4でlossless ragged genome buffers、translation、replication、proofreading、mutation、material mutationを移植する。A4の編集前には、会話ではなくA3 core、scheduler、contract/schema/event order、36検証、343継承結果、benchmark、fp32 discrepancyと0.6.6正本を読み、promoted A3 HEADに結び付くfresh preflightを発行する。
+
+運用上の追加条件として、対象機はRTX 4060 Ti 16GBを持つ一方でCPU能力が制約になる。A4以降はCPUを主計算器として性能を補うのではなく、GPU上にragged genomeとcell stateを常駐させ、batch化、kernel統合、host-device転送削減、Python object commit削減を優先する。CPU版は意味論正本・照合oracle・未移植部分の一時的fallbackとして保持する。GPU主経路の採否はCUDA fp64正確性ゲート後の正式benchmarkで決め、遅い結果も保存する。
