@@ -59,6 +59,8 @@ Git履歴には大文字・小文字だけが異なるpathがあります。通�
 
 A3は工学的移植checkpointです。生命、意識、開放進化、GPU高速化を証明したものではありません。正・負の結果、CUDA未達、platform sensitivityを削除せず保存します。
 
-## License / visibility
+## License
 
-現時点ではprivate repositoryを前提とし、オープンソースライセンスは未選択です。public化する前にライセンス、追跡済み絶対path、machine/environment情報の公開範囲を決定してください。
+特記のないSOMA-CELLのproject-authored code・documentation・resultsは、[Apache License 2.0](LICENSE)で公開します。
+
+凍結済みA3 release ZIPはcheckpoint hashを維持するため再生成していません。ZIPを単独再配布する場合はroot `LICENSE`も添付してください。今後のrelease builderではライセンスをarchiveへ同梱します。
