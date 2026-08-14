@@ -1,6 +1,6 @@
 # SOMA-CELL 0.6.8-GPU A4 contract
 
-Status: A4 development contract through slice A4.2. This is not an A4
+Status: A4 development contract through slice A4.3. This is not an A4
 promotion.
 
 ## Authority
@@ -55,10 +55,44 @@ All Torch outputs remain on the input device until one explicit
 
 `A4GeneCacheBatch` is disposable derived data. `A4RaggedGenomeBatch` remains
 the sole genome authority; no second world state or save format is introduced.
-The cache has no deserialization constructor. A later translation slice may
-consume only a cache produced directly from the same validated resident arena,
-not an external or restored cache whose biological values cannot be proven
-without that source.
+The cache has no deserialization constructor. A4.3 consumes only a cache
+produced directly from the same validated resident arena, not an external or
+restored cache whose biological values cannot be proven without that source.
+
+## A4.3 scope
+
+A4.3 adds one pure, fixed-shape paid-translation plan. It does not replace the
+A3 scheduler or mutate a CPU cell. `bind_a4_translation()` decodes its cache
+internally from the exact ragged object, binds that cache to a one-time
+physiology/protein snapshot, and returns no serializable authority. NumPy and
+Torch plans return an updated `A4TranslationStateBatch`; inputs, RNG, cells,
+world, and scheduler receipts remain unchanged.
+
+The plan reproduces the actual Formal066 dynamic dispatch, not only the A3
+single-cell test helper:
+
+- 0.3 paid translation, quiescence, misfolding, and protein sync thresholds;
+- 0.5 ecology-localized regulator needs;
+- 0.4 sensor/effector needs, repair-localized chaperone activity, and
+  behavioural quiescence;
+- P0 neural-attachment osmolyte contribution to inherited membrane tension;
+- 0.2 non-regulator protein needs and material stoichiometry.
+
+The neural attachment contribution is an ordered, read-only CPU-authoritative
+snapshot. A4.3 does not move neural dynamics, tissue material, or attachment
+ownership to the device.
+
+All weights observe the pre-translation state. Protein payment then follows
+gene-cache order, preserves the ATP reserve `0.042`, and consumes exactly
+`0.64 fuel + 0.36 mineral + 0.52 ATP` per translated unit. Active and damaged
+protein dictionaries retain their independent insertion orders. Existing keys
+keep their positions; new keys append in gene-cache order only when the final
+mass survives the frozen active `>1e-10` or damaged `>1e-11` sync threshold.
+The Torch path uses fixed arrays, a host-constant gene-rank loop batched across
+cells, and scatter to the prevalidated fixed protein capacity. The loop keeps
+the frozen per-gene fp64 payment recurrence instead of substituting a
+closed-form prefix budget at exhausted-resource boundaries. It performs no
+scalar readback or variable-length output.
 
 ## Fail-closed invariants
 
@@ -96,9 +130,41 @@ Gene-cache invariants are:
 - Decode is pure: source arena, CPU cells, RNG, scheduler receipts, material
   pools, and protein dictionaries are unchanged.
 
-## Explicit exclusions through A4.2
+Translation-state invariants are:
 
-- No paid translation kernel or protein/material commit.
+- Cell IDs/order and the derived genome count, lesion mean, replication flag,
+  and material-symbol count agree with the bound ragged arena.
+- `source_provenance` is a lowercase 64-hex SHA-256 of the fully validated
+  NumPy ragged source. Host binding recomputes it; resident binding accepts the
+  carried digest only while both ragged and physiology tensor pointers and
+  version counters still match their trusted upload or trusted clone. A
+  resident clone verifies its source attestation before re-attesting new
+  storage, so mutation followed by clone cannot mint new trust.
+- The internally decoded cache is attested for the binding lifetime: host
+  arrays use a canonical SHA-256 and resident tensors use pointer/version
+  counters. Mutation between bind and plan is rejected.
+- Neural attachment osmolyte is the ordered sum of the current CPU-authoritative
+  attachment states. It is a translation input only, not neural state ownership.
+- Active and damaged protein rows are independent true prefixes in their
+  original dictionary insertion orders; fingerprints are unique per mapping.
+- Catalyst and damaged-protein pools equal their ordered mapping sums.
+- The three paid pools (fuel, mineral, ATP) may retain a signed fp64 payment
+  residual no smaller than `-2e-12`; every other pool remains nonnegative and
+  larger negative biology is rejected. This tolerance preserves the frozen
+  sequential subtraction result and is not free material or clipping.
+- Packing proves both `existing keys union current gene fingerprints` fit the
+  declared per-cell protein capacity. Capacity is never grown on device.
+- The cache is created inside the binding from the same ragged arena; restored
+  or caller-supplied cache data is not accepted.
+- `last_translation` always resets when the operation is invoked.
+  `last_quiescence` changes only after the translator/gene/positive-weight
+  gates, matching the frozen early-return boundary.
+- A4.3 output is a pure plan. It is not applied to the A3 world and cannot run
+  beside the current `translation_cpu` event.
+
+## Explicit exclusions through A4.3
+
+- No scheduler/world integration or CPU-cell protein/material commit.
 - No replication, proofreading, mutation, symbol hydrolysis, or RNG kernel.
 - No scheduler replacement and no change to A3 `gene_refresh`,
   `translation_cpu`, or `replication_cpu` authority.
@@ -107,7 +173,7 @@ Gene-cache invariants are:
   CUDA, multi-stream, multi-GPU, or online-GPU abstraction.
 - No formal 13-spec/65-measurement benchmark and no speedup claim.
 
-## A4.2 acceptance
+## A4.3 acceptance
 
 - All A4.1 lossless/corruption/capacity/residency tests remain PASS.
 - Nested valid markers and invalid-outer/valid-inner recovery match frozen
@@ -116,11 +182,25 @@ Gene-cache invariants are:
   active template/copy genes are excluded.
 - Full host `gene_specs`, including 0.6.5 grammar payload and conditional
   reaction keys, match the frozen CPU oracle.
-- NumPy, Torch CPU, and RTX CUDA fixed-shape outputs are exact after explicit
-  readback; decoder input pointers and values do not change.
+- NumPy, Torch CPU, and RTX CUDA fixed-shape outputs have exact discrete state
+  and agree within the registered fp64 tolerance after explicit readback;
+  decoder input pointers and values do not change.
 - Exact derived entry capacity passes; the next complete gene is rejected at
   the enclosing fixed symbol/sequence boundary.
 - Focused A3 regressions remain PASS and `full_gpu_world_step=false`.
 
-The next slice may add RNG-free paid translation using this derived cache.
-Replication and mutation remain later slices.
+- Direct `Formal066ProtoCell.translate` comparison covers rich material,
+  exact ATP reserve, mid-order material exhaustion, no-translator early return,
+  repair/sensor/effector/ecology regulators, behavioural quiescence, external
+  translator weighting, and a real P0 neural attachment osmolyte contribution.
+- Pools, `last_translation`, conditional `last_quiescence`, active/damaged
+  amounts, and both dictionary orders match the CPU oracle in fp64.
+- NumPy, Torch CPU, and RTX CUDA plans agree after one explicit readback;
+  resident ragged/cache/physiology storage remains unchanged.
+- Exact protein-union capacity passes and capacity + 1 fails before upload.
+- A4.3 does not alter A3 `translation_cpu`, replication authority, or the
+  promoted baseline.
+
+The next slice may add replication/proofreading/material mutation state and
+RNG planning. Scheduler replacement remains later, after a contiguous resident
+chain can commit without recreating A3's per-cell host/device round trips.

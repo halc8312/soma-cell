@@ -1,5 +1,5 @@
 # coding: utf-8
-"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1/A4.2 slices."""
+"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.3 slices."""
 from __future__ import division
 
 import argparse
@@ -27,9 +27,9 @@ try:
 except Exception:  # pragma: no cover
     torch = None
 
-RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_2_VALIDATION_RESULTS.json'
-RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_2_validation.csv'
-RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_2_VALIDATION_RESULTS.txt'
+RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_3_VALIDATION_RESULTS.json'
+RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_3_validation.csv'
+RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_3_VALIDATION_RESULTS.txt'
 
 SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4.py',
@@ -39,7 +39,11 @@ SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_A3_validation.py',
     'src/0_6_6/SOMA_CELL_0_6_6_pythonista.py',
     'src/0_6_5/SOMA_CELL_0_6_5_pythonista.py',
+    'src/baseline/SOMA_CELL_0_5_pythonista.py',
+    'src/baseline/SOMA_CELL_0_4_pythonista.py',
+    'src/baseline/SOMA_CELL_0_3_pythonista.py',
     'src/baseline/SOMA_CELL_0_2_pythonista.py',
+    'src/0_6_p0/SOMA_CELL_0_6_P0_pythonista.py',
     'docs/SOMA_CELL_0_6_8_GPU_A4_CONTRACT.md',
     'docs/SOMA_CELL_0_6_8_GPU_A4_SCHEMA.json',
     'planning/SOMA_CELL_0_6_8_GPU_A4_PREREGISTRATION_JA.md',
@@ -227,6 +231,115 @@ def _assert_raises(kind, fn):
     raise AssertionError('expected %s' % kind.__name__)
 
 
+def _paid_translation_fixture(seed=7701):
+    """Four Formal066 cells fixing payment, early-gate, and MRO signals."""
+    world = v3.make_world(seed=seed, cells=4)
+    cells = world.cells
+    for ci, cell in enumerate(cells):
+        cell.last_receptor_activity = np.linspace(
+            0.03 + 0.01 * ci, 0.42 + 0.01 * ci,
+            a4.s4.LIGAND_COUNT, dtype=np.float64,
+        )
+        cell.last_control_vectors = np.asarray([
+            (0.01 * (index + 1), -0.006 * (ci + index + 1))
+            for index in range(a4.s4.CONTROL_COUNT)
+        ], dtype=np.float64)
+        cell.last_control_scalars = np.linspace(
+            -0.08, 0.11 + 0.01 * ci, a4.s4.CONTROL_COUNT,
+            dtype=np.float64,
+        )
+        cell.last_edna_signal = 0.07 + 0.02 * ci
+        cell.last_corpse_signal = 0.05 + 0.01 * ci
+        cell.last_necrotoxin_signal = 0.04 + 0.015 * ci
+        cell.behavioural_quiescence = 0.18 + 0.03 * ci
+        cell.last_translation = 0.41 + 0.01 * ci
+        cell.last_quiescence = 0.61 + 0.01 * ci
+        cell._refresh_gene_cache()
+        cell._sync_protein_pool()
+        cell._sync_damage_pool()
+
+    # Formal066 inherits P0ProtoCell.osmolyte(), which includes every neural
+    # attachment.  Keep one real attachment in the shared fixture so both the
+    # NumPy oracle and resident Torch path exercise that dynamic-MRO input.
+    p0 = sys.modules['SOMA_CELL_0_6_P0_pythonista']
+    attachment = p0.NeuralAttachmentState(
+        'a4-neural-osmolyte',
+        stores=np.full((p0.BUDGET_COUNT,), 10.0, dtype=np.float64),
+        tissue_material=np.full(
+            (p0.TISSUE_MATERIAL_COUNT,), 10.0, dtype=np.float64,
+        ),
+    )
+    cells[0].neural_attachments['a4-neural-osmolyte'] = attachment
+
+    # Reaching the weight gate with exactly the ATP reserve must update
+    # quiescence but produce no protein.
+    cells[1].pools[a4.a3.POOL_ATP] = 0.042
+    # One early gene consumes this tiny mineral budget; later genes see the
+    # already depleted material in frozen cache order.
+    cells[2].pools[a4.a3.POOL_MINERAL] = 0.36e-6
+    # Remove every active translator while retaining its genes.  This returns
+    # before quiescence and leaves that observable at its sentinel value.
+    translator_keys = [
+        fingerprint for fingerprint, spec in cells[3].gene_specs.items()
+        if int(spec['role']) == int(a4.a3.ROLE_TRANSLATOR)
+    ]
+    for fingerprint in translator_keys:
+        cells[3].proteins.pop(fingerprint, None)
+    cells[3]._sync_protein_pool()
+    cells[3]._sync_damage_pool()
+
+    config = a4.GPU068A4Config(
+        max_cells=4, max_sequences=16, max_symbols=8192,
+        max_sequence_symbols=a4.MAX_FROZEN_GENOME_SYMBOLS,
+        max_proteins_per_cell=64,
+    )
+    return world, cells, config, 0.1
+
+
+def _assert_translation_matches_cells(state, cells, label, atol=2e-12):
+    if int(state.cell_count) != len(cells):
+        raise AssertionError('%s cell count differs' % label)
+    for ci, cell in enumerate(cells):
+        v3.assert_recursive_close(
+            cell.pools, state.pools[ci], atol=atol, rtol=0.0,
+            path='%s.cell[%d].pools' % (label, ci),
+        )
+        v3.assert_recursive_close(
+            float(cell.last_translation), float(state.last_translation[ci]),
+            atol=atol, rtol=0.0,
+            path='%s.cell[%d].last_translation' % (label, ci),
+        )
+        v3.assert_recursive_close(
+            float(cell.last_quiescence), float(state.last_quiescence[ci]),
+            atol=atol, rtol=0.0,
+            path='%s.cell[%d].last_quiescence' % (label, ci),
+        )
+        active_count = int(state.active_count[ci])
+        damaged_count = int(state.damaged_count[ci])
+        active_order = [int(value) for value in
+                        state.active_fingerprints[ci, :active_count]]
+        damaged_order = [int(value) for value in
+                         state.damaged_fingerprints[ci, :damaged_count]]
+        if active_order != list(cell.proteins.keys()):
+            raise AssertionError('%s cell[%d] active insertion order differs' %
+                                 (label, ci))
+        if damaged_order != list(cell.damaged_proteins.keys()):
+            raise AssertionError('%s cell[%d] damaged insertion order differs' %
+                                 (label, ci))
+        v3.assert_recursive_close(
+            np.asarray(list(cell.proteins.values()), dtype=np.float64),
+            state.active_mass[ci, :active_count],
+            atol=atol, rtol=0.0,
+            path='%s.cell[%d].active' % (label, ci),
+        )
+        v3.assert_recursive_close(
+            np.asarray(list(cell.damaged_proteins.values()), dtype=np.float64),
+            state.damaged_mass[ci, :damaged_count],
+            atol=atol, rtol=0.0,
+            path='%s.cell[%d].damaged' % (label, ci),
+        )
+
+
 def test_api_scope():
     required = (
         'GPU068A4Config', 'A4RaggedGenomeBatch',
@@ -234,6 +347,10 @@ def test_api_scope():
         'pack_a4_cells', 'unpack_a4_cells', 'A4GeneCacheBatch',
         'validate_a4_gene_cache', 'decode_a4_gene_cache_numpy',
         'decode_a4_gene_cache_torch', 'decode_a4_gene_cache',
+        'A4TranslationStateBatch', 'FullFidelityA4TranslationAdapter',
+        'pack_a4_translation_state', 'bind_a4_translation',
+        'paid_translation_plan_numpy', 'paid_translation_plan_torch',
+        'paid_translation_plan', 'validate_a4_translation_state',
     )
     missing = [name for name in required if not hasattr(a4, name)]
     if missing:
@@ -246,12 +363,13 @@ def test_api_scope():
             'a4.2-batched-resident-derived-cache'):
         raise AssertionError('A4.2 gene-cache status is missing')
     if a4.PORT_STATUS.get('translation') != (
-            'cpu-authoritative-next-a4-slice-after-gene-decode'):
-        raise AssertionError('translation authority changed in decode slice')
+            'a4.3-full-formal066-paid-plan-not-integrated-cpu-authoritative'):
+        raise AssertionError('A4.3 translation plan status is missing')
     if a4.PORT_STATUS.get('genome_replication') != 'cpu-authoritative-next-a4-slice':
         raise AssertionError('replication authority changed in representation slice')
     return '%s / %s + %s / full_gpu=false' % (
-        a4.BUILD, a4.SCHEMA_VERSION, a4.GENE_CACHE_SCHEMA_VERSION,
+        a4.BUILD, a4.SCHEMA_VERSION,
+        a4.GENE_CACHE_SCHEMA_VERSION + ' + ' + a4.TRANSLATION_SCHEMA_VERSION,
     )
 
 
@@ -693,6 +811,462 @@ def test_a4_gene_cache_schema_and_decode_nonmutation():
     return '%d cache + 2 resident metadata corruptions rejected; source/cells unchanged' % len(corruptions)
 
 
+def test_a4_paid_translation_cpu_oracle_ledger_and_order():
+    world, cells, config, dt = _paid_translation_fixture()
+    world_before = v3.pickle_clone(world.state_dict())
+    gene_orders = [list(cell.gene_specs.keys()) for cell in cells]
+    ragged = a4.FullFidelityA4GenomeAdapter(config).pack_cells(cells)
+    state = a4.pack_a4_translation_state(cells, ragged, world.config, config)
+    v3.assert_recursive_close(
+        float(state.neural_attachment_osmolyte[0]), 29.3,
+        atol=4e-15, rtol=0.0, path='neural_attachment_osmolyte',
+    )
+    state_before = state.state_dict()
+    plan = a4.paid_translation_plan_numpy(
+        a4.bind_a4_translation(ragged, state), dt,
+    )
+    cpu_cells = copy.deepcopy(cells)
+    for cell in cpu_cells:
+        cell.translate(dt, world.config)
+    _assert_translation_matches_cells(plan, cpu_cells, 'cpu_oracle')
+
+    for ci, (before, after) in enumerate(zip(cells, cpu_cells)):
+        if list(after.gene_specs.keys()) != gene_orders[ci]:
+            raise AssertionError('translation changed gene-cache order')
+        total = float(after.last_translation) * dt
+        for pool, coefficient in (
+            (a4.a3.POOL_FUEL, 0.64),
+            (a4.a3.POOL_MINERAL, 0.36),
+            (a4.a3.POOL_ATP, 0.52),
+        ):
+            v3.assert_recursive_close(
+                float(before.pools[pool] - after.pools[pool]),
+                coefficient * total, atol=3e-12, rtol=0.0,
+                path='ledger.cell[%d].pool[%d]' % (ci, pool),
+            )
+        v3.assert_recursive_close(
+            float(after.pools[a4.a3.POOL_CATALYST]),
+            float(sum(after.proteins.values())), atol=2e-12, rtol=0.0,
+            path='ledger.cell[%d].active' % ci,
+        )
+        v3.assert_recursive_close(
+            float(after.pools[a4.a3.POOL_DAMAGED_PROTEIN]),
+            float(sum(after.damaged_proteins.values())),
+            atol=2e-12, rtol=0.0,
+            path='ledger.cell[%d].damaged' % ci,
+        )
+    if cpu_cells[1].last_translation != 0.0:
+        raise AssertionError('ATP reserve produced unpaid protein')
+    if cpu_cells[1].last_quiescence == cells[1].last_quiescence:
+        raise AssertionError('ATP reserve was mistaken for an early return')
+    if not (cpu_cells[2].last_translation > 0.0
+            and cpu_cells[2].pools[a4.a3.POOL_MINERAL] <= 2e-16):
+        raise AssertionError('gene-order mineral exhaustion was not exercised')
+    if (cpu_cells[3].last_translation != 0.0
+            or cpu_cells[3].last_quiescence != cells[3].last_quiescence):
+        raise AssertionError('no-translator early-return observables differ')
+    v3.assert_recursive_close(
+        state_before, state.state_dict(), atol=0.0, rtol=0.0,
+        path='translation_numpy_input',
+    )
+    v3.assert_recursive_close(
+        world_before, world.state_dict(), atol=0.0, rtol=0.0,
+        path='translation_numpy_world',
+    )
+    return '4 Formal066 cells exact; ATP reserve/order/ledgers/dict order fixed'
+
+
+def test_a4_paid_translation_numpy_torch_devices_nonmutation():
+    if torch is None:
+        raise AssertionError('PyTorch is required for A4.3')
+    if _REQUIRE_CUDA and not torch.cuda.is_available():
+        raise AssertionError('CUDA required but unavailable; CPU fallback forbidden')
+    world, cells, config, dt = _paid_translation_fixture(seed=7702)
+    ragged = a4.FullFidelityA4GenomeAdapter(config).pack_cells(cells)
+    state = a4.pack_a4_translation_state(cells, ragged, world.config, config)
+    expected = a4.paid_translation_plan_numpy(
+        a4.bind_a4_translation(ragged, state), dt,
+    )
+    source = '\n'.join(inspect.getsource(item) for item in (
+        a4.paid_translation_plan_torch,
+        a4._torch_ordered_row_sum,
+        a4._validate_translation_resident_metadata,
+        a4._validate_translation_backend_and_dtypes,
+    ))
+    forbidden = ('.item(', '.cpu(', '.numpy(', '.tolist(',
+                 'nonzero(', 'masked_select(', 'unique(')
+    found = [token for token in forbidden if token in source]
+    if found:
+        raise AssertionError('resident translation contains host/dynamic op: %s' % found)
+
+    devices = ['cpu']
+    if torch.cuda.is_available():
+        devices.append('cuda')
+    for device in devices:
+        resident_ragged = ragged.to_torch(device=device)
+        resident_state = state.to_torch(device=device)
+        ragged_ptrs = resident_ragged.data_ptrs()
+        state_ptrs = resident_state.data_ptrs()
+        binding = a4.bind_a4_translation(resident_ragged, resident_state)
+        cache_ptrs = binding.cache.data_ptrs()
+        plan = a4.paid_translation_plan_torch(binding, dt)
+        if any(getattr(plan, name).device.type != device
+               for name in a4._TRANSLATION_ARRAY_FIELDS):
+            raise AssertionError('%s translation output escaped device' % device)
+        if device == 'cuda':
+            torch.cuda.synchronize()
+        back = plan.to_numpy()
+        v3.assert_recursive_close(
+            expected.state_dict(), back.state_dict(),
+            atol=2e-12, rtol=0.0, path='translation.%s' % device,
+        )
+        if ragged_ptrs != resident_ragged.data_ptrs():
+            raise AssertionError('%s translation reallocated ragged input' % device)
+        if state_ptrs != resident_state.data_ptrs():
+            raise AssertionError('%s translation reallocated physiology input' % device)
+        if cache_ptrs != binding.cache.data_ptrs():
+            raise AssertionError('%s translation reallocated decoded cache' % device)
+        v3.assert_recursive_close(
+            ragged.state_dict(), resident_ragged.to_numpy().state_dict(),
+            atol=0.0, rtol=0.0, path='translation_ragged_source.%s' % device,
+        )
+        v3.assert_recursive_close(
+            state.state_dict(), resident_state.to_numpy().state_dict(),
+            atol=0.0, rtol=0.0, path='translation_state_source.%s' % device,
+        )
+
+    # External translator raises capacity but must not alter the endogenous
+    # translator-protein need used while weights are built.
+    external_config = copy.deepcopy(world.config)
+    external_config.external_translator = True
+    external_state = a4.pack_a4_translation_state(
+        cells, ragged, external_config, config,
+    )
+    external_expected = a4.paid_translation_plan_numpy(
+        a4.bind_a4_translation(ragged, external_state), dt,
+    )
+    external_cpu = copy.deepcopy(cells)
+    for cell in external_cpu:
+        cell.translate(dt, external_config)
+    _assert_translation_matches_cells(
+        external_expected, external_cpu, 'external_translator_cpu',
+    )
+    external_device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    external_plan = a4.paid_translation_plan_torch(
+        a4.bind_a4_translation(
+            ragged.to_torch(external_device),
+            external_state.to_torch(external_device),
+        ), dt,
+    ).to_numpy()
+    v3.assert_recursive_close(
+        external_expected.state_dict(), external_plan.state_dict(),
+        atol=2e-12, rtol=0.0, path='external_translator.%s' % external_device,
+    )
+
+    # Resource exhaustion at a tiny positive budget is a sensitive fp64
+    # boundary: the resident plan must preserve the literal per-gene payment
+    # recurrence without producing a schema-invalid negative pool.
+    tiny_cells = copy.deepcopy(cells)
+    tiny_cells[0].pools[a4.a3.POOL_FUEL] = 0.64e-12
+    tiny_cells[0].pools[a4.a3.POOL_MINERAL] = 0.36e-12
+    tiny_cells[0].pools[a4.a3.POOL_ATP] = 0.042 + 0.52e-12
+    tiny_ragged = a4.FullFidelityA4GenomeAdapter(config).pack_cells(tiny_cells)
+    tiny_state = a4.pack_a4_translation_state(
+        tiny_cells, tiny_ragged, external_config, config,
+    )
+    tiny_dt = 1e-8
+    tiny_expected = a4.paid_translation_plan_numpy(
+        a4.bind_a4_translation(tiny_ragged, tiny_state), tiny_dt,
+    )
+    tiny_cpu = copy.deepcopy(tiny_cells)
+    for cell in tiny_cpu:
+        cell.translate(tiny_dt, external_config)
+    _assert_translation_matches_cells(
+        tiny_expected, tiny_cpu, 'tiny_resource_cpu', atol=2e-12,
+    )
+    tiny_plan = a4.paid_translation_plan_torch(
+        a4.bind_a4_translation(
+            tiny_ragged.to_torch(external_device),
+            tiny_state.to_torch(external_device),
+        ), tiny_dt,
+    ).to_numpy()
+    v3.assert_recursive_close(
+        tiny_expected.state_dict(), tiny_plan.state_dict(),
+        atol=2e-12, rtol=0.0, path='tiny_resource.%s' % external_device,
+    )
+
+    # This exact fuel boundary makes the frozen Python recurrence retain a
+    # signed fp64 residual.  Preserve it as measured evidence for the narrow
+    # three-paid-pool ledger tolerance; do not hide it with a general clip.
+    residual_cells = copy.deepcopy(cells)
+    residual_cells[0].pools[a4.a3.POOL_FUEL] = 9.936293309191388e-08
+    residual_ragged = a4.FullFidelityA4GenomeAdapter(config).pack_cells(
+        residual_cells,
+    )
+    residual_state = a4.pack_a4_translation_state(
+        residual_cells, residual_ragged, world.config, config,
+    )
+    residual_dt = 0.001
+    residual_expected = a4.paid_translation_plan_numpy(
+        a4.bind_a4_translation(residual_ragged, residual_state), residual_dt,
+    )
+    residual_cpu = copy.deepcopy(residual_cells)
+    for cell in residual_cpu:
+        cell.translate(residual_dt, world.config)
+    _assert_translation_matches_cells(
+        residual_expected, residual_cpu, 'signed_payment_residual',
+        atol=2e-12,
+    )
+    observed_residual = float(
+        residual_cpu[0].pools[a4.a3.POOL_FUEL]
+    )
+    if not (-a4.TRANSLATION_LEDGER_ATOL <= observed_residual < 0.0):
+        raise AssertionError(
+            'fixture did not exercise a signed fp64 payment residual'
+        )
+    residual_plan = a4.paid_translation_plan_torch(
+        a4.bind_a4_translation(
+            residual_ragged.to_torch(external_device),
+            residual_state.to_torch(external_device),
+        ), residual_dt,
+    ).to_numpy()
+    v3.assert_recursive_close(
+        residual_expected.state_dict(), residual_plan.state_dict(),
+        atol=2e-12, rtol=0.0,
+        path='signed_payment_residual.%s' % external_device,
+    )
+    return 'NumPy/Torch %s fp64 + external translator parity; fixed output and stable inputs' % '/'.join(devices)
+
+
+def test_a4_paid_translation_full_mro_signals_and_behavioural_quiescence():
+    world, cells, config, dt = _paid_translation_fixture(seed=7703)
+    localisations = {
+        int(spec['localisation'])
+        for spec in cells[0].gene_specs.values()
+        if int(spec['role']) == int(a4.a3.ROLE_REGULATOR)
+    }
+    expected_localisations = {
+        int(a4.s4.LOC_REPAIR), int(a4.s4.LOC_SENSOR),
+        int(a4.s4.LOC_EFFECTOR), int(a4.s5.LOC_ECOLOGY),
+    }
+    if localisations != expected_localisations:
+        raise AssertionError('fixture does not cover the full regulator MRO')
+
+    model_config = copy.deepcopy(world.config)
+    model_config.quiescence = False
+    model_config.quiescence_effector = True
+    cells[0].behavioural_quiescence = 0.47
+    ragged = a4.FullFidelityA4GenomeAdapter(config).pack_cells(cells)
+    state = a4.pack_a4_translation_state(
+        cells, ragged, model_config, config,
+    )
+    plan = a4.paid_translation_plan_numpy(
+        a4.bind_a4_translation(ragged, state), dt,
+    )
+    cpu_cells = copy.deepcopy(cells)
+    for cell in cpu_cells:
+        cell.translate(dt, model_config)
+    _assert_translation_matches_cells(plan, cpu_cells, 'full_mro')
+    v3.assert_recursive_close(
+        float(plan.last_quiescence[0]), 0.47,
+        atol=2e-12, rtol=0.0, path='behavioural_quiescence',
+    )
+
+    zero_signal_cells = copy.deepcopy(cells)
+    for cell in zero_signal_cells:
+        cell.last_receptor_activity[:] = 0.0
+        cell.last_control_vectors[:] = 0.0
+        cell.last_control_scalars[:] = 0.0
+        cell.last_edna_signal = 0.0
+        cell.last_corpse_signal = 0.0
+        cell.last_necrotoxin_signal = 0.0
+        cell.behavioural_quiescence = 0.0
+    zero_ragged = a4.FullFidelityA4GenomeAdapter(config).pack_cells(zero_signal_cells)
+    zero_state = a4.pack_a4_translation_state(
+        zero_signal_cells, zero_ragged, model_config, config,
+    )
+    zero_plan = a4.paid_translation_plan_numpy(
+        a4.bind_a4_translation(zero_ragged, zero_state), dt,
+    )
+    if np.allclose(plan.active_mass, zero_plan.active_mass, atol=1e-15, rtol=0.0):
+        raise AssertionError('sensor/effector/ecology snapshots did not affect weights')
+    return 'repair/sensor/effector/ecology MRO + behavioural quiescence exact'
+
+
+def test_a4_paid_translation_early_gate_capacity_and_schema():
+    world, cells, config, dt = _paid_translation_fixture(seed=7704)
+    disabled_config = copy.deepcopy(world.config)
+    disabled_config.gene_expression = False
+    ragged = a4.FullFidelityA4GenomeAdapter(config).pack_cells(cells)
+    state = a4.pack_a4_translation_state(
+        cells, ragged, disabled_config, config,
+    )
+    plan = a4.paid_translation_plan_numpy(
+        a4.bind_a4_translation(ragged, state), dt,
+    )
+    cpu_cells = copy.deepcopy(cells)
+    for cell in cpu_cells:
+        cell.translate(dt, disabled_config)
+    _assert_translation_matches_cells(plan, cpu_cells, 'gene_expression_disabled')
+    if np.any(plan.last_translation[:plan.cell_count] != 0.0):
+        raise AssertionError('disabled translation did not reset last_translation')
+    if not np.array_equal(plan.last_quiescence, state.last_quiescence):
+        raise AssertionError('disabled translation changed last_quiescence')
+
+    cache = a4.decode_a4_gene_cache_numpy(ragged)
+    specs = cache.materialize_gene_specs_host()
+    required = 0
+    for cell, cell_specs in zip(cells, specs):
+        gene_keys = set(cell_specs.keys())
+        required = max(
+            required,
+            len(set(cell.proteins.keys()).union(gene_keys)),
+            len(set(cell.damaged_proteins.keys()).union(gene_keys)),
+        )
+    exact_config = a4.GPU068A4Config(
+        max_cells=config.max_cells, max_sequences=config.max_sequences,
+        max_symbols=config.max_symbols,
+        max_sequence_symbols=config.max_sequence_symbols,
+        max_proteins_per_cell=required,
+    )
+    exact = a4.pack_a4_translation_state(
+        cells, ragged, world.config, exact_config,
+    )
+    if exact.protein_capacity != required:
+        raise AssertionError('exact protein capacity did not remain exact')
+    smaller = a4.GPU068A4Config(
+        max_cells=config.max_cells, max_sequences=config.max_sequences,
+        max_symbols=config.max_symbols,
+        max_sequence_symbols=config.max_sequence_symbols,
+        max_proteins_per_cell=required - 1,
+    )
+    _assert_raises(
+        a4.A4CapacityError,
+        lambda: a4.pack_a4_translation_state(cells, ragged, world.config, smaller),
+    )
+
+    corruptions = []
+    def add(name, mutate):
+        item = state.clone()
+        mutate(item)
+        corruptions.append((name, item))
+    add('negative_pool', lambda x: x.pools.__setitem__((0, 0), -1.0))
+    add('active_count', lambda x: x.active_count.__setitem__(0, x.protein_capacity + 1))
+    add('float32', lambda x: setattr(x, 'pools', x.pools.astype(np.float32)))
+    add('fingerprint_tail', lambda x: x.active_fingerprints.__setitem__(
+        (0, int(x.active_count[0])), 0,
+    ))
+    for _, item in corruptions:
+        _assert_raises(a4.A4SchemaError,
+                       lambda item=item: a4.validate_a4_translation_state(item))
+    signed_roundoff = state.clone()
+    signed_roundoff.pools[0, a4.a3.POOL_FUEL] = (
+        -0.5 * a4.TRANSLATION_LEDGER_ATOL
+    )
+    a4.validate_a4_translation_state(signed_roundoff)
+    beyond_roundoff = state.clone()
+    beyond_roundoff.pools[0, a4.a3.POOL_FUEL] = (
+        -2.0 * a4.TRANSLATION_LEDGER_ATOL
+    )
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a4.validate_a4_translation_state(beyond_roundoff),
+    )
+    nonpayment_negative = state.clone()
+    nonpayment_negative.pools[0, a4.a3.POOL_WASTE] = (
+        -0.5 * a4.TRANSLATION_LEDGER_ATOL
+    )
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a4.validate_a4_translation_state(nonpayment_negative),
+    )
+    mismatched = state.clone()
+    mismatched.cell_ids[:2] = mismatched.cell_ids[1::-1]
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a4.bind_a4_translation(ragged, mismatched),
+    )
+    foreign = ragged.clone()
+    foreign.symbols[0] = (int(foreign.symbols[0]) + 1) % a4.ALPHABET_SIZE
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a4.bind_a4_translation(foreign, state),
+    )
+    resident_foreign = foreign.to_torch('cuda' if torch.cuda.is_available() else 'cpu')
+    resident_state = state.to_torch(
+        'cuda' if torch.cuda.is_available() else 'cpu'
+    )
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a4.bind_a4_translation(resident_foreign, resident_state),
+    )
+    resident_ragged = ragged.to_torch(
+        'cuda' if torch.cuda.is_available() else 'cpu'
+    )
+    trusted_ragged_clone = resident_ragged.clone()
+    trusted_state_clone = resident_state.clone()
+    a4.bind_a4_translation(trusted_ragged_clone, trusted_state_clone)
+    trusted_state_clone.pools[0, a4.a3.POOL_FUEL] += 1e-9
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a4.bind_a4_translation(
+            trusted_ragged_clone, trusted_state_clone,
+        ),
+    )
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: trusted_state_clone.clone(),
+    )
+    trusted_ragged_clone.symbols[0] = torch.remainder(
+        trusted_ragged_clone.symbols[0].to(torch.int64) + 1,
+        a4.ALPHABET_SIZE,
+    ).to(torch.uint8)
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: trusted_ragged_clone.clone(),
+    )
+    cache = a4.decode_a4_gene_cache_numpy(ragged)
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a4.A4TranslationBinding(
+            ragged=ragged, cache=cache, state=state,
+        ),
+    )
+    forged = object.__new__(a4.A4TranslationBinding)
+    object.__setattr__(forged, 'ragged', ragged)
+    object.__setattr__(forged, 'cache', cache)
+    object.__setattr__(forged, 'state', state)
+    object.__setattr__(forged, '_token', object())
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a4.paid_translation_plan_numpy(forged, dt),
+    )
+    changed_host_cache = a4.bind_a4_translation(ragged, state)
+    changed_host_cache.cache.copy_numbers[0] += 1
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a4.paid_translation_plan_numpy(changed_host_cache, dt),
+    )
+    attest_device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    changed_resident_cache = a4.bind_a4_translation(
+        ragged.to_torch(attest_device), state.to_torch(attest_device),
+    )
+    changed_resident_cache.cache.copy_numbers[0] += 1
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a4.paid_translation_plan_torch(
+            changed_resident_cache, dt,
+        ),
+    )
+    if a4.FULL_GPU_WORLD_STEP is not False:
+        raise AssertionError('A4.3 must not claim a full GPU world-step')
+    if a4.PORT_STATUS['genome_replication'] != 'cpu-authoritative-next-a4-slice':
+        raise AssertionError('translation slice changed replication authority')
+    return 'early gate + exact P=%d/P+1 atomic + %d schema corruptions rejected' % (
+        required, len(corruptions),
+    )
+
+
 def test_a3_focused_regression():
     # Invoke named tests only; never call A3 run_all or overwrite A3 evidence.
     for fn in (
@@ -719,6 +1293,10 @@ TESTS = (
     test_a4_gene_decode_numpy_torch_devices,
     test_a4_gene_decode_capacity_exact_and_plus_one,
     test_a4_gene_cache_schema_and_decode_nonmutation,
+    test_a4_paid_translation_cpu_oracle_ledger_and_order,
+    test_a4_paid_translation_numpy_torch_devices_nonmutation,
+    test_a4_paid_translation_full_mro_signals_and_behavioural_quiescence,
+    test_a4_paid_translation_early_gate_capacity_and_schema,
     test_a3_focused_regression,
 )
 
@@ -751,8 +1329,9 @@ def run_all(write=False, output_dir=None):
         'schema': {
             'ragged_genome': a4.SCHEMA_VERSION,
             'gene_cache': a4.GENE_CACHE_SCHEMA_VERSION,
+            'translation_state': a4.TRANSLATION_SCHEMA_VERSION,
         },
-        'development_slice': 'A4.2-batched-resident-gene-decode',
+        'development_slice': 'A4.3-resident-paid-translation-plan',
         'promoted_baseline_unchanged': 'SOMA-CELL 0.6.8-GPU A3',
         'full_gpu_world_step': False,
         'require_cuda': bool(_REQUIRE_CUDA),
@@ -773,7 +1352,7 @@ def run_all(write=False, output_dir=None):
             writer.writeheader()
             writer.writerows(rows)
         lines = [
-            'SOMA-CELL 0.6.8-GPU A4.2 VALIDATION',
+            'SOMA-CELL 0.6.8-GPU A4.3 VALIDATION',
             '%d PASS / %d FAIL / %d TOTAL' % (passed, failed, len(rows)),
             'elapsed %.6fs' % elapsed,
             '',

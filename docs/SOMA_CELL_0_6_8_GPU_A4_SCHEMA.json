@@ -1,5 +1,5 @@
 {
-  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.2-resident-ragged-gene-cache",
+  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.3-resident-paid-translation-plan",
   "status": "development_slice_not_promoted",
   "full_gpu_world_step": false,
   "authoritative_state": "A4RaggedGenomeBatch",
@@ -65,8 +65,82 @@
       "preserved_fields": ["start", "payload", "fingerprint", "copy_number"]
     }
   },
+  "derived_translation_state": {
+    "schema_version": "0.6.8-GPU-A4.3-paid-translation-state",
+    "ownership": "disposable_pre_post_plan_not_world_or_save_authority",
+    "cache_binding": "cache_is_decoded_internally_from_the_exact_ragged_object",
+    "scalar_metadata": {
+      "source_provenance": {
+        "type": "string",
+        "format": "64_character_lowercase_sha256_of_validated_ragged_source"
+      }
+    },
+    "runtime_binding_attestation": {
+      "host": "recompute_source_provenance_and_compare_full_ragged_relation",
+      "resident": "same_carried_source_provenance_and_unchanged_ragged_and_translation_tensor_data_ptrs_and_versions",
+      "trusted_clone": "clone_first_verifies_source_pointer_and_version_attestation_then_attests_its_new_storage",
+      "derived_cache_lifetime": "host_sha256_or_resident_data_ptr_and_version_attestation_rejects_mutation_between_bind_and_plan",
+      "caller_supplied_cache_or_binding": "rejected"
+    },
+    "arrays": {
+      "cell_ids": {"dtype": "int64", "shape": ["cell_capacity"], "unused": -1},
+      "cell_mask": {"dtype": "bool", "shape": ["cell_capacity"], "unused": false},
+      "pools": {"dtype": "float64", "shape": ["cell_capacity", 13], "unused": 0.0},
+      "membrane": {"dtype": "float64", "shape": ["cell_capacity", 36], "unused": 0.0},
+      "membrane_oxidation": {"dtype": "float64", "shape": ["cell_capacity", 36], "unused": 0.0},
+      "damage_trace": {"dtype": "float64", "shape": ["cell_capacity", 36], "unused": 0.0},
+      "radius": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
+      "current_stress": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
+      "division_progress": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
+      "last_translation": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
+      "last_quiescence": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
+      "active_fingerprints": {"dtype": "int64", "shape": ["cell_capacity", "protein_capacity"], "unused": -1},
+      "active_mass": {"dtype": "float64", "shape": ["cell_capacity", "protein_capacity"], "unused": 0.0},
+      "active_count": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
+      "damaged_fingerprints": {"dtype": "int64", "shape": ["cell_capacity", "protein_capacity"], "unused": -1},
+      "damaged_mass": {"dtype": "float64", "shape": ["cell_capacity", "protein_capacity"], "unused": 0.0},
+      "damaged_count": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
+      "last_receptor_activity": {"dtype": "float64", "shape": ["cell_capacity", 8], "unused": 0.0},
+      "last_control_vectors": {"dtype": "float64", "shape": ["cell_capacity", 8, 2], "unused": 0.0},
+      "last_control_scalars": {"dtype": "float64", "shape": ["cell_capacity", 8], "unused": 0.0},
+      "last_edna_signal": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
+      "last_corpse_signal": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
+      "last_necrotoxin_signal": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
+      "behavioural_quiescence": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
+      "neural_attachment_osmolyte": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
+      "genome_count": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
+      "genome_lesion_mean": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
+      "replication_active": {"dtype": "bool", "shape": ["cell_capacity"], "unused": false},
+      "genome_material_symbols": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0}
+    },
+    "host_flags": [
+      "gene_expression", "external_translator", "protein_repair",
+      "quiescence", "quiescence_effector"
+    ],
+    "invariants": [
+      "active and damaged rows preserve their independent dictionary insertion orders",
+      "fingerprints are unique within each active or damaged mapping",
+      "active masses are greater than 1e-10 and damaged masses are greater than 1e-11",
+      "catalyst and damaged pools equal the corresponding ordered mapping sums",
+      "fuel mineral and ATP may retain frozen sequential fp64 payment residuals down to -2e-12; every other pool is nonnegative and larger negatives fail closed",
+      "derived genome metadata agrees with the bound ragged arena before upload",
+      "neural_attachment_osmolyte is the ordered nonnegative sum of CPU-authoritative P0 attachment osmolytes",
+      "source_provenance binds physiology to the exact validated ragged source and resident storage/version attestation rejects later mutation",
+      "existing protein keys union every current gene fingerprint fits protein_capacity before upload",
+      "all translation weights and misfold signals observe pre-translation state",
+      "payment follows gene-cache order with fuel 0.64 mineral 0.36 ATP 0.52 and ATP reserve 0.042",
+      "last_translation always resets; last_quiescence updates only after the positive weight gate",
+      "input arrays CPU cells RNG scheduler and world remain unchanged"
+    ],
+    "formal066_dispatch": [
+      "0.3 paid translation and repair needs",
+      "0.4 sensor effector repair-localised activity and behavioural quiescence",
+      "0.5 ecology-localised needs",
+      "P0 neural-attachment osmolyte contribution to inherited tension"
+    ]
+  },
   "cpu_authoritative_after_slice": [
-    "paid_translation_and_protein_commit",
+    "paid_translation_world_commit_and_scheduler_event",
     "replication_proofreading_mutation_hydrolysis_rng",
     "division_death_corpse_edna_hgt",
     "neural_and_causal_systems"
