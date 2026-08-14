@@ -1,15 +1,17 @@
 # coding: utf-8
-"""A4.6a pure resident replication-completion descriptor.
+"""A4.6b1 attested completion-mutation PCG64 event tape.
 
-This deliberately narrow development slice retains the A4.5b template-start
-and substitution-RNG plan, and adds a separate mutation-free completion path
-for pre-existing active templates.  Every used row in that new path must
-complete in the same call.  Its fixed-shape result describes the completed
-polymer, inherited lesion, cycle delta, and future topology deltas without
-mutating or re-attesting the ragged arena.  It does not perform structural or
-material mutation, refresh the gene cache, advance a live RNG, commit a CPU
-cell, or replace the A3 scheduler.  Frozen Formal066 CPU behavior remains
-authority.
+This deliberately narrow development slice retains every A4.6a plan and the
+A4.5 substitution tape, then adds a separate, binding-aware host replay for a
+pre-existing active template that completes with mutation enabled.  One
+combined PCG64 stream records each cell's paid append substitutions followed
+immediately by that same cell's insertion/deletion/duplication/inversion/
+transposition and padding calls.  The tape contains semantic draws and bounded
+integer payloads, never a precomputed final genome.  It can be attested and
+uploaded to Torch CPU/CUDA, but this slice does not yet apply those operations
+on device, mutate the ragged arena, advance a live RNG, refresh a gene cache,
+commit a CPU cell, or replace the A3 scheduler.  Frozen Formal066 CPU behavior
+remains authority.
 """
 from __future__ import division
 
@@ -29,11 +31,14 @@ except Exception:  # pragma: no cover - NumPy reference remains importable
     torch = None
 
 
-BUILD = 'SOMA-CELL 0.6.8-GPU A4.6a'
+BUILD = 'SOMA-CELL 0.6.8-GPU A4.6b1'
 BUILD_ID = BUILD
-BUILD_LONG = BUILD + ' | mutation-free replication-completion descriptor'
+BUILD_LONG = BUILD + ' | completion structural/material mutation RNG tape'
 SCHEMA_VERSION = '0.6.8-GPU-A4.6a-replication-completion-plan'
 RNG_TAPE_SCHEMA_VERSION = '0.6.8-GPU-A4.5b-template-start-rng-tape'
+COMPLETION_MUTATION_RNG_TAPE_SCHEMA_VERSION = (
+    '0.6.8-GPU-A4.6b1-completion-mutation-rng-tape'
+)
 FULL_GPU_WORLD_STEP = False
 
 SCOPE_OK = 0
@@ -99,6 +104,59 @@ _RNG_TAPE_BOOL_FIELDS = (
 )
 _RNG_TAPE_FLOAT64_FIELDS = ('uniform_draws', 'effective_error')
 _RNG_TAPE_FACTORY_TOKEN = object()
+
+STRUCTURAL_EVENT_NAMES = (
+    'insertion', 'deletion', 'duplication', 'inversion', 'transposition',
+)
+STRUCTURAL_EVENT_COUNT = len(STRUCTURAL_EVENT_NAMES)
+STRUCTURAL_INSERTION = 0
+STRUCTURAL_DELETION = 1
+STRUCTURAL_DUPLICATION = 2
+STRUCTURAL_INVERSION = 3
+STRUCTURAL_TRANSPOSITION = 4
+STRUCTURAL_THRESHOLD_FACTORS = (0.55, 0.50, 0.42, 0.28, 0.20)
+STRUCTURAL_SHORT_EDIT_MAX = 5
+
+_COMPLETION_TAPE_ARRAY_FIELDS = (
+    'cell_ids', 'cell_mask',
+    'append_draw_mask', 'append_uniform_draws',
+    'replacement_raw', 'replacement_mask',
+    'append_count', 'substitution_count', 'effective_error',
+    'nucleotide_budget_symbols', 'pre_structural_lengths',
+    'post_structural_lengths', 'material_delta_symbols',
+    'structural_event_counts',
+    'threshold_draw_mask', 'threshold_uniform_draws', 'threshold_hit_mask',
+    'insertion_count', 'insertion_position', 'insertion_symbols',
+    'deletion_count', 'deletion_position',
+    'duplication_gene_ordinal', 'duplication_source_start',
+    'duplication_position',
+    'inversion_left', 'inversion_right',
+    'transposition_count', 'transposition_start', 'transposition_position',
+    'padding_count', 'padding_symbols',
+)
+_COMPLETION_TAPE_UINT8_FIELDS = (
+    'replacement_raw', 'insertion_symbols', 'padding_symbols',
+)
+_COMPLETION_TAPE_INT64_FIELDS = (
+    'cell_ids', 'append_count', 'substitution_count',
+    'nucleotide_budget_symbols', 'pre_structural_lengths',
+    'post_structural_lengths', 'material_delta_symbols',
+    'structural_event_counts',
+    'insertion_count', 'insertion_position',
+    'deletion_count', 'deletion_position',
+    'duplication_gene_ordinal', 'duplication_source_start',
+    'duplication_position', 'inversion_left', 'inversion_right',
+    'transposition_count', 'transposition_start', 'transposition_position',
+    'padding_count',
+)
+_COMPLETION_TAPE_BOOL_FIELDS = (
+    'cell_mask', 'append_draw_mask', 'replacement_mask',
+    'threshold_draw_mask', 'threshold_hit_mask',
+)
+_COMPLETION_TAPE_FLOAT64_FIELDS = (
+    'append_uniform_draws', 'effective_error', 'threshold_uniform_draws',
+)
+_COMPLETION_TAPE_FACTORY_TOKEN = object()
 
 
 class A4ReplicationError(a4.A4Error):
@@ -197,6 +255,53 @@ def _substitution_config(config):
         'quiescence_effector': bool(flags['quiescence_effector']),
     }
     return deterministic, _sha256_json(payload)
+
+
+def _completion_mutation_config(config):
+    """Freeze exactly the Formal066 completion-mutation configuration."""
+    if not hasattr(config, 'mutation') or not _strict_bool(
+            getattr(config, 'mutation'), 'config.mutation'):
+        raise A4ReplicationScopeError(
+            'A4.6b1 completion mutation requires config.mutation=True'
+        )
+    deterministic = copy.deepcopy(config)
+    deterministic.mutation = False
+    mutation_rate, scale, flags = _supported_config(deterministic)
+    for name in ('variable_length', 'gene_duplication'):
+        if not hasattr(config, name):
+            raise A4ReplicationScopeError('config missing %s' % name)
+    variable_length = _strict_bool(
+        getattr(config, 'variable_length'), 'config.variable_length',
+    )
+    gene_duplication = _strict_bool(
+        getattr(config, 'gene_duplication'), 'config.gene_duplication',
+    )
+    structural_rate = _strict_real_scalar(
+        getattr(config, 'structural_rate', None), 'config.structural_rate',
+    )
+    options = {
+        'variable_length': variable_length,
+        'gene_duplication': gene_duplication,
+        'structural_rate': max(0.0, structural_rate),
+    }
+    payload = {
+        'genome_replication': True,
+        'mutation': True,
+        'mutation_rate_hex': float(mutation_rate).hex(),
+        'structural_rate_hex': float(structural_rate).hex(),
+        'variable_length': variable_length,
+        'gene_duplication': gene_duplication,
+        'eco66_replication_rate_scale_hex': float(scale).hex(),
+        'proofreading': bool(flags['proofreading']),
+        'external_replicase': bool(flags['external_replicase']),
+        'quiescence': bool(flags['quiescence']),
+        'quiescence_effector': bool(flags['quiescence_effector']),
+        'alphabet_size': int(a4.g2.ALPHABET_SIZE),
+        'min_genome_length': int(a4.g2.MIN_GENOME_LENGTH),
+        'max_genome_length': int(a4.g2.MAX_GENOME_LENGTH),
+        'gene_span': int(a4.g2.GENE_SPAN),
+    }
+    return deterministic, options, _sha256_json(payload)
 
 
 def _strict_dt(value):
@@ -480,6 +585,169 @@ class A4SubstitutionRngTape:
         }
 
 
+@dataclass
+class A4CompletionMutationRngTape:
+    """Ephemeral combined PCG64 tape; never final-genome or RNG authority."""
+
+    _factory_token: object
+    schema_version: str
+    cell_capacity: int
+    append_capacity: int
+    mutation_capacity: int
+    cell_count: int
+    source_provenance: str
+    dt_hex: str
+    config_sha256: str
+    schedule_sha256: str
+    rng_before_state: object
+    rng_after_state: object
+    cell_ids: object
+    cell_mask: object
+    append_draw_mask: object
+    append_uniform_draws: object
+    replacement_raw: object
+    replacement_mask: object
+    append_count: object
+    substitution_count: object
+    effective_error: object
+    nucleotide_budget_symbols: object
+    pre_structural_lengths: object
+    post_structural_lengths: object
+    material_delta_symbols: object
+    structural_event_counts: object
+    threshold_draw_mask: object
+    threshold_uniform_draws: object
+    threshold_hit_mask: object
+    insertion_count: object
+    insertion_position: object
+    insertion_symbols: object
+    deletion_count: object
+    deletion_position: object
+    duplication_gene_ordinal: object
+    duplication_source_start: object
+    duplication_position: object
+    inversion_left: object
+    inversion_right: object
+    transposition_count: object
+    transposition_start: object
+    transposition_position: object
+    padding_count: object
+    padding_symbols: object
+
+    def clone(self):
+        _require_completion_mutation_rng_tape(self)
+        values = {
+            name: (
+                _clone_array(getattr(self, name))
+                if name in _COMPLETION_TAPE_ARRAY_FIELDS
+                else copy.deepcopy(getattr(self, name))
+            )
+            for name in (
+                'schema_version', 'cell_capacity', 'append_capacity',
+                'mutation_capacity', 'cell_count', 'source_provenance',
+                'dt_hex', 'config_sha256', 'schedule_sha256',
+                'rng_before_state', 'rng_after_state',
+            ) + _COMPLETION_TAPE_ARRAY_FIELDS
+        }
+        values['_expected_host_array_sha256'] = (
+            self._expected_host_array_sha256
+        )
+        return _make_completion_mutation_rng_tape(**values)
+
+    def to_torch(self, binding, dt, config, device='cpu'):
+        """Validate against a NumPy source before the explicit H2D boundary."""
+        if torch is None:
+            raise RuntimeError('PyTorch is unavailable')
+        validate_a4_completion_mutation_rng_tape(
+            self, binding, dt, config,
+        )
+        requested = torch.device(device)
+        if requested.type not in ('cpu', 'cuda'):
+            raise a4.A4DeviceError(
+                'completion-mutation RNG tape device must be cpu or cuda'
+            )
+        if requested.type == 'cuda' and not torch.cuda.is_available():
+            raise a4.A4DeviceError('CUDA requested but unavailable')
+        values = {
+            name: copy.deepcopy(getattr(self, name))
+            for name in (
+                'schema_version', 'cell_capacity', 'append_capacity',
+                'mutation_capacity', 'cell_count', 'source_provenance',
+                'dt_hex', 'config_sha256', 'schedule_sha256',
+                'rng_before_state', 'rng_after_state',
+            )
+        }
+        for name in _COMPLETION_TAPE_ARRAY_FIELDS:
+            value = np.asarray(getattr(self, name))
+            dtype = (
+                torch.uint8 if name in _COMPLETION_TAPE_UINT8_FIELDS else
+                torch.int64 if name in _COMPLETION_TAPE_INT64_FIELDS else
+                torch.bool if name in _COMPLETION_TAPE_BOOL_FIELDS else
+                torch.float64
+            )
+            values[name] = torch.as_tensor(
+                value, dtype=dtype, device=requested,
+            ).clone()
+        values['_expected_host_array_sha256'] = (
+            self._expected_host_array_sha256
+        )
+        return _make_completion_mutation_rng_tape(**values)
+
+    def to_numpy(self):
+        """Read back values; binding-aware semantic validation remains explicit."""
+        _require_completion_mutation_rng_tape(self)
+        if not _is_tensor(self.append_uniform_draws):
+            return self.clone()
+        values = {
+            name: copy.deepcopy(getattr(self, name))
+            for name in (
+                'schema_version', 'cell_capacity', 'append_capacity',
+                'mutation_capacity', 'cell_count', 'source_provenance',
+                'dt_hex', 'config_sha256', 'schedule_sha256',
+                'rng_before_state', 'rng_after_state',
+            )
+        }
+        for name in _COMPLETION_TAPE_ARRAY_FIELDS:
+            value = _host_array(getattr(self, name))
+            dtype = (
+                np.uint8 if name in _COMPLETION_TAPE_UINT8_FIELDS else
+                np.int64 if name in _COMPLETION_TAPE_INT64_FIELDS else
+                bool if name in _COMPLETION_TAPE_BOOL_FIELDS else
+                np.float64
+            )
+            values[name] = value.astype(dtype, copy=False)
+        values['_expected_host_array_sha256'] = (
+            self._expected_host_array_sha256
+        )
+        return _make_completion_mutation_rng_tape(**values)
+
+    def data_ptrs(self):
+        if not all(_is_tensor(getattr(self, name))
+                   for name in _COMPLETION_TAPE_ARRAY_FIELDS):
+            raise TypeError(
+                'data_ptrs requires a Torch-backed completion RNG tape'
+            )
+        return {
+            name: int(getattr(self, name).data_ptr())
+            for name in _COMPLETION_TAPE_ARRAY_FIELDS
+        }
+
+    def state_dict(self):
+        return {
+            name: (
+                _clone_array(getattr(self, name))
+                if name in _COMPLETION_TAPE_ARRAY_FIELDS
+                else copy.deepcopy(getattr(self, name))
+            )
+            for name in (
+                'schema_version', 'cell_capacity', 'append_capacity',
+                'mutation_capacity', 'cell_count', 'source_provenance',
+                'dt_hex', 'config_sha256', 'schedule_sha256',
+                'rng_before_state', 'rng_after_state',
+            ) + _COMPLETION_TAPE_ARRAY_FIELDS
+        }
+
+
 def _make_rng_tape(**values):
     tape = A4SubstitutionRngTape(
         _factory_token=_RNG_TAPE_FACTORY_TOKEN, **values
@@ -491,6 +759,199 @@ def _make_rng_tape(**values):
             name: int(getattr(tape, name)._version)
             for name in _RNG_TAPE_ARRAY_FIELDS
         }
+    return tape
+
+
+def _completion_mutation_tape_array_digest(tape):
+    """Hash host arrays without granting serialization or commit authority."""
+    digest = hashlib.sha256()
+    for name in _COMPLETION_TAPE_ARRAY_FIELDS:
+        value = np.asarray(getattr(tape, name))
+        digest.update(name.encode('ascii'))
+        digest.update(value.dtype.str.encode('ascii'))
+        digest.update(str(tuple(value.shape)).encode('ascii'))
+        digest.update(np.ascontiguousarray(value).tobytes())
+    return digest.hexdigest()
+
+
+def _completion_mutation_tape_scalar_metadata(tape):
+    before = _canonical_pcg64_state(
+        tape.rng_before_state, 'rng_before_state',
+    )
+    after = _canonical_pcg64_state(
+        tape.rng_after_state, 'rng_after_state',
+    )
+    return (
+        str(tape.schema_version), int(tape.cell_capacity),
+        int(tape.append_capacity), int(tape.mutation_capacity),
+        int(tape.cell_count), str(tape.source_provenance),
+        str(tape.dt_hex), str(tape.config_sha256),
+        str(tape.schedule_sha256), _sha256_json(before),
+        _sha256_json(after), str(tape._expected_host_array_sha256),
+    )
+
+
+def _make_completion_mutation_rng_tape(**values):
+    expected_host_array_sha256 = values.pop(
+        '_expected_host_array_sha256', None,
+    )
+    tape = A4CompletionMutationRngTape(
+        _factory_token=_COMPLETION_TAPE_FACTORY_TOKEN, **values
+    )
+    if _is_tensor(tape.append_uniform_draws):
+        if not _is_lower_hex_digest(expected_host_array_sha256):
+            raise a4.A4SchemaError(
+                'resident completion-mutation tape lacks host content digest'
+            )
+        tape._expected_host_array_sha256 = expected_host_array_sha256
+        tape._resident_data_ptrs = tape.data_ptrs()
+        tape._resident_versions = {
+            name: int(getattr(tape, name)._version)
+            for name in _COMPLETION_TAPE_ARRAY_FIELDS
+        }
+    else:
+        tape._host_array_sha256 = _completion_mutation_tape_array_digest(tape)
+        if (expected_host_array_sha256 is not None
+                and expected_host_array_sha256
+                != tape._host_array_sha256):
+            raise a4.A4SchemaError(
+                'completion-mutation tape content changed during readback'
+            )
+        tape._expected_host_array_sha256 = tape._host_array_sha256
+    tape._scalar_metadata = _completion_mutation_tape_scalar_metadata(tape)
+    return tape
+
+
+def _validate_completion_mutation_tape_metadata(tape):
+    if (not isinstance(tape, A4CompletionMutationRngTape)
+            or tape._factory_token is not _COMPLETION_TAPE_FACTORY_TOKEN):
+        raise a4.A4SchemaError(
+            'completion-mutation RNG tape must come from the private factory'
+        )
+    if tape.schema_version != COMPLETION_MUTATION_RNG_TAPE_SCHEMA_VERSION:
+        raise a4.A4SchemaError('completion-mutation RNG tape schema mismatch')
+    for name in (
+            'cell_capacity', 'append_capacity', 'mutation_capacity',
+            'cell_count'):
+        value = getattr(tape, name)
+        if isinstance(value, (bool, np.bool_)) or not isinstance(
+                value, (int, np.integer)):
+            raise a4.A4SchemaError('%s must be integer' % name)
+    C = int(tape.cell_capacity)
+    W = int(tape.append_capacity)
+    F = int(tape.mutation_capacity)
+    N = int(tape.cell_count)
+    minimum = int(a4.g2.MIN_GENOME_LENGTH)
+    if (C <= 0 or W <= 0 or F != int(a4.g2.MAX_GENOME_LENGTH)
+            or W > F or N < 0 or N > C):
+        raise a4.A4SchemaError(
+            'completion-mutation RNG tape capacities/count are invalid'
+        )
+    if (not _is_lower_hex_digest(tape.source_provenance)
+            or not _is_lower_hex_digest(tape.config_sha256)
+            or not _is_lower_hex_digest(tape.schedule_sha256)):
+        raise a4.A4SchemaError(
+            'completion-mutation RNG tape provenance digest is invalid'
+        )
+    try:
+        parsed_dt = float.fromhex(tape.dt_hex)
+    except Exception as exc:
+        raise a4.A4SchemaError(
+            'completion-mutation RNG tape dt hex is invalid'
+        ) from exc
+    if not math.isfinite(parsed_dt) or parsed_dt < 0.0:
+        raise a4.A4SchemaError(
+            'completion-mutation RNG tape dt is outside supported range'
+        )
+    _canonical_pcg64_state(tape.rng_before_state, 'rng_before_state')
+    _canonical_pcg64_state(tape.rng_after_state, 'rng_after_state')
+    kinds = set()
+    devices = set()
+    for name in _COMPLETION_TAPE_ARRAY_FIELDS:
+        value = getattr(tape, name)
+        if _is_tensor(value):
+            kinds.add('torch')
+            devices.add(str(value.device))
+        elif isinstance(value, np.ndarray):
+            kinds.add('numpy')
+        else:
+            raise a4.A4SchemaError('%s is not an array/tensor' % name)
+    if len(kinds) != 1 or len(devices) > 1:
+        raise a4.A4SchemaError(
+            'mixed completion-mutation tape backend/device is forbidden'
+        )
+    backend = next(iter(kinds))
+    for names, numpy_dtype, torch_dtype in (
+        (_COMPLETION_TAPE_UINT8_FIELDS, np.dtype(np.uint8),
+         getattr(torch, 'uint8', None)),
+        (_COMPLETION_TAPE_INT64_FIELDS, np.dtype(np.int64),
+         getattr(torch, 'int64', None)),
+        (_COMPLETION_TAPE_BOOL_FIELDS, np.dtype(bool),
+         getattr(torch, 'bool', None)),
+        (_COMPLETION_TAPE_FLOAT64_FIELDS, np.dtype(np.float64),
+         getattr(torch, 'float64', None)),
+    ):
+        for name in names:
+            expected = torch_dtype if backend == 'torch' else numpy_dtype
+            if getattr(tape, name).dtype != expected:
+                raise a4.A4SchemaError('%s has noncanonical dtype' % name)
+    shapes = {
+        'cell_ids': (C,), 'cell_mask': (C,),
+        'append_draw_mask': (C, W),
+        'append_uniform_draws': (C, W),
+        'replacement_raw': (C, W), 'replacement_mask': (C, W),
+        'append_count': (C,), 'substitution_count': (C,),
+        'effective_error': (C,), 'nucleotide_budget_symbols': (C,),
+        'pre_structural_lengths': (C,),
+        'post_structural_lengths': (C,),
+        'material_delta_symbols': (C,),
+        'structural_event_counts': (C, STRUCTURAL_EVENT_COUNT),
+        'threshold_draw_mask': (C, STRUCTURAL_EVENT_COUNT),
+        'threshold_uniform_draws': (C, STRUCTURAL_EVENT_COUNT),
+        'threshold_hit_mask': (C, STRUCTURAL_EVENT_COUNT),
+        'insertion_count': (C,), 'insertion_position': (C,),
+        'insertion_symbols': (C, STRUCTURAL_SHORT_EDIT_MAX),
+        'deletion_count': (C,), 'deletion_position': (C,),
+        'duplication_gene_ordinal': (C,),
+        'duplication_source_start': (C,),
+        'duplication_position': (C,),
+        'inversion_left': (C,), 'inversion_right': (C,),
+        'transposition_count': (C,), 'transposition_start': (C,),
+        'transposition_position': (C,), 'padding_count': (C,),
+        'padding_symbols': (C, minimum),
+    }
+    for name, shape in shapes.items():
+        if tuple(getattr(tape, name).shape) != shape:
+            raise a4.A4SchemaError('%s shape mismatch' % name)
+    return backend
+
+
+def _require_completion_mutation_rng_tape(tape):
+    backend = _validate_completion_mutation_tape_metadata(tape)
+    if getattr(tape, '_scalar_metadata', None) != (
+            _completion_mutation_tape_scalar_metadata(tape)):
+        raise a4.A4SchemaError(
+            'completion-mutation RNG tape scalar metadata changed'
+        )
+    if not _is_lower_hex_digest(
+            getattr(tape, '_expected_host_array_sha256', None)):
+        raise a4.A4SchemaError(
+            'completion-mutation RNG tape content digest is invalid'
+        )
+    if backend == 'torch':
+        if (getattr(tape, '_resident_data_ptrs', None) != tape.data_ptrs()
+                or getattr(tape, '_resident_versions', None) != {
+                    name: int(getattr(tape, name)._version)
+                    for name in _COMPLETION_TAPE_ARRAY_FIELDS
+                }):
+            raise a4.A4SchemaError(
+                'resident completion-mutation RNG tape changed after upload'
+            )
+    elif getattr(tape, '_host_array_sha256', None) != (
+            _completion_mutation_tape_array_digest(tape)):
+        raise a4.A4SchemaError(
+            'host completion-mutation RNG tape changed after creation'
+        )
     return tape
 
 
@@ -1955,6 +2416,444 @@ def _paid_replication_completion_torch(binding, dt, config):
     )
 
 
+def _empty_completion_mutation_arrays(plan):
+    C = int(plan.cell_capacity)
+    W = int(plan.append_capacity)
+    F = int(a4.g2.MAX_GENOME_LENGTH)
+    minimum = int(a4.g2.MIN_GENOME_LENGTH)
+    values = {
+        'cell_ids': np.asarray(plan.cell_ids, dtype=np.int64).copy(),
+        'cell_mask': np.asarray(plan.cell_mask, dtype=bool).copy(),
+        'append_draw_mask': (
+            np.arange(W, dtype=np.int64)[None, :]
+            < np.asarray(plan.append_count, dtype=np.int64)[:, None]
+        ),
+        'append_uniform_draws': np.zeros((C, W), dtype=np.float64),
+        'replacement_raw': np.zeros((C, W), dtype=np.uint8),
+        'replacement_mask': np.zeros((C, W), dtype=bool),
+        'append_count': np.asarray(plan.append_count, dtype=np.int64).copy(),
+        'substitution_count': np.zeros((C,), dtype=np.int64),
+        'effective_error': np.asarray(
+            plan.last_effective_error_rate, dtype=np.float64,
+        ).copy(),
+        'nucleotide_budget_symbols': np.zeros((C,), dtype=np.int64),
+        'pre_structural_lengths': np.asarray(
+            plan.completed_lengths, dtype=np.int64,
+        ).copy(),
+        'post_structural_lengths': np.zeros((C,), dtype=np.int64),
+        'material_delta_symbols': np.zeros((C,), dtype=np.int64),
+        'structural_event_counts': np.zeros(
+            (C, STRUCTURAL_EVENT_COUNT), dtype=np.int64,
+        ),
+        'threshold_draw_mask': np.zeros(
+            (C, STRUCTURAL_EVENT_COUNT), dtype=bool,
+        ),
+        'threshold_uniform_draws': np.zeros(
+            (C, STRUCTURAL_EVENT_COUNT), dtype=np.float64,
+        ),
+        'threshold_hit_mask': np.zeros(
+            (C, STRUCTURAL_EVENT_COUNT), dtype=bool,
+        ),
+        'insertion_count': np.zeros((C,), dtype=np.int64),
+        'insertion_position': np.full((C,), -1, dtype=np.int64),
+        'insertion_symbols': np.zeros(
+            (C, STRUCTURAL_SHORT_EDIT_MAX), dtype=np.uint8,
+        ),
+        'deletion_count': np.zeros((C,), dtype=np.int64),
+        'deletion_position': np.full((C,), -1, dtype=np.int64),
+        'duplication_gene_ordinal': np.full((C,), -1, dtype=np.int64),
+        'duplication_source_start': np.full((C,), -1, dtype=np.int64),
+        'duplication_position': np.full((C,), -1, dtype=np.int64),
+        'inversion_left': np.full((C,), -1, dtype=np.int64),
+        'inversion_right': np.full((C,), -1, dtype=np.int64),
+        'transposition_count': np.zeros((C,), dtype=np.int64),
+        'transposition_start': np.full((C,), -1, dtype=np.int64),
+        'transposition_position': np.full((C,), -1, dtype=np.int64),
+        'padding_count': np.zeros((C,), dtype=np.int64),
+        'padding_symbols': np.zeros((C, minimum), dtype=np.uint8),
+    }
+    if F <= 0:
+        raise a4.A4SchemaError('frozen mutation capacity must be positive')
+    return values
+
+
+def _completion_mutation_schedule_digest(tape):
+    N = int(tape.cell_count)
+    raw = {
+        name: np.asarray(getattr(tape, name))
+        for name in _COMPLETION_TAPE_ARRAY_FIELDS
+    }
+    payload = {
+        'schema': str(tape.schema_version),
+        'source': str(tape.source_provenance),
+        'dt_hex': str(tape.dt_hex),
+        'config_sha256': str(tape.config_sha256),
+        'cell_ids': [int(value) for value in raw['cell_ids'][:N]],
+        'append_count': [int(value) for value in raw['append_count'][:N]],
+        'effective_error_hex': [
+            float(value).hex() for value in raw['effective_error'][:N]
+        ],
+        'nucleotide_budget_symbols': [
+            int(value) for value in raw['nucleotide_budget_symbols'][:N]
+        ],
+        'pre_structural_lengths': [
+            int(value) for value in raw['pre_structural_lengths'][:N]
+        ],
+        'post_structural_lengths': [
+            int(value) for value in raw['post_structural_lengths'][:N]
+        ],
+        'material_delta_symbols': [
+            int(value) for value in raw['material_delta_symbols'][:N]
+        ],
+        'structural_event_counts': [
+            [int(value) for value in row]
+            for row in raw['structural_event_counts'][:N]
+        ],
+        'threshold_draw_mask': [
+            [bool(value) for value in row]
+            for row in raw['threshold_draw_mask'][:N]
+        ],
+        'threshold_hit_mask': [
+            [bool(value) for value in row]
+            for row in raw['threshold_hit_mask'][:N]
+        ],
+    }
+    return _sha256_json(payload)
+
+
+def _record_structural_mutation(
+        sequence, generator, options, nucleotide_budget, arrays, ci):
+    """Literal high-level PCG64 calls for frozen ``g2.mutate_sequence``."""
+    original = np.asarray(sequence, dtype=np.uint8).copy()
+    candidate = original.copy()
+    F = int(a4.g2.MAX_GENOME_LENGTH)
+    minimum = int(a4.g2.MIN_GENOME_LENGTH)
+    alphabet = int(a4.g2.ALPHABET_SIZE)
+    gene_span = int(a4.g2.GENE_SPAN)
+    structural = float(options['structural_rate'])
+    events = arrays['structural_event_counts'][ci]
+
+    def threshold(operation):
+        uniform = float(generator.random())
+        limit = structural * float(STRUCTURAL_THRESHOLD_FACTORS[operation])
+        if _numpy_fp64_comparison_boundary(uniform, limit):
+            raise A4ReplicationScopeError(
+                'structural RNG comparison is fp64-ambiguous'
+            )
+        arrays['threshold_draw_mask'][ci, operation] = True
+        arrays['threshold_uniform_draws'][ci, operation] = uniform
+        hit = uniform < limit
+        arrays['threshold_hit_mask'][ci, operation] = hit
+        return hit
+
+    if options['variable_length'] and len(candidate) > 0:
+        if (threshold(STRUCTURAL_INSERTION)
+                and len(candidate) < F):
+            count = int(generator.integers(
+                1, min(STRUCTURAL_SHORT_EDIT_MAX, F - len(candidate)) + 1,
+            ))
+            position = int(generator.integers(0, len(candidate) + 1))
+            inserted = np.asarray(generator.integers(
+                0, alphabet, count, dtype=np.uint8,
+            ), dtype=np.uint8)
+            arrays['insertion_count'][ci] = count
+            arrays['insertion_position'][ci] = position
+            arrays['insertion_symbols'][ci, :count] = inserted
+            candidate = np.concatenate([
+                candidate[:position], inserted, candidate[position:],
+            ])
+            events[STRUCTURAL_INSERTION] += count
+        if (threshold(STRUCTURAL_DELETION)
+                and len(candidate) > minimum):
+            count = int(generator.integers(
+                1,
+                min(STRUCTURAL_SHORT_EDIT_MAX, len(candidate) - minimum) + 1,
+            ))
+            position = int(generator.integers(
+                0, len(candidate) - count + 1,
+            ))
+            arrays['deletion_count'][ci] = count
+            arrays['deletion_position'][ci] = position
+            candidate = np.concatenate([
+                candidate[:position], candidate[position + count:],
+            ])
+            events[STRUCTURAL_DELETION] += count
+        if options['gene_duplication']:
+            duplication_hit = threshold(STRUCTURAL_DUPLICATION)
+            if duplication_hit and len(candidate) + gene_span <= F:
+                genes = a4.g2.parse_genes(candidate)
+                if genes:
+                    ordinal = int(generator.integers(0, len(genes)))
+                    start = int(genes[ordinal]['start'])
+                    fragment = candidate[start:start + gene_span].copy()
+                    position = int(generator.integers(
+                        0, len(candidate) + 1,
+                    ))
+                    arrays['duplication_gene_ordinal'][ci] = ordinal
+                    arrays['duplication_source_start'][ci] = start
+                    arrays['duplication_position'][ci] = position
+                    candidate = np.concatenate([
+                        candidate[:position], fragment, candidate[position:],
+                    ])
+                    events[STRUCTURAL_DUPLICATION] += int(len(fragment))
+
+    if len(candidate) >= 4 and threshold(STRUCTURAL_INVERSION):
+        left = int(generator.integers(0, len(candidate) - 2))
+        right = int(generator.integers(
+            left + 2, min(len(candidate), left + 28) + 1,
+        ))
+        arrays['inversion_left'][ci] = left
+        arrays['inversion_right'][ci] = right
+        candidate[left:right] = candidate[left:right][::-1]
+        events[STRUCTURAL_INVERSION] += 1
+
+    if len(candidate) >= 8 and threshold(STRUCTURAL_TRANSPOSITION):
+        count = int(generator.integers(
+            2, min(12, len(candidate) // 3) + 1,
+        ))
+        start = int(generator.integers(0, len(candidate) - count + 1))
+        fragment = candidate[start:start + count].copy()
+        remainder = np.concatenate([
+            candidate[:start], candidate[start + count:],
+        ])
+        position = int(generator.integers(0, len(remainder) + 1))
+        arrays['transposition_count'][ci] = count
+        arrays['transposition_start'][ci] = start
+        arrays['transposition_position'][ci] = position
+        candidate = np.concatenate([
+            remainder[:position], fragment, remainder[position:],
+        ])
+        events[STRUCTURAL_TRANSPOSITION] += 1
+
+    if len(candidate) < minimum:
+        count = minimum - len(candidate)
+        padding = np.asarray(generator.integers(
+            0, alphabet, count, dtype=np.uint8,
+        ), dtype=np.uint8)
+        arrays['padding_count'][ci] = count
+        arrays['padding_symbols'][ci, :count] = padding
+        candidate = np.concatenate([candidate, padding])
+    if len(candidate) > F:
+        candidate = candidate[:F]
+    delta = int(len(candidate) - len(original))
+    if delta > int(nucleotide_budget):
+        candidate = candidate[:len(original) + int(nucleotide_budget)]
+        delta = int(len(candidate) - len(original))
+    arrays['post_structural_lengths'][ci] = len(candidate)
+    arrays['material_delta_symbols'][ci] = delta
+    return candidate.astype(np.uint8), delta
+
+
+def _replay_completion_mutation_rng(
+        binding, plan, config, options, rng_state_before):
+    """Build one combined cell-interleaved tape and cross-check g2 directly."""
+    arrays = _empty_completion_mutation_arrays(plan)
+    before = _canonical_pcg64_state(
+        rng_state_before, 'rng_state_before',
+    )
+    generator = np.random.Generator(np.random.PCG64())
+    generator.bit_generator.state = copy.deepcopy(before)
+    N = int(plan.cell_count)
+    structural_config = copy.deepcopy(config)
+    structural_config.mutation_rate = 0.0
+    mass = float(a4.g2.MONOMER_MASS)
+    for ci in range(N):
+        count = int(arrays['append_count'][ci])
+        error = float(arrays['effective_error'][ci])
+        appended = np.asarray(
+            plan.append_symbols[ci, :count], dtype=np.uint8,
+        ).copy()
+        for rank in range(count):
+            uniform = float(generator.random())
+            if _numpy_fp64_comparison_boundary(uniform, error):
+                raise A4ReplicationScopeError(
+                    'completion substitution comparison is fp64-ambiguous'
+                )
+            arrays['append_uniform_draws'][ci, rank] = uniform
+            if uniform < error:
+                arrays['replacement_mask'][ci, rank] = True
+                raw = int(generator.integers(0, 7))
+                arrays['replacement_raw'][ci, rank] = raw
+                old = int(appended[rank])
+                appended[rank] = (
+                    raw + (1 if raw >= old else 0)
+                ) % int(a4.g2.ALPHABET_SIZE)
+                arrays['substitution_count'][ci] += 1
+        template, partial, start_event, _, _ = _numpy_template_copy(
+            binding, ci, allow_template_start=False,
+        )
+        if (template is None or bool(start_event)
+                or len(partial) + count != int(
+                    arrays['pre_structural_lengths'][ci])):
+            raise A4ReplicationScopeError(
+                'completion-mutation source differs from completion plan'
+            )
+        pre_structural = np.concatenate([partial, appended]).astype(
+            np.uint8, copy=False,
+        )
+        nucleotide_after = float(
+            plan.pools_after[ci, a4.a3.POOL_NUCLEOTIDE]
+        )
+        if not math.isfinite(nucleotide_after) or nucleotide_after < 0.0:
+            raise A4ReplicationScopeError(
+                'completion-mutation nucleotide pool is invalid'
+            )
+        # The frozen mutator can add at most one full frozen sequence, so a
+        # larger finite integer budget is outcome-equivalent to that bound.
+        # Preserve the frozen fp64 division and Python ``int`` conversion,
+        # however: a nonfinite quotient remains outside this bounded slice
+        # rather than giving A4 behavior where the CPU reference raises.
+        mutation_capacity = int(a4.g2.MAX_GENOME_LENGTH)
+        raw_budget = nucleotide_after / mass
+        if not math.isfinite(raw_budget):
+            raise A4ReplicationScopeError(
+                'completion-mutation nucleotide budget is nonfinite'
+            )
+        budget = min(int(raw_budget), mutation_capacity)
+        arrays['nucleotide_budget_symbols'][ci] = budget
+        structural_before = copy.deepcopy(generator.bit_generator.state)
+        candidate, delta = _record_structural_mutation(
+            pre_structural, generator, options, budget, arrays, ci,
+        )
+
+        # Independent frozen-source oracle: the literal recorder above must have
+        # exactly the same high-level calls, final polymer, counters, and cache.
+        oracle = np.random.Generator(np.random.PCG64())
+        oracle.bit_generator.state = copy.deepcopy(structural_before)
+        expected, expected_delta, expected_events = a4.g2.mutate_sequence(
+            pre_structural, oracle, structural_config,
+            nucleotide_budget=budget,
+        )
+        expected_counts = np.asarray([
+            int(expected_events[name]) for name in STRUCTURAL_EVENT_NAMES
+        ], dtype=np.int64)
+        if (not np.array_equal(candidate, expected)
+                or int(delta) != int(expected_delta)
+                or not np.array_equal(
+                    arrays['structural_event_counts'][ci], expected_counts,
+                )
+                or oracle.bit_generator.state != generator.bit_generator.state):
+            raise A4ReplicationScopeError(
+                'completion structural RNG replay differs from frozen g2'
+            )
+        if len(candidate) > int(plan.append_capacity):
+            raise a4.A4CapacityError(
+                'completion mutation exceeds declared sequence capacity'
+            )
+    future_symbol_count = (
+        int(binding.ragged.symbol_count)
+        + int(np.sum(
+            np.asarray(plan.topology_symbol_deltas[:N], dtype=np.int64),
+            dtype=np.int64,
+        ))
+        + int(np.sum(
+            arrays['material_delta_symbols'][:N], dtype=np.int64,
+        ))
+    )
+    if future_symbol_count > int(binding.ragged.symbol_capacity):
+        raise a4.A4CapacityError(
+            'completion mutation exceeds aggregate symbol capacity'
+        )
+    return arrays, copy.deepcopy(generator.bit_generator.state)
+
+
+def prepare_completion_mutation_rng_tape(
+        binding, dt, config, rng_state_before):
+    """Prepare an immutable combined tape without advancing a live RNG."""
+    a4._require_translation_binding(binding)
+    if _is_tensor(binding.state.pools):
+        raise a4.A4SchemaError(
+            'completion-mutation tape preparation requires a NumPy binding'
+        )
+    deterministic, options, config_sha256 = _completion_mutation_config(
+        config,
+    )
+    dt = _strict_dt(dt)
+    plan = _paid_replication_completion_numpy(
+        binding, dt, deterministic,
+    )
+    before = _canonical_pcg64_state(
+        rng_state_before, 'rng_state_before',
+    )
+    arrays, after = _replay_completion_mutation_rng(
+        binding, plan, config, options, before,
+    )
+    values = {
+        'schema_version': COMPLETION_MUTATION_RNG_TAPE_SCHEMA_VERSION,
+        'cell_capacity': int(plan.cell_capacity),
+        'append_capacity': int(plan.append_capacity),
+        'mutation_capacity': int(a4.g2.MAX_GENOME_LENGTH),
+        'cell_count': int(plan.cell_count),
+        'source_provenance': str(plan.source_provenance),
+        'dt_hex': float(dt).hex(),
+        'config_sha256': str(config_sha256),
+        'schedule_sha256': '0' * 64,
+        'rng_before_state': copy.deepcopy(before),
+        'rng_after_state': copy.deepcopy(after),
+    }
+    values.update(arrays)
+    draft = _make_completion_mutation_rng_tape(**values)
+    values['schedule_sha256'] = _completion_mutation_schedule_digest(draft)
+    tape = _make_completion_mutation_rng_tape(**values)
+    return validate_a4_completion_mutation_rng_tape(
+        tape, binding, dt, config,
+    )
+
+
+def validate_a4_completion_mutation_rng_tape(
+        tape, binding, dt, config):
+    """Replay every high-level call against its attested NumPy source."""
+    _require_completion_mutation_rng_tape(tape)
+    if _validate_completion_mutation_tape_metadata(tape) != 'numpy':
+        raise a4.A4SchemaError(
+            'full completion-mutation tape validation requires NumPy'
+        )
+    a4._require_translation_binding(binding)
+    if _is_tensor(binding.state.pools):
+        raise a4.A4SchemaError(
+            'completion-mutation tape validation requires a NumPy binding'
+        )
+    deterministic, options, config_sha256 = _completion_mutation_config(
+        config,
+    )
+    dt = _strict_dt(dt)
+    plan = _paid_replication_completion_numpy(
+        binding, dt, deterministic,
+    )
+    if (tape.source_provenance != str(plan.source_provenance)
+            or tape.dt_hex != float(dt).hex()
+            or tape.config_sha256 != str(config_sha256)
+            or int(tape.cell_capacity) != int(plan.cell_capacity)
+            or int(tape.append_capacity) != int(plan.append_capacity)
+            or int(tape.mutation_capacity)
+            != int(a4.g2.MAX_GENOME_LENGTH)
+            or int(tape.cell_count) != int(plan.cell_count)):
+        raise A4ReplicationScopeError(
+            'completion-mutation tape does not bind this source/config/dt'
+        )
+    expected_arrays, expected_after = _replay_completion_mutation_rng(
+        binding, plan, config, options, tape.rng_before_state,
+    )
+    for name in _COMPLETION_TAPE_ARRAY_FIELDS:
+        if not np.array_equal(
+                np.asarray(getattr(tape, name)), expected_arrays[name]):
+            raise a4.A4SchemaError(
+                'completion-mutation RNG tape %s differs from replay' % name
+            )
+    after = _canonical_pcg64_state(
+        tape.rng_after_state, 'rng_after_state',
+    )
+    if expected_after != after:
+        raise a4.A4SchemaError(
+            'completion-mutation RNG tape after-state differs from replay'
+        )
+    if tape.schedule_sha256 != _completion_mutation_schedule_digest(tape):
+        raise a4.A4SchemaError(
+            'completion-mutation RNG tape schedule provenance differs'
+        )
+    return tape
+
+
 def _require_rng_tape_binding(tape, binding, dt, config_sha256):
     _require_rng_tape(tape)
     dt = _strict_dt(dt)
@@ -2256,10 +3155,13 @@ def paid_replication_completion_plan(binding, dt, config):
 PORT_STATUS = dict(a4.PORT_STATUS)
 PORT_STATUS.update({
     'genome_replication': (
-        'a4.6a-mutation-free-active-template-all-row-completion-payload-'
-        'ledger-topology-descriptor-not-arena-committed-not-integrated-'
-        'cpu-authoritative'
+        'a4.6b1-pre-existing-active-all-row-completion-combined-pcg64-'
+        'substitution-structural-material-rng-tape-not-device-applied-'
+        'not-arena-committed-not-integrated-cpu-authoritative'
     ),
-    'material_mutation': 'cpu-authoritative-later-a4-slice',
+    'material_mutation': (
+        'a4.6b1-binding-aware-host-replayed-attested-rng-tape-'
+        'not-device-applied-not-live-rng-authority-cpu-authoritative'
+    ),
     'full_gpu_world_step': False,
 })

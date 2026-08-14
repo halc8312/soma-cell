@@ -1,5 +1,5 @@
 {
-  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.6a-mutation-free-replication-completion-descriptor",
+  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.6b1-completion-mutation-pcg64-event-tape",
   "status": "development_slice_not_promoted",
   "full_gpu_world_step": false,
   "authoritative_state": "A4RaggedGenomeBatch",
@@ -306,9 +306,96 @@
       "the tape is direct-call evidence only and does not replace the interleaved world scheduler RNG order"
     ]
   },
+  "derived_completion_mutation_rng_tape": {
+    "schema_version": "0.6.8-GPU-A4.6b1-completion-mutation-rng-tape",
+    "ownership": "private_factory_ephemeral_combined_event_tape_not_final_genome_save_live_rng_or_world_authority",
+    "supported_scope": [
+      "every_used_row_has_a_preexisting_active_nonempty_template_and_completes_in_the_same_call",
+      "mutation_enabled_with_paid_append_substitutions_followed_immediately_by_that_cells_structural_chain",
+      "all_A4_6a_completion_kinetics_scope_and_capacity_checks_pass_before_any_draw",
+      "final_per_sequence_and_aggregate_symbol_storage_fit_the_declared_fixed_capacities",
+      "host_replay_only_in_A4_6b1_device_application_is_deferred_to_A4_6b2"
+    ],
+    "scalar_metadata": {
+      "cell_capacity": "positive_exact_integer",
+      "append_capacity": "positive_exact_integer_not_above_mutation_capacity",
+      "mutation_capacity": "exact_runtime_frozen_MAX_GENOME_LENGTH",
+      "cell_count": "exact_used_prefix_count",
+      "source_provenance": "64_character_lowercase_SHA256_of_the_validated_ragged_source",
+      "dt_hex": "exact_nonnegative_finite_float64_hex",
+      "config_sha256": "canonical_completion_mutation_configuration_and_frozen_constant_digest",
+      "schedule_sha256": "canonical_cell_append_budget_length_event_and_threshold_schedule_digest",
+      "rng_before_state": "canonical_NumPy_PCG64_state_inc_has_uint32_uinteger",
+      "rng_after_state": "canonical_NumPy_PCG64_state_inc_has_uint32_uinteger"
+    },
+    "arrays": {
+      "cell_ids": {"dtype": "int64", "shape": ["cell_capacity"], "unused": -1},
+      "cell_mask": {"dtype": "bool", "shape": ["cell_capacity"], "unused": false},
+      "append_draw_mask": {"dtype": "bool", "shape": ["cell_capacity", "append_capacity"], "unused": false},
+      "append_uniform_draws": {"dtype": "float64", "shape": ["cell_capacity", "append_capacity"], "unused": 0.0},
+      "replacement_raw": {"dtype": "uint8", "shape": ["cell_capacity", "append_capacity"], "unused": 0},
+      "replacement_mask": {"dtype": "bool", "shape": ["cell_capacity", "append_capacity"], "unused": false},
+      "append_count": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
+      "substitution_count": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
+      "effective_error": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
+      "nucleotide_budget_symbols": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0, "meaning": "after_frozen_fp64_division_and_finite_Python_int_conversion_the_outcome_equivalent_effective_budget_is_capped_at_frozen_MAX_GENOME_LENGTH"},
+      "pre_structural_lengths": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
+      "post_structural_lengths": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
+      "material_delta_symbols": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
+      "structural_event_counts": {"dtype": "int64", "shape": ["cell_capacity", 5], "order": ["insertion", "deletion", "duplication", "inversion", "transposition"], "unused": 0},
+      "threshold_draw_mask": {"dtype": "bool", "shape": ["cell_capacity", 5], "unused": false},
+      "threshold_uniform_draws": {"dtype": "float64", "shape": ["cell_capacity", 5], "unused": 0.0},
+      "threshold_hit_mask": {"dtype": "bool", "shape": ["cell_capacity", 5], "unused": false},
+      "insertion_count": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
+      "insertion_position": {"dtype": "int64", "shape": ["cell_capacity"], "unused": -1},
+      "insertion_symbols": {"dtype": "uint8", "shape": ["cell_capacity", 5], "unused": 0},
+      "deletion_count": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
+      "deletion_position": {"dtype": "int64", "shape": ["cell_capacity"], "unused": -1},
+      "duplication_gene_ordinal": {"dtype": "int64", "shape": ["cell_capacity"], "unused": -1},
+      "duplication_source_start": {"dtype": "int64", "shape": ["cell_capacity"], "unused": -1},
+      "duplication_position": {"dtype": "int64", "shape": ["cell_capacity"], "unused": -1},
+      "inversion_left": {"dtype": "int64", "shape": ["cell_capacity"], "unused": -1},
+      "inversion_right": {"dtype": "int64", "shape": ["cell_capacity"], "unused": -1},
+      "transposition_count": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
+      "transposition_start": {"dtype": "int64", "shape": ["cell_capacity"], "unused": -1},
+      "transposition_position": {"dtype": "int64", "shape": ["cell_capacity"], "unused": -1},
+      "padding_count": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
+      "padding_symbols": {"dtype": "uint8", "shape": ["cell_capacity", "frozen_MIN_GENOME_LENGTH"], "unused": 0}
+    },
+    "frozen_rng_order": [
+      "iterate_cells_in_input_order",
+      "for_each_paid_append_call_scalar_random_then_only_on_hit_scalar_integers_0_7",
+      "for_that_same_cell_call_insertion_then_deletion_then_optional_duplication_thresholds_and_conditional_integer_or_uint8_payloads",
+      "call_inversion_then_transposition_thresholds_and_conditional_integer_payloads_when_the_current_length_gates_pass",
+      "call_one_uint8_padding_vector_only_when_the_post_edit_length_is_below_the_frozen_minimum",
+      "apply_frozen_max_length_then_material_budget_tail_trim_without_rewriting_pretrim_event_counts",
+      "only_then_advance_to_the_next_cell"
+    ],
+    "runtime_attestation": {
+      "host": "binding_aware_replay_reconstructs_every_high_level_call_and_cross_checks_final_polymer_delta_event_counts_and_full_PCG64_after_state_against_frozen_g2_mutate_sequence",
+      "resident": "all_scalar_and_PCG64_metadata_plus_every_tensor_data_pointer_and_version_are_snapshotted_at_upload_and_the_validated_host_content_digest_is_inherited_by_resident_clones",
+      "readback": "the_explicit_D2H_boundary_rehashes_every_array_and_rejects_data_or_shared_NumPy_writes_that_bypassed_Torch_versioning_before_reissuing_a_host_tape",
+      "host_arrays": "a_private_full_array_SHA256_detects_any_post_factory_change_before_clone_upload_or_validation"
+    },
+    "capacity": {
+      "per_sequence": "post_structural_length_must_not_exceed_append_capacity",
+      "aggregate": "source_symbol_count_plus_A4_6a_topology_symbol_deltas_plus_material_delta_symbols_must_not_exceed_symbol_capacity",
+      "material_budget": "positive_structural_growth_is_tail_trimmed_only_by_the_frozen_physical_nucleotide_budget_law_never_by_arena_capacity"
+    },
+    "invariants": [
+      "the_tape_contains_draws_masks_indices_and_vector_payloads_but_never_a_precomputed_final_genome",
+      "the_completion_substitution_and_structural_calls_for_one_cell_finish_before_any_draw_for_the_next_cell",
+      "scalar_and_vector_NumPy_high_level_calls_are_replayed_literally_without_assuming_raw_PCG64_draw_counts",
+      "structural_substitution_is_disabled_inside_frozen_g2_because_paid_append_substitution_already_occurred",
+      "event_counts_describe_pre_material_trim_operations_while_material_delta_describes_the_final_paid_or_refunded_length",
+      "the_live_world_RNG_binding_ragged_cache_physiology_cells_and_scheduler_are_unchanged",
+      "A4_6b1_uploads_and_attests_the_tape_but_does_not_apply_it_on_Torch_CPU_or_CUDA",
+      "actual_ragged_cache_lesion_cycle_material_live_RNG_CPU_cell_and_scheduler_commit_remain_CPU_authoritative"
+    ]
+  },
   "cpu_authoritative_after_slice": [
     "paid_translation_world_commit_and_scheduler_event",
-    "replication_mutation_free_inactive_template_start_actual_template_copy_or_completed_genome_arena_commit_live_lesion_cycle_cache_novel_path_update_structural_material_mutation_hydrolysis_live_RNG_commit_and_world_commit",
+    "replication_mutation_free_inactive_template_start_actual_template_copy_or_completed_genome_arena_commit_live_lesion_cycle_cache_novel_path_update_completion_mutation_tape_device_application_hydrolysis_live_RNG_commit_and_world_commit",
     "division_death_corpse_edna_hgt",
     "neural_and_causal_systems"
   ]

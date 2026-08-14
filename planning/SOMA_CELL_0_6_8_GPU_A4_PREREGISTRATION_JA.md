@@ -1,6 +1,6 @@
-# SOMA-CELL 0.6.8-GPU A4.6a 事前登録（A4.1〜A4.5b継承）
+# SOMA-CELL 0.6.8-GPU A4.6b1 事前登録（A4.1〜A4.6a継承）
 
-状態: A4.5bまでを継承する開発用の最小slice。A4昇格判定ではない。
+状態: A4.6aまでを継承するA4.6b1開発slice。A4昇格判定ではない。
 
 ## 継承する基盤
 
@@ -453,6 +453,73 @@ storage topology deltaはmaterial paymentではない。active時の`template + 
   sourceへ再照合する。A4.6a planを外部復元/commit authorityにしない。
 - A4.6a単独の速度測定・scheduler統合・A4昇格は行わない。
 
-次はA4.6bとしてcompletion後のstructural/material mutation RNGを別sliceで扱う。その後
-hydrolysisをA4.7として分離する。scheduler置換は、連続したresident chainをhost/device往復
-なしでatomic commitできる段階まで延期する。
+## A4.6b1追加仮説
+
+pre-existing active templateが同一callでcompletionへ到達するmutation-enabled経路なら、
+paid append substitutionとcompletion直後のstructural mutationを、cellごとに連続した
+combined PCG64 tapeとして固定できる。A4.6b1ではdraw/payload/material scheduleの確定だけを
+行い、device上の変形適用はA4.6b2へ分離する。
+
+## A4.6b1で実装するもの
+
+- private-factory `A4CompletionMutationRngTape`
+- pre-existing active、all-row completion、mutation enabledの限定scope
+- binding/config/dtと完全PCG64 before/after stateのattestation
+- cell入力順の paid append `random()` とhit直後のscalar `integers(0,7)`
+- 同じcellで直ちに続く insertion/deletion/duplication/inversion/transposition の
+  threshold draw mask、decision、count/position/ordinal
+- insertionとminimum-length paddingのhigh-level `uint8` vector payload
+- post-elongation nucleotideから一度だけ計算し、結果同値なfrozen最大長でbounded化した
+  effective material budget
+- pre-budget/final length、committed material delta、pre-trim event telemetry
+- binding-aware host replay、host array digest、resident pointer/version attestation、
+  resident cloneへ継承するexpected digestと明示readback時のcontent再照合
+- exact future capacity PASSとone-short atomic failure
+- NumPy tapeとTorch CPU/CUDA storage/readback parity
+
+`MAX_GENOME_LENGTH`、`MIN_GENOME_LENGTH`、`GENE_SPAN`、alphabetは正本定数から取得し、
+384や640をliteral biologyとして埋め込まない。bounded integer/vector callの内部raw draw数は
+仮定せず、NumPy high-level callをそのままreplayする。
+
+## A4.6b1で実装しないもの
+
+- tapeからのNumPy/Torch structural/material変形（A4.6b2）
+- CPUで作ったfinal genomeのtape格納とGPUへの単純copy
+- mutation-free inactive start、mixed completion/noncompletion event
+- actual ragged/cache/lesion/cycle/novel-path/CPU-cell commit
+- live RNG after-state commit、A3 scheduler置換、world-step authority
+- hydrolysis RNG（A4.7）
+- division後daughter grammar mutation（A5）
+- generic RNG framework、software fp64、custom CUDA/Triton、速度向上主張
+
+material-budget tail trimは凍結CPUの物質則として保持する。全structural RNGとevent計数後に
+final positive deltaをbudgetまで末尾trimし、event countersはtrim前値のまま、物質支払/返却は
+final length deltaだけを使う。arena capacity不足を追加trimで隠すことは禁止する。
+CPUでfinite integerへ変換できる大きなnucleotide budgetは、構造的な正のdelta上限である
+frozen `MAX_GENOME_LENGTH`へeffective budgetだけをcapする。raw fp64 quotientがnonfiniteに
+なるpathological poolは、CPU正本の変換例外をA4だけ成功へ変えず明示scope errorにする。
+
+## A4.6b1固定テスト
+
+1. primed PCG64の3 Formal066 rowでappend miss/hit、conditional integer、insertion、
+   deletion、duplication、inversion、transposition、padding、budget trim、negative delta refund、
+   complete after-stateをexact照合する。
+2. NumPy tapeをTorch CPUと明示RTX CUDAへupload/readbackし、全dtype/shape/value、pointer、
+   version、scalar metadata、expected content digest、`.data` version-bypass拒否、
+   source/world/live RNG不変を確認する。
+3. schema/source/config/dt/PCG64、append/structural payload、bounds、padding tail、material
+   budget/delta/event改ざんをfail closedとし、exact future capacity PASS、one-short FAILを固定する。
+4. A4.1〜A4.6aの34 testsを変更せず継続し、合計37/37をCUDA必須でPASSさせる。
+5. A3 `replication_cpu` exactly once、promoted A3、`full_gpu_world_step=false`を維持する。
+
+## A4.6b1判定
+
+- 37/37、Formal066 high-level RNG order、full PCG64 state、material/event schedule、
+  NumPy/Torch CPU/CUDA tape attestationが全てPASSした場合だけ「A4.6b1 combined
+  completion-mutation RNG tape、未適用・未統合」と記録する。
+- CPU final genomeをtapeへ保存してdevice applyを省略しない。
+- A4.6b1だけでA4.6b完了、structural mutation移植済み、scheduler authorityとは呼ばない。
+
+次はA4.6b2としてattested operation tapeをNumPy/Torch CPU/CUDAの固定shape変形・材料・
+lesion・topology descriptorへ適用する。その後hydrolysisをA4.7として分離する。scheduler
+置換は、連続したresident chainをhost/device往復なしでatomic commitできる段階まで延期する。

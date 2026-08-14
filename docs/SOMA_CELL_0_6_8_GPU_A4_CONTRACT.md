@@ -1,6 +1,6 @@
 # SOMA-CELL 0.6.8-GPU A4 contract
 
-Status: A4 development contract through slice A4.6a. This is not an A4
+Status: A4 development contract through slice A4.6b1. This is not an A4
 promotion.
 
 ## Authority
@@ -305,6 +305,74 @@ plan and revalidate those two semantic relations against the attested source;
 caller-forged but self-consistent payload/lesion values are outside A4.6a's
 trust boundary.
 
+## A4.6b1 scope
+
+A4.6b1 fixes the combined PCG64 call schedule for mutation-enabled completion
+without yet applying structural mutations on the device.  Every used row has a
+pre-existing active, non-empty template, is incomplete on entry, and completes
+in this call.  Template selection, non-completing rows, and mixed batches stay
+outside this event tape.  The public A4.6a mutation-free descriptor is not
+weakened or given a mode flag.
+
+Tape preparation first re-derives the mutation-free completion schedule from
+the attested binding.  It then replays one cloned NumPy PCG64 stream in literal
+cell order.  For each cell it performs all paid-append threshold draws and
+their immediate conditional `integers(0, 7)` replacements, then immediately
+performs that cell's structural chain before advancing to the next cell.  It
+is forbidden to prepare all cells' append substitutions first and append a
+second all-cell structural tape, because the resulting global RNG state would
+not match Formal066.
+
+The structural chain records, without inventing raw-draw counts:
+
+- scalar insertion, deletion, duplication, inversion, and transposition
+  threshold calls and the short-circuit conditions which decide whether each
+  call exists;
+- the exact scalar count/position/ordinal bounds and returned values for an
+  applied operation;
+- insertion and minimum-length padding as the original high-level NumPy
+  `uint8` vector calls, never scalarized;
+- the pre-budget length, material budget, post-budget length, committed
+  material delta, and frozen per-operation event counts; and
+- the complete `state`, `inc`, `has_uint32`, and `uinteger` PCG64 before/after
+  states.
+
+The frozen structural mutator receives `mutation_rate=0` after paid append
+substitutions, so it performs no second base-substitution vector.  Nucleotide
+budget is computed once from the post-elongation pool.  The tape stores the
+outcome-equivalent effective budget capped at frozen `MAX_GENOME_LENGTH`,
+because no structural expansion can consume more symbols.  The frozen fp64
+division and Python integer conversion are performed first; a nonfinite raw
+quotient fails closed instead of inventing a successful A4 state where the CPU
+reference raises.
+Material-budget tail
+trim occurs only after every structural RNG call and event count.  It is an
+authoritative material rule, not arena overflow clipping: event counters keep
+their pre-trim values, while nucleotide payment or refund uses only the final
+length delta.  Structural mutation consumes no ATP.  Arena sequence/symbol/
+lesion capacity remains a separate fail-closed condition and is never repaired
+by extra trimming.  Both the final per-sequence length and the aggregate future
+symbol count, including structural material deltas, must fit exactly.
+
+`A4CompletionMutationRngTape` is a private-factory, event-local object with a
+binding-aware host validator.  Host arrays are protected by a canonical digest;
+resident tensors use scalar metadata plus pointer/version attestation and carry
+the validated host-content digest unchanged through resident clones.  Explicit
+readback must match that original digest before a NumPy tape is reissued, which
+also rejects `.data` or shared-NumPy writes that bypass Torch `_version`.  The
+validator re-derives the completion schedule and replays every high-level call,
+bound, dtype, vector payload, event count, material delta, and final PCG64 state
+against the same source/config/dt.  Any disagreement invalidates the complete
+shared stream.  The tape stores operation parameters, not a CPU-produced final
+genome; A4.6b2 must derive the transformed polymer with fixed NumPy/Torch
+operations and perform its own device-side semantic checks before use.
+
+A4.6b1 does not apply the tape, produce mutation-enabled completion authority,
+advance a live RNG, mutate/re-attest the ragged arena, refresh a cache, update a
+CPU cell, or replace the scheduler.  Its CPU/CUDA result is tape storage and
+attestation evidence only.  Hydrolysis remains A4.7, while post-division grammar
+mutation remains A5.
+
 ## Fail-closed invariants
 
 Ragged foundation invariants remain unchanged:
@@ -399,12 +467,12 @@ Replication-elongation-plan invariants are:
   mutation-free, pre-existing-active, all-row completion above.  No path may
   fall through to a partial GPU result plus a second CPU replication call.
 
-## Explicit exclusions through A4.6a
+## Explicit exclusions through A4.6b1
 
 - No scheduler/world integration or CPU-cell protein/material commit.
 - No mutation-free inactive-template start, actual template/copy/completed-
-  genome arena commit, live lesion/cycle/cache/novel-path update, structural/
-  material mutation, symbol hydrolysis, or device RNG kernel.
+  genome arena commit, live lesion/cycle/cache/novel-path update, resident
+  structural/material application, symbol hydrolysis, or device RNG kernel.
 - No scheduler replacement and no change to A3 `gene_refresh`,
   `translation_cpu`, or `replication_cpu` authority.
 - No division, death, corpse/eDNA/HGT, neural, or causal-system port.
@@ -412,7 +480,7 @@ Replication-elongation-plan invariants are:
   CUDA, multi-stream, multi-GPU, or online-GPU abstraction.
 - No formal 13-spec/65-measurement benchmark and no speedup claim.
 
-## Acceptance through A4.6a
+## Acceptance through A4.6b1
 
 - All A4.1 lossless/corruption/capacity/residency tests remain PASS.
 - Nested valid markers and invalid-outer/valid-inner recovery match frozen
@@ -505,6 +573,23 @@ Replication-elongation-plan invariants are:
 - All 34 A4 development tests and focused A3 regressions pass while A3
   `replication_cpu` remains the only scheduler authority.
 
+- A primed PCG64 fixture replays paid append substitution and the same cell's
+  insertion/deletion/duplication/inversion/transposition/padding before moving
+  to the next cell, with complete before/after state exact to Formal066.
+- The tape preserves vector-integer call boundaries, short-circuit draw masks,
+  operation payloads, pre-trim event counts, final material delta, nucleotide
+  refund/payment, and material-budget tail trim.
+- NumPy tape validation and Torch CPU/explicit RTX CUDA upload/readback agree
+  byte-for-byte; scalar metadata, host array digest, resident pointers/versions,
+  sources, world, and live RNG remain unchanged.
+- Exact future capacity passes; one-short arena or per-sequence capacity fails
+  atomically and is not converted into additional material trim.
+- Tampered PCG64, source/config/dt, operation payload, bounds, padding tail,
+  material budget/delta, or event telemetry fails the binding-aware replay.
+- All 37 A4 development tests and focused A3 regressions pass while A4.6b1
+  remains a preparation/attestation slice and A3 `replication_cpu` remains the
+  only scheduler authority.
+
 Known A4.4b integration blockers are recorded rather than hidden.  On the
 measured six-cell development fixture the current fixed symbol-rank Torch plan
 was about 503 ms per call versus about 10.1 ms for NumPy, so it is not a
@@ -522,7 +607,7 @@ division was rejected as disproportionate complexity.  The launch-heavy path
 must be redesigned and remeasured before scheduler authority, promotion, or
 any speedup claim.
 
-Actual ragged/RNG/cache commit, mutation-free inactive start, structural
-completion mutation, and hydrolysis remain separate later slices. Scheduler replacement remains later,
+Actual ragged/RNG/cache commit, mutation-free inactive start, resident
+structural/material tape application, and hydrolysis remain separate later slices. Scheduler replacement remains later,
 after a contiguous resident chain can commit without recreating A3's per-cell
 host/device round trips.
