@@ -1,5 +1,5 @@
 {
-  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.4a-resident-paid-dna-elongation-plan",
+  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.4b-resident-proofreading-dna-elongation-plan",
   "status": "development_slice_not_promoted",
   "full_gpu_world_step": false,
   "authoritative_state": "A4RaggedGenomeBatch",
@@ -66,7 +66,7 @@
     }
   },
   "derived_translation_state": {
-    "schema_version": "0.6.8-GPU-A4.3-paid-translation-state",
+    "schema_version": "0.6.8-GPU-A4.4b-paid-translation-state",
     "ownership": "disposable_pre_post_plan_not_world_or_save_authority",
     "cache_binding": "cache_is_decoded_internally_from_the_exact_ragged_object",
     "scalar_metadata": {
@@ -79,6 +79,7 @@
       "host": "recompute_source_provenance_and_compare_full_ragged_relation",
       "resident": "same_carried_source_provenance_and_unchanged_ragged_and_translation_tensor_data_ptrs_and_versions",
       "trusted_clone": "clone_first_verifies_source_pointer_and_version_attestation_then_attests_its_new_storage",
+      "scalar_metadata_lifetime": "ragged_translation_and_cache_host_scalar_metadata_must_equal_the_values_snapshotted_at_bind",
       "derived_cache_lifetime": "host_sha256_or_resident_data_ptr_and_version_attestation_rejects_mutation_between_bind_and_plan",
       "caller_supplied_cache_or_binding": "rejected"
     },
@@ -94,6 +95,7 @@
       "division_progress": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
       "last_translation": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
       "last_quiescence": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
+      "cumulative_proofreading_atp": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
       "active_fingerprints": {"dtype": "int64", "shape": ["cell_capacity", "protein_capacity"], "unused": -1},
       "active_mass": {"dtype": "float64", "shape": ["cell_capacity", "protein_capacity"], "unused": 0.0},
       "active_count": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
@@ -130,6 +132,7 @@
       "all translation weights and misfold signals observe pre-translation state",
       "payment follows gene-cache order with fuel 0.64 mineral 0.36 ATP 0.52 and ATP reserve 0.042",
       "last_translation always resets; last_quiescence updates only after the positive weight gate",
+      "cumulative_proofreading_atp is finite nonnegative and preserves the CPU telemetry value before replication",
       "input arrays CPU cells RNG scheduler and world remain unchanged"
     ],
     "formal066_dispatch": [
@@ -140,19 +143,23 @@
     ]
   },
   "derived_paid_dna_elongation_plan": {
-    "schema_version": "0.6.8-GPU-A4.4a-paid-dna-elongation-plan",
+    "schema_version": "0.6.8-GPU-A4.4b-paid-dna-elongation-plan",
     "ownership": "pure_nonserializable_plan_not_world_or_save_authority",
     "source_binding": "same_attested_A4TranslationBinding_as_the_validated_ragged_cache_and_physiology_snapshot",
     "supported_scope": [
       "genome_replication_enabled",
       "preexisting_active_nonempty_template",
       "partial_copy_shorter_than_template",
-      "endogenous_replicase_above_frozen_gate",
+      "effective_endogenous_plus_optional_external_replicase_above_frozen_gate",
+      "at_least_one_complete_genome",
       "mutation_disabled",
-      "proofreading_disabled",
-      "external_replicase_disabled",
-      "quiescence_disabled",
-      "quiescence_effector_disabled",
+      "proofreading_may_be_enabled_or_disabled",
+      "external_replicase_may_be_enabled_or_disabled",
+      "inherited_quiescence_may_be_enabled_or_disabled",
+      "behavioural_quiescence_effector_may_be_enabled_or_disabled",
+      "replication_entry_ATP_is_nonnegative",
+      "positive_progress_is_outside_the_4096_eps64_integer_ambiguity_band",
+      "derived_replicase_and_proofreading_ATP_comparisons_are_outside_the_4096_eps64_relative_ambiguity_band",
       "copy_remains_incomplete_after_ordered_resource_gates"
     ],
     "scope_error_codes": {
@@ -160,7 +167,9 @@
       "1": "inactive_missing_or_already_complete_template",
       "2": "replicase_gate_not_reached",
       "3": "completion_transaction_required",
-      "4": "fixed_symbol_capacity_exceeded"
+      "4": "fixed_symbol_capacity_exceeded",
+      "5": "negative_replication_entry_ATP_not_supported",
+      "6": "fp64_derived_discrete_boundary_is_cpu_authoritative"
     },
     "arrays": {
       "cell_ids": {"dtype": "int64", "shape": ["cell_capacity"], "unused": -1},
@@ -173,25 +182,41 @@
       "pools_after": {"dtype": "float64", "shape": ["cell_capacity", 13], "unused": 0.0},
       "replication_fractional_after": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
       "last_replication_symbols": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
-      "last_effective_error_rate": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0}
+      "last_effective_error_rate": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
+      "cumulative_proofreading_atp_after": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0}
     },
     "frozen_order": [
       "scale_dt_by_max_0.25_eco66_replication_rate_scale",
       "derive_endogenous_replicase_from_active_dictionary_order",
+      "add_optional_external_replicase_after_endogenous_attenuation",
+      "fail_closed_at_the_derived_effective_replicase_comparison_band",
+      "derive_proofreading_and_quiescence_with_literal_active_dictionary_left_folds",
+      "apply_proofreading_and_inherited_then_behavioural_quiescence_speed_factors",
       "add_speed_to_fractional_progress",
+      "fail_closed_when_positive_progress_lands_within_4096_eps64_scaled_distance_of_a_positive_integer",
       "remove_full_integer_request_before_resource_tests",
-      "update_effective_error_even_though_mutation_is_disabled",
-      "for_each_requested_symbol_in_template_order_test_nucleotide_then_ATP_reserve_then_copy_and_pay"
+      "update_proofreading_reduced_effective_error_even_though_mutation_is_disabled",
+      "for_each_requested_symbol_in_template_order_test_nucleotide_then_fail_closed_at_a_proofreading_ATP_comparison_band_else_test_ATP_reserve_copy_pay_and_accumulate_proofreading_ATP"
     ],
     "payment": {
       "nucleotide_per_symbol": 0.00082,
-      "ATP_per_symbol": 0.0012,
+      "ATP_per_symbol": "0.0012 + 0.00075 * proof_fraction",
       "ATP_reserve_gate": 0.022,
       "world_dissipated_energy_delta": 0.0
+    },
+    "fp64_discrete_boundary_guard": {
+      "scope_error_code": 6,
+      "integer_condition": "nonfinite(progress_increment) or nonfinite(fractional_total) or (progress_increment > 0 and rint(fractional_total) >= 1 and abs(fractional_total - rint(fractional_total)) <= 4096 * eps64 * max(1, abs(fractional_total)))",
+      "comparison_condition": "nonfinite(left) or nonfinite(right) or abs(left - right) <= 4096 * eps64 * max(abs(left), abs(right)) at the effective-replicase gate or a proofreading-derived ATP gate",
+      "effect": "no requested symbols payment or replication telemetry are committed; CPU authority is retained"
     },
     "invariants": [
       "append bytes equal the next template bytes exactly and retain order",
       "requested integer progress is not refunded when resources stop copying",
+      "cumulative_proofreading_atp_after starts at the input value and is incremented once per accepted symbol in CPU order",
+      "negative replication-entry ATP is rejected even when it is within the earlier paid-translation residual tolerance",
+      "a supported plan requires nonnegative ATP output while only inherited fuel and mineral may retain the paid-translation signed residual tolerance",
+      "fp64 integer replicase and proofreading-ATP boundary rows are rejected with code 6 and any tentative row prefix is rolled back before commit",
       "input ragged cache physiology CPU cells world RNG and scheduler receipts are unchanged",
       "supported scope consumes zero RNG draws",
       "exact future symbol capacity passes and capacity plus one fails before commit",
@@ -202,7 +227,7 @@
   },
   "cpu_authoritative_after_slice": [
     "paid_translation_world_commit_and_scheduler_event",
-    "replication_template_selection_proofreading_completion_mutation_hydrolysis_rng_and_world_commit",
+    "replication_template_selection_completion_mutation_hydrolysis_rng_and_world_commit",
     "division_death_corpse_edna_hgt",
     "neural_and_causal_systems"
   ]

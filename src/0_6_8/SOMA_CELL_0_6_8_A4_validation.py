@@ -1,5 +1,5 @@
 # coding: utf-8
-"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.4a slices."""
+"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.4b slices."""
 from __future__ import division
 
 import argparse
@@ -28,9 +28,9 @@ try:
 except Exception:  # pragma: no cover
     torch = None
 
-RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_4A_VALIDATION_RESULTS.json'
-RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_4a_validation.csv'
-RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_4A_VALIDATION_RESULTS.txt'
+RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_4B_VALIDATION_RESULTS.json'
+RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_4b_validation.csv'
+RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_4B_VALIDATION_RESULTS.txt'
 
 SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4.py',
@@ -394,43 +394,109 @@ def _paid_replication_fixture(seed=7801):
     return world, cells, config, 1e-9
 
 
+def _replication_model_config(
+        base, proofreading=False, external_replicase=False,
+        quiescence=False, quiescence_effector=False):
+    config = copy.deepcopy(base)
+    config.genome_replication = True
+    config.mutation = False
+    config.proofreading = bool(proofreading)
+    config.external_replicase = bool(external_replicase)
+    config.quiescence = bool(quiescence)
+    config.quiescence_effector = bool(quiescence_effector)
+    return config
+
+
+def _cpu_raw_repair_activity(cell, kind):
+    """Literal 0.4 grouping: (mass * efficiency) * promoter."""
+    total = 0.0
+    for fingerprint, amount in cell.proteins.items():
+        spec = cell.gene_specs.get(fingerprint)
+        if (
+                spec is not None
+                and int(spec['role']) == int(a4.a3.ROLE_REGULATOR)
+                and int(spec['localisation']) == int(a4.s4.LOC_REPAIR)
+                and int(spec['parameter']) % int(a4.a3.REPAIR_COUNT)
+                == int(kind)):
+            total += (
+                float(amount) * float(spec['efficiency'])
+            ) * float(spec['promoter'])
+    inhibition = 1.0 / (1.0 + 2.6 * cell.aggregate_concentration())
+    return float(total / 0.014 * inhibition)
+
+
+def _paid_replication_b_fixture(seed=7901):
+    """A4.4b proof, quiescence, error, and resource-boundary rows."""
+    world, cells, config, dt = _paid_replication_fixture(seed=seed)
+    world.config = _replication_model_config(
+        world.config, proofreading=True, external_replicase=True,
+        quiescence=True, quiescence_effector=True,
+    )
+    cumulative_before = (
+        0.375, -0.0, float(2 ** 40), 17.0, 0.125, 2048.5,
+    )
+    for ci, cell in enumerate(cells):
+        cell.pools[a4.a3.POOL_NUCLEOTIDE] = 0.75
+        cell.pools[a4.a3.POOL_ATP] = 0.75
+        cell.pools[a4.a3.POOL_REACTIVE] = 0.015 * (ci + 1)
+        cell.replication_template_lesion = 0.035 + 0.09 * ci
+        cell.behavioural_quiescence = 0.0
+        cell.cumulative_proofreading_atp = cumulative_before[ci]
+
+    # Complete-genome damage drives inherited quiescence, while the distinct
+    # template lesion above drives replication error telemetry.
+    cells[0].genome_lesions = [0.55]
+    cells[0].membrane_oxidation[:] = 1.2
+    cells[0].current_stress = 0.45
+    cells[0].pools[a4.a3.POOL_AGGREGATE] = 0.18
+    cells[0].pools[a4.a3.POOL_REACTIVE] = 0.16
+    cells[0].behavioural_quiescence = 0.05
+    cells[1].behavioural_quiescence = 0.70
+
+    proof = _cpu_raw_repair_activity(
+        cells[2], a4.a3.REPAIR_PROOFREADING,
+    )
+    if proof <= 0.0:
+        raise AssertionError('A4.4b fixture lacks proofreading activity')
+    proof_fraction = proof / (0.75 + proof)
+    atp_per_symbol = (
+        float(a4.g2.REPLICATION_ATP_PER_SYMBOL)
+        + 0.00075 * proof_fraction
+    )
+    atp_gate = atp_per_symbol + 0.022
+    # Keep the ordinary parity batch outside A4.4b's fp64 comparison guard.
+    # Exact/nextafter proof-ATP boundaries are tested separately as explicit
+    # CPU-authoritative scope exclusions.
+    cells[2].pools[a4.a3.POOL_ATP] = atp_gate + 1e-10
+    cells[3].pools[a4.a3.POOL_ATP] = atp_gate - 1e-10
+    monomer_gate = float(a4.g2.MONOMER_MASS)
+    cells[4].pools[a4.a3.POOL_NUCLEOTIDE] = monomer_gate
+    cells[5].pools[a4.a3.POOL_NUCLEOTIDE] = np.nextafter(
+        monomer_gate, 0.0,
+    )
+    return world, cells, config, dt
+
+
+def _external_only_replication_cell(cell):
+    out = copy.deepcopy(cell)
+    keys = [
+        fingerprint for fingerprint, spec in out.gene_specs.items()
+        if int(spec['role']) == int(a4.a3.ROLE_REPLICASE)
+    ]
+    for fingerprint in keys:
+        out.proteins.pop(fingerprint, None)
+    out._sync_protein_pool()
+    if out.role_activity(a4.a3.ROLE_REPLICASE) > 1e-6:
+        raise AssertionError('external-only fixture retains replicase')
+    return out
+
+
 def _paid_replication_binding(cells, model_config, config):
     ragged = a4.FullFidelityA4GenomeAdapter(config).pack_cells(cells)
     state = a4.pack_a4_translation_state(
         cells, ragged, model_config, config,
     )
     return ragged, state, a4.bind_a4_translation(ragged, state)
-
-
-def _torch_cuda_cumsum_call(device, fn):
-    """Call a CUDA-cumsum path while preserving global determinism policy."""
-    if torch is None or torch.device(device).type != 'cuda':
-        return fn()
-    deterministic = torch.are_deterministic_algorithms_enabled()
-    warn_only = torch.is_deterministic_algorithms_warn_only_enabled()
-    if deterministic:
-        # PyTorch 2.5 CUDA cumsum has no deterministic implementation.  The
-        # cache itself is independently compared with the frozen NumPy result.
-        torch.use_deterministic_algorithms(False)
-    try:
-        return fn()
-    finally:
-        if deterministic:
-            torch.use_deterministic_algorithms(True, warn_only=warn_only)
-
-
-def _bind_a4_translation_resident(ragged, state):
-    return _torch_cuda_cumsum_call(
-        ragged.symbols.device,
-        lambda: a4.bind_a4_translation(ragged, state),
-    )
-
-
-def _paid_replication_elongation_torch(binding, dt, config):
-    return _torch_cuda_cumsum_call(
-        binding.state.pools.device,
-        lambda: a44.paid_replication_elongation_torch(binding, dt, config),
-    )
 
 
 def _assert_paid_replication_cpu_parity(plan, before_cells, cpu_cells, label):
@@ -450,6 +516,9 @@ def _assert_paid_replication_cpu_parity(plan, before_cells, cpu_cells, label):
         )
         expected.last_effective_error_rate = float(
             plan.last_effective_error_rate[ci]
+        )
+        expected.cumulative_proofreading_atp = float(
+            plan.cumulative_proofreading_atp_after[ci]
         )
         if actual.replication_copy[len(before.replication_copy):] != appended:
             raise AssertionError('%s cell[%d] copied suffix differs' % (label, ci))
@@ -503,7 +572,7 @@ def test_api_scope():
     )
     missing = [name for name in replication_required if not hasattr(a44, name)]
     if missing:
-        raise AssertionError('missing A4.4a API: %s' % missing)
+        raise AssertionError('missing A4.4b API: %s' % missing)
     if a4.FULL_GPU_WORLD_STEP is not False:
         raise AssertionError('A4.1 must not claim full GPU world-step')
     if hasattr(a4.A4GeneCacheBatch, 'from_state_dict'):
@@ -516,12 +585,15 @@ def test_api_scope():
         raise AssertionError('A4.3 translation plan status is missing')
     if a4.PORT_STATUS.get('genome_replication') != 'cpu-authoritative-next-a4-slice':
         raise AssertionError('replication authority changed in representation slice')
-    if a44.BUILD != 'SOMA-CELL 0.6.8-GPU A4.4a':
-        raise AssertionError('A4.4a build identity differs')
-    if a44.SCHEMA_VERSION != '0.6.8-GPU-A4.4a-paid-dna-elongation-plan':
-        raise AssertionError('A4.4a schema identity differs')
+    if a44.BUILD != 'SOMA-CELL 0.6.8-GPU A4.4b':
+        raise AssertionError('A4.4b build identity differs')
+    if a44.SCHEMA_VERSION != '0.6.8-GPU-A4.4b-paid-dna-elongation-plan':
+        raise AssertionError('A4.4b schema identity differs')
     if a44.FULL_GPU_WORLD_STEP is not False:
-        raise AssertionError('A4.4a must not claim full GPU world-step')
+        raise AssertionError('A4.4b must not claim full GPU world-step')
+    if (a44.SCOPE_FP64_DISCRETE_BOUNDARY != 6
+            or a44.FP64_DISCRETE_GUARD_EPS != 4096.0):
+        raise AssertionError('A4.4b fp64 discrete guard contract differs')
     return '%s / %s + %s + %s / full_gpu=false' % (
         a44.BUILD, a4.SCHEMA_VERSION,
         a4.GENE_CACHE_SCHEMA_VERSION + ' + ' + a4.TRANSLATION_SCHEMA_VERSION,
@@ -1414,6 +1486,62 @@ def test_a4_paid_translation_early_gate_capacity_and_schema():
             changed_resident_cache, dt,
         ),
     )
+
+    # Scalar metadata is part of the binding trust identity even though it is
+    # not tensor storage.  Cover every post-bind component on both backends.
+    for component in ('ragged', 'state', 'cache'):
+        scalar_binding = a4.bind_a4_translation(
+            ragged.clone(), state.clone(),
+        )
+        if component == 'ragged':
+            scalar_binding.ragged.symbol_count -= 1
+        elif component == 'state':
+            scalar_binding.state.quiescence = (
+                not scalar_binding.state.quiescence
+            )
+        else:
+            scalar_binding.cache.cell_count -= 1
+        _assert_raises(
+            a4.A4SchemaError,
+            lambda scalar_binding=scalar_binding: a4.paid_translation_plan_numpy(
+                scalar_binding, dt,
+            ),
+        )
+    for component in ('ragged', 'state', 'cache'):
+        scalar_binding = a4.bind_a4_translation(
+            ragged.to_torch(attest_device),
+            state.to_torch(attest_device),
+        )
+        if component == 'ragged':
+            scalar_binding.ragged.symbol_count -= 1
+        elif component == 'state':
+            scalar_binding.state.quiescence = (
+                not scalar_binding.state.quiescence
+            )
+        else:
+            scalar_binding.cache.cell_count -= 1
+        _assert_raises(
+            a4.A4SchemaError,
+            lambda scalar_binding=scalar_binding: a4.paid_translation_plan_torch(
+                scalar_binding, dt,
+            ),
+        )
+
+    # Resident uploads remember their scalar metadata before binding.
+    prebind_ragged = ragged.to_torch(attest_device)
+    prebind_state = state.to_torch(attest_device)
+    prebind_ragged.symbol_count -= 1
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a4.bind_a4_translation(prebind_ragged, prebind_state),
+    )
+    prebind_ragged = ragged.to_torch(attest_device)
+    prebind_state = state.to_torch(attest_device)
+    prebind_state.quiescence = not prebind_state.quiescence
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a4.bind_a4_translation(prebind_ragged, prebind_state),
+    )
     if a4.FULL_GPU_WORLD_STEP is not False:
         raise AssertionError('A4.3 must not claim a full GPU world-step')
     if a4.PORT_STATUS['genome_replication'] != 'cpu-authoritative-next-a4-slice':
@@ -1439,7 +1567,7 @@ def test_a3_focused_regression():
 def test_a44_paid_replication_formal066_cpu_oracle_and_nonmutation():
     world, cells, config, dt = _paid_replication_fixture()
     if any(type(cell).__name__ != 'Formal066ProtoCell' for cell in cells):
-        raise AssertionError('A4.4a CPU oracle is not Formal066')
+        raise AssertionError('A4.4 CPU oracle is not Formal066')
     world_before = v3.pickle_clone(world.state_dict())
     rng_before = v3.pickle_clone(world.rng.bit_generator.state)
     ragged, state, binding = _paid_replication_binding(
@@ -1535,7 +1663,7 @@ def test_a44_requested_zero_and_exact_resource_boundaries():
 
 def test_a44_paid_replication_numpy_torch_devices_and_scope_readback():
     if torch is None:
-        raise AssertionError('PyTorch is required for A4.4a')
+        raise AssertionError('PyTorch is required for A4.4b')
     if _REQUIRE_CUDA and not torch.cuda.is_available():
         raise AssertionError('CUDA required but unavailable; CPU fallback forbidden')
     world, cells, config, dt = _paid_replication_fixture(seed=7803)
@@ -1573,11 +1701,11 @@ def test_a44_paid_replication_numpy_torch_devices_and_scope_readback():
         resident_state = state.to_torch(device=device)
         ragged_ptrs = resident_ragged.data_ptrs()
         state_ptrs = resident_state.data_ptrs()
-        resident_binding = _bind_a4_translation_resident(
+        resident_binding = a4.bind_a4_translation(
             resident_ragged, resident_state,
         )
         cache_ptrs = resident_binding.cache.data_ptrs()
-        plan = _paid_replication_elongation_torch(
+        plan = a44.paid_replication_elongation_torch(
             resident_binding, dt, world.config,
         )
         plan_ptrs = plan.data_ptrs()
@@ -1608,11 +1736,11 @@ def test_a44_paid_replication_numpy_torch_devices_and_scope_readback():
             atol=0.0, rtol=0.0, path='a44.state_source.%s' % device,
         )
 
-        invalid_binding = _bind_a4_translation_resident(
+        invalid_binding = a4.bind_a4_translation(
             inactive_ragged.to_torch(device=device),
             inactive_state.to_torch(device=device),
         )
-        invalid_plan = _paid_replication_elongation_torch(
+        invalid_plan = a44.paid_replication_elongation_torch(
             invalid_binding, dt, world.config,
         )
         _assert_raises(a44.A4ReplicationScopeError, invalid_plan.to_numpy)
@@ -1675,7 +1803,7 @@ def test_a44_capacity_scope_fail_closed_and_a3_authority():
     )
 
     trust_device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    resident_ragged_binding = _bind_a4_translation_resident(
+    resident_ragged_binding = a4.bind_a4_translation(
         exact_ragged.to_torch(device=trust_device),
         exact_binding.state.to_torch(device=trust_device),
     )
@@ -1685,18 +1813,18 @@ def test_a44_capacity_scope_fail_closed_and_a3_authority():
     ).to(torch.uint8)
     _assert_raises(
         a4.A4SchemaError,
-        lambda: _paid_replication_elongation_torch(
+        lambda: a44.paid_replication_elongation_torch(
             resident_ragged_binding, dt, world.config,
         ),
     )
-    resident_state_binding = _bind_a4_translation_resident(
+    resident_state_binding = a4.bind_a4_translation(
         exact_ragged.to_torch(device=trust_device),
         exact_binding.state.to_torch(device=trust_device),
     )
     resident_state_binding.state.pools[0, a4.a3.POOL_FUEL] += 1e-9
     _assert_raises(
         a4.A4SchemaError,
-        lambda: _paid_replication_elongation_torch(
+        lambda: a44.paid_replication_elongation_torch(
             resident_state_binding, dt, world.config,
         ),
     )
@@ -1717,11 +1845,11 @@ def test_a44_capacity_scope_fail_closed_and_a3_authority():
         'a44.capacity_plus_one',
     )
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    resident_full = _bind_a4_translation_resident(
+    resident_full = a4.bind_a4_translation(
         full_ragged.to_torch(device=device),
         full_state.to_torch(device=device),
     )
-    resident_capacity_plan = _paid_replication_elongation_torch(
+    resident_capacity_plan = a44.paid_replication_elongation_torch(
         resident_full, dt, world.config,
     )
     _assert_raises(a4.A4CapacityError, resident_capacity_plan.to_numpy)
@@ -1729,8 +1857,6 @@ def test_a44_capacity_scope_fail_closed_and_a3_authority():
     flag_cases = (
         ('genome_replication', False),
         ('mutation', True),
-        ('proofreading', True),
-        ('external_replicase', True),
         ('quiescence', True),
         ('quiescence_effector', True),
     )
@@ -1778,14 +1904,14 @@ def test_a44_capacity_scope_fail_closed_and_a3_authority():
     )
 
     expected_status = (
-        'a4.4a-active-template-mutation-free-proofreading-free-'
-        'noncompletion-paid-plan-not-integrated-cpu-authoritative'
+        'a4.4b-active-template-mutation-free-deterministic-proofreading-'
+        'quiescence-noncompletion-paid-plan-not-integrated-cpu-authoritative'
     )
     if a44.PORT_STATUS.get('genome_replication') != expected_status:
-        raise AssertionError('A4.4a CPU authority status differs')
+        raise AssertionError('A4.4b CPU authority status differs')
     if (a44.FULL_GPU_WORLD_STEP is not False
             or a44.PORT_STATUS.get('full_gpu_world_step') is not False):
-        raise AssertionError('A4.4a claimed full GPU authority')
+        raise AssertionError('A4.4b claimed full GPU authority')
     if a4.PORT_STATUS.get('genome_replication') != 'cpu-authoritative-next-a4-slice':
         raise AssertionError('A4 core authority was changed')
     if getattr(v3.a3_module(), 'FULL_GPU_WORLD_STEP', None) is not False:
@@ -1801,7 +1927,951 @@ def test_a44_capacity_scope_fail_closed_and_a3_authority():
         rng_before, world.rng.bit_generator.state, atol=0.0, rtol=0.0,
         path='a44.fail_closed_rng',
     )
-    return 'future-symbol exact/+1 atomic; 4 post-bind + forged-plan rejects; 6 flags + inactive/completion; A3 CPU authority'
+    return 'future-symbol exact/+1 atomic; trust/plan rejects; 4 flags + inactive/completion; A3 CPU authority'
+
+
+def test_a44b_feature_matrix_formal066_cpu_oracle():
+    world, cells, config, dt = _paid_replication_b_fixture()
+    if any(type(cell).__name__ != 'Formal066ProtoCell' for cell in cells):
+        raise AssertionError('A4.4b CPU oracle is not Formal066')
+
+    # Fix decoded promoter/efficiency arithmetic and the CPU multiplication
+    # grouping used by repair-localised proofreading/quiescence proteins.
+    repair_specs = [
+        spec for spec in cells[0].gene_specs.values()
+        if (int(spec['role']) == int(a4.a3.ROLE_REGULATOR)
+            and int(spec['localisation']) == int(a4.s4.LOC_REPAIR))
+    ]
+    if not repair_specs:
+        raise AssertionError('A4.4b fixture lacks repair-localised regulators')
+    for spec in repair_specs:
+        payload = spec['payload']
+        expected_promoter = 0.18 + 1.22 * (payload[3] / 7.0)
+        expected_efficiency = 0.52 + 0.96 * (payload[4] / 7.0)
+        if (float(spec['promoter']) != expected_promoter
+                or float(spec['efficiency']) != expected_efficiency):
+            raise AssertionError('gene decode changed base + scale*(byte/7.0)')
+    for kind in (a4.a3.REPAIR_PROOFREADING, a4.a3.REPAIR_QUIESCENCE):
+        v3.assert_recursive_close(
+            _cpu_raw_repair_activity(cells[0], kind),
+            cells[0].raw_repair_activity(kind),
+            atol=0.0, rtol=0.0, path='a44b.raw_repair.%d' % int(kind),
+        )
+
+    plans = {}
+    for label, model_config in (
+        ('proof_off', _replication_model_config(world.config)),
+        ('proof_on', _replication_model_config(
+            world.config, proofreading=True,
+        )),
+    ):
+        _, _, binding = _paid_replication_binding(
+            cells[:2], model_config, config,
+        )
+        plan = a44.paid_replication_elongation_numpy(
+            binding, dt, model_config,
+        )
+        cpu_cells = copy.deepcopy(cells[:2])
+        cpu_before = copy.deepcopy(cpu_cells)
+        for cell in cpu_cells:
+            cell._replicate_genome(world, dt, model_config)
+        _assert_paid_replication_cpu_parity(
+            plan, cpu_before, cpu_cells, 'a44b.%s' % label,
+        )
+        plans[label] = plan
+    if not np.array_equal(
+            plans['proof_off'].cumulative_proofreading_atp_after[:2],
+            np.asarray([
+                cells[0].cumulative_proofreading_atp,
+                cells[1].cumulative_proofreading_atp,
+            ], dtype=np.float64)):
+        raise AssertionError('proofreading-off changed cumulative ATP')
+    if not (
+            float(plans['proof_on'].cumulative_proofreading_atp_after[0])
+            > float(cells[0].cumulative_proofreading_atp)
+            and float(plans['proof_on'].last_effective_error_rate[0])
+            < float(plans['proof_off'].last_effective_error_rate[0])
+            and float(plans['proof_on'].replication_fractional_after[1])
+            < float(plans['proof_off'].replication_fractional_after[1])):
+        raise AssertionError('proofreading speed/error/payment branches not exercised')
+
+    all_on = _replication_model_config(
+        world.config, proofreading=True, external_replicase=True,
+        quiescence=True, quiescence_effector=True,
+    )
+    _, _, binding = _paid_replication_binding(cells[:2], all_on, config)
+    combined = a44.paid_replication_elongation_numpy(binding, dt, all_on)
+    cpu_cells = copy.deepcopy(cells[:2])
+    cpu_before = copy.deepcopy(cpu_cells)
+    for cell in cpu_cells:
+        cell._replicate_genome(world, dt, all_on)
+    _assert_paid_replication_cpu_parity(
+        combined, cpu_before, cpu_cells, 'a44b.combined',
+    )
+    inherited = cells[0].quiescence_level(all_on)
+    behavioural = cells[1].quiescence_level(all_on)
+    if not (inherited > cells[0].behavioural_quiescence
+            and behavioural == cells[1].behavioural_quiescence == 0.70):
+        raise AssertionError('inherited/behavioural quiescence dominance missing')
+
+    external = _external_only_replication_cell(cells[0])
+    external_config = _replication_model_config(
+        world.config, external_replicase=True,
+    )
+    _, _, external_binding = _paid_replication_binding(
+        [external], external_config, config,
+    )
+    external_plan = a44.paid_replication_elongation_numpy(
+        external_binding, dt, external_config,
+    )
+    external_cpu = [copy.deepcopy(external)]
+    external_before = copy.deepcopy(external_cpu)
+    external_cpu[0]._replicate_genome(world, dt, external_config)
+    _assert_paid_replication_cpu_parity(
+        external_plan, external_before, external_cpu, 'a44b.external_only',
+    )
+    no_external = _replication_model_config(world.config)
+    _assert_raises(
+        a44.A4ReplicationScopeError,
+        lambda: a44.paid_replication_elongation_numpy(
+            external_binding, dt, no_external,
+        ),
+    )
+    return 'proof on/off + inherited/behavioural q + external-only direct Formal066 exact'
+
+
+def test_a44b_proof_ledger_resource_error_and_nonmutation():
+    world, cells, config, dt = _paid_replication_b_fixture(seed=7902)
+    world_before = v3.pickle_clone(world.state_dict())
+    rng_before = v3.pickle_clone(world.rng.bit_generator.state)
+    ragged, state, binding = _paid_replication_binding(
+        cells, world.config, config,
+    )
+    ragged_before = ragged.state_dict()
+    state_before = state.state_dict()
+    cache_before = binding.cache.state_dict()
+    plan = a44.paid_replication_elongation_numpy(
+        binding, dt, world.config,
+    )
+    requested = [int(value) for value in plan.requested_symbols[:6]]
+    appended = [int(value) for value in plan.append_count[:6]]
+    if requested != [1, 0, 1, 1, 1, 1]:
+        raise AssertionError('A4.4b requested rows differ: %s' % requested)
+    if appended != [1, 0, 1, 0, 1, 0]:
+        raise AssertionError('A4.4b resource gates differ: %s' % appended)
+
+    cpu_cells = copy.deepcopy(cells)
+    cpu_before = copy.deepcopy(cpu_cells)
+    for cell in cpu_cells:
+        cell._replicate_genome(world, dt, world.config)
+    _assert_paid_replication_cpu_parity(
+        plan, cpu_before, cpu_cells, 'a44b.ledger_cpu',
+    )
+    for ci, (before, after) in enumerate(zip(cells, cpu_cells)):
+        v3.assert_recursive_close(
+            float(plan.cumulative_proofreading_atp_after[ci]),
+            float(after.cumulative_proofreading_atp),
+            atol=0.0, rtol=0.0,
+            path='a44b.cumulative_after[%d]' % ci,
+        )
+        if appended[ci] == 0 and (
+                float(after.cumulative_proofreading_atp)
+                != float(before.cumulative_proofreading_atp)):
+            raise AssertionError('unaccepted row paid proofreading ATP')
+
+    atp = int(a4.a3.POOL_ATP)
+    nucleotide = int(a4.a3.POOL_NUCLEOTIDE)
+    proof = _cpu_raw_repair_activity(
+        cells[2], a4.a3.REPAIR_PROOFREADING,
+    )
+    proof_fraction = proof / (0.75 + proof)
+    expected_atp_after = (
+        float(cells[2].pools[atp])
+        - (float(a4.g2.REPLICATION_ATP_PER_SYMBOL)
+           + 0.00075 * proof_fraction)
+    )
+    v3.assert_recursive_close(
+        float(plan.pools_after[2, atp]), expected_atp_after,
+        atol=4e-18, rtol=0.0, path='a44b.proof_atp_above_guard',
+    )
+    if float(plan.pools_after[3, atp]) != float(cells[3].pools[atp]):
+        raise AssertionError('proof ATP nextafter gate was not atomic')
+    if float(plan.pools_after[4, nucleotide]) != 0.0:
+        raise AssertionError('monomer exact gate did not pay to zero')
+    if (float(plan.pools_after[5, nucleotide])
+            != float(cells[5].pools[nucleotide])):
+        raise AssertionError('monomer nextafter gate was not atomic')
+    if (not np.array_equal(plan.pools_after[1], cells[1].pools)
+            or float(plan.cumulative_proofreading_atp_after[1])
+            != float(cells[1].cumulative_proofreading_atp)):
+        raise AssertionError('requested=0 changed a paid ledger')
+    if (not np.signbit(plan.cumulative_proofreading_atp_after[1])
+            or not np.signbit(cpu_cells[1].cumulative_proofreading_atp)):
+        raise AssertionError('requested=0 lost frozen negative-zero telemetry')
+
+    for ci in (0, 1):
+        proof = _cpu_raw_repair_activity(
+            cells[ci], a4.a3.REPAIR_PROOFREADING,
+        )
+        proof_fraction = proof / (0.75 + proof)
+        volume = max(
+            0.20, (cells[ci].radius / float(a4.s5.BASE_RADIUS)) ** 2,
+        )
+        reactive = cells[ci].pools[a4.a3.POOL_REACTIVE] / volume
+        raw_error = max(
+            0.0, float(world.config.mutation_rate)
+            + 0.0012 * cells[ci].replication_template_lesion
+            + 0.0010 * reactive,
+        )
+        expected_error = raw_error * (1.0 - 0.82 * proof_fraction)
+        v3.assert_recursive_close(
+            float(plan.last_effective_error_rate[ci]), expected_error,
+            atol=2e-15, rtol=0.0, path='a44b.error[%d]' % ci,
+        )
+
+    for label, expected, actual in (
+        ('world', world_before, world.state_dict()),
+        ('rng', rng_before, world.rng.bit_generator.state),
+        ('ragged', ragged_before, ragged.state_dict()),
+        ('state', state_before, state.state_dict()),
+        ('cache', cache_before, binding.cache.state_dict()),
+    ):
+        v3.assert_recursive_close(
+            expected, actual, atol=0.0, rtol=0.0,
+            path='a44b.nonmutation.%s' % label,
+        )
+    return ('proof after-state + guard-separated ATP ledgers + exact monomer '
+            'boundaries + lesion/reactive error; RNG/world/input exact')
+
+
+def test_a44b_numpy_torch_deterministic_devices_and_pointers():
+    if torch is None:
+        raise AssertionError('PyTorch is required for A4.4b')
+    if _REQUIRE_CUDA and not torch.cuda.is_available():
+        raise AssertionError('CUDA required but unavailable; CPU fallback forbidden')
+    world, cells, config, dt = _paid_replication_b_fixture(seed=7903)
+    ragged, state, binding = _paid_replication_binding(
+        cells, world.config, config,
+    )
+    expected = a44.paid_replication_elongation_numpy(
+        binding, dt, world.config,
+    )
+    expected_translation = a4.paid_translation_plan_numpy(binding, dt)
+    boundary_dt = float.fromhex('0x1.c46204851f076p-4')
+    boundary_ragged, boundary_state, boundary_binding = (
+        _paid_replication_binding([cells[0]], world.config, config)
+    )
+    _assert_raises(
+        a44.A4ReplicationScopeError,
+        lambda: a44.paid_replication_elongation_numpy(
+            boundary_binding, boundary_dt, world.config,
+        ),
+    )
+    control_dt = boundary_dt + 1e-10
+    control_expected = a44.paid_replication_elongation_numpy(
+        boundary_binding, control_dt, world.config,
+    )
+    if int(control_expected.requested_symbols[0]) != 5:
+        raise AssertionError('A4.4b nonambiguous boundary control drifted')
+    division_cell = copy.deepcopy(cells[0])
+    division_cell.radius = float.fromhex('0x1.5eaf9b4659ac2p-5')
+    division_dt = float.fromhex('0x1.c96cc2eb79450p-4')
+    division_ragged, division_state, division_binding = (
+        _paid_replication_binding([division_cell], world.config, config)
+    )
+    _assert_raises(
+        a44.A4ReplicationScopeError,
+        lambda: a44.paid_replication_elongation_numpy(
+            division_binding, division_dt, world.config,
+        ),
+    )
+    if (not a44._numpy_fp64_comparison_boundary(1e-6, 1e-6)
+            or a44._numpy_fp64_comparison_boundary(
+                1e-6 + 1e-10, 1e-6,
+            )
+            or not a44._numpy_fp64_integer_boundary(
+                float('nan'), float('nan'),
+            )):
+        raise AssertionError('NumPy derived comparison guard differs')
+    proof = _cpu_raw_repair_activity(
+        cells[2], a4.a3.REPAIR_PROOFREADING,
+    )
+    proof_fraction = proof / (0.75 + proof)
+    proof_atp_gate = (
+        float(a4.g2.REPLICATION_ATP_PER_SYMBOL)
+        + 0.00075 * proof_fraction + 0.022
+    )
+    payment_boundaries = []
+    for atp_value in (
+            proof_atp_gate, np.nextafter(proof_atp_gate, 0.0)):
+        payment_cell = copy.deepcopy(cells[2])
+        payment_cell.pools[a4.a3.POOL_ATP] = atp_value
+        payment_ragged, payment_state, payment_binding = (
+            _paid_replication_binding(
+                [payment_cell], world.config, config,
+            )
+        )
+        _assert_raises(
+            a44.A4ReplicationScopeError,
+            lambda payment_binding=payment_binding:
+                a44.paid_replication_elongation_numpy(
+                    payment_binding, dt, world.config,
+                ),
+        )
+        payment_boundaries.append((payment_ragged, payment_state))
+
+    # Construct an actual plan row on the derived replicase gate while
+    # preserving the active-protein pool ledger.  This pins code 6 at the
+    # public plan boundary rather than testing only the comparison helper.
+    replicase_cell = copy.deepcopy(cells[0])
+    replicase_ragged, replicase_state, initial_replicase_binding = (
+        _paid_replication_binding(
+            [replicase_cell], world.config, config,
+        )
+    )
+    replicase_specs = (
+        initial_replicase_binding.cache.materialize_gene_specs_host()[0]
+    )
+    replicase_positions = []
+    nonreplicase_positions = []
+    for position in range(int(replicase_state.active_count[0])):
+        fingerprint = int(
+            replicase_state.active_fingerprints[0, position]
+        )
+        spec = replicase_specs.get(fingerprint)
+        if (spec is not None
+                and int(spec['role']) == int(a4.a3.ROLE_REPLICASE)):
+            replicase_positions.append(position)
+        else:
+            nonreplicase_positions.append(position)
+    if len(replicase_positions) != 1 or not nonreplicase_positions:
+        raise AssertionError('replicase boundary fixture shape drifted')
+    rep_position = replicase_positions[0]
+    donor_position = nonreplicase_positions[0]
+    rep_fingerprint = int(
+        replicase_state.active_fingerprints[0, rep_position]
+    )
+    efficiency = float(replicase_specs[rep_fingerprint]['efficiency'])
+    pools = replicase_state.pools[0]
+    volume = max(
+        0.20,
+        (float(replicase_state.radius[0])
+         / float(a4.s5.BASE_RADIUS)) ** 2,
+    )
+    aggregate_concentration = float(
+        pools[a4.a3.POOL_AGGREGATE] / volume
+    )
+    active = max(0.0, float(pools[a4.a3.POOL_CATALYST]))
+    damaged = float(pools[a4.a3.POOL_DAMAGED_PROTEIN])
+    aggregate_pool = float(pools[a4.a3.POOL_AGGREGATE])
+    functional = active / max(
+        1e-9, active + damaged + aggregate_pool,
+    )
+    toxicity = 1.0 / (1.0 + 3.6 * aggregate_concentration)
+    proteostasis = float(np.clip(functional * toxicity, 0.02, 1.0))
+    genome_factor = 1.0 / (
+        1.0 + 0.85 * float(replicase_state.genome_lesion_mean[0])
+    )
+    target_mass = (
+        (1e-6 * 0.040 / (proteostasis * genome_factor)) / efficiency
+    )
+    old_mass = float(replicase_state.active_mass[0, rep_position])
+    transfer = old_mass - target_mass
+    replicase_state.active_mass[0, rep_position] = target_mass
+    replicase_state.active_mass[0, donor_position] += transfer
+    a4.validate_a4_translation_state(replicase_state)
+    replicase_boundary_binding = a4.bind_a4_translation(
+        replicase_ragged, replicase_state,
+    )
+    replicase_boundary_config = _replication_model_config(
+        world.config, proofreading=True, external_replicase=False,
+        quiescence=True, quiescence_effector=True,
+    )
+    observed_replicase = a44._numpy_replicase(
+        replicase_boundary_binding, 0, replicase_specs,
+    )
+    if not a44._numpy_fp64_comparison_boundary(
+            observed_replicase, 1e-6):
+        raise AssertionError('actual replicase row missed comparison guard')
+    _assert_raises(
+        a44.A4ReplicationScopeError,
+        lambda: a44.paid_replication_elongation_numpy(
+            replicase_boundary_binding, dt, replicase_boundary_config,
+        ),
+    )
+
+    overflow_ragged, overflow_state, initial_overflow_binding = (
+        _paid_replication_binding(
+            [copy.deepcopy(cells[0])], world.config, config,
+        )
+    )
+    overflow_specs = (
+        initial_overflow_binding.cache.materialize_gene_specs_host()[0]
+    )
+    proof_positions = []
+    for position in range(int(overflow_state.active_count[0])):
+        fingerprint = int(overflow_state.active_fingerprints[0, position])
+        spec = overflow_specs.get(fingerprint)
+        if (spec is not None
+                and int(spec['role']) == int(a4.a3.ROLE_REGULATOR)
+                and int(spec['localisation']) == int(a4.s4.LOC_REPAIR)
+                and int(spec['parameter']) % int(a4.a3.REPAIR_COUNT)
+                == int(a4.a3.REPAIR_PROOFREADING)):
+            proof_positions.append(position)
+    if not proof_positions:
+        raise AssertionError('overflow fixture lacks proof regulator')
+    overflow_state.active_mass[0, proof_positions[0]] = 1e308
+    ordered_active_total = 0.0
+    for position in range(int(overflow_state.active_count[0])):
+        ordered_active_total += float(overflow_state.active_mass[0, position])
+    overflow_state.pools[0, a4.a3.POOL_CATALYST] = ordered_active_total
+    a4.validate_a4_translation_state(overflow_state)
+    overflow_binding = a4.bind_a4_translation(
+        overflow_ragged, overflow_state,
+    )
+    _assert_raises(
+        a44.A4ReplicationScopeError,
+        lambda: a44.paid_replication_elongation_numpy(
+            overflow_binding, dt, world.config,
+        ),
+    )
+
+    # Pin the late proofreading-payment boundary that motivated the 4096-eps
+    # comparison band.  The ambiguous comparison occurs after 405 accepted
+    # symbols: narrower 8/512/2048-eps bands allowed the CUDA row to continue
+    # while NumPy/Torch CPU failed closed.  Keep this as an actual public plan
+    # row, not only a helper-level comparison.
+    late_payment_cell = copy.deepcopy(cells[0])
+    late_proof_fingerprint = 66246424745
+    late_proof_found = False
+    for fingerprint, spec in late_payment_cell.gene_specs.items():
+        if (int(spec['role']) == int(a4.a3.ROLE_REGULATOR)
+                and int(spec['localisation']) == int(a4.s4.LOC_REPAIR)
+                and int(spec['parameter']) % int(a4.a3.REPAIR_COUNT)
+                == int(a4.a3.REPAIR_PROOFREADING)):
+            late_payment_cell.proteins[fingerprint] = 0.0
+            if int(fingerprint) == late_proof_fingerprint:
+                late_proof_found = True
+    if not late_proof_found:
+        raise AssertionError('late payment proof fingerprint drifted')
+    late_payment_cell.proteins[late_proof_fingerprint] = float.fromhex(
+        '0x1.a027936981d40p-3'
+    )
+    late_payment_cell._sync_protein_pool()
+    late_payment_cell.radius = float.fromhex('0x1.3c3336c953ab2p-6')
+    late_payment_cell.pools[a4.a3.POOL_AGGREGATE] = float.fromhex(
+        '0x1.c6be302cd832cp-3'
+    )
+    late_payment_cell.pools[a4.a3.POOL_ATP] = float.fromhex(
+        '0x1.851a9a4931017p-1'
+    )
+    late_payment_cell.pools[a4.a3.POOL_NUCLEOTIDE] = 0.75
+    late_payment_cell.replication_fractional = 0.2718281828459045
+    if (len(late_payment_cell.replication_template) != 576
+            or len(late_payment_cell.replication_copy) != 8):
+        raise AssertionError('late payment template/copy shape drifted')
+    late_ragged, late_state, late_binding = _paid_replication_binding(
+        [late_payment_cell], world.config, config,
+    )
+    late_dt = 16.0
+    late_specs = late_binding.cache.materialize_gene_specs_host()[0]
+    late_proof = _cpu_raw_repair_activity(
+        late_payment_cell, a4.a3.REPAIR_PROOFREADING,
+    )
+    late_fraction = late_proof / (0.75 + late_proof)
+    late_gate = (
+        float(a4.g2.REPLICATION_ATP_PER_SYMBOL)
+        + 0.00075 * late_fraction + 0.022
+    )
+    if (late_gate.hex() != '0x1.863a7e0fc1aeap-6'
+            or late_specs[late_proof_fingerprint]['copy_number'] < 1):
+        raise AssertionError('late payment arithmetic fixture drifted')
+    _assert_raises(
+        a44.A4ReplicationScopeError,
+        lambda: a44.paid_replication_elongation_numpy(
+            late_binding, late_dt, world.config,
+        ),
+    )
+    world_before = v3.pickle_clone(world.state_dict())
+    source = '\n'.join(inspect.getsource(item) for item in (
+        a44.paid_replication_elongation_torch,
+        a44._torch_replicase,
+        a44._torch_numpy_pairwise_sum_rows,
+        a44._torch_fp64_integer_boundary,
+        a44._torch_fp64_comparison_boundary,
+        a4._torch_ordered_row_sum,
+    ))
+    forbidden = ('.item(', '.cpu(', '.numpy(', '.tolist(',
+                 'nonzero(', 'masked_select(', 'unique(', 'cumsum(')
+    found = [token for token in forbidden if token in source]
+    if found:
+        raise AssertionError('resident A4.4b contains host/dynamic op: %s' % found)
+
+    deterministic_before = torch.are_deterministic_algorithms_enabled()
+    warn_before = torch.is_deterministic_algorithms_warn_only_enabled()
+    devices = ['cpu']
+    if torch.cuda.is_available():
+        devices.append('cuda')
+    try:
+        torch.use_deterministic_algorithms(True)
+        for device in devices:
+            resident_ragged = ragged.to_torch(device=device)
+            resident_state = state.to_torch(device=device)
+            ragged_ptrs = resident_ragged.data_ptrs()
+            state_ptrs = resident_state.data_ptrs()
+            # Direct bind exercises deterministic resident gene decode.
+            resident_binding = a4.bind_a4_translation(
+                resident_ragged, resident_state,
+            )
+            cache_ptrs = resident_binding.cache.data_ptrs()
+            translation = a4.paid_translation_plan_torch(
+                resident_binding, dt,
+            )
+            plan = a44.paid_replication_elongation_torch(
+                resident_binding, dt, world.config,
+            )
+            boundary_resident = a4.bind_a4_translation(
+                boundary_ragged.to_torch(device=device),
+                boundary_state.to_torch(device=device),
+            )
+            boundary_plan = a44.paid_replication_elongation_torch(
+                boundary_resident, boundary_dt, world.config,
+            )
+            control_plan = a44.paid_replication_elongation_torch(
+                boundary_resident, control_dt, world.config,
+            ).to_numpy()
+            division_resident = a4.bind_a4_translation(
+                division_ragged.to_torch(device=device),
+                division_state.to_torch(device=device),
+            )
+            division_plan = a44.paid_replication_elongation_torch(
+                division_resident, division_dt, world.config,
+            )
+            payment_plans = []
+            for payment_ragged, payment_state in payment_boundaries:
+                payment_resident = a4.bind_a4_translation(
+                    payment_ragged.to_torch(device=device),
+                    payment_state.to_torch(device=device),
+                )
+                payment_plans.append(
+                    a44.paid_replication_elongation_torch(
+                        payment_resident, dt, world.config,
+                    )
+                )
+            replicase_resident = a4.bind_a4_translation(
+                replicase_ragged.to_torch(device=device),
+                replicase_state.to_torch(device=device),
+            )
+            replicase_boundary_plan = a44.paid_replication_elongation_torch(
+                replicase_resident, dt, replicase_boundary_config,
+            )
+            overflow_resident = a4.bind_a4_translation(
+                overflow_ragged.to_torch(device=device),
+                overflow_state.to_torch(device=device),
+            )
+            overflow_plan = a44.paid_replication_elongation_torch(
+                overflow_resident, dt, world.config,
+            )
+            late_resident = a4.bind_a4_translation(
+                late_ragged.to_torch(device=device),
+                late_state.to_torch(device=device),
+            )
+            late_plan = a44.paid_replication_elongation_torch(
+                late_resident, late_dt, world.config,
+            )
+            if not torch.are_deterministic_algorithms_enabled():
+                raise AssertionError('A4.4b disabled deterministic algorithms')
+            if any(getattr(plan, name).device.type != device
+                   for name in a44._PLAN_ARRAY_FIELDS):
+                raise AssertionError('%s A4.4b plan escaped device' % device)
+            plan_ptrs = plan.data_ptrs()
+            if device == 'cuda':
+                torch.cuda.synchronize()
+            v3.assert_recursive_close(
+                expected_translation.state_dict(),
+                translation.to_numpy().state_dict(),
+                atol=2e-12, rtol=0.0,
+                path='a44b.translation.%s' % device,
+            )
+            v3.assert_recursive_close(
+                expected.state_dict(), plan.to_numpy().state_dict(),
+                atol=2e-12, rtol=0.0, path='a44b.plan.%s' % device,
+            )
+            boundary_code = int(
+                boundary_plan.scope_error_code.detach().cpu().numpy()[0]
+            )
+            division_code = int(
+                division_plan.scope_error_code.detach().cpu().numpy()[0]
+            )
+            if (boundary_code != a44.SCOPE_FP64_DISCRETE_BOUNDARY
+                    or division_code != a44.SCOPE_FP64_DISCRETE_BOUNDARY):
+                raise AssertionError(
+                    '%s fp64 integer guard codes differ: %d/%d' % (
+                        device, boundary_code, division_code,
+                    )
+                )
+            _assert_raises(
+                a44.A4ReplicationScopeError, boundary_plan.to_numpy,
+            )
+            _assert_raises(
+                a44.A4ReplicationScopeError, division_plan.to_numpy,
+            )
+            for payment_plan in payment_plans:
+                payment_code = int(
+                    payment_plan.scope_error_code.detach().cpu().numpy()[0]
+                )
+                if payment_code != a44.SCOPE_FP64_DISCRETE_BOUNDARY:
+                    raise AssertionError(
+                        '%s proof ATP guard code differs: %d' % (
+                            device, payment_code,
+                        )
+                    )
+                _assert_raises(
+                    a44.A4ReplicationScopeError, payment_plan.to_numpy,
+                )
+            replicase_code = int(
+                replicase_boundary_plan.scope_error_code.detach().cpu()
+                .numpy()[0]
+            )
+            if replicase_code != a44.SCOPE_FP64_DISCRETE_BOUNDARY:
+                raise AssertionError(
+                    '%s actual replicase guard code differs: %d' % (
+                        device, replicase_code,
+                    )
+                )
+            if (int(replicase_boundary_plan.requested_symbols.detach().cpu()
+                    .numpy()[0]) != 0
+                    or int(replicase_boundary_plan.append_count.detach().cpu()
+                           .numpy()[0]) != 0
+                    or float(
+                        replicase_boundary_plan.replication_fractional_after
+                        .detach().cpu().numpy()[0]
+                    ) != 0.0):
+                raise AssertionError(
+                    '%s replicase-boundary telemetry was speculative' % device
+                )
+            _assert_raises(
+                a44.A4ReplicationScopeError,
+                replicase_boundary_plan.to_numpy,
+            )
+            overflow_code = int(
+                overflow_plan.scope_error_code.detach().cpu().numpy()[0]
+            )
+            if overflow_code != a44.SCOPE_FP64_DISCRETE_BOUNDARY:
+                raise AssertionError(
+                    '%s nonfinite kinetics guard code differs: %d' % (
+                        device, overflow_code,
+                    )
+                )
+            if (int(overflow_plan.requested_symbols.detach().cpu()
+                    .numpy()[0]) != 0
+                    or int(overflow_plan.append_count.detach().cpu()
+                           .numpy()[0]) != 0
+                    or float(
+                        overflow_plan.replication_fractional_after
+                        .detach().cpu().numpy()[0]
+                    ) != 0.0):
+                raise AssertionError(
+                    '%s nonfinite kinetics telemetry was speculative' % device
+                )
+            _assert_raises(
+                a44.A4ReplicationScopeError, overflow_plan.to_numpy,
+            )
+            late_code = int(
+                late_plan.scope_error_code.detach().cpu().numpy()[0]
+            )
+            if late_code != a44.SCOPE_FP64_DISCRETE_BOUNDARY:
+                raise AssertionError(
+                    '%s late proof-payment guard code differs: %d' % (
+                        device, late_code,
+                    )
+                )
+            if (int(late_plan.requested_symbols.detach().cpu().numpy()[0])
+                    != 0
+                    or int(late_plan.append_count.detach().cpu().numpy()[0])
+                    != 0
+                    or float(
+                        late_plan.replication_fractional_after.detach().cpu()
+                        .numpy()[0]
+                    ) != 0.0):
+                raise AssertionError(
+                    '%s late proof-payment telemetry was speculative' % device
+                )
+            _assert_raises(
+                a44.A4ReplicationScopeError, late_plan.to_numpy,
+            )
+            v3.assert_recursive_close(
+                control_expected.state_dict(), control_plan.state_dict(),
+                atol=2e-12, rtol=0.0,
+                path='a44b.nonambiguous_control.%s' % device,
+            )
+            pairwise_values = (
+                np.clip(
+                    np.asarray(boundary_state.membrane_oxidation[:1]),
+                    0.0, 2.5,
+                )
+                * np.maximum(
+                    np.asarray(boundary_state.membrane[:1]), 1e-9,
+                )
+            )
+            pairwise_expected = np.sum(
+                pairwise_values, axis=1, dtype=np.float64,
+            )
+            pairwise_actual = a44._torch_numpy_pairwise_sum_rows(
+                torch.as_tensor(
+                    pairwise_values, dtype=torch.float64, device=device,
+                )
+            ).detach().cpu().numpy()
+            if not np.array_equal(
+                    pairwise_expected.view(np.uint64),
+                    pairwise_actual.view(np.uint64)):
+                raise AssertionError(
+                    '%s NumPy pairwise fp64 fold differs' % device
+                )
+            comparison_probe = torch.as_tensor(
+                [1e-6, 1e-6 + 1e-10],
+                dtype=torch.float64, device=device,
+            )
+            comparison_guard = a44._torch_fp64_comparison_boundary(
+                comparison_probe, 1e-6,
+            ).detach().cpu().numpy()
+            if not np.array_equal(
+                    comparison_guard, np.asarray([True, False])):
+                raise AssertionError(
+                    '%s derived comparison guard differs' % device
+                )
+            nonfinite_guard = a44._torch_fp64_integer_boundary(
+                torch.as_tensor(
+                    [float('nan'), 0.25],
+                    dtype=torch.float64, device=device,
+                ),
+                torch.as_tensor(
+                    [float('nan'), 0.0],
+                    dtype=torch.float64, device=device,
+                ),
+            ).detach().cpu().numpy()
+            if not np.array_equal(
+                    nonfinite_guard, np.asarray([True, False])):
+                raise AssertionError(
+                    '%s nonfinite progress guard differs' % device
+                )
+            if (ragged_ptrs != resident_ragged.data_ptrs()
+                    or state_ptrs != resident_state.data_ptrs()
+                    or cache_ptrs != resident_binding.cache.data_ptrs()
+                    or plan_ptrs != plan.data_ptrs()):
+                raise AssertionError('%s resident pointer changed' % device)
+            v3.assert_recursive_close(
+                ragged.state_dict(), resident_ragged.to_numpy().state_dict(),
+                atol=0.0, rtol=0.0,
+                path='a44b.ragged_source.%s' % device,
+            )
+            v3.assert_recursive_close(
+                state.state_dict(), resident_state.to_numpy().state_dict(),
+                atol=0.0, rtol=0.0,
+                path='a44b.state_source.%s' % device,
+            )
+    finally:
+        torch.use_deterministic_algorithms(
+            deterministic_before, warn_only=warn_before,
+        )
+    v3.assert_recursive_close(
+        world_before, world.state_dict(), atol=0.0, rtol=0.0,
+        path='a44b.device_world',
+    )
+    return ('deterministic=True direct gene decode/translation/replication '
+            'NumPy/Torch %s; pairwise fold exact + two fp64 integer '
+            'boundaries plus first/late proof-ATP, replicase, and nonfinite '
+            'comparisons '
+            'fail closed + control/pointers exact') % '/'.join(devices)
+
+
+def test_a44b_capacity_scope_and_a3_authority():
+    world, cells, roomy_config, dt = _paid_replication_b_fixture(seed=7904)
+    single = [cells[0]]
+    probe = a4.FullFidelityA4GenomeAdapter(roomy_config).pack_cells(single)
+    common = {
+        'max_cells': 1,
+        'max_sequences': int(probe.sequence_count),
+        'max_sequence_symbols': int(roomy_config.max_sequence_symbols),
+        'max_proteins_per_cell': int(roomy_config.max_proteins_per_cell),
+    }
+    exact_config = a4.GPU068A4Config(
+        max_symbols=int(probe.symbol_count) + 1, **common
+    )
+    exact_ragged, _, exact_binding = _paid_replication_binding(
+        single, world.config, exact_config,
+    )
+    exact_plan = a44.paid_replication_elongation_numpy(
+        exact_binding, dt, world.config,
+    )
+    if (int(exact_ragged.symbol_capacity) != int(exact_ragged.symbol_count) + 1
+            or int(exact_plan.append_count[0]) != 1):
+        raise AssertionError('A4.4b exact future capacity did not pass')
+    full_config = a4.GPU068A4Config(
+        max_symbols=int(probe.symbol_count), **common
+    )
+    _, _, full_binding = _paid_replication_binding(
+        single, world.config, full_config,
+    )
+    _assert_replication_failure_atomic(
+        a4.A4CapacityError, full_binding,
+        lambda: a44.paid_replication_elongation_numpy(
+            full_binding, dt, world.config,
+        ),
+        'a44b.capacity_plus_one',
+    )
+
+    negative_atp = copy.deepcopy(cells[0])
+    negative_atp.pools[a4.a3.POOL_ATP] = -1e-12
+    negative_atp.replication_fractional = 0.5
+    negative_dt = 1e6
+    _, negative_state, negative_binding = _paid_replication_binding(
+        [negative_atp], world.config, roomy_config,
+    )
+    _assert_replication_failure_atomic(
+        a44.A4ReplicationScopeError, negative_binding,
+        lambda: a44.paid_replication_elongation_numpy(
+            negative_binding, negative_dt, world.config,
+        ),
+        'a44b.negative_atp',
+    )
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    negative_ragged = negative_binding.ragged.to_torch(device)
+    negative_resident = a4.bind_a4_translation(
+        negative_ragged, negative_state.to_torch(device),
+    )
+    negative_plan = a44.paid_replication_elongation_torch(
+        negative_resident, negative_dt, world.config,
+    )
+    if (int(negative_plan.scope_error_code[0])
+            != int(a44.SCOPE_NEGATIVE_ATP)
+            or int(negative_plan.requested_symbols[0]) != 0
+            or float(negative_plan.replication_fractional_after[0]) != 0.0):
+        raise AssertionError('negative ATP entered resident rate telemetry')
+    _assert_raises(a44.A4ReplicationScopeError, negative_plan.to_numpy)
+
+    zero_genome = copy.deepcopy(cells[0])
+    zero_genome.genomes = []
+    zero_genome.genome_lesions = []
+    zero_genome._refresh_gene_cache()
+    _, _, zero_binding = _paid_replication_binding(
+        [zero_genome], world.config, roomy_config,
+    )
+    _assert_replication_failure_atomic(
+        a44.A4ReplicationScopeError, zero_binding,
+        lambda: a44.paid_replication_elongation_numpy(
+            zero_binding, dt, world.config,
+        ),
+        'a44b.zero_genome_active_template',
+    )
+
+    mismatched = copy.deepcopy(world.config)
+    mismatched.quiescence = not mismatched.quiescence
+    _assert_replication_failure_atomic(
+        a44.A4ReplicationScopeError, exact_binding,
+        lambda: a44.paid_replication_elongation_numpy(
+            exact_binding, dt, mismatched,
+        ),
+        'a44b.quiescence_metadata_mismatch',
+    )
+    mutation = copy.deepcopy(world.config)
+    mutation.mutation = True
+    _assert_replication_failure_atomic(
+        a44.A4ReplicationScopeError, exact_binding,
+        lambda: a44.paid_replication_elongation_numpy(
+            exact_binding, dt, mutation,
+        ),
+        'a44b.mutation_scope',
+    )
+    external_only = _external_only_replication_cell(cells[0])
+    no_external = _replication_model_config(world.config)
+    _, _, no_external_binding = _paid_replication_binding(
+        [external_only], no_external, roomy_config,
+    )
+    _assert_replication_failure_atomic(
+        a44.A4ReplicationScopeError, no_external_binding,
+        lambda: a44.paid_replication_elongation_numpy(
+            no_external_binding, dt, no_external,
+        ),
+        'a44b.replicase_gate',
+    )
+
+    completing = copy.deepcopy(cells[0])
+    completing.replication_copy = [
+        int(value) for value in completing.replication_template[:-1]
+    ]
+    completing.replication_fractional = np.nextafter(1.0, 0.0)
+    _, _, completing_binding = _paid_replication_binding(
+        [completing], world.config, roomy_config,
+    )
+    _assert_replication_failure_atomic(
+        a44.A4ReplicationScopeError, completing_binding,
+        lambda: a44.paid_replication_elongation_numpy(
+            completing_binding, dt, world.config,
+        ),
+        'a44b.completion',
+    )
+
+    completion_probe = a4.FullFidelityA4GenomeAdapter(
+        roomy_config,
+    ).pack_cells([completing])
+    completion_capacity = a4.GPU068A4Config(
+        max_cells=1,
+        max_sequences=int(completion_probe.sequence_count),
+        max_symbols=int(completion_probe.symbol_count),
+        max_sequence_symbols=int(roomy_config.max_sequence_symbols),
+        max_proteins_per_cell=int(roomy_config.max_proteins_per_cell),
+    )
+    completion_ragged, completion_state, completion_capacity_binding = (
+        _paid_replication_binding(
+            [completing], world.config, completion_capacity,
+        )
+    )
+    _assert_replication_failure_atomic(
+        a4.A4CapacityError, completion_capacity_binding,
+        lambda: a44.paid_replication_elongation_numpy(
+            completion_capacity_binding, dt, world.config,
+        ),
+        'a44b.completion_capacity_priority',
+    )
+    completion_resident = a4.bind_a4_translation(
+        completion_ragged.to_torch(device),
+        completion_state.to_torch(device),
+    )
+    completion_capacity_plan = a44.paid_replication_elongation_torch(
+        completion_resident, dt, world.config,
+    )
+    _assert_raises(
+        a4.A4CapacityError, completion_capacity_plan.to_numpy,
+    )
+
+    forged = exact_plan.clone()
+    forged.cumulative_proofreading_atp_after[0] = -1e-12
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a44.validate_a4_paid_elongation_plan(forged),
+    )
+    forged_atp = exact_plan.clone()
+    forged_atp.pools_after[0, a4.a3.POOL_ATP] = -1e-12
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a44.validate_a4_paid_elongation_plan(forged_atp),
+    )
+    expected_status = (
+        'a4.4b-active-template-mutation-free-deterministic-proofreading-'
+        'quiescence-noncompletion-paid-plan-not-integrated-cpu-authoritative'
+    )
+    if (a44.PORT_STATUS.get('genome_replication') != expected_status
+            or a44.FULL_GPU_WORLD_STEP is not False
+            or a44.PORT_STATUS.get('full_gpu_world_step') is not False):
+        raise AssertionError('A4.4b CPU authority status differs')
+    if (a4.PORT_STATUS.get('genome_replication')
+            != 'cpu-authoritative-next-a4-slice'):
+        raise AssertionError('A4 core replication authority changed')
+    if (getattr(v3.a3_module(), 'FULL_GPU_WORLD_STEP', None) is not False
+            or v3._event_order().count('replication_cpu') != 1):
+        raise AssertionError('A3 CPU replication authority changed')
+    return 'exact/+1 and completion+capacity priority; negative ATP telemetry/zero-genome/config/mutation/replicase/completion fail closed; A3 authority'
 
 
 TESTS = (
@@ -1826,6 +2896,10 @@ TESTS = (
     test_a44_requested_zero_and_exact_resource_boundaries,
     test_a44_paid_replication_numpy_torch_devices_and_scope_readback,
     test_a44_capacity_scope_fail_closed_and_a3_authority,
+    test_a44b_feature_matrix_formal066_cpu_oracle,
+    test_a44b_proof_ledger_resource_error_and_nonmutation,
+    test_a44b_numpy_torch_deterministic_devices_and_pointers,
+    test_a44b_capacity_scope_and_a3_authority,
 )
 
 
@@ -1861,7 +2935,7 @@ def run_all(write=False, output_dir=None):
             'paid_replication_elongation': a44.SCHEMA_VERSION,
         },
         'development_slice': (
-            'A4.4a-pre-existing-template-paid-dna-elongation-plan'
+            'A4.4b-deterministic-proofreading-quiescence-elongation-plan'
         ),
         'promoted_baseline_unchanged': 'SOMA-CELL 0.6.8-GPU A3',
         'full_gpu_world_step': False,

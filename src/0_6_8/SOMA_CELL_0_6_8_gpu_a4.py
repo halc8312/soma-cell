@@ -40,12 +40,12 @@ s5 = a3.s5
 s4 = s5.s4
 s65 = a3.s66.s65
 
-BUILD = 'SOMA-CELL 0.6.8-GPU A4.3'
+BUILD = 'SOMA-CELL 0.6.8-GPU A4.4b'
 BUILD_ID = BUILD
-BUILD_LONG = BUILD + ' | resident ragged genomes, gene decode, and paid translation plan'
+BUILD_LONG = BUILD + ' | resident ragged genomes, paid translation, and proofreading state'
 SCHEMA_VERSION = '0.6.8-GPU-A4.1-ragged-genome'
 GENE_CACHE_SCHEMA_VERSION = '0.6.8-GPU-A4.2-gene-cache'
-TRANSLATION_SCHEMA_VERSION = '0.6.8-GPU-A4.3-paid-translation-state'
+TRANSLATION_SCHEMA_VERSION = '0.6.8-GPU-A4.4b-paid-translation-state'
 FULL_GPU_WORLD_STEP = False
 TRANSLATION_LEDGER_ATOL = 2e-12
 TRANSLATION_PAID_POOL_INDICES = (
@@ -148,7 +148,8 @@ _GENE_UINT8_FIELDS = ('payloads',)
 _TRANSLATION_ARRAY_FIELDS = (
     'cell_ids', 'cell_mask', 'pools', 'membrane', 'membrane_oxidation',
     'damage_trace', 'radius', 'current_stress', 'division_progress',
-    'last_translation', 'last_quiescence', 'active_fingerprints',
+    'last_translation', 'last_quiescence', 'cumulative_proofreading_atp',
+    'active_fingerprints',
     'active_mass', 'active_count', 'damaged_fingerprints', 'damaged_mass',
     'damaged_count', 'last_receptor_activity', 'last_control_vectors',
     'last_control_scalars', 'last_edna_signal', 'last_corpse_signal',
@@ -192,6 +193,17 @@ def _require_capacity(observed, capacity, label):
         )
 
 
+def _ragged_scalar_metadata(batch):
+    """Host scalar identity for one validated resident ragged upload."""
+    return (
+        str(batch.schema_version), int(batch.cell_capacity),
+        int(batch.sequence_capacity), int(batch.symbol_capacity),
+        int(batch.max_sequence_symbols), int(batch.cell_count),
+        int(batch.sequence_count), int(batch.symbol_count),
+        int(batch.lesion_count),
+    )
+
+
 @dataclass
 class A4RaggedGenomeBatch:
     """Fixed-capacity arena for one world's structural genome state.
@@ -224,6 +236,11 @@ class A4RaggedGenomeBatch:
 
     def clone(self):
         if _is_tensor(self.symbols):
+            if getattr(self, '_a4_translation_metadata', None) != (
+                    _ragged_scalar_metadata(self)):
+                raise A4SchemaError(
+                    'cannot clone changed resident ragged metadata'
+                )
             if getattr(self, '_a4_translation_data_ptrs', None) != self.data_ptrs():
                 raise A4SchemaError(
                     'cannot clone changed resident ragged storage'
@@ -253,6 +270,10 @@ class A4RaggedGenomeBatch:
                 copy.deepcopy(self._a4_translation_provenance),
             )
         if _is_tensor(out.symbols):
+            object.__setattr__(
+                out, '_a4_translation_metadata',
+                _ragged_scalar_metadata(out),
+            )
             object.__setattr__(
                 out, '_a4_translation_data_ptrs', out.data_ptrs(),
             )
@@ -308,6 +329,10 @@ class A4RaggedGenomeBatch:
         object.__setattr__(
             out, '_a4_translation_provenance',
             _ragged_translation_provenance(self),
+        )
+        object.__setattr__(
+            out, '_a4_translation_metadata',
+            _ragged_scalar_metadata(out),
         )
         object.__setattr__(
             out, '_a4_translation_data_ptrs', out.data_ptrs(),
@@ -1409,6 +1434,17 @@ def _gene_cache_provenance(cache):
     return digest.hexdigest()
 
 
+def _translation_scalar_metadata(state):
+    """Host scalar identity for one validated resident physiology upload."""
+    return (
+        str(state.schema_version), int(state.cell_capacity),
+        int(state.protein_capacity), int(state.cell_count),
+        bool(state.gene_expression), bool(state.external_translator),
+        bool(state.protein_repair), bool(state.quiescence),
+        bool(state.quiescence_effector), str(state.source_provenance),
+    )
+
+
 @dataclass
 class A4TranslationStateBatch:
     """Fixed-shape pre/post snapshot for one pure paid-translation plan.
@@ -1439,6 +1475,7 @@ class A4TranslationStateBatch:
     division_progress: object
     last_translation: object
     last_quiescence: object
+    cumulative_proofreading_atp: object
     active_fingerprints: object
     active_mass: object
     active_count: object
@@ -1460,6 +1497,11 @@ class A4TranslationStateBatch:
 
     def clone(self):
         if _is_tensor(self.pools):
+            if getattr(self, '_a4_translation_metadata', None) != (
+                    _translation_scalar_metadata(self)):
+                raise A4SchemaError(
+                    'cannot clone changed resident translation metadata'
+                )
             if getattr(self, '_a4_translation_data_ptrs', None) != self.data_ptrs():
                 raise A4SchemaError(
                     'cannot clone changed resident translation storage'
@@ -1485,6 +1527,10 @@ class A4TranslationStateBatch:
             )
         out = A4TranslationStateBatch(**values)
         if _is_tensor(out.pools):
+            object.__setattr__(
+                out, '_a4_translation_metadata',
+                _translation_scalar_metadata(out),
+            )
             object.__setattr__(
                 out, '_a4_translation_data_ptrs', out.data_ptrs(),
             )
@@ -1521,6 +1567,10 @@ class A4TranslationStateBatch:
             values[item.name] = value
         out = A4TranslationStateBatch(**values)
         _validate_translation_resident_metadata(out)
+        object.__setattr__(
+            out, '_a4_translation_metadata',
+            _translation_scalar_metadata(out),
+        )
         object.__setattr__(out, '_a4_translation_data_ptrs', out.data_ptrs())
         object.__setattr__(
             out, '_a4_translation_versions',
@@ -1590,6 +1640,14 @@ def _translation_state_provenance(state):
 _TRANSLATION_BINDING_TOKEN = object()
 
 
+def _gene_cache_scalar_metadata(cache):
+    return (
+        str(cache.schema_version), int(cache.cell_capacity),
+        int(cache.entry_capacity), int(cache.max_sequence_symbols),
+        int(cache.cell_count),
+    )
+
+
 @dataclass(frozen=True, init=False)
 class A4TranslationBinding:
     """Ephemeral binding to a cache decoded from this exact ragged object."""
@@ -1597,6 +1655,9 @@ class A4TranslationBinding:
     ragged: A4RaggedGenomeBatch
     cache: A4GeneCacheBatch
     state: A4TranslationStateBatch
+    _ragged_metadata: object
+    _state_metadata: object
+    _cache_metadata: object
     _ragged_provenance: object
     _state_provenance: object
     _ragged_data_ptrs: object
@@ -1621,6 +1682,12 @@ def _require_translation_binding(binding):
     ragged = binding.ragged
     state = binding.state
     cache = binding.cache
+    if binding._ragged_metadata != _ragged_scalar_metadata(ragged):
+        raise A4SchemaError('bound ragged scalar metadata changed')
+    if binding._state_metadata != _translation_scalar_metadata(state):
+        raise A4SchemaError('bound translation scalar metadata changed')
+    if binding._cache_metadata != _gene_cache_scalar_metadata(cache):
+        raise A4SchemaError('bound gene-cache scalar metadata changed')
     if _is_tensor(ragged.symbols):
         if (binding._ragged_data_ptrs != ragged.data_ptrs()
                 or binding._state_data_ptrs != state.data_ptrs()):
@@ -1704,7 +1771,7 @@ def _translation_expected_shapes(state):
         'damage_trace': (C, int(a3.MEMBRANE_SEGMENTS)),
         'radius': (C,), 'current_stress': (C,),
         'division_progress': (C,), 'last_translation': (C,),
-        'last_quiescence': (C,),
+        'last_quiescence': (C,), 'cumulative_proofreading_atp': (C,),
         'active_fingerprints': (C, P), 'active_mass': (C, P),
         'active_count': (C,), 'damaged_fingerprints': (C, P),
         'damaged_mass': (C, P), 'damaged_count': (C,),
@@ -1789,6 +1856,7 @@ def validate_a4_translation_state(state):
         'last_receptor_activity', 'last_edna_signal', 'last_corpse_signal',
         'last_necrotoxin_signal', 'behavioural_quiescence',
         'neural_attachment_osmolyte', 'genome_lesion_mean',
+        'cumulative_proofreading_atp',
     )
     if any(np.any(raw[name][:N] < 0.0) for name in nonnegative):
         raise A4SchemaError('translation state contains negative biology')
@@ -1937,6 +2005,7 @@ class FullFidelityA4TranslationAdapter:
             'division_progress': np.zeros((C,), dtype=np.float64),
             'last_translation': np.zeros((C,), dtype=np.float64),
             'last_quiescence': np.zeros((C,), dtype=np.float64),
+            'cumulative_proofreading_atp': np.zeros((C,), dtype=np.float64),
             'active_fingerprints': np.full((C, P), -1, dtype=np.int64),
             'active_mass': np.zeros((C, P), dtype=np.float64),
             'active_count': np.zeros((C,), dtype=np.int64),
@@ -1986,6 +2055,7 @@ class FullFidelityA4TranslationAdapter:
                 'cell[%d].damage_trace' % ci, True)
             for name in ('radius', 'current_stress', 'division_progress',
                          'last_translation', 'last_quiescence',
+                         'cumulative_proofreading_atp',
                          'last_edna_signal', 'last_corpse_signal',
                          'last_necrotoxin_signal', 'behavioural_quiescence'):
                 if not hasattr(cell, name):
@@ -2130,6 +2200,14 @@ def bind_a4_translation(ragged, state):
     if ragged_tensor:
         _validate_resident_ragged_metadata(ragged)
         _validate_translation_resident_metadata(state)
+        if getattr(ragged, '_a4_translation_metadata', None) != (
+                _ragged_scalar_metadata(ragged)):
+            raise A4SchemaError('resident ragged metadata changed after upload')
+        if getattr(state, '_a4_translation_metadata', None) != (
+                _translation_scalar_metadata(state)):
+            raise A4SchemaError(
+                'resident translation metadata changed after upload'
+            )
         if str(ragged.symbols.device) != str(state.pools.device):
             raise A4SchemaError('translation binding devices differ')
         if ragged.cell_capacity != state.cell_capacity or ragged.cell_count != state.cell_count:
@@ -2167,6 +2245,15 @@ def bind_a4_translation(ragged, state):
     object.__setattr__(binding, 'ragged', ragged)
     object.__setattr__(binding, 'cache', cache)
     object.__setattr__(binding, 'state', state)
+    object.__setattr__(
+        binding, '_ragged_metadata', _ragged_scalar_metadata(ragged),
+    )
+    object.__setattr__(
+        binding, '_state_metadata', _translation_scalar_metadata(state),
+    )
+    object.__setattr__(
+        binding, '_cache_metadata', _gene_cache_scalar_metadata(cache),
+    )
     if ragged_tensor:
         object.__setattr__(binding, '_ragged_provenance', None)
         object.__setattr__(binding, '_state_provenance', None)
@@ -2513,10 +2600,17 @@ def paid_translation_plan_numpy(binding, dt):
 
 
 def _torch_ordered_row_sum(values):
-    if int(values.shape[1]) == 0:
-        return torch.zeros((values.shape[0],), dtype=values.dtype,
-                           device=values.device)
-    return torch.cumsum(values, dim=1)[:, -1]
+    # The frozen Python dictionaries use a literal left fold.  CUDA cumsum is
+    # deterministic for these tensors but may associate fp64 additions
+    # differently, which can move branch-critical repair/replication signals
+    # by several ULPs.  Keep a host-known column loop batched across cells;
+    # this is a correctness implementation and makes no speed claim.
+    total = torch.zeros(
+        (values.shape[0],), dtype=values.dtype, device=values.device,
+    )
+    for position in range(int(values.shape[1])):
+        total = total + values[:, position]
+    return total
 
 
 def paid_translation_plan_torch(binding, dt):

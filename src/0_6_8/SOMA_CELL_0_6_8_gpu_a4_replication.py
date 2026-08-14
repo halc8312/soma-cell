@@ -1,10 +1,12 @@
 # coding: utf-8
-"""A4.4a pure resident paid DNA-elongation plan.
+"""A4.4b pure resident paid DNA-elongation plan.
 
 This deliberately narrow development slice handles only a pre-existing active
 replication template whose partial copy remains incomplete in this call.  It
-does not select a template, proofread, mutate, complete a genome, consume RNG,
-or replace the A3 scheduler.  Frozen Formal066 CPU behavior remains authority.
+adds deterministic proofreading, inherited/behavioural quiescence, and an
+external-replicase contribution.  It does not select a template, mutate,
+complete a genome, consume RNG, or replace the A3 scheduler.  Frozen Formal066
+CPU behavior remains authority.
 """
 from __future__ import division
 
@@ -22,10 +24,10 @@ except Exception:  # pragma: no cover - NumPy reference remains importable
     torch = None
 
 
-BUILD = 'SOMA-CELL 0.6.8-GPU A4.4a'
+BUILD = 'SOMA-CELL 0.6.8-GPU A4.4b'
 BUILD_ID = BUILD
-BUILD_LONG = BUILD + ' | pre-existing-template paid DNA elongation plan'
-SCHEMA_VERSION = '0.6.8-GPU-A4.4a-paid-dna-elongation-plan'
+BUILD_LONG = BUILD + ' | deterministic proofreading/quiescence elongation plan'
+SCHEMA_VERSION = '0.6.8-GPU-A4.4b-paid-dna-elongation-plan'
 FULL_GPU_WORLD_STEP = False
 
 SCOPE_OK = 0
@@ -33,12 +35,21 @@ SCOPE_INACTIVE_TEMPLATE = 1
 SCOPE_REPLICASE_GATE = 2
 SCOPE_COMPLETION = 3
 SCOPE_CAPACITY = 4
+SCOPE_NEGATIVE_ATP = 5
+SCOPE_FP64_DISCRETE_BOUNDARY = 6
+
+# CPU and CUDA fp64 division may differ by a few ulps.  Do not turn that
+# continuous discrepancy into a different integer symbol request.  The
+# deliberately conservative band is an engineering scope boundary, not a
+# replacement arithmetic model; ambiguous rows remain CPU-authoritative.
+FP64_DISCRETE_GUARD_EPS = 4096.0
+FP64_EPSILON = float(np.finfo(np.float64).eps)
 
 _PLAN_ARRAY_FIELDS = (
     'cell_ids', 'cell_mask', 'scope_valid', 'scope_error_code',
     'requested_symbols', 'append_symbols', 'append_count', 'pools_after',
     'replication_fractional_after', 'last_replication_symbols',
-    'last_effective_error_rate',
+    'last_effective_error_rate', 'cumulative_proofreading_atp_after',
 )
 _PLAN_UINT8_FIELDS = ('append_symbols',)
 _PLAN_INT64_FIELDS = (
@@ -48,7 +59,7 @@ _PLAN_INT64_FIELDS = (
 _PLAN_BOOL_FIELDS = ('cell_mask', 'scope_valid')
 _PLAN_FLOAT64_FIELDS = (
     'pools_after', 'replication_fractional_after',
-    'last_effective_error_rate',
+    'last_effective_error_rate', 'cumulative_proofreading_atp_after',
 )
 
 
@@ -93,14 +104,10 @@ def _strict_bool(value, label):
 
 
 def _supported_config(config):
-    """Extract exactly the host flags supported by A4.4a."""
+    """Extract exactly the host flags supported by A4.4b."""
     required = {
         'genome_replication': True,
         'mutation': False,
-        'proofreading': False,
-        'external_replicase': False,
-        'quiescence': False,
-        'quiescence_effector': False,
     }
     for name, expected in required.items():
         if not hasattr(config, name):
@@ -108,8 +115,17 @@ def _supported_config(config):
         actual = _strict_bool(getattr(config, name), 'config.%s' % name)
         if actual is not expected:
             raise A4ReplicationScopeError(
-                'A4.4a requires config.%s=%s' % (name, expected)
+                'A4.4b requires config.%s=%s' % (name, expected)
             )
+    flags = {}
+    for name in (
+            'proofreading', 'external_replicase', 'quiescence',
+            'quiescence_effector'):
+        if not hasattr(config, name):
+            raise A4ReplicationScopeError('config missing %s' % name)
+        flags[name] = _strict_bool(
+            getattr(config, name), 'config.%s' % name,
+        )
     mutation_rate = _strict_real_scalar(
         getattr(config, 'mutation_rate', None), 'config.mutation_rate',
     )
@@ -117,20 +133,80 @@ def _supported_config(config):
         getattr(config, 'eco66_replication_rate_scale', 1.0),
         'config.eco66_replication_rate_scale',
     )
-    return mutation_rate, max(0.25, scale)
+    return mutation_rate, max(0.25, scale), flags
 
 
 def _strict_dt(value):
     return _strict_real_scalar(value, 'replication dt', minimum=0.0)
 
 
-def _require_binding_scope_flags(state):
+def _numpy_fp64_integer_boundary(fractional_total, increment):
+    """Return true when fp64 backend variance can change truncation."""
+    fractional_total = float(fractional_total)
+    increment = float(increment)
+    if not (math.isfinite(fractional_total) and math.isfinite(increment)):
+        return True
+    if not increment > 0.0:
+        return False
+    nearest = float(np.rint(np.float64(fractional_total)))
+    if nearest < 1.0:
+        return False
+    tolerance = (
+        FP64_DISCRETE_GUARD_EPS * FP64_EPSILON
+        * max(1.0, abs(fractional_total))
+    )
+    return abs(fractional_total - nearest) <= tolerance
+
+
+def _torch_fp64_integer_boundary(fractional_total, increment):
+    """Fixed-shape resident counterpart of the NumPy ambiguity guard."""
+    finite = torch.isfinite(fractional_total)
+    increment_finite = torch.isfinite(increment)
+    safe_total = torch.where(
+        finite, fractional_total, torch.zeros_like(fractional_total),
+    )
+    nearest = torch.round(safe_total)
+    tolerance = (
+        FP64_DISCRETE_GUARD_EPS * FP64_EPSILON
+        * torch.clamp(torch.abs(safe_total), min=1.0)
+    )
+    return (~finite) | (~increment_finite) | (
+        (increment > 0.0)
+        & (nearest >= 1.0)
+        & (torch.abs(safe_total - nearest) <= tolerance)
+    )
+
+
+def _numpy_fp64_comparison_boundary(left, right):
+    """Guard a derived fp64 value before it controls a discrete branch."""
+    left = float(left)
+    right = float(right)
+    if not (math.isfinite(left) and math.isfinite(right)):
+        return True
+    scale = max(abs(left), abs(right))
+    tolerance = FP64_DISCRETE_GUARD_EPS * FP64_EPSILON * scale
+    return abs(left - right) <= tolerance
+
+
+def _torch_fp64_comparison_boundary(left, right):
+    """Resident comparison guard with the same registered relative band."""
+    if not _is_tensor(right):
+        right = torch.full_like(left, float(right))
+    finite = torch.isfinite(left) & torch.isfinite(right)
+    scale = torch.maximum(torch.abs(left), torch.abs(right))
+    tolerance = FP64_DISCRETE_GUARD_EPS * FP64_EPSILON * scale
+    return (~finite) | (torch.abs(left - right) <= tolerance)
+
+
+def _require_binding_scope_flags(state, flags):
     # These flags are carried as trusted host metadata in the A4.3 snapshot.
     # Require them to agree with this slice instead of accepting a state packed
     # under a different quiescence policy and a separately supplied config.
-    if bool(state.quiescence) or bool(state.quiescence_effector):
+    if (bool(state.quiescence) != bool(flags['quiescence'])
+            or bool(state.quiescence_effector)
+            != bool(flags['quiescence_effector'])):
         raise A4ReplicationScopeError(
-            'A4.4a requires a snapshot packed with both quiescence routes off'
+            'A4.4b config quiescence flags differ from the packed snapshot'
         )
 
 
@@ -154,6 +230,7 @@ class A4PaidElongationPlan:
     replication_fractional_after: object
     last_replication_symbols: object
     last_effective_error_rate: object
+    cumulative_proofreading_atp_after: object
 
     def clone(self):
         values = {}
@@ -264,6 +341,7 @@ def _validate_plan_metadata(plan):
         'replication_fractional_after': (C,),
         'last_replication_symbols': (C,),
         'last_effective_error_rate': (C,),
+        'cumulative_proofreading_atp_after': (C,),
     }
     for name, shape in shapes.items():
         if tuple(getattr(plan, name).shape) != shape:
@@ -290,7 +368,7 @@ def validate_a4_paid_elongation_plan(plan):
         raise a4.A4CapacityError('paid elongation exceeds symbol capacity')
     if np.any(error_codes != SCOPE_OK) or not np.all(raw['scope_valid'][:N]):
         raise A4ReplicationScopeError(
-            'paid elongation row is outside A4.4a scope: %s' %
+            'paid elongation row is outside A4.4b scope: %s' %
             [int(value) for value in error_codes]
         )
     if np.any(raw['scope_valid'][N:]) or np.any(
@@ -306,17 +384,21 @@ def validate_a4_paid_elongation_plan(plan):
         raise a4.A4SchemaError('last replication count differs from append count')
     if (not np.isfinite(raw['pools_after']).all()
             or not np.isfinite(raw['replication_fractional_after']).all()
-            or not np.isfinite(raw['last_effective_error_rate']).all()):
+            or not np.isfinite(raw['last_effective_error_rate']).all()
+            or not np.isfinite(
+                raw['cumulative_proofreading_atp_after']).all()):
         raise a4.A4SchemaError('replication plan contains nonfinite values')
     if (np.any(raw['replication_fractional_after'][:N] < 0.0)
             or np.any(raw['replication_fractional_after'][:N] >= 1.0)
-            or np.any(raw['last_effective_error_rate'][:N] < 0.0)):
+            or np.any(raw['last_effective_error_rate'][:N] < 0.0)
+            or np.any(raw['cumulative_proofreading_atp_after'][:N] < 0.0)):
         raise a4.A4SchemaError('replication telemetry outside range')
-    # Only the three inherited A4.3 paid pools may carry its registered
-    # sequential fp64 residual.  Replication admits a symbol only when the
-    # nucleotide pool is >= the exact monomer constant, so nucleotide remains
-    # strictly nonnegative after subtracting that same constant.
+    # Only unchanged fuel/mineral may carry the inherited A4.3 sequential
+    # fp64 residual.  A supported row rejects negative entry ATP and keeps the
+    # frozen 0.022 reserve, while nucleotide admission uses the exact monomer
+    # constant; both replication-paid pools therefore remain nonnegative.
     allowed_negative = set(a4.TRANSLATION_PAID_POOL_INDICES)
+    allowed_negative.discard(int(a4.a3.POOL_ATP))
     for pool_index in range(int(a4.a3.POOL_COUNT)):
         minimum = -a4.TRANSLATION_LEDGER_ATOL if pool_index in allowed_negative else 0.0
         if np.any(raw['pools_after'][:N, pool_index] < minimum):
@@ -337,17 +419,51 @@ def validate_a4_paid_elongation_plan(plan):
     return plan
 
 
-def _numpy_replicase(binding, ci):
+def _numpy_replicase(binding, ci, specs):
     state = binding.state
-    specs = binding.cache.materialize_gene_specs_host()[ci]
     total = 0.0
     for position in range(int(state.active_count[ci])):
         fingerprint = int(state.active_fingerprints[ci, position])
         spec = specs.get(fingerprint)
         if spec is not None and int(spec['role']) == int(a4.a3.ROLE_REPLICASE):
             total += float(state.active_mass[ci, position]) * float(spec['efficiency'])
-    metrics = a4._numpy_translation_cell_metrics(state, ci)
-    return float(total / 0.040 * metrics['proteostasis'] * metrics['genome_factor'])
+    pools = state.pools[ci]
+    radius = float(state.radius[ci])
+    volume = max(0.20, (radius / float(a4.s5.BASE_RADIUS)) ** 2)
+    aggregate_concentration = float(
+        pools[a4.a3.POOL_AGGREGATE] / volume
+    )
+    active = max(0.0, float(pools[a4.a3.POOL_CATALYST]))
+    damaged = float(pools[a4.a3.POOL_DAMAGED_PROTEIN])
+    aggregate = float(pools[a4.a3.POOL_AGGREGATE])
+    functional = active / max(1e-9, active + damaged + aggregate)
+    toxicity = 1.0 / (1.0 + 3.6 * aggregate_concentration)
+    proteostasis = float(np.clip(functional * toxicity, 0.02, 1.0))
+    genome_factor = 1.0 / (
+        1.0 + 0.85 * float(state.genome_lesion_mean[ci])
+    )
+    return float((total / 0.040) * proteostasis * genome_factor)
+
+
+def _numpy_raw_repair(binding, ci, specs, kind, aggregate):
+    """Literal 0.4 LOC_REPAIR activity in active-dictionary order."""
+    state = binding.state
+    total = 0.0
+    for position in range(int(state.active_count[ci])):
+        fingerprint = int(state.active_fingerprints[ci, position])
+        spec = specs.get(fingerprint)
+        if (
+                spec is not None
+                and int(spec['role']) == int(a4.a3.ROLE_REGULATOR)
+                and int(spec['localisation']) == int(a4.s4.LOC_REPAIR)
+                and int(spec['parameter']) % int(a4.a3.REPAIR_COUNT)
+                == int(kind)):
+            total += (
+                float(state.active_mass[ci, position])
+                * float(spec['efficiency']) * float(spec['promoter'])
+            )
+    inhibition = 1.0 / (1.0 + 2.6 * float(aggregate))
+    return float((total / 0.014) * inhibition)
 
 
 def _numpy_template_copy(binding, ci):
@@ -365,6 +481,46 @@ def _numpy_template_copy(binding, ci):
         np.asarray(ragged.symbols[template_start:template_end], dtype=np.uint8),
         np.asarray(ragged.symbols[copy_start:copy_end], dtype=np.uint8),
     )
+
+
+def _torch_numpy_pairwise_sum_rows(values):
+    """Reproduce NumPy's contiguous fp64 pairwise sum for fixed rows."""
+    rows = int(values.shape[0])
+
+    def pairwise(start, width):
+        if width < 8:
+            result = torch.full(
+                (rows,), -0.0, dtype=values.dtype, device=values.device,
+            )
+            for position in range(width):
+                result = result + values[:, start + position]
+            return result
+        if width <= 128:
+            accumulators = [values[:, start + index] for index in range(8)]
+            stop = width - (width % 8)
+            for position in range(8, stop, 8):
+                accumulators = [
+                    accumulators[index]
+                    + values[:, start + position + index]
+                    for index in range(8)
+                ]
+            result = (
+                (accumulators[0] + accumulators[1])
+                + (accumulators[2] + accumulators[3])
+            ) + (
+                (accumulators[4] + accumulators[5])
+                + (accumulators[6] + accumulators[7])
+            )
+            for position in range(stop, width):
+                result = result + values[:, start + position]
+            return result
+        left_width = width // 2
+        left_width -= left_width % 8
+        return pairwise(start, left_width) + pairwise(
+            start + left_width, width - left_width,
+        )
+
+    return pairwise(0, int(values.shape[1]))
 
 
 def _empty_numpy_plan(binding):
@@ -389,6 +545,9 @@ def _empty_numpy_plan(binding):
         replication_fractional_after=np.zeros((C,), dtype=np.float64),
         last_replication_symbols=np.zeros((C,), dtype=np.int64),
         last_effective_error_rate=np.zeros((C,), dtype=np.float64),
+        cumulative_proofreading_atp_after=np.asarray(
+            state.cumulative_proofreading_atp, dtype=np.float64,
+        ).copy(),
     )
 
 
@@ -400,35 +559,82 @@ def paid_replication_elongation_numpy(binding, dt, config):
     a4.validate_a4_ragged(binding.ragged)
     a4.validate_a4_translation_state(binding.state)
     a4.validate_a4_gene_cache(binding.cache)
-    mutation_rate, scale = _supported_config(config)
-    _require_binding_scope_flags(binding.state)
+    mutation_rate, scale, flags = _supported_config(config)
+    _require_binding_scope_flags(binding.state, flags)
     dt = _strict_dt(dt)
     result = _empty_numpy_plan(binding)
     ragged = binding.ragged
     state = binding.state
     N = int(state.cell_count)
+    specs_by_cell = binding.cache.materialize_gene_specs_host()
     total_appended = 0
     for ci in range(N):
         template, partial = _numpy_template_copy(binding, ci)
-        if template is None or len(template) == 0 or len(partial) >= len(template):
+        if (int(state.genome_count[ci]) <= 0 or template is None
+                or len(template) == 0 or len(partial) >= len(template)):
             result.scope_error_code[ci] = SCOPE_INACTIVE_TEMPLATE
             continue
-        replicase = _numpy_replicase(binding, ci)
+        pools = result.pools_after[ci]
+        if pools[a4.a3.POOL_ATP] < 0.0:
+            result.scope_error_code[ci] = SCOPE_NEGATIVE_ATP
+            continue
+        specs = specs_by_cell[ci]
+        replicase = _numpy_replicase(binding, ci, specs)
+        if flags['external_replicase']:
+            replicase += 0.85
+        if _numpy_fp64_comparison_boundary(replicase, 1e-6):
+            result.scope_error_code[ci] = SCOPE_FP64_DISCRETE_BOUNDARY
+            continue
         if replicase <= 1e-6:
             result.scope_error_code[ci] = SCOPE_REPLICASE_GATE
             continue
-        pools = result.pools_after[ci]
+        metrics = a4._numpy_translation_cell_metrics(state, ci)
+        proofreading = (
+            _numpy_raw_repair(
+                binding, ci, specs, a4.a3.REPAIR_PROOFREADING,
+                metrics['aggregate'],
+            )
+            if flags['proofreading'] else 0.0
+        )
+        proof_fraction = proofreading / (0.75 + proofreading)
+        if flags['quiescence']:
+            signal = _numpy_raw_repair(
+                binding, ci, specs, a4.a3.REPAIR_QUIESCENCE,
+                metrics['aggregate'],
+            )
+            need = (
+                max(0.0, float(metrics['burden']) - 0.12)
+                + 0.35 * float(state.current_stress[ci])
+            )
+            quiescence = float(np.clip(
+                (signal / (0.8 + signal)) * need * 1.45,
+                0.0, 0.82,
+            ))
+        else:
+            quiescence = 0.0
+        if flags['quiescence_effector']:
+            quiescence = float(np.clip(
+                max(quiescence, float(state.behavioural_quiescence[ci])),
+                0.0, 0.86,
+            ))
         sat_nucleotide = pools[a4.a3.POOL_NUCLEOTIDE] / (
             0.055 + pools[a4.a3.POOL_NUCLEOTIDE]
         )
         sat_atp = pools[a4.a3.POOL_ATP] / (0.10 + pools[a4.a3.POOL_ATP])
         speed = 10.0 * replicase * sat_nucleotide * sat_atp
+        speed *= (
+            (1.0 - 0.34 * proof_fraction)
+            * (1.0 - 0.78 * quiescence)
+        )
         # Formal066 first forms the scaled dt argument, then the inherited
         # 0.4 method multiplies speed by that one fp64 value.
+        increment = speed * (dt * scale)
         fractional = (
-            float(ragged.replication_fractional[ci])
-            + speed * (dt * scale)
+            float(ragged.replication_fractional[ci]) + increment
         )
+        if _numpy_fp64_integer_boundary(fractional, increment):
+            result.scope_error_code[ci] = SCOPE_FP64_DISCRETE_BOUNDARY
+            continue
         requested = int(fractional)
         result.requested_symbols[ci] = requested
         result.replication_fractional_after[ci] = fractional - requested
@@ -437,25 +643,52 @@ def paid_replication_elongation_numpy(binding, dt, config):
             (float(state.radius[ci]) / float(a4.s5.BASE_RADIUS)) ** 2,
         )
         reactive = float(pools[a4.a3.POOL_REACTIVE] / volume)
-        result.last_effective_error_rate[ci] = max(
+        raw_error = max(
             0.0,
             mutation_rate
             + 0.0012 * float(ragged.replication_template_lesions[ci])
             + 0.0010 * reactive,
         )
+        result.last_effective_error_rate[ci] = (
+            raw_error * (1.0 - 0.82 * proof_fraction)
+        )
+        extra_atp = 0.00075 * proof_fraction
+        initial_pools = np.asarray(state.pools[ci], dtype=np.float64).copy()
+        initial_cumulative = float(state.cumulative_proofreading_atp[ci])
         copied = 0
+        comparison_boundary = False
         for _ in range(requested):
             index = len(partial) + copied
             if index >= len(template):
                 break
-            if (pools[a4.a3.POOL_NUCLEOTIDE] < float(a4.g2.MONOMER_MASS)
-                    or pools[a4.a3.POOL_ATP]
-                    < float(a4.g2.REPLICATION_ATP_PER_SYMBOL) + 0.022):
+            atp_per_symbol = (
+                float(a4.g2.REPLICATION_ATP_PER_SYMBOL) + extra_atp
+            )
+            if pools[a4.a3.POOL_NUCLEOTIDE] < float(a4.g2.MONOMER_MASS):
+                break
+            atp_gate = atp_per_symbol + 0.022
+            if (flags['proofreading']
+                    and _numpy_fp64_comparison_boundary(
+                        pools[a4.a3.POOL_ATP], atp_gate,
+                    )):
+                comparison_boundary = True
+                break
+            if pools[a4.a3.POOL_ATP] < atp_gate:
                 break
             result.append_symbols[ci, copied] = int(template[index])
             pools[a4.a3.POOL_NUCLEOTIDE] -= float(a4.g2.MONOMER_MASS)
-            pools[a4.a3.POOL_ATP] -= float(a4.g2.REPLICATION_ATP_PER_SYMBOL)
+            pools[a4.a3.POOL_ATP] -= atp_per_symbol
+            result.cumulative_proofreading_atp_after[ci] += extra_atp
             copied += 1
+        if comparison_boundary:
+            result.scope_error_code[ci] = SCOPE_FP64_DISCRETE_BOUNDARY
+            result.requested_symbols[ci] = 0
+            result.replication_fractional_after[ci] = 0.0
+            result.last_effective_error_rate[ci] = 0.0
+            result.append_symbols[ci, :] = 0
+            pools[:] = initial_pools
+            result.cumulative_proofreading_atp_after[ci] = initial_cumulative
+            continue
         result.append_count[ci] = copied
         result.last_replication_symbols[ci] = copied
         total_appended += copied
@@ -468,7 +701,10 @@ def paid_replication_elongation_numpy(binding, dt, config):
     return validate_a4_paid_elongation_plan(result)
 
 
-def _torch_replicase(binding, valid_entries, fingerprints, role, efficiency):
+def _torch_replicase(
+        binding, valid_entries, fingerprints, role, parameter, localisation,
+        promoter, efficiency):
+    """Return ordered replication and repair signals plus frozen metrics."""
     state = binding.state
     C = int(state.cell_capacity)
     P = int(state.protein_capacity)
@@ -479,11 +715,36 @@ def _torch_replicase(binding, valid_entries, fingerprints, role, efficiency):
         valid_entries[:, :, None] & active_valid[:, None, :]
         & (fingerprints[:, :, None] == state.active_fingerprints[:, None, :])
     )
-    factor = torch.sum(torch.where(
+    zero_contribution = torch.zeros_like(
+        state.active_mass[:, None, :] * efficiency[:, :, None]
+    )
+    replicase_contribution = torch.sum(torch.where(
         match & (role[:, :, None] == int(a4.a3.ROLE_REPLICASE)),
-        efficiency[:, :, None], torch.zeros_like(efficiency[:, :, None]),
+        state.active_mass[:, None, :] * efficiency[:, :, None],
+        zero_contribution,
     ), dim=1)
-    total = a4._torch_ordered_row_sum(state.active_mass * factor) / 0.040
+    repair_contribution = (
+        state.active_mass[:, None, :] * efficiency[:, :, None]
+    ) * promoter[:, :, None]
+    proof_contribution = torch.sum(torch.where(
+        match
+        & (role[:, :, None] == int(a4.a3.ROLE_REGULATOR))
+        & (localisation[:, :, None] == int(a4.s4.LOC_REPAIR))
+        & (torch.remainder(
+            parameter[:, :, None], int(a4.a3.REPAIR_COUNT),
+        ) == int(a4.a3.REPAIR_PROOFREADING)),
+        repair_contribution, zero_contribution,
+    ), dim=1)
+    quiescence_contribution = torch.sum(torch.where(
+        match
+        & (role[:, :, None] == int(a4.a3.ROLE_REGULATOR))
+        & (localisation[:, :, None] == int(a4.s4.LOC_REPAIR))
+        & (torch.remainder(
+            parameter[:, :, None], int(a4.a3.REPAIR_COUNT),
+        ) == int(a4.a3.REPAIR_QUIESCENCE)),
+        repair_contribution, zero_contribution,
+    ), dim=1)
+    total = a4._torch_ordered_row_sum(replicase_contribution) / 0.040
     pools = state.pools
     volume = torch.clamp(
         (state.radius / float(a4.s5.BASE_RADIUS)) ** 2, min=0.20,
@@ -495,11 +756,40 @@ def _torch_replicase(binding, valid_entries, fingerprints, role, efficiency):
     functional = active / torch.clamp(
         active + damaged + aggregate_pool, min=1e-9,
     )
-    proteostasis = torch.clamp(
-        functional / (1.0 + 3.6 * aggregate), min=0.02, max=1.0,
-    )
+    toxicity = 1.0 / (1.0 + 3.6 * aggregate)
+    proteostasis = torch.clamp(functional * toxicity, min=0.02, max=1.0)
     genome_factor = 1.0 / (1.0 + 0.85 * state.genome_lesion_mean)
-    return total * proteostasis * genome_factor, volume
+    inhibition = 1.0 / (1.0 + 2.6 * aggregate)
+    proof_signal = (
+        a4._torch_ordered_row_sum(proof_contribution) / 0.014
+    ) * inhibition
+    quiescence_signal = (
+        a4._torch_ordered_row_sum(quiescence_contribution) / 0.014
+    ) * inhibition
+    reactive = pools[:, a4.a3.POOL_REACTIVE] / volume
+    protein_total = torch.clamp(
+        active + damaged + aggregate_pool, min=0.08,
+    )
+    protein_damage = (
+        damaged + 1.8 * aggregate_pool
+    ) / protein_total
+    membrane_weights = torch.clamp(state.membrane, min=1e-9)
+    membrane_weighted_damage = (
+        torch.clamp(state.membrane_oxidation, min=0.0, max=2.5)
+        * membrane_weights
+    )
+    membrane_damage = _torch_numpy_pairwise_sum_rows(
+        membrane_weighted_damage,
+    ) / _torch_numpy_pairwise_sum_rows(membrane_weights)
+    burden = torch.clamp(
+        0.36 * protein_damage + 0.24 * membrane_damage
+        + 0.20 * reactive + 0.20 * state.genome_lesion_mean,
+        min=0.0, max=4.0,
+    )
+    return (
+        total * proteostasis * genome_factor,
+        volume, aggregate, burden, proof_signal, quiescence_signal,
+    )
 
 
 def paid_replication_elongation_torch(binding, dt, config):
@@ -512,8 +802,8 @@ def paid_replication_elongation_torch(binding, dt, config):
     a4._validate_resident_ragged_metadata(binding.ragged)
     a4._validate_translation_resident_metadata(binding.state)
     a4._validate_gene_backend_and_dtypes(binding.cache)
-    mutation_rate, scale = _supported_config(config)
-    _require_binding_scope_flags(binding.state)
+    mutation_rate, scale, flags = _supported_config(config)
+    _require_binding_scope_flags(binding.state, flags)
     dt = _strict_dt(dt)
     ragged = binding.ragged
     state = binding.state
@@ -538,15 +828,47 @@ def paid_replication_elongation_torch(binding, dt, config):
         payload = cache.payloads[safe_indices]
         fingerprints = cache.fingerprints[safe_indices]
         role = torch.remainder(payload[:, :, 0].to(torch.int64), 8)
-        efficiency = 0.52 + 0.96 * payload[:, :, 4].to(dtype) / 7.0
+        parameter = torch.remainder(payload[:, :, 1].to(torch.int64), 8)
+        promoter = 0.18 + 1.22 * (payload[:, :, 3].to(dtype) / 7.0)
+        efficiency = 0.52 + 0.96 * (payload[:, :, 4].to(dtype) / 7.0)
+        localisation = torch.remainder(payload[:, :, 6].to(torch.int64), 4)
     else:
         valid_entries = torch.zeros((C, 0), dtype=torch.bool, device=device)
         fingerprints = torch.zeros((C, 0), dtype=torch.int64, device=device)
         role = torch.zeros((C, 0), dtype=torch.int64, device=device)
+        parameter = torch.zeros((C, 0), dtype=torch.int64, device=device)
+        promoter = torch.zeros((C, 0), dtype=dtype, device=device)
         efficiency = torch.zeros((C, 0), dtype=dtype, device=device)
-    replicase, volume = _torch_replicase(
-        binding, valid_entries, fingerprints, role, efficiency,
+        localisation = torch.zeros((C, 0), dtype=torch.int64, device=device)
+    (
+        replicase, volume, aggregate, burden,
+        proofreading_signal, quiescence_signal,
+    ) = _torch_replicase(
+        binding, valid_entries, fingerprints, role, parameter, localisation,
+        promoter, efficiency,
     )
+    if flags['external_replicase']:
+        replicase = replicase + 0.85
+    if flags['proofreading']:
+        proof_fraction = proofreading_signal / (0.75 + proofreading_signal)
+    else:
+        proof_fraction = torch.zeros((C,), dtype=dtype, device=device)
+    if flags['quiescence']:
+        q_need = (
+            torch.clamp(burden - 0.12, min=0.0)
+            + 0.35 * state.current_stress
+        )
+        quiescence = torch.clamp(
+            (quiescence_signal / (0.8 + quiescence_signal))
+            * q_need * 1.45,
+            min=0.0, max=0.82,
+        )
+    else:
+        quiescence = torch.zeros((C,), dtype=dtype, device=device)
+    if flags['quiescence_effector']:
+        quiescence = torch.clamp(torch.maximum(
+            quiescence, state.behavioural_quiescence,
+        ), min=0.0, max=0.86)
 
     sequence_end = ragged.cell_sequence_offsets[1:C + 1]
     template_index = torch.clamp(
@@ -563,27 +885,49 @@ def paid_replication_elongation_torch(binding, dt, config):
     copy_length = torch.clamp(copy_end - copy_start, min=0)
     structural = (
         state.cell_mask & ragged.replication_active
+        & (state.genome_count > 0)
         & (template_length > 0) & (copy_length < template_length)
     )
-    replicase_gate = replicase > 1e-6
+    replicase_boundary = _torch_fp64_comparison_boundary(replicase, 1e-6)
+    replicase_gate = (replicase > 1e-6) & (~replicase_boundary)
     pools_after = state.pools.clone()
+    atp_value = pools_after[:, a4.a3.POOL_ATP]
+    atp_supported = atp_value >= 0.0
+    rate_atp = torch.where(
+        atp_supported, atp_value, torch.zeros_like(atp_value),
+    )
+    kinetics_supported = structural & replicase_gate & atp_supported
     sat_nucleotide = pools_after[:, a4.a3.POOL_NUCLEOTIDE] / (
         0.055 + pools_after[:, a4.a3.POOL_NUCLEOTIDE]
     )
-    sat_atp = pools_after[:, a4.a3.POOL_ATP] / (
-        0.10 + pools_after[:, a4.a3.POOL_ATP]
-    )
+    sat_atp = rate_atp / (0.10 + rate_atp)
     speed = 10.0 * replicase * sat_nucleotide * sat_atp
-    fractional_total = ragged.replication_fractional + speed * float(dt * scale)
-    requested = torch.floor(fractional_total).to(torch.int64)
-    fractional_after = fractional_total - requested.to(dtype)
+    speed = speed * (
+        (1.0 - 0.34 * proof_fraction)
+        * (1.0 - 0.78 * quiescence)
+    )
+    increment = speed * float(dt * scale)
+    fractional_total = ragged.replication_fractional + increment
+    fp64_integer_boundary = (
+        kinetics_supported
+        & _torch_fp64_integer_boundary(fractional_total, increment)
+    )
+    unambiguous_kinetics = kinetics_supported & (~fp64_integer_boundary)
+    safe_fractional_total = torch.where(
+        unambiguous_kinetics, fractional_total,
+        torch.zeros_like(fractional_total),
+    )
+    requested = torch.trunc(safe_fractional_total).to(torch.int64)
+    fractional_after = safe_fractional_total - requested.to(dtype)
     reactive = pools_after[:, a4.a3.POOL_REACTIVE] / volume
-    effective_error = torch.clamp(
+    raw_error = torch.clamp(
         float(mutation_rate)
         + 0.0012 * ragged.replication_template_lesions
         + 0.0010 * reactive,
         min=0.0,
     )
+    effective_error = raw_error * (1.0 - 0.82 * proof_fraction)
+    extra_atp = 0.00075 * proof_fraction
 
     symbol_rank = torch.arange(W, dtype=torch.int64, device=device)
     symbol_indices = template_start[:, None] + copy_length[:, None] + symbol_rank[None, :]
@@ -593,15 +937,38 @@ def paid_replication_elongation_torch(binding, dt, config):
     candidates = ragged.symbols[safe_symbols]
     append_symbols = torch.zeros((C, W), dtype=torch.uint8, device=device)
     append_count = torch.zeros((C,), dtype=torch.int64, device=device)
-    running = structural & replicase_gate
+    payment_boundary = torch.zeros((C,), dtype=torch.bool, device=device)
+    cumulative_proofreading_atp_after = torch.where(
+        state.cell_mask, state.cumulative_proofreading_atp,
+        torch.zeros_like(state.cumulative_proofreading_atp),
+    ).clone()
+    running = unambiguous_kinetics
     for position in range(W):
-        accepted = (
+        atp_per_symbol = (
+            float(a4.g2.REPLICATION_ATP_PER_SYMBOL) + extra_atp
+        )
+        attempted = (
             running & (position < requested)
             & (copy_length + position < template_length)
-            & (pools_after[:, a4.a3.POOL_NUCLEOTIDE]
-               >= float(a4.g2.MONOMER_MASS))
-            & (pools_after[:, a4.a3.POOL_ATP]
-               >= float(a4.g2.REPLICATION_ATP_PER_SYMBOL) + 0.022)
+        )
+        nucleotide_supported = (
+            pools_after[:, a4.a3.POOL_NUCLEOTIDE]
+            >= float(a4.g2.MONOMER_MASS)
+        )
+        atp_gate = atp_per_symbol + 0.022
+        if flags['proofreading']:
+            atp_boundary = (
+                attempted & nucleotide_supported
+                & _torch_fp64_comparison_boundary(
+                    pools_after[:, a4.a3.POOL_ATP], atp_gate,
+                )
+            )
+        else:
+            atp_boundary = torch.zeros_like(attempted)
+        payment_boundary = payment_boundary | atp_boundary
+        accepted = (
+            attempted & nucleotide_supported & (~atp_boundary)
+            & (pools_after[:, a4.a3.POOL_ATP] >= atp_gate)
         )
         append_symbols[:, position] = torch.where(
             accepted, candidates[:, position], append_symbols[:, position],
@@ -612,10 +979,33 @@ def paid_replication_elongation_torch(binding, dt, config):
         )
         pools_after[:, a4.a3.POOL_ATP] = (
             pools_after[:, a4.a3.POOL_ATP]
-            - accepted.to(dtype) * float(a4.g2.REPLICATION_ATP_PER_SYMBOL)
+            - accepted.to(dtype) * atp_per_symbol
+        )
+        cumulative_proofreading_atp_after = torch.where(
+            accepted,
+            cumulative_proofreading_atp_after + extra_atp,
+            cumulative_proofreading_atp_after,
         )
         append_count = append_count + accepted.to(torch.int64)
         running = accepted
+
+    # A late ATP comparison ambiguity invalidates the whole pure event rather
+    # than exposing a partially paid prefix as commit authority.
+    append_symbols = torch.where(
+        payment_boundary[:, None], torch.zeros_like(append_symbols),
+        append_symbols,
+    )
+    append_count = torch.where(
+        payment_boundary, torch.zeros_like(append_count), append_count,
+    )
+    pools_after = torch.where(
+        payment_boundary[:, None], state.pools, pools_after,
+    )
+    cumulative_proofreading_atp_after = torch.where(
+        payment_boundary, state.cumulative_proofreading_atp,
+        cumulative_proofreading_atp_after,
+    )
+    completed_kinetics = unambiguous_kinetics & (~payment_boundary)
 
     error = torch.zeros((C,), dtype=torch.int64, device=device)
     error = torch.where(
@@ -623,10 +1013,20 @@ def paid_replication_elongation_torch(binding, dt, config):
         torch.full_like(error, SCOPE_INACTIVE_TEMPLATE), error,
     )
     error = torch.where(
-        state.cell_mask & structural & (~replicase_gate),
+        state.cell_mask & structural & (~atp_supported),
+        torch.full_like(error, SCOPE_NEGATIVE_ATP), error,
+    )
+    error = torch.where(
+        state.cell_mask & structural & atp_supported
+        & (~replicase_boundary) & (~replicase_gate),
         torch.full_like(error, SCOPE_REPLICASE_GATE), error,
     )
-    completion = structural & replicase_gate & (
+    error = torch.where(
+        (state.cell_mask & structural & atp_supported & replicase_boundary)
+        | fp64_integer_boundary | payment_boundary,
+        torch.full_like(error, SCOPE_FP64_DISCRETE_BOUNDARY), error,
+    )
+    completion = completed_kinetics & (
         copy_length + append_count >= template_length
     )
     error = torch.where(
@@ -637,7 +1037,7 @@ def paid_replication_elongation_torch(binding, dt, config):
         > int(ragged.symbol_capacity)
     )
     error = torch.where(
-        state.cell_mask & (error == SCOPE_OK) & capacity_overflow,
+        state.cell_mask & capacity_overflow,
         torch.full_like(error, SCOPE_CAPACITY), error,
     )
     scope_valid = state.cell_mask & (error == SCOPE_OK)
@@ -653,7 +1053,7 @@ def paid_replication_elongation_torch(binding, dt, config):
         scope_valid=scope_valid,
         scope_error_code=error,
         requested_symbols=torch.where(
-            state.cell_mask, requested, torch.zeros_like(requested),
+            completed_kinetics, requested, torch.zeros_like(requested),
         ),
         append_symbols=append_symbols,
         append_count=append_count,
@@ -661,14 +1061,16 @@ def paid_replication_elongation_torch(binding, dt, config):
             state.cell_mask[:, None], pools_after, torch.zeros_like(pools_after),
         ),
         replication_fractional_after=torch.where(
-            state.cell_mask, fractional_after,
+            completed_kinetics, fractional_after,
             torch.zeros_like(fractional_after),
         ),
         last_replication_symbols=append_count.clone(),
         last_effective_error_rate=torch.where(
-            state.cell_mask & structural & replicase_gate, effective_error,
+            completed_kinetics,
+            effective_error,
             torch.zeros_like(effective_error),
         ),
+        cumulative_proofreading_atp_after=cumulative_proofreading_atp_after,
     )
     _validate_plan_metadata(plan)
     return plan
@@ -684,8 +1086,8 @@ def paid_replication_elongation_plan(binding, dt, config):
 PORT_STATUS = dict(a4.PORT_STATUS)
 PORT_STATUS.update({
     'genome_replication': (
-        'a4.4a-active-template-mutation-free-proofreading-free-'
-        'noncompletion-paid-plan-not-integrated-cpu-authoritative'
+        'a4.4b-active-template-mutation-free-deterministic-proofreading-'
+        'quiescence-noncompletion-paid-plan-not-integrated-cpu-authoritative'
     ),
     'material_mutation': 'cpu-authoritative-later-a4-slice',
     'full_gpu_world_step': False,

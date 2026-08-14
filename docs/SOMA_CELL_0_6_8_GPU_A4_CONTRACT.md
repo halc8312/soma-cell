@@ -1,6 +1,6 @@
 # SOMA-CELL 0.6.8-GPU A4 contract
 
-Status: A4 development contract through slice A4.4a. This is not an A4
+Status: A4 development contract through slice A4.4b. This is not an A4
 promotion.
 
 ## Authority
@@ -94,43 +94,87 @@ the frozen per-gene fp64 payment recurrence instead of substituting a
 closed-form prefix budget at exhausted-resource boundaries. It performs no
 scalar readback or variable-length output.
 
-## A4.4a scope
+## A4.4b scope
 
-A4.4a adds only the smallest deterministic heredity-chemistry continuation:
-paid elongation of an already active replication template.  It is a pure plan,
-not a scheduler replacement or CPU-cell commit.  A supported row must have an
-existing non-empty template and a shorter partial copy, an active endogenous
-replicase above the frozen gate, and this invocation must remain incomplete
-after the literal resource gates are applied.
+A4.4b retains A4.4a's pre-existing active-template, mutation-free,
+non-completing pure plan and adds only its deterministic frozen controls:
+proofreading, inherited quiescence, behavioural quiescence, and the external
+replicase contribution.  It remains neither a scheduler replacement nor a
+CPU-cell commit.  A supported row has a non-empty active template, a shorter
+partial copy, at least one complete genome, effective replicase above the
+frozen gate, nonnegative ATP at replication entry, and remains incomplete
+after the literal resource gates are applied.  Every derived fp64 value that
+controls a discrete replication branch must also remain outside the registered
+ambiguity bands described below; a row inside a band remains CPU-authoritative.
 
-The supported configuration is deliberately narrow:
-
-- genome replication is enabled;
-- mutation, proofreading, external replicase, inherited quiescence, and the
-  behavioural quiescence effector are disabled;
-- template selection has already occurred; and
-- the copied prefix does not complete the template in this invocation.
+The supported configuration requires genome replication on and mutation off.
+Proofreading, external replicase, inherited quiescence, and the behavioural
+quiescence effector may independently be on or off.  The two quiescence flags
+must exactly match the attested physiology snapshot.  Template selection has
+already occurred.
 
 Within that boundary the plan reproduces the Formal066 wrapper and frozen 0.4
-operation order: scale `dt` by `max(0.25, eco66_replication_rate_scale)`, derive
-endogenous replicase from active-protein dictionary order, add speed to the
-fractional carry, remove the full integer request before checking resources,
-then copy template symbols in order while paying one nucleotide monomer and
-`0.0012 ATP` per accepted symbol.  The nucleotide gate is exact
-`MONOMER_MASS`; the ATP gate retains the frozen `0.022` reserve.  Unpaid
-requests are not restored to the fractional carry.
+operation order: scale `dt` by `max(0.25, eco66_replication_rate_scale)`, fold
+endogenous replicase in active-protein dictionary order, then add `0.85` for
+an enabled external replicase.  Proofreading and quiescence repair signals use
+only repair-localized regulator proteins, literal `(mass * efficiency) *
+promoter` grouping, active-dictionary left folds, and the frozen aggregate
+inhibition.  Inherited and behavioural quiescence are combined in the same MRO
+order as Formal066.  These deterministic factors scale speed before it is
+added to the fractional carry.  The full integer request is removed before
+resources are checked.
 
-Although mutation is disabled, the observable effective error rate is still
-updated from configured mutation rate, template lesion, and reactive
-concentration.  RNG state, proofreading ATP, world dissipated energy, complete
-genomes, lesions, and the gene cache remain unchanged.  Inputs remain
-immutable and the fixed output carries only the append plan, paid pools,
-fractional progress, and replication telemetry needed for later atomic commit.
+CPU and CUDA fp64 division are permitted to differ by a few ulps even when
+both follow the same expression order.  Because truncating that result can
+turn a continuous difference into a different DNA-symbol count, A4.4b does
+not guess at an integer boundary.  For a positive progress increment it marks
+the row out of scope when
+`abs(fractional_total - rint(fractional_total)) <=
+4096 * eps64 * max(1, abs(fractional_total))` and the nearest integer is at
+least one.  Nonfinite increments or totals are rejected by the same scope
+code.  A zero
+increment remains a valid no-op.  This narrow engineering guard preserves the
+CPU oracle without adding software fp64 division or silently accepting a
+different discrete result.
+
+The same factor supplies a relative comparison band,
+`4096 * eps64 * max(abs(left), abs(right))`, around the effective-replicase
+`> 1e-6` gate and the proofreading-derived ATP payment gate.  The ATP band is
+needed only when proofreading is enabled; the proofreading-free constant gate
+remains exact.  The nucleotide comparison uses the unchanged resident input
+and exact monomer constant and therefore remains outside this derived-value
+guard.  If an ATP ambiguity appears after an earlier symbol was tentatively
+planned, the entire row is rolled back to its input pools, telemetry, and empty
+append plan before it is marked out of scope.
+
+Accepted symbols then consume one exact `MONOMER_MASS` and
+`0.0012 + 0.00075 * proof_fraction` ATP, while retaining the frozen `0.022`
+ATP gate reserve.  Unpaid requests are not restored.  The input physiology
+now carries `cumulative_proofreading_atp`; the plan returns
+`cumulative_proofreading_atp_after` and adds the extra proofreading ATP once
+per accepted symbol in the same fixed symbol loop as the CPU.  It is not
+reconstructed later as `before + aggregate_delta`, which could change fp64
+rounding.
+
+Although mutation is disabled, the observable effective error rate is updated
+from configured mutation rate, template lesion, reactive concentration, and
+proofreading reduction.  RNG state, world dissipated energy, complete genomes,
+lesions, and the gene cache remain unchanged.  Inputs remain immutable and the
+fixed output carries only the append plan, paid pools, fractional progress,
+and replication telemetry needed for a later atomic commit.  A signed ATP
+residual permitted at the preceding translation boundary is explicitly
+outside this replication slice; it is rejected rather than fed into rate
+math.  A successful plan therefore requires nonnegative ATP on output as
+well; only unchanged fuel/mineral translation residuals retain their
+registered signed ledger tolerance.
 
 NumPy rejects an out-of-scope row before returning a plan.  The CUDA path does
 not perform a hidden scalar readback; it carries a fixed scope-valid/error-code
 result which must be rejected at the explicit readback or future commit
-boundary.  An unsupported row is never a successful replication result.
+boundary.  Error code 6 identifies every fp64 discrete-boundary guard.  An
+unsupported row is never a successful replication result, and the remaining
+resident fields of an invalid plan are not commit authority before explicit
+readback and full validation succeed.
 
 ## Fail-closed invariants
 
@@ -178,6 +222,9 @@ Translation-state invariants are:
   version counters still match their trusted upload or trusted clone. A
   resident clone verifies its source attestation before re-attesting new
   storage, so mutation followed by clone cannot mint new trust.
+- Ragged, physiology, and cache scalar metadata (schema, capacities, used
+  counts, host flags, and provenance) are snapshotted at bind and must remain
+  exactly unchanged for the binding lifetime; this check requires no D2H.
 - The internally decoded cache is attested for the binding lifetime: host
   arrays use a canonical SHA-256 and resident tensors use pointer/version
   counters. Mutation between bind and plan is rejected.
@@ -218,12 +265,11 @@ Replication-elongation-plan invariants are:
   row explicitly unsupported; it cannot silently fall through to a partial
   GPU result plus a second CPU replication call.
 
-## Explicit exclusions through A4.4a
+## Explicit exclusions through A4.4b
 
 - No scheduler/world integration or CPU-cell protein/material commit.
 - No template selection, completion transaction, new complete genome, lesion
-  inheritance, gene-cache refresh, proofreading, mutation, symbol hydrolysis,
-  or RNG kernel.
+  inheritance, gene-cache refresh, mutation, symbol hydrolysis, or RNG kernel.
 - No scheduler replacement and no change to A3 `gene_refresh`,
   `translation_cpu`, or `replication_cpu` authority.
 - No division, death, corpse/eDNA/HGT, neural, or causal-system port.
@@ -231,7 +277,7 @@ Replication-elongation-plan invariants are:
   CUDA, multi-stream, multi-GPU, or online-GPU abstraction.
 - No formal 13-spec/65-measurement benchmark and no speedup claim.
 
-## Acceptance through A4.4a
+## Acceptance through A4.4b
 
 - All A4.1 lossless/corruption/capacity/residency tests remain PASS.
 - Nested valid markers and invalid-outer/valid-inner recovery match frozen
@@ -261,32 +307,47 @@ Replication-elongation-plan invariants are:
 
 - A pre-existing active-template, non-completing Formal066 CPU fixture matches
   the NumPy plan for appended bytes/count, nucleotide and ATP pools,
-  fractional carry, `last_replication_symbols`, and
-  `last_effective_error_rate`.
+  fractional carry, `last_replication_symbols`,
+  `last_effective_error_rate`, and the sequential
+  `cumulative_proofreading_atp_after` value.
 - Requested-zero, exact and immediately-below nucleotide/ATP gates, and
   resource exhaustion preserve the frozen ordered behavior.
+- Proofreading on/off, inherited and behavioural quiescence, endogenous plus
+  external replicase, distinct complete-genome/template lesion signals, and a
+  nonzero large cumulative proofreading value match direct Formal066 calls.
 - CPU oracle RNG state is byte-exact before/after because the supported slice
   consumes zero random draws.
 - NumPy, Torch CPU, and explicit RTX CUDA fp64 plans agree after one explicit
   readback; all source pointers and values remain unchanged.
 - Scope and capacity failure are atomic and fail closed.  Completion,
-  inactive-template start, proofreading, mutation, external replicase, or
-  either quiescence route is not reported as migrated.
-- A4.4a leaves A3 `replication_cpu` authoritative and makes no speed claim.
+  inactive-template start, mutation, or negative replication-entry ATP is not
+  reported as migrated.
+- Two crafted CPU/CUDA integer-boundary cases plus exact/nextafter
+  proofreading-ATP comparisons are rejected with scope code 6 on NumPy,
+  Torch CPU, and RTX CUDA, while controls displaced by `1e-10` remain
+  supported with the same requested/payment result.  The replicase comparison
+  guard is also exercised, and the NumPy pairwise fold used for membrane
+  damage is checked bit-exactly on both Torch devices.
+- A4.4b leaves A3 `replication_cpu` authoritative and makes no speed claim.
 
-Known A4.4a integration blockers are recorded rather than hidden.  On the
+Known A4.4b integration blockers are recorded rather than hidden.  On the
 measured six-cell development fixture the current fixed symbol-rank Torch plan
 was about 503 ms per call versus about 10.1 ms for NumPy, so it is not a
-performance candidate.  PyTorch 2.5 also does not provide a deterministic CUDA
-implementation for the `cumsum` used by the resident gene-cache path; focused
-validation temporarily disables deterministic-algorithm enforcement only
-around that operation and restores the prior setting.  Both the launch-heavy
-performance path and deterministic-enforcement compatibility must be resolved
-and remeasured before scheduler authority, promotion, or any speedup claim.
+performance candidate.  A4.4b replaces branch-critical fp64 reductions with
+host-constant device loops and is validated with deterministic algorithms
+enabled on the recorded PyTorch/CUDA environment, but this is a correctness
+result rather than a performance improvement or a promise for untested older
+PyTorch releases.  The 4096-epsilon discrete guard is the next power of two
+above the worst normalized distance (2987.54) observed in 50,000
+boundary-focused, up-to-639-symbol proofreading-payment recurrences.  It is a
+conservative measured engineering bound, not a proof over every possible
+real-valued input; rows in
+its ambiguity band deliberately retain CPU authority.  Exact software
+division was rejected as disproportionate complexity.  The launch-heavy path
+must be redesigned and remeasured before scheduler authority, promotion, or
+any speedup claim.
 
-The next slice may add deterministic proofreading and quiescence/external
-replicase inputs while retaining the same non-completion boundary. Template
-selection, substitution RNG, completion/structural mutation, and hydrolysis
-remain separate later slices. Scheduler replacement remains later, after a
-contiguous resident chain can commit without recreating A3's per-cell
+Template selection and substitution RNG, completion/structural mutation, and
+hydrolysis remain separate later slices. Scheduler replacement remains later,
+after a contiguous resident chain can commit without recreating A3's per-cell
 host/device round trips.
