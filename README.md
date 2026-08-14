@@ -1,36 +1,64 @@
-# STOP — Mandatory preflight before any SOMA work
+# SOMA-CELL
 
-会話記憶だけから実装・修正・評価してはならない。`00_MANDATORY_STARTUP_GATE_JA.md`を読み、最新版のSHA-256確認とプリフライト証跡を作成する。
+SOMA-CELLは、膜・粒子・物質ゲノム・損傷・死体・eDNA・HGT・神経因果系を削らずに扱う、物質制約付き人工生命シミュレーションです。GPU化は現象を簡略化するためではなく、同じ詳細現象を大規模に計算するために進めています。
+
+> 現在の工学baseline: **SOMA-CELL 0.6.8-GPU A3**
+> 次のmilestone: **SOMA-CELL 0.6.8-GPU A4**
+
+A3はgene-coded metabolism、ATP有料合成・維持、protein damage/aggregation、reactive byproduct、膜酸化、damage repair、segregation planningと、A2/A3処理のexactly-once schedulerを統合したengineering checkpointです。
+
+## 現在の実測状態
+
+- A3専用検証: 36/36 PASS
+- A2・A1・Windows historical chainを含む合計: 379/379 PASS
+- RTX 4060 Ti CUDA fp64 full-world最大差: `3.552713678800501e-15`
+- fp32 full-world最大差: `3.598134365018738e-6`（candidate-only）
+- 正式benchmark: 13仕様・65測定を完走
+- A3 CUDA fp64は凍結0.6.6 CPU正本より約570.096〜590.276倍遅く、速度向上は未達
+- `full_gpu_world_step=false`
+
+性能が遅い主因は、per-cell Python orchestration、CPU object pack/commit、host-device転送、小kernelの逐次起動です。A4ではGPUを主計算器とし、device-resident ragged genome、batched cell state、kernel統合を優先します。CPU実装は意味論正本・照合oracle・未移植部分のfallbackとして保持します。
+
+## 作業開始前の必須ゲート
+
+会話記憶やこのREADMEだけから編集を始めないでください。権威は`PROJECT_STATE.json`、`CURRENT_BASELINE.txt`、現在source、測定済みresultsです。
 
 ```bash
 python3 scripts/soma_preflight.py verify
 python3 scripts/soma_preflight.py start \
   --actor "<name>" \
   --purpose "<work>" \
-  --milestone "<PROJECT_STATE next_milestone>" \
+  --milestone "SOMA-CELL 0.6.8-GPU A4" \
   --ack "READ_LATEST_SOURCES_AND_CONTRACTS"
 ```
 
-# SOMA Project Checkpoint — SOMA-CELL 0.6.1
+必須読み順は`MANDATORY_WORKFLOW.json`にあります。
 
-現在の凍結基準版は **SOMA-CELL 0.6.1**、次は **SOMA-CELL 0.6.2**。
+## 主要ファイル
 
-- Runtime: `src/0_6_1/SOMA_CELL_0_6_1_pythonista.py`
-- Formal contract: `docs/SOMA_CELL_0_6_1_FORMAL_CONTRACT.md`
-- Formal schema: `docs/SOMA_CELL_0_6_1_FORMAL_SCHEMA.json`
-- Preregistration: `results/SOMA_CELL_0_6_1_R2_PREREGISTRATION.json`
-- Holdout: `results/SOMA_CELL_0_6_1_R2_HOLDOUT_REPORT.txt`
-- Validation: `results/SOMA_CELL_0_6_1_VALIDATION_RESULTS.txt` — 43/43 PASS
-- Inherited regressions: `results/SOMA_CELL_0_6_1_REGRESSION_RESULTS.txt` — 84/84 PASS
-- Pythonista release: `releases/SOMA_CELL_0_6_1_GOLD_20260803.zip`
+- A3 core: `src/0_6_8/SOMA_CELL_0_6_8_gpu_a3.py`
+- A3 scheduler: `src/0_6_8/SOMA_CELL_0_6_8_gpu_a3_scheduler.py`
+- A3 contract/schema/event order: `docs/SOMA_CELL_0_6_8_GPU_A3_*`
+- CPU科学正本: `src/0_6_6/SOMA_CELL_0_6_6_pythonista.py`
+- 状態: `PROJECT_STATE.json`
+- 検証: `results/SOMA_CELL_0_6_8_GPU_A3_VALIDATION_RESULTS.txt`
+- 工学報告: `results/SOMA_CELL_0_6_8_GPU_A3_EXPERIMENT_REPORT.txt`
+- benchmark: `results/soma_cell_0_6_8_gpu_a3_benchmark.json`
 
-0.6.1の強い結果は、事前登録された物理的運動器故障での有料診断と神経休眠による代謝保全です。自然空間の短期物質取得、外部分子の意味診断、局所予測、再帰の純価値は未確立です。
+CUDA環境でA3検証を再実行する場合:
 
-## Authority order
+```bash
+python3 src/0_6_8/SOMA_CELL_0_6_8_A3_validation.py --require-cuda --no-write
+```
 
-1. Validated 0.6.1 source, R2 preregistration and measured results
-2. 0.6.1 formal contract/schema
-3. Formal 0.6 and P2/P1/P0 frozen contracts
-4. Mandatory startup gate and integration contract
-5. PROJECT_STATE and context handoff
-6. Conversation memory
+## Checkout上の注意
+
+Git履歴には大文字・小文字だけが異なるpathがあります。通常のcase-insensitive Windows checkoutでは片方を失う可能性があるため、WSL ext4などcase-sensitiveなfilesystemへcloneしてください。
+
+## 科学的な限界
+
+A3は工学的移植checkpointです。生命、意識、開放進化、GPU高速化を証明したものではありません。正・負の結果、CUDA未達、platform sensitivityを削除せず保存します。
+
+## License / visibility
+
+現時点ではprivate repositoryを前提とし、オープンソースライセンスは未選択です。public化する前にライセンス、追跡済み絶対path、machine/environment情報の公開範囲を決定してください。
