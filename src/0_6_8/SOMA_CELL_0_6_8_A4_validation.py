@@ -1,5 +1,5 @@
 # coding: utf-8
-"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.4b slices."""
+"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.5a slices."""
 from __future__ import division
 
 import argparse
@@ -28,9 +28,9 @@ try:
 except Exception:  # pragma: no cover
     torch = None
 
-RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_4B_VALIDATION_RESULTS.json'
-RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_4b_validation.csv'
-RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_4B_VALIDATION_RESULTS.txt'
+RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_5A_VALIDATION_RESULTS.json'
+RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_5a_validation.csv'
+RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_5A_VALIDATION_RESULTS.txt'
 
 SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4.py',
@@ -520,6 +520,9 @@ def _assert_paid_replication_cpu_parity(plan, before_cells, cpu_cells, label):
         expected.cumulative_proofreading_atp = float(
             plan.cumulative_proofreading_atp_after[ci]
         )
+        expected.mutation_events['substitution'] += int(
+            plan.substitution_events[ci]
+        )
         if actual.replication_copy[len(before.replication_copy):] != appended:
             raise AssertionError('%s cell[%d] copied suffix differs' % (label, ci))
         v3.assert_recursive_close(
@@ -569,10 +572,15 @@ def test_api_scope():
         'paid_replication_elongation_numpy',
         'paid_replication_elongation_torch',
         'paid_replication_elongation_plan',
+        'A4SubstitutionRngTape', 'validate_a4_substitution_rng_tape',
+        'prepare_substitution_rng_tape',
+        'paid_replication_substitution_numpy',
+        'paid_replication_substitution_torch',
+        'paid_replication_substitution_plan',
     )
     missing = [name for name in replication_required if not hasattr(a44, name)]
     if missing:
-        raise AssertionError('missing A4.4b API: %s' % missing)
+        raise AssertionError('missing A4.5a API: %s' % missing)
     if a4.FULL_GPU_WORLD_STEP is not False:
         raise AssertionError('A4.1 must not claim full GPU world-step')
     if hasattr(a4.A4GeneCacheBatch, 'from_state_dict'):
@@ -585,15 +593,21 @@ def test_api_scope():
         raise AssertionError('A4.3 translation plan status is missing')
     if a4.PORT_STATUS.get('genome_replication') != 'cpu-authoritative-next-a4-slice':
         raise AssertionError('replication authority changed in representation slice')
-    if a44.BUILD != 'SOMA-CELL 0.6.8-GPU A4.4b':
-        raise AssertionError('A4.4b build identity differs')
-    if a44.SCHEMA_VERSION != '0.6.8-GPU-A4.4b-paid-dna-elongation-plan':
-        raise AssertionError('A4.4b schema identity differs')
+    if a44.BUILD != 'SOMA-CELL 0.6.8-GPU A4.5a':
+        raise AssertionError('A4.5a build identity differs')
+    if a44.SCHEMA_VERSION != (
+            '0.6.8-GPU-A4.5a-substitution-rng-elongation-plan'):
+        raise AssertionError('A4.5a schema identity differs')
+    if a44.RNG_TAPE_SCHEMA_VERSION != (
+            '0.6.8-GPU-A4.5a-substitution-rng-tape'):
+        raise AssertionError('A4.5a RNG tape schema identity differs')
     if a44.FULL_GPU_WORLD_STEP is not False:
-        raise AssertionError('A4.4b must not claim full GPU world-step')
+        raise AssertionError('A4.5a must not claim full GPU world-step')
     if (a44.SCOPE_FP64_DISCRETE_BOUNDARY != 6
             or a44.FP64_DISCRETE_GUARD_EPS != 4096.0):
-        raise AssertionError('A4.4b fp64 discrete guard contract differs')
+        raise AssertionError('A4.5a fp64 discrete guard contract differs')
+    if a44.SCOPE_RNG_TAPE_MISMATCH != 7:
+        raise AssertionError('A4.5a RNG tape scope code differs')
     return '%s / %s + %s + %s / full_gpu=false' % (
         a44.BUILD, a4.SCHEMA_VERSION,
         a4.GENE_CACHE_SCHEMA_VERSION + ' + ' + a4.TRANSLATION_SCHEMA_VERSION,
@@ -1904,14 +1918,15 @@ def test_a44_capacity_scope_fail_closed_and_a3_authority():
     )
 
     expected_status = (
-        'a4.4b-active-template-mutation-free-deterministic-proofreading-'
-        'quiescence-noncompletion-paid-plan-not-integrated-cpu-authoritative'
+        'a4.5a-active-template-substitution-rng-tape-deterministic-'
+        'proofreading-quiescence-noncompletion-plan-not-integrated-'
+        'cpu-authoritative'
     )
     if a44.PORT_STATUS.get('genome_replication') != expected_status:
-        raise AssertionError('A4.4b CPU authority status differs')
+        raise AssertionError('A4.5a CPU authority status differs')
     if (a44.FULL_GPU_WORLD_STEP is not False
             or a44.PORT_STATUS.get('full_gpu_world_step') is not False):
-        raise AssertionError('A4.4b claimed full GPU authority')
+        raise AssertionError('A4.5a claimed full GPU authority')
     if a4.PORT_STATUS.get('genome_replication') != 'cpu-authoritative-next-a4-slice':
         raise AssertionError('A4 core authority was changed')
     if getattr(v3.a3_module(), 'FULL_GPU_WORLD_STEP', None) is not False:
@@ -2858,13 +2873,14 @@ def test_a44b_capacity_scope_and_a3_authority():
         lambda: a44.validate_a4_paid_elongation_plan(forged_atp),
     )
     expected_status = (
-        'a4.4b-active-template-mutation-free-deterministic-proofreading-'
-        'quiescence-noncompletion-paid-plan-not-integrated-cpu-authoritative'
+        'a4.5a-active-template-substitution-rng-tape-deterministic-'
+        'proofreading-quiescence-noncompletion-plan-not-integrated-'
+        'cpu-authoritative'
     )
     if (a44.PORT_STATUS.get('genome_replication') != expected_status
             or a44.FULL_GPU_WORLD_STEP is not False
             or a44.PORT_STATUS.get('full_gpu_world_step') is not False):
-        raise AssertionError('A4.4b CPU authority status differs')
+        raise AssertionError('A4.5a CPU authority status differs')
     if (a4.PORT_STATUS.get('genome_replication')
             != 'cpu-authoritative-next-a4-slice'):
         raise AssertionError('A4 core replication authority changed')
@@ -2872,6 +2888,448 @@ def test_a44b_capacity_scope_and_a3_authority():
             or v3._event_order().count('replication_cpu') != 1):
         raise AssertionError('A3 CPU replication authority changed')
     return 'exact/+1 and completion+capacity priority; negative ATP telemetry/zero-genome/config/mutation/replicase/completion fail closed; A3 authority'
+
+
+def _a45_substitution_fixture(seed=8002):
+    world, cells, capacity, _ = _paid_replication_b_fixture(seed=seed)
+    world.config.mutation = True
+    world.config.mutation_rate = 0.5
+    return world, cells[:3], capacity, 0.5
+
+
+def test_a45_substitution_rng_tape_formal066_oracle():
+    world, cells, capacity, dt = _a45_substitution_fixture()
+    world_before = v3.pickle_clone(world.state_dict())
+    rng_before = copy.deepcopy(world.rng.bit_generator.state)
+    ragged, state, binding = _paid_replication_binding(
+        cells, world.config, capacity,
+    )
+    ragged_before = ragged.state_dict()
+    state_before = state.state_dict()
+    cache_before = binding.cache.state_dict()
+    tape = a44.prepare_substitution_rng_tape(
+        binding, dt, world.config, rng_before,
+    )
+    plan = a44.paid_replication_substitution_numpy(
+        binding, dt, world.config, tape,
+    )
+
+    cpu_world = copy.deepcopy(world)
+    cpu_before_cells = [copy.deepcopy(cell) for cell in cpu_world.cells[:3]]
+    for cell in cpu_world.cells[:3]:
+        cell._replicate_genome(cpu_world, dt, cpu_world.config)
+    _assert_paid_replication_cpu_parity(
+        plan, cpu_before_cells, cpu_world.cells[:3], 'a45.cpu_oracle',
+    )
+    if tape.rng_after_state != cpu_world.rng.bit_generator.state:
+        raise AssertionError('A4.5a PCG64 after-state differs from Formal066')
+    if not np.array_equal(tape.draw_count, plan.append_count):
+        raise AssertionError('A4.5a threshold draw count differs from append')
+    if (int(np.sum(tape.substitution_count)) <= 0
+            or int(np.sum(tape.substitution_count))
+            >= int(np.sum(tape.draw_count))):
+        raise AssertionError('A4.5a fixture lacks mixed hit/miss draws')
+    if not np.any(plan.requested_symbols[:3] > plan.append_count[:3]):
+        raise AssertionError('A4.5a fixture lacks resource-stopped requests')
+    for ci, before in enumerate(cpu_before_cells):
+        offset = len(before.replication_copy)
+        count = int(plan.append_count[ci])
+        template = np.asarray(before.replication_template, dtype=np.uint8)
+        for rank in range(count):
+            old = int(template[offset + rank])
+            new = int(plan.append_symbols[ci, rank])
+            if bool(tape.replacement_mask[ci, rank]) != (new != old):
+                raise AssertionError('A4.5a exclude-old mapping differs')
+
+    # mutation_rate=0 still consumes one scalar random() per accepted symbol,
+    # but never consumes the conditional bounded integer draw.
+    zero_world, zero_cells, zero_capacity, zero_dt = _paid_replication_fixture(
+        seed=8003,
+    )
+    zero_world.config.mutation = True
+    zero_world.config.mutation_rate = 0.0
+    zero_cells[0].replication_template_lesion = 0.0
+    zero_cells[0].pools[a4.a3.POOL_REACTIVE] = 0.0
+    _, _, zero_binding = _paid_replication_binding(
+        [zero_cells[0]], zero_world.config, zero_capacity,
+    )
+    zero_before = copy.deepcopy(zero_world.rng.bit_generator.state)
+    zero_tape = a44.prepare_substitution_rng_tape(
+        zero_binding, zero_dt, zero_world.config, zero_before,
+    )
+    if (int(zero_tape.draw_count[0]) <= 0
+            or int(zero_tape.substitution_count[0]) != 0
+            or np.any(zero_tape.replacement_mask)):
+        raise AssertionError('zero-error RNG consumption differs')
+    replay = np.random.Generator(np.random.PCG64())
+    replay.bit_generator.state = copy.deepcopy(zero_before)
+    for _ in range(int(zero_tape.draw_count[0])):
+        replay.random()
+    if replay.bit_generator.state != zero_tape.rng_after_state:
+        raise AssertionError('zero-error threshold-only RNG state differs')
+
+    if world.rng.bit_generator.state != rng_before:
+        raise AssertionError('A4.5a changed the live world RNG')
+    v3.assert_recursive_close(
+        world_before, world.state_dict(), atol=0.0, rtol=0.0,
+        path='a45.source_world',
+    )
+    for label, expected, actual in (
+        ('ragged', ragged_before, ragged.state_dict()),
+        ('state', state_before, state.state_dict()),
+        ('cache', cache_before, binding.cache.state_dict()),
+    ):
+        v3.assert_recursive_close(
+            expected, actual, atol=0.0, rtol=0.0,
+            path='a45.source_%s' % label,
+        )
+    return ('3 Formal066 rows: scalar random per paid symbol, conditional '
+            'integer draws, suffix/events/PCG64 after-state exact')
+
+
+def test_a45_substitution_rng_tape_numpy_torch_devices():
+    if torch is None:
+        raise AssertionError('PyTorch is required for A4.5a')
+    if _REQUIRE_CUDA and not torch.cuda.is_available():
+        raise AssertionError('CUDA required but unavailable; fallback forbidden')
+    world, cells, capacity, dt = _a45_substitution_fixture(seed=8004)
+    ragged, state, binding = _paid_replication_binding(
+        cells, world.config, capacity,
+    )
+    rng_before = copy.deepcopy(world.rng.bit_generator.state)
+    tape = a44.prepare_substitution_rng_tape(
+        binding, dt, world.config, rng_before,
+    )
+    expected = a44.paid_replication_substitution_numpy(
+        binding, dt, world.config, tape,
+    )
+    ragged_before = ragged.state_dict()
+    state_before = state.state_dict()
+    cache_before = binding.cache.state_dict()
+    source = inspect.getsource(a44.paid_replication_substitution_torch)
+    forbidden = (
+        '.item(', '.cpu(', '.numpy(', '.tolist(', 'nonzero(',
+        'masked_select(', 'unique(',
+    )
+    found = [token for token in forbidden if token in source]
+    if found:
+        raise AssertionError('resident substitution contains host op: %s' % found)
+    devices = ['cpu']
+    if torch.cuda.is_available():
+        devices.append('cuda')
+    for device in devices:
+        resident_ragged = ragged.to_torch(device=device)
+        resident_state = state.to_torch(device=device)
+        resident = a4.bind_a4_translation(resident_ragged, resident_state)
+        resident_tape = tape.to_torch(device=device)
+        ragged_ptrs = resident_ragged.data_ptrs()
+        state_ptrs = resident_state.data_ptrs()
+        cache_ptrs = resident.cache.data_ptrs()
+        tape_ptrs = resident_tape.data_ptrs()
+        plan = a44.paid_replication_substitution_torch(
+            resident, dt, world.config, resident_tape,
+        )
+        if any(getattr(plan, name).device.type != device
+               for name in a44._PLAN_ARRAY_FIELDS):
+            raise AssertionError('%s A4.5a output escaped device' % device)
+        v3.assert_recursive_close(
+            expected.state_dict(), plan.to_numpy().state_dict(),
+            atol=2e-12, rtol=0.0, path='a45.plan.%s' % device,
+        )
+        v3.assert_recursive_close(
+            tape.state_dict(), resident_tape.to_numpy().state_dict(),
+            atol=0.0, rtol=0.0, path='a45.tape.%s' % device,
+        )
+        if (ragged_ptrs != resident_ragged.data_ptrs()
+                or state_ptrs != resident_state.data_ptrs()
+                or cache_ptrs != resident.cache.data_ptrs()
+                or tape_ptrs != resident_tape.data_ptrs()):
+            raise AssertionError('%s A4.5a resident pointer changed' % device)
+    if world.rng.bit_generator.state != rng_before:
+        raise AssertionError('device parity changed the live RNG')
+    for label, before, after in (
+        ('ragged', ragged_before, ragged.state_dict()),
+        ('state', state_before, state.state_dict()),
+        ('cache', cache_before, binding.cache.state_dict()),
+    ):
+        v3.assert_recursive_close(
+            before, after, atol=0.0, rtol=0.0,
+            path='a45.device_source.%s' % label,
+        )
+    return 'NumPy/Torch %s fixed-tape suffix/events exact; source/RNG/pointers stable' % '/'.join(devices)
+
+
+def test_a45_substitution_rng_tape_fail_closed_and_authority():
+    if torch is None:
+        raise AssertionError('PyTorch is required for A4.5a trust checks')
+    world, cells, capacity, dt = _a45_substitution_fixture(seed=8005)
+    ragged, state, binding = _paid_replication_binding(
+        [cells[0]], world.config, capacity,
+    )
+    rng_before = copy.deepcopy(world.rng.bit_generator.state)
+    tape = a44.prepare_substitution_rng_tape(
+        binding, dt, world.config, rng_before,
+    )
+
+    forged = tape.clone()
+    forged._factory_token = None
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a44.validate_a4_substitution_rng_tape(forged),
+    )
+    bad_after = tape.clone()
+    bad_after.rng_after_state['state']['state'] ^= 1
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a44.validate_a4_substitution_rng_tape(bad_after),
+    )
+    bad_tail = tape.clone()
+    bad_tail.uniform_draws[0, int(bad_tail.draw_count[0])] = 0.25
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a44.validate_a4_substitution_rng_tape(bad_tail),
+    )
+    _assert_raises(
+        a44.A4ReplicationScopeError,
+        lambda: a44.paid_replication_substitution_numpy(
+            binding, dt + 1e-6, world.config, tape,
+        ),
+    )
+    disabled = copy.deepcopy(world.config)
+    disabled.mutation = False
+    _assert_raises(
+        a44.A4ReplicationScopeError,
+        lambda: a44.prepare_substitution_rng_tape(
+            binding, dt, disabled, rng_before,
+        ),
+    )
+    noncanonical = copy.deepcopy(rng_before)
+    noncanonical['bit_generator'] = 'PCG64DXSM'
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a44.prepare_substitution_rng_tape(
+            binding, dt, world.config, noncanonical,
+        ),
+    )
+
+    # An exact threshold comparison is deliberately CPU-authoritative.
+    boundary_world, boundary_cells, boundary_capacity, boundary_dt = (
+        _paid_replication_fixture(seed=8006)
+    )
+    boundary_world.config.mutation = True
+    boundary_world.config.proofreading = False
+    boundary_world.config.quiescence = False
+    boundary_world.config.quiescence_effector = False
+    boundary_cells[0].replication_template_lesion = 0.0
+    boundary_cells[0].pools[a4.a3.POOL_REACTIVE] = 0.0
+    boundary_state_before = copy.deepcopy(
+        boundary_world.rng.bit_generator.state,
+    )
+    probe = np.random.Generator(np.random.PCG64())
+    probe.bit_generator.state = copy.deepcopy(boundary_state_before)
+    boundary_world.config.mutation_rate = float(probe.random())
+    _, _, boundary_binding = _paid_replication_binding(
+        [boundary_cells[0]], boundary_world.config, boundary_capacity,
+    )
+    _assert_raises(
+        a44.A4ReplicationScopeError,
+        lambda: a44.prepare_substitution_rng_tape(
+            boundary_binding, boundary_dt, boundary_world.config,
+            boundary_state_before,
+        ),
+    )
+    if boundary_world.rng.bit_generator.state != boundary_state_before:
+        raise AssertionError('ambiguous tape preparation changed live RNG')
+
+    completing = copy.deepcopy(cells[0])
+    completing.replication_copy = [
+        int(value) for value in completing.replication_template[:-1]
+    ]
+    completing.replication_fractional = np.nextafter(1.0, 0.0)
+    _, _, completing_binding = _paid_replication_binding(
+        [completing], world.config, capacity,
+    )
+    _assert_raises(
+        a44.A4ReplicationScopeError,
+        lambda: a44.prepare_substitution_rng_tape(
+            completing_binding, dt, world.config, rng_before,
+        ),
+    )
+
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    resident = a4.bind_a4_translation(
+        ragged.to_torch(device=device), state.to_torch(device=device),
+    )
+    resident_tape = tape.to_torch(device=device)
+    resident_tape.uniform_draws[0, 0] += 0.125
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a44.paid_replication_substitution_torch(
+            resident, dt, world.config, resident_tape,
+        ),
+    )
+
+    # Scalar metadata and the nested PCG64 states are part of the resident
+    # attestation, not caller-editable labels around otherwise trusted arrays.
+    for component in (
+            'source_provenance', 'config_sha256', 'schedule_sha256',
+            'rng_before_state', 'rng_after_state'):
+        changed = tape.to_torch(device=device)
+        if component in (
+                'source_provenance', 'config_sha256', 'schedule_sha256'):
+            setattr(
+                changed, component,
+                ('0' if getattr(changed, component)[0] != '0' else '1')
+                + getattr(changed, component)[1:],
+            )
+        else:
+            getattr(changed, component)['state']['state'] ^= 1
+        _assert_raises(
+            a4.A4SchemaError,
+            lambda changed=changed: a44.paid_replication_substitution_torch(
+                resident, dt, world.config, changed,
+            ),
+        )
+
+    # A tape from the same ragged genome but a different physiology snapshot
+    # must not be reusable merely because its append count happens to match.
+    foreign_world, foreign_cells, foreign_capacity, foreign_dt = (
+        _a45_substitution_fixture(seed=8123)
+    )
+    original = copy.deepcopy(foreign_cells[2])
+    altered = copy.deepcopy(original)
+    altered.pools[a4.a3.POOL_REACTIVE] = 1000.0
+    original_ragged, original_state, _ = _paid_replication_binding(
+        [original], foreign_world.config, foreign_capacity,
+    )
+    _, _, altered_binding = _paid_replication_binding(
+        [altered], foreign_world.config, foreign_capacity,
+    )
+    foreign_tape = a44.prepare_substitution_rng_tape(
+        altered_binding, foreign_dt, foreign_world.config,
+        copy.deepcopy(foreign_world.rng.bit_generator.state),
+    )
+    original_binding = a4.bind_a4_translation(
+        original_ragged.to_torch(device=device),
+        original_state.to_torch(device=device),
+    )
+    foreign_result = a44.paid_replication_substitution_torch(
+        original_binding, foreign_dt, foreign_world.config,
+        foreign_tape.to_torch(device=device),
+    )
+    foreign_back = {
+        'code': foreign_result.scope_error_code.detach().cpu().numpy(),
+        'valid': foreign_result.scope_valid.detach().cpu().numpy(),
+        'requested': foreign_result.requested_symbols.detach().cpu().numpy(),
+        'append': foreign_result.append_count.detach().cpu().numpy(),
+        'events': foreign_result.substitution_events.detach().cpu().numpy(),
+    }
+    if (int(foreign_back['code'][0])
+            != int(a44.SCOPE_RNG_TAPE_MISMATCH)
+            or bool(foreign_back['valid'][0])
+            or any(int(foreign_back[name][0]) != 0
+                   for name in ('requested', 'append', 'events'))):
+        raise AssertionError('foreign physiology tape did not rollback as code 7')
+    _assert_raises(a44.A4ReplicationScopeError, foreign_result.to_numpy)
+
+    # A schedule mismatch on a row that has become independently out of scope
+    # still invalidates later rows in the shared PCG64 chain.  The cause row
+    # retains its primary code; otherwise-valid followers roll back as code 7.
+    chain_world, chain_cells, chain_capacity, chain_dt = (
+        _a45_substitution_fixture(seed=8124)
+    )
+    chain_ragged, chain_state, chain_binding = _paid_replication_binding(
+        chain_cells[:2], chain_world.config, chain_capacity,
+    )
+    chain_tape = a44.prepare_substitution_rng_tape(
+        chain_binding, chain_dt, chain_world.config,
+        copy.deepcopy(chain_world.rng.bit_generator.state),
+    )
+    invalid_chain_state = chain_state.clone()
+    invalid_chain_state.pools[0, int(a4.a3.POOL_ATP)] = -1e-12
+    invalid_chain = a4.bind_a4_translation(
+        chain_ragged.to_torch(device=device),
+        invalid_chain_state.to_torch(device=device),
+    )
+    chain_result = a44.paid_replication_substitution_torch(
+        invalid_chain, chain_dt, chain_world.config,
+        chain_tape.to_torch(device=device),
+    )
+    chain_code = chain_result.scope_error_code.detach().cpu().numpy()
+    chain_valid = chain_result.scope_valid.detach().cpu().numpy()
+    chain_append = chain_result.append_count.detach().cpu().numpy()
+    if (chain_code[:2].tolist() != [
+            int(a44.SCOPE_NEGATIVE_ATP),
+            int(a44.SCOPE_RNG_TAPE_MISMATCH),
+            ] or np.any(chain_valid[:2]) or np.any(chain_append[:2] != 0)):
+        raise AssertionError('shared RNG chain mismatch was not batch-atomic')
+    _assert_raises(a44.A4ReplicationScopeError, chain_result.to_numpy)
+
+    # If the current device error lies inside the registered comparison band
+    # around a recorded draw, ambiguity (code 6) takes precedence over the
+    # ordinary schedule mismatch and invalidates the complete RNG event.
+    deterministic, _ = a44._substitution_config(world.config)
+    base_plan = a44.paid_replication_elongation_numpy(
+        binding, dt, deterministic,
+    )
+    ranks = [
+        rank for rank in range(int(tape.draw_count[0]))
+        if float(tape.uniform_draws[0, rank])
+        > float(base_plan.last_effective_error_rate[0])
+    ]
+    if not ranks:
+        raise AssertionError('A4.5a fixture lacks a tunable comparison draw')
+    target = float(tape.uniform_draws[0, ranks[0]])
+    tuned_state = state.clone()
+    reactive_index = int(a4.a3.POOL_REACTIVE)
+    original_reactive = float(tuned_state.pools[0, reactive_index])
+    probe_state = state.clone()
+    probe_state.pools[0, reactive_index] = original_reactive + 1.0
+    probe_binding = a4.bind_a4_translation(ragged, probe_state)
+    probe_error = float(a44.paid_replication_elongation_numpy(
+        probe_binding, dt, deterministic,
+    ).last_effective_error_rate[0])
+    base_error = float(base_plan.last_effective_error_rate[0])
+    slope = probe_error - base_error
+    if not slope > 0.0:
+        raise AssertionError('reactive/error tuning slope is not positive')
+    tuned_state.pools[0, reactive_index] = (
+        original_reactive + (target - base_error) / slope
+    )
+    tuned_binding = a4.bind_a4_translation(ragged, tuned_state)
+    tuned_error = float(a44.paid_replication_elongation_numpy(
+        tuned_binding, dt, deterministic,
+    ).last_effective_error_rate[0])
+    if not a44._numpy_fp64_comparison_boundary(target, tuned_error):
+        raise AssertionError('failed to construct device comparison boundary')
+    resident_tuned = a4.bind_a4_translation(
+        ragged.to_torch(device=device), tuned_state.to_torch(device=device),
+    )
+    boundary_result = a44.paid_replication_substitution_torch(
+        resident_tuned, dt, world.config, tape.to_torch(device=device),
+    )
+    boundary_back = {
+        'code': boundary_result.scope_error_code.detach().cpu().numpy(),
+        'valid': boundary_result.scope_valid.detach().cpu().numpy(),
+        'requested': boundary_result.requested_symbols.detach().cpu().numpy(),
+        'append': boundary_result.append_count.detach().cpu().numpy(),
+        'events': boundary_result.substitution_events.detach().cpu().numpy(),
+    }
+    if (int(boundary_back['code'][0])
+            != int(a44.SCOPE_FP64_DISCRETE_BOUNDARY)
+            or bool(boundary_back['valid'][0])
+            or any(int(boundary_back[name][0]) != 0
+                   for name in ('requested', 'append', 'events'))):
+        raise AssertionError('device decision boundary did not rollback as code 6')
+    _assert_raises(a44.A4ReplicationScopeError, boundary_result.to_numpy)
+    if (world.rng.bit_generator.state != rng_before
+            or a44.FULL_GPU_WORLD_STEP is not False
+            or a44.PORT_STATUS.get('full_gpu_world_step') is not False
+            or v3._event_order().count('replication_cpu') != 1):
+        raise AssertionError('A4.5a changed RNG or A3 CPU authority')
+    return ('forged/state/tail/dt/config/PCG64/scalar-attestation/'
+            'foreign-state-code7/device-boundary-code6/completion/resident '
+            'mutation rejected; A3 replication_cpu authority retained')
 
 
 TESTS = (
@@ -2900,6 +3358,9 @@ TESTS = (
     test_a44b_proof_ledger_resource_error_and_nonmutation,
     test_a44b_numpy_torch_deterministic_devices_and_pointers,
     test_a44b_capacity_scope_and_a3_authority,
+    test_a45_substitution_rng_tape_formal066_oracle,
+    test_a45_substitution_rng_tape_numpy_torch_devices,
+    test_a45_substitution_rng_tape_fail_closed_and_authority,
 )
 
 
@@ -2933,9 +3394,10 @@ def run_all(write=False, output_dir=None):
             'gene_cache': a4.GENE_CACHE_SCHEMA_VERSION,
             'translation_state': a4.TRANSLATION_SCHEMA_VERSION,
             'paid_replication_elongation': a44.SCHEMA_VERSION,
+            'substitution_rng_tape': a44.RNG_TAPE_SCHEMA_VERSION,
         },
         'development_slice': (
-            'A4.4b-deterministic-proofreading-quiescence-elongation-plan'
+            'A4.5a-active-template-transactional-substitution-rng-tape'
         ),
         'promoted_baseline_unchanged': 'SOMA-CELL 0.6.8-GPU A3',
         'full_gpu_world_step': False,

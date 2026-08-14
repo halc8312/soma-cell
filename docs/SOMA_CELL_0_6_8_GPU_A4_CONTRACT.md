@@ -1,6 +1,6 @@
 # SOMA-CELL 0.6.8-GPU A4 contract
 
-Status: A4 development contract through slice A4.4b. This is not an A4
+Status: A4 development contract through slice A4.5a. This is not an A4
 promotion.
 
 ## Authority
@@ -176,6 +176,47 @@ unsupported row is never a successful replication result, and the remaining
 resident fields of an invalid plan are not commit authority before explicit
 readback and full validation succeed.
 
+## A4.5a scope
+
+A4.5a overlays scalar PCG64 substitution decisions on the already validated
+A4.4b schedule.  Its boundary is deliberately narrow: the template is already
+active, the paid copy remains incomplete, and mutation is enabled only for
+same-length per-symbol substitution.  Inactive-template start, completion,
+structural/material mutation, hydrolysis, CPU-cell commit, and scheduler
+replacement remain outside this slice.
+
+Tape preparation takes an explicit canonical NumPy PCG64 state and clones it;
+it never advances the live world RNG.  In cell-input order and then accepted
+symbol order it performs exactly one scalar `random()` call per paid append,
+including when effective error is zero.  Only a strict `uniform <
+effective_error` hit immediately performs scalar `integers(0, 7)`.  Resource-
+blocked requests consume no draw.  The bounded integer call is kept as a
+NumPy high-level call so its internal rejection and `has_uint32`/`uinteger`
+cache behavior are not guessed.
+
+`A4SubstitutionRngTape` is fixed-shape, private-factory, event-local data.  It
+carries draw/replacement prefixes, per-row counts and effective errors, full
+PCG64 before/after states, source/config/dt/schedule digests, and immutable
+scalar plus resident pointer/version attestations.  Host validation replays
+the complete scalar call sequence and proves the after-state exactly.  The
+tape has no deserialization, save, or live-RNG authority.
+
+The resident plan applies the CPU-resolved replacement mask; it does not use a
+second Torch RNG.  It nevertheless recomputes the deterministic schedule and
+checks cell identity, append counts, effective-error bits, and every recorded
+decision on device.  A draw within the registered 4096-epsilon comparison
+band is code 6.  A nonambiguous schedule or decision mismatch is code 7.
+Because all rows share one ordered PCG64 stream, either failure rolls back and
+invalidates the complete used batch, not only the row where it was detected.
+This also prevents a valid tape made from a different physiology snapshot but
+the same ragged genome from being reused.
+
+The returned `rng_after_state` is evidence for a later atomic commit only.
+A4.5a leaves the actual world RNG unchanged.  It is a direct-call oracle, not
+a scheduler integration: the current world step interleaves other per-cell RNG
+events between replication calls, so a batched tape cannot be installed as
+world authority until that global order is represented transactionally.
+
 ## Fail-closed invariants
 
 Ragged foundation invariants remain unchanged:
@@ -265,11 +306,12 @@ Replication-elongation-plan invariants are:
   row explicitly unsupported; it cannot silently fall through to a partial
   GPU result plus a second CPU replication call.
 
-## Explicit exclusions through A4.4b
+## Explicit exclusions through A4.5a
 
 - No scheduler/world integration or CPU-cell protein/material commit.
-- No template selection, completion transaction, new complete genome, lesion
-  inheritance, gene-cache refresh, mutation, symbol hydrolysis, or RNG kernel.
+- No inactive-template start, completion transaction, new complete genome,
+  lesion inheritance, gene-cache refresh, structural/material mutation,
+  symbol hydrolysis, or device RNG kernel.
 - No scheduler replacement and no change to A3 `gene_refresh`,
   `translation_cpu`, or `replication_cpu` authority.
 - No division, death, corpse/eDNA/HGT, neural, or causal-system port.
@@ -277,7 +319,7 @@ Replication-elongation-plan invariants are:
   CUDA, multi-stream, multi-GPU, or online-GPU abstraction.
 - No formal 13-spec/65-measurement benchmark and no speedup claim.
 
-## Acceptance through A4.4b
+## Acceptance through A4.5a
 
 - All A4.1 lossless/corruption/capacity/residency tests remain PASS.
 - Nested valid markers and invalid-outer/valid-inner recovery match frozen
@@ -330,6 +372,20 @@ Replication-elongation-plan invariants are:
   damage is checked bit-exactly on both Torch devices.
 - A4.4b leaves A3 `replication_cpu` authoritative and makes no speed claim.
 
+- A mutation-enabled, active, non-completing Formal066 fixture matches the
+  A4.5a suffix bytes, substitution-event counts, and full PCG64 after-state.
+- Effective error zero still consumes one threshold draw per paid symbol;
+  only hits consume the immediate bounded-integer call, and resource stops
+  consume no later draw.
+- NumPy, Torch CPU, and explicit RTX CUDA apply the same attested fixed tape
+  without changing the source arena, physiology, cache, tape storage, or live
+  RNG.
+- Forged/tampered scalar, PCG64, tail, config, dt, and source schedules fail
+  closed. A foreign-physiology tape is code 7; an on-device decision boundary
+  is code 6; both invalidate and roll back the whole used batch.
+- All 28 A4 development tests and the focused A3 regressions pass while A3
+  `replication_cpu` remains the only scheduler authority.
+
 Known A4.4b integration blockers are recorded rather than hidden.  On the
 measured six-cell development fixture the current fixed symbol-rank Torch plan
 was about 503 ms per call versus about 10.1 ms for NumPy, so it is not a
@@ -347,7 +403,7 @@ division was rejected as disproportionate complexity.  The launch-heavy path
 must be redesigned and remeasured before scheduler authority, promotion, or
 any speedup claim.
 
-Template selection and substitution RNG, completion/structural mutation, and
-hydrolysis remain separate later slices. Scheduler replacement remains later,
+Inactive-template start, completion/structural mutation, and hydrolysis remain
+separate later slices. Scheduler replacement remains later,
 after a contiguous resident chain can commit without recreating A3's per-cell
 host/device round trips.

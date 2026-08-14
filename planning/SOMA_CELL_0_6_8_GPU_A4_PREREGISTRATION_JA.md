@@ -1,6 +1,6 @@
-# SOMA-CELL 0.6.8-GPU A4.4b 事前登録（A4.4a継承）
+# SOMA-CELL 0.6.8-GPU A4.5a 事前登録（A4.1〜A4.4b継承）
 
-状態: A4.4aまでを継承する開発用の最小slice。A4昇格判定ではない。
+状態: A4.4bまでを継承する開発用の最小slice。A4昇格判定ではない。
 
 ## 継承する基盤
 
@@ -243,6 +243,83 @@ proofreading有効時のderived ATP gateにも適用する。ATP bandがsymbol l
   software divisionや汎用数値frameworkの導入が必要になった場合はこのsliceで行わない。
 - `replication_cpu`、promoted A3、`full_gpu_world_step=false`は変更しない。
 
-次はtemplate selection/substitution RNG、completion/structural mutation、hydrolysisを
-別sliceで進める。scheduler置換は、連続したresident chainをhost/device往復なしで
-atomic commitできる段階まで延期する。
+## A4.5a追加仮説
+
+既にactiveなtemplateを使い、このcallでcompletionへ到達しないA4.4bの支払schedule
+なら、Formal066のper-symbol substitution RNG順を、live world RNGを動かさない
+transactional event tapeとして固定できる。今回支持するmutationは同じ長さの
+substitutionだけである。
+
+inactive template startは同じCPU call内でtemplate/copyのragged topologyを新設して
+直ちに伸長する別transactionなのでA4.5bへ分離する。completion後のstructural/
+material mutationとhydrolysis RNGも同梱しない。
+
+## A4.5aで実装するもの
+
+- 明示されたcanonical NumPy PCG64 before-stateのclone
+- cell入力順、paid append順のscalar `random()` 1回
+- strict `uniform < effective_error`成立時だけ直後にscalar `integers(0,7)`
+- `effective_error=0`でもpaid appendごとにthreshold drawを消費し、resource stop後は
+  drawを消費しない凍結順序
+- `state/inc/has_uint32/uinteger`を含む完全before/after state
+- fixed-shape draw/replacement prefix、count、effective error、source/config/dt/schedule
+  digestを持つprivate-factory `A4SubstitutionRngTape`
+- hostの高水準PCG64 replayによる全draw、decision、bounded integer、after-state照合
+- scalar/PCG64 metadataとresident array pointer/versionのlifetime attestation
+- CPUで確定したreplacement maskのNumPy/Torch CPU/CUDA適用
+- device上でcell/count/effective-error bits/decisionを再照合し、foreign physiology
+  scheduleをcode 7でbatch全体rollback
+- uniform/effective-errorが4096-epsilon帯内ならcode 6でbatch全体rollback
+- live world RNG、source ragged/cache/physiology、CPU cell、scheduler receiptの不変
+
+bounded integerが内部で消費するraw draw数は仮定しない。全uniformを先にvector生成、
+非hit分のinteger先取り、Torch RNG、counter RNG、独自software RNGは使わない。
+`rng_after_state`は将来のatomic commit候補であり、このsliceではlive authorityでない。
+
+## A4.5aで実装しないもの
+
+- inactive template startとtemplate/copy arena topology transaction
+- completion、新complete genome、lesion/cycle/cache更新
+- insertion/deletion/duplication/inversion/transpositionとmaterial mutation
+- hydrolysis RNG
+- world RNGへのafter-state commit、CPU cell/raggedへのcommit
+- A3 scheduler authority置換、global interleaved RNG event tape
+- device RNG kernel、汎用RNG framework、fp32、compile/custom CUDA、速度向上主張
+
+現schedulerは各cellのreplication後に別RNG eventを挟むため、A4.5aのmulti-cell tapeは
+direct-call oracleだけに使う。このglobal順序をtransactionとして表現する前に
+world-stepへ接続しない。
+
+## A4.5a固定テスト
+
+1. 3つのFormal066 cellでsuffix byte、substitution event count、完全PCG64 after-stateを
+   direct CPU oracleとexact照合する。
+2. error=0でもthreshold drawを消費しinteger drawは0、mixed hit/missではhit直後だけ
+   integer、requestedよりresource-paid数が少ない場合はpaid数だけdrawすることを固定する。
+3. NumPy、Torch CPU、明示RTX CUDAで同じtapeのsuffix/event/pools/telemetryを照合し、
+   source値、pointer、tape、live RNGが不変であることを確認する。
+4. forged factory token、PCG64 after-state、tail、dt/config、非PCG64 state、
+   resident array mutationをfail closedとする。
+5. source/config/schedule digestとbefore/after PCG64 dictをupload後に変更した場合、
+   resident plan前にattestation errorとする。
+6. 同じragged/countでも別reactive physiologyから作ったvalid tapeをcode 7とし、
+   requested/append/eventを全row rollbackする。
+7. device effective errorを記録uniformの4096-epsilon帯へ調整したcaseはcode 6を
+   code 7より優先し、同じく全row rollbackする。
+8. completion、inactive start、structural mutationは成功扱いせず、A3
+   `replication_cpu` exactly onceと`full_gpu_world_step=false`を維持する。
+9. A4.1〜A4.4bの25テストを変更せず継続し、合計28/28をCUDA必須でPASSさせる。
+
+## A4.5a判定
+
+- 28/28、direct Formal066 RNG state、NumPy/Torch CPU/CUDA、trust/capacity/scopeが
+  全てPASSした場合だけ「active-template/noncompletion substitution RNG tape pure
+  plan、未統合」と記録する。
+- PCG64高水準call順、full state、suffix、material ledger、device schedule照合の
+  どれかが違えばA4.4bを維持する。
+- schedule mismatchをrow-local成功へ縮退したり、live RNGを部分的に進めたりしない。
+- A4.5a単独の速度測定・scheduler統合・A4昇格は行わない。
+
+次はA4.5bとしてinactive template startとarena topology transactionを実装する。
+その後completion/structural mutation、hydrolysisを別sliceで進める。scheduler置換は、
+連続したresident chainをhost/device往復なしでatomic commitできる段階まで延期する。

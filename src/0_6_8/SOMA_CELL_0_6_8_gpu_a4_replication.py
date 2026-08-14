@@ -1,16 +1,19 @@
 # coding: utf-8
-"""A4.4b pure resident paid DNA-elongation plan.
+"""A4.5a pure resident paid DNA-elongation and substitution-RNG plan.
 
 This deliberately narrow development slice handles only a pre-existing active
 replication template whose partial copy remains incomplete in this call.  It
-adds deterministic proofreading, inherited/behavioural quiescence, and an
-external-replicase contribution.  It does not select a template, mutate,
-complete a genome, consume RNG, or replace the A3 scheduler.  Frozen Formal066
-CPU behavior remains authority.
+adds deterministic proofreading, inherited/behavioural quiescence, an
+external-replicase contribution, and an event-local PCG64 substitution tape.
+It does not select a template, complete a genome, perform structural mutation,
+advance the live world RNG, or replace the A3 scheduler.  Frozen Formal066 CPU
+behavior remains authority.
 """
 from __future__ import division
 
 import copy
+import hashlib
+import json
 import math
 from dataclasses import dataclass, fields
 
@@ -24,10 +27,11 @@ except Exception:  # pragma: no cover - NumPy reference remains importable
     torch = None
 
 
-BUILD = 'SOMA-CELL 0.6.8-GPU A4.4b'
+BUILD = 'SOMA-CELL 0.6.8-GPU A4.5a'
 BUILD_ID = BUILD
-BUILD_LONG = BUILD + ' | deterministic proofreading/quiescence elongation plan'
-SCHEMA_VERSION = '0.6.8-GPU-A4.4b-paid-dna-elongation-plan'
+BUILD_LONG = BUILD + ' | PCG64 substitution-tape elongation plan'
+SCHEMA_VERSION = '0.6.8-GPU-A4.5a-substitution-rng-elongation-plan'
+RNG_TAPE_SCHEMA_VERSION = '0.6.8-GPU-A4.5a-substitution-rng-tape'
 FULL_GPU_WORLD_STEP = False
 
 SCOPE_OK = 0
@@ -37,6 +41,7 @@ SCOPE_COMPLETION = 3
 SCOPE_CAPACITY = 4
 SCOPE_NEGATIVE_ATP = 5
 SCOPE_FP64_DISCRETE_BOUNDARY = 6
+SCOPE_RNG_TAPE_MISMATCH = 7
 
 # CPU and CUDA fp64 division may differ by a few ulps.  Do not turn that
 # continuous discrepancy into a different integer symbol request.  The
@@ -50,17 +55,32 @@ _PLAN_ARRAY_FIELDS = (
     'requested_symbols', 'append_symbols', 'append_count', 'pools_after',
     'replication_fractional_after', 'last_replication_symbols',
     'last_effective_error_rate', 'cumulative_proofreading_atp_after',
+    'substitution_events',
 )
 _PLAN_UINT8_FIELDS = ('append_symbols',)
 _PLAN_INT64_FIELDS = (
     'cell_ids', 'scope_error_code', 'requested_symbols', 'append_count',
     'last_replication_symbols',
+    'substitution_events',
 )
 _PLAN_BOOL_FIELDS = ('cell_mask', 'scope_valid')
 _PLAN_FLOAT64_FIELDS = (
     'pools_after', 'replication_fractional_after',
     'last_effective_error_rate', 'cumulative_proofreading_atp_after',
 )
+
+_RNG_TAPE_ARRAY_FIELDS = (
+    'cell_ids', 'cell_mask', 'draw_mask', 'uniform_draws',
+    'replacement_raw', 'replacement_mask', 'draw_count',
+    'substitution_count', 'effective_error',
+)
+_RNG_TAPE_UINT8_FIELDS = ('replacement_raw',)
+_RNG_TAPE_INT64_FIELDS = (
+    'cell_ids', 'draw_count', 'substitution_count',
+)
+_RNG_TAPE_BOOL_FIELDS = ('cell_mask', 'draw_mask', 'replacement_mask')
+_RNG_TAPE_FLOAT64_FIELDS = ('uniform_draws', 'effective_error')
+_RNG_TAPE_FACTORY_TOKEN = object()
 
 
 class A4ReplicationError(a4.A4Error):
@@ -104,7 +124,7 @@ def _strict_bool(value, label):
 
 
 def _supported_config(config):
-    """Extract exactly the host flags supported by A4.4b."""
+    """Extract exactly the deterministic host flags supported by A4.5a."""
     required = {
         'genome_replication': True,
         'mutation': False,
@@ -115,7 +135,9 @@ def _supported_config(config):
         actual = _strict_bool(getattr(config, name), 'config.%s' % name)
         if actual is not expected:
             raise A4ReplicationScopeError(
-                'A4.4b requires config.%s=%s' % (name, expected)
+                'deterministic elongation requires config.%s=%s' % (
+                    name, expected,
+                )
             )
     flags = {}
     for name in (
@@ -134,6 +156,29 @@ def _supported_config(config):
         'config.eco66_replication_rate_scale',
     )
     return mutation_rate, max(0.25, scale), flags
+
+
+def _substitution_config(config):
+    """Return the mutation-free schedule config and an exact host digest."""
+    if not hasattr(config, 'mutation') or not _strict_bool(
+            getattr(config, 'mutation'), 'config.mutation'):
+        raise A4ReplicationScopeError(
+            'A4.5a substitution planning requires config.mutation=True'
+        )
+    deterministic = copy.deepcopy(config)
+    deterministic.mutation = False
+    mutation_rate, scale, flags = _supported_config(deterministic)
+    payload = {
+        'genome_replication': True,
+        'mutation': True,
+        'mutation_rate_hex': float(mutation_rate).hex(),
+        'eco66_replication_rate_scale_hex': float(scale).hex(),
+        'proofreading': bool(flags['proofreading']),
+        'external_replicase': bool(flags['external_replicase']),
+        'quiescence': bool(flags['quiescence']),
+        'quiescence_effector': bool(flags['quiescence_effector']),
+    }
+    return deterministic, _sha256_json(payload)
 
 
 def _strict_dt(value):
@@ -206,7 +251,7 @@ def _require_binding_scope_flags(state, flags):
             or bool(state.quiescence_effector)
             != bool(flags['quiescence_effector'])):
         raise A4ReplicationScopeError(
-            'A4.4b config quiescence flags differ from the packed snapshot'
+            'A4.5a config quiescence flags differ from the packed snapshot'
         )
 
 
@@ -231,6 +276,7 @@ class A4PaidElongationPlan:
     last_replication_symbols: object
     last_effective_error_rate: object
     cumulative_proofreading_atp_after: object
+    substitution_events: object
 
     def clone(self):
         values = {}
@@ -280,6 +326,389 @@ class A4PaidElongationPlan:
             if item.name in _PLAN_ARRAY_FIELDS
             else copy.deepcopy(getattr(self, item.name))
         ) for item in fields(self)}
+
+
+@dataclass
+class A4SubstitutionRngTape:
+    """Ephemeral event tape; it is neither save nor live-RNG authority."""
+
+    _factory_token: object
+    schema_version: str
+    cell_capacity: int
+    append_capacity: int
+    cell_count: int
+    source_provenance: str
+    dt_hex: str
+    config_sha256: str
+    schedule_sha256: str
+    rng_before_state: object
+    rng_after_state: object
+    cell_ids: object
+    cell_mask: object
+    draw_mask: object
+    uniform_draws: object
+    replacement_raw: object
+    replacement_mask: object
+    draw_count: object
+    substitution_count: object
+    effective_error: object
+
+    def clone(self):
+        _require_rng_tape(self)
+        values = {
+            name: (
+                _clone_array(getattr(self, name))
+                if name in _RNG_TAPE_ARRAY_FIELDS
+                else copy.deepcopy(getattr(self, name))
+            )
+            for name in (
+                'schema_version', 'cell_capacity', 'append_capacity',
+                'cell_count', 'source_provenance', 'dt_hex',
+                'config_sha256', 'schedule_sha256', 'rng_before_state',
+                'rng_after_state',
+            ) + _RNG_TAPE_ARRAY_FIELDS
+        }
+        return _make_rng_tape(**values)
+
+    def to_torch(self, device='cpu'):
+        if torch is None:
+            raise RuntimeError('PyTorch is unavailable')
+        validate_a4_substitution_rng_tape(self)
+        requested = torch.device(device)
+        if requested.type not in ('cpu', 'cuda'):
+            raise a4.A4DeviceError('RNG tape device must be cpu or cuda')
+        if requested.type == 'cuda' and not torch.cuda.is_available():
+            raise a4.A4DeviceError('CUDA requested but unavailable')
+        values = {
+            name: copy.deepcopy(getattr(self, name))
+            for name in (
+                'schema_version', 'cell_capacity', 'append_capacity',
+                'cell_count', 'source_provenance', 'dt_hex',
+                'config_sha256', 'schedule_sha256', 'rng_before_state',
+                'rng_after_state',
+            )
+        }
+        for name in _RNG_TAPE_ARRAY_FIELDS:
+            value = np.asarray(getattr(self, name))
+            dtype = (
+                torch.uint8 if name in _RNG_TAPE_UINT8_FIELDS else
+                torch.int64 if name in _RNG_TAPE_INT64_FIELDS else
+                torch.bool if name in _RNG_TAPE_BOOL_FIELDS else
+                torch.float64
+            )
+            values[name] = torch.as_tensor(
+                value, dtype=dtype, device=requested,
+            ).clone()
+        return _make_rng_tape(**values)
+
+    def to_numpy(self):
+        _require_rng_tape(self)
+        if not _is_tensor(self.uniform_draws):
+            return validate_a4_substitution_rng_tape(self.clone())
+        values = {
+            name: copy.deepcopy(getattr(self, name))
+            for name in (
+                'schema_version', 'cell_capacity', 'append_capacity',
+                'cell_count', 'source_provenance', 'dt_hex',
+                'config_sha256', 'schedule_sha256', 'rng_before_state',
+                'rng_after_state',
+            )
+        }
+        for name in _RNG_TAPE_ARRAY_FIELDS:
+            value = _host_array(getattr(self, name))
+            dtype = (
+                np.uint8 if name in _RNG_TAPE_UINT8_FIELDS else
+                np.int64 if name in _RNG_TAPE_INT64_FIELDS else
+                bool if name in _RNG_TAPE_BOOL_FIELDS else
+                np.float64
+            )
+            values[name] = value.astype(dtype, copy=False)
+        return validate_a4_substitution_rng_tape(_make_rng_tape(**values))
+
+    def data_ptrs(self):
+        if not all(_is_tensor(getattr(self, name))
+                   for name in _RNG_TAPE_ARRAY_FIELDS):
+            raise TypeError('data_ptrs requires a Torch-backed RNG tape')
+        return {
+            name: int(getattr(self, name).data_ptr())
+            for name in _RNG_TAPE_ARRAY_FIELDS
+        }
+
+    def state_dict(self):
+        return {
+            name: (
+                _clone_array(getattr(self, name))
+                if name in _RNG_TAPE_ARRAY_FIELDS
+                else copy.deepcopy(getattr(self, name))
+            )
+            for name in (
+                'schema_version', 'cell_capacity', 'append_capacity',
+                'cell_count', 'source_provenance', 'dt_hex',
+                'config_sha256', 'schedule_sha256', 'rng_before_state',
+                'rng_after_state',
+            ) + _RNG_TAPE_ARRAY_FIELDS
+        }
+
+
+def _make_rng_tape(**values):
+    tape = A4SubstitutionRngTape(
+        _factory_token=_RNG_TAPE_FACTORY_TOKEN, **values
+    )
+    tape._scalar_metadata = _rng_tape_scalar_metadata(tape)
+    if _is_tensor(tape.uniform_draws):
+        tape._resident_data_ptrs = tape.data_ptrs()
+        tape._resident_versions = {
+            name: int(getattr(tape, name)._version)
+            for name in _RNG_TAPE_ARRAY_FIELDS
+        }
+    return tape
+
+
+def _is_lower_hex_digest(value):
+    return (
+        isinstance(value, str) and len(value) == 64
+        and value == value.lower()
+        and all(ch in '0123456789abcdef' for ch in value)
+    )
+
+
+def _sha256_json(value):
+    encoded = json.dumps(
+        value, sort_keys=True, separators=(',', ':'), ensure_ascii=True,
+    ).encode('ascii')
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _canonical_pcg64_state(value, label):
+    if not isinstance(value, dict) or set(value) != {
+            'bit_generator', 'state', 'has_uint32', 'uinteger'}:
+        raise a4.A4SchemaError('%s has noncanonical PCG64 keys' % label)
+    if value.get('bit_generator') != 'PCG64':
+        raise a4.A4SchemaError('%s is not a PCG64 state' % label)
+    nested = value.get('state')
+    if not isinstance(nested, dict) or set(nested) != {'state', 'inc'}:
+        raise a4.A4SchemaError('%s has noncanonical inner state' % label)
+    result = {
+        'bit_generator': 'PCG64',
+        'state': {},
+        'has_uint32': None,
+        'uinteger': None,
+    }
+    for name in ('state', 'inc'):
+        item = nested[name]
+        if isinstance(item, (bool, np.bool_)) or not isinstance(
+                item, (int, np.integer)):
+            raise a4.A4SchemaError('%s.%s must be integer' % (label, name))
+        item = int(item)
+        if item < 0 or item >= (1 << 128):
+            raise a4.A4SchemaError('%s.%s outside uint128' % (label, name))
+        result['state'][name] = item
+    for name, upper in (('has_uint32', 2), ('uinteger', 1 << 32)):
+        item = value[name]
+        if isinstance(item, (bool, np.bool_)) or not isinstance(
+                item, (int, np.integer)):
+            raise a4.A4SchemaError('%s.%s must be integer' % (label, name))
+        item = int(item)
+        if item < 0 or item >= upper:
+            raise a4.A4SchemaError('%s.%s outside range' % (label, name))
+        result[name] = item
+    try:
+        bit_generator = np.random.PCG64()
+        bit_generator.state = copy.deepcopy(result)
+    except Exception as exc:
+        raise a4.A4SchemaError('%s is not accepted by NumPy PCG64' % label) from exc
+    if bit_generator.state != result:
+        raise a4.A4SchemaError('%s is not a canonical PCG64 state' % label)
+    return result
+
+
+def _rng_tape_scalar_metadata(tape):
+    """Immutable identity for an uploaded one-event PCG64 tape."""
+    before = _canonical_pcg64_state(
+        tape.rng_before_state, 'rng_before_state',
+    )
+    after = _canonical_pcg64_state(
+        tape.rng_after_state, 'rng_after_state',
+    )
+    return (
+        str(tape.schema_version), int(tape.cell_capacity),
+        int(tape.append_capacity), int(tape.cell_count),
+        str(tape.source_provenance), str(tape.dt_hex),
+        str(tape.config_sha256), str(tape.schedule_sha256),
+        _sha256_json(before), _sha256_json(after),
+    )
+
+
+def _rng_schedule_digest(tape):
+    N = int(tape.cell_count)
+    payload = {
+        'schema': str(tape.schema_version),
+        'source': str(tape.source_provenance),
+        'dt_hex': str(tape.dt_hex),
+        'config_sha256': str(tape.config_sha256),
+        'cell_ids': [int(value) for value in np.asarray(tape.cell_ids)[:N]],
+        'draw_count': [
+            int(value) for value in np.asarray(tape.draw_count)[:N]
+        ],
+        'effective_error_hex': [
+            float(value).hex()
+            for value in np.asarray(tape.effective_error)[:N]
+        ],
+    }
+    return _sha256_json(payload)
+
+
+def _validate_rng_tape_metadata(tape):
+    if (not isinstance(tape, A4SubstitutionRngTape)
+            or tape._factory_token is not _RNG_TAPE_FACTORY_TOKEN):
+        raise a4.A4SchemaError('RNG tape must come from the private factory')
+    if tape.schema_version != RNG_TAPE_SCHEMA_VERSION:
+        raise a4.A4SchemaError('RNG tape schema mismatch')
+    for name in ('cell_capacity', 'append_capacity', 'cell_count'):
+        value = getattr(tape, name)
+        if isinstance(value, (bool, np.bool_)) or not isinstance(
+                value, (int, np.integer)):
+            raise a4.A4SchemaError('%s must be integer' % name)
+    C = int(tape.cell_capacity)
+    W = int(tape.append_capacity)
+    N = int(tape.cell_count)
+    if C <= 0 or W <= 0 or N < 0 or N > C:
+        raise a4.A4SchemaError('RNG tape capacities/count are invalid')
+    if (not _is_lower_hex_digest(tape.source_provenance)
+            or not _is_lower_hex_digest(tape.config_sha256)
+            or not _is_lower_hex_digest(tape.schedule_sha256)):
+        raise a4.A4SchemaError('RNG tape provenance digest is invalid')
+    try:
+        parsed_dt = float.fromhex(tape.dt_hex)
+    except Exception as exc:
+        raise a4.A4SchemaError('RNG tape dt hex is invalid') from exc
+    if not math.isfinite(parsed_dt) or parsed_dt < 0.0:
+        raise a4.A4SchemaError('RNG tape dt is outside supported range')
+    _canonical_pcg64_state(tape.rng_before_state, 'rng_before_state')
+    _canonical_pcg64_state(tape.rng_after_state, 'rng_after_state')
+    kinds = set()
+    devices = set()
+    for name in _RNG_TAPE_ARRAY_FIELDS:
+        value = getattr(tape, name)
+        if _is_tensor(value):
+            kinds.add('torch')
+            devices.add(str(value.device))
+        elif isinstance(value, np.ndarray):
+            kinds.add('numpy')
+        else:
+            raise a4.A4SchemaError('%s is not an array/tensor' % name)
+    if len(kinds) != 1 or len(devices) > 1:
+        raise a4.A4SchemaError('mixed RNG tape backend/device is forbidden')
+    backend = next(iter(kinds))
+    for names, numpy_dtype, torch_dtype in (
+        (_RNG_TAPE_UINT8_FIELDS, np.dtype(np.uint8),
+         getattr(torch, 'uint8', None)),
+        (_RNG_TAPE_INT64_FIELDS, np.dtype(np.int64),
+         getattr(torch, 'int64', None)),
+        (_RNG_TAPE_BOOL_FIELDS, np.dtype(bool), getattr(torch, 'bool', None)),
+        (_RNG_TAPE_FLOAT64_FIELDS, np.dtype(np.float64),
+         getattr(torch, 'float64', None)),
+    ):
+        for name in names:
+            expected = torch_dtype if backend == 'torch' else numpy_dtype
+            if getattr(tape, name).dtype != expected:
+                raise a4.A4SchemaError('%s has noncanonical dtype' % name)
+    shapes = {
+        'cell_ids': (C,), 'cell_mask': (C,),
+        'draw_mask': (C, W), 'uniform_draws': (C, W),
+        'replacement_raw': (C, W), 'replacement_mask': (C, W),
+        'draw_count': (C,), 'substitution_count': (C,),
+        'effective_error': (C,),
+    }
+    for name, shape in shapes.items():
+        if tuple(getattr(tape, name).shape) != shape:
+            raise a4.A4SchemaError('%s shape mismatch' % name)
+    return backend
+
+
+def _require_rng_tape(tape):
+    backend = _validate_rng_tape_metadata(tape)
+    if getattr(tape, '_scalar_metadata', None) != (
+            _rng_tape_scalar_metadata(tape)):
+        raise a4.A4SchemaError('RNG tape scalar metadata changed after creation')
+    if backend == 'torch':
+        if (getattr(tape, '_resident_data_ptrs', None) != tape.data_ptrs()
+                or getattr(tape, '_resident_versions', None) != {
+                    name: int(getattr(tape, name)._version)
+                    for name in _RNG_TAPE_ARRAY_FIELDS
+                }):
+            raise a4.A4SchemaError('resident RNG tape changed after upload')
+    return tape
+
+
+def validate_a4_substitution_rng_tape(tape):
+    """Replay a host tape and prove PCG64 before/after state exactly."""
+    _require_rng_tape(tape)
+    backend = _validate_rng_tape_metadata(tape)
+    if backend != 'numpy':
+        raise a4.A4SchemaError('full RNG tape validation requires NumPy')
+    raw = {
+        name: np.asarray(getattr(tape, name))
+        for name in _RNG_TAPE_ARRAY_FIELDS
+    }
+    C = int(tape.cell_capacity)
+    W = int(tape.append_capacity)
+    N = int(tape.cell_count)
+    prefix = np.arange(W, dtype=np.int64)[None, :] < raw['draw_count'][:, None]
+    if (not np.array_equal(raw['cell_mask'], np.arange(C) < N)
+            or not np.array_equal(raw['draw_mask'], prefix)
+            or np.any(raw['draw_count'][:N] < 0)
+            or np.any(raw['draw_count'][:N] > W)
+            or np.any(raw['draw_count'][N:] != 0)):
+        raise a4.A4SchemaError('RNG tape draw prefix/count is invalid')
+    if (np.any(raw['cell_ids'][:N] < 0)
+            or len(set(int(v) for v in raw['cell_ids'][:N])) != N
+            or np.any(raw['cell_ids'][N:] != -1)):
+        raise a4.A4SchemaError('RNG tape cell identity is invalid')
+    if (not np.isfinite(raw['uniform_draws']).all()
+            or np.any(raw['uniform_draws'] < 0.0)
+            or np.any(raw['uniform_draws'] >= 1.0)
+            or not np.isfinite(raw['effective_error']).all()
+            or np.any(raw['effective_error'][:N] < 0.0)
+            or np.any(raw['effective_error'][N:] != 0.0)):
+        raise a4.A4SchemaError('RNG tape floating values are invalid')
+    if (np.any(raw['replacement_mask'] & ~raw['draw_mask'])
+            or np.any(raw['replacement_raw'][raw['replacement_mask']] >= 7)
+            or np.any(raw['replacement_raw'][~raw['replacement_mask']] != 0)
+            or np.any(raw['uniform_draws'][~raw['draw_mask']] != 0.0)):
+        raise a4.A4SchemaError('RNG tape replacement/tail is invalid')
+    expected_counts = np.sum(
+        raw['replacement_mask'], axis=1, dtype=np.int64,
+    )
+    if (not np.array_equal(expected_counts, raw['substitution_count'])
+            or np.any(raw['substitution_count'] > raw['draw_count'])):
+        raise a4.A4SchemaError('RNG tape substitution count is invalid')
+    if tape.schedule_sha256 != _rng_schedule_digest(tape):
+        raise a4.A4SchemaError('RNG tape schedule provenance differs')
+    before = _canonical_pcg64_state(
+        tape.rng_before_state, 'rng_before_state',
+    )
+    generator = np.random.Generator(np.random.PCG64())
+    generator.bit_generator.state = copy.deepcopy(before)
+    for ci in range(N):
+        for rank in range(int(raw['draw_count'][ci])):
+            uniform = float(generator.random())
+            if np.float64(uniform).view(np.uint64) != np.float64(
+                    raw['uniform_draws'][ci, rank]).view(np.uint64):
+                raise a4.A4SchemaError('RNG tape uniform replay differs')
+            expected_hit = uniform < float(raw['effective_error'][ci])
+            if bool(raw['replacement_mask'][ci, rank]) != expected_hit:
+                raise a4.A4SchemaError('RNG tape mutation decision differs')
+            if expected_hit:
+                replacement = int(generator.integers(0, 7))
+                if replacement != int(raw['replacement_raw'][ci, rank]):
+                    raise a4.A4SchemaError('RNG tape integer replay differs')
+    after = _canonical_pcg64_state(
+        tape.rng_after_state, 'rng_after_state',
+    )
+    if generator.bit_generator.state != after:
+        raise a4.A4SchemaError('RNG tape after-state differs from replay')
+    return tape
 
 
 def _validate_plan_backend(plan):
@@ -342,6 +771,7 @@ def _validate_plan_metadata(plan):
         'last_replication_symbols': (C,),
         'last_effective_error_rate': (C,),
         'cumulative_proofreading_atp_after': (C,),
+        'substitution_events': (C,),
     }
     for name, shape in shapes.items():
         if tuple(getattr(plan, name).shape) != shape:
@@ -377,7 +807,10 @@ def validate_a4_paid_elongation_plan(plan):
     if (np.any(raw['requested_symbols'][:N] < 0)
             or np.any(raw['append_count'][:N] < 0)
             or np.any(raw['append_count'][:N] > W)
-            or np.any(raw['append_count'][:N] > raw['requested_symbols'][:N])):
+            or np.any(raw['append_count'][:N] > raw['requested_symbols'][:N])
+            or np.any(raw['substitution_events'][:N] < 0)
+            or np.any(raw['substitution_events'][:N]
+                      > raw['append_count'][:N])):
         raise a4.A4SchemaError('replication counts are invalid')
     if not np.array_equal(
             raw['last_replication_symbols'], raw['append_count']):
@@ -548,6 +981,7 @@ def _empty_numpy_plan(binding):
         cumulative_proofreading_atp_after=np.asarray(
             state.cumulative_proofreading_atp, dtype=np.float64,
         ).copy(),
+        substitution_events=np.zeros((C,), dtype=np.int64),
     )
 
 
@@ -1071,9 +1505,244 @@ def paid_replication_elongation_torch(binding, dt, config):
             torch.zeros_like(effective_error),
         ),
         cumulative_proofreading_atp_after=cumulative_proofreading_atp_after,
+        substitution_events=torch.zeros_like(append_count),
     )
     _validate_plan_metadata(plan)
     return plan
+
+
+def _require_rng_tape_binding(tape, binding, dt, config_sha256):
+    _require_rng_tape(tape)
+    dt = _strict_dt(dt)
+    if (tape.source_provenance != str(binding.state.source_provenance)
+            or tape.dt_hex != float(dt).hex()
+            or tape.config_sha256 != str(config_sha256)
+            or int(tape.cell_capacity) != int(binding.state.cell_capacity)
+            or int(tape.append_capacity)
+            != int(binding.ragged.max_sequence_symbols)
+            or int(tape.cell_count) != int(binding.state.cell_count)):
+        raise A4ReplicationScopeError(
+            'substitution RNG tape does not bind this source/config/dt'
+        )
+    return tape
+
+
+def prepare_substitution_rng_tape(
+        binding, dt, config, rng_state_before):
+    """Replay Formal066 scalar PCG64 calls on a clone, never the live RNG."""
+    a4._require_translation_binding(binding)
+    if _is_tensor(binding.state.pools):
+        raise a4.A4SchemaError('RNG tape preparation requires a NumPy binding')
+    deterministic, config_sha256 = _substitution_config(config)
+    dt = _strict_dt(dt)
+    plan = paid_replication_elongation_numpy(binding, dt, deterministic)
+    before = _canonical_pcg64_state(rng_state_before, 'rng_state_before')
+    generator = np.random.Generator(np.random.PCG64())
+    generator.bit_generator.state = copy.deepcopy(before)
+    C = int(plan.cell_capacity)
+    W = int(plan.append_capacity)
+    N = int(plan.cell_count)
+    draw_count = np.asarray(plan.append_count, dtype=np.int64).copy()
+    effective_error = np.asarray(
+        plan.last_effective_error_rate, dtype=np.float64,
+    ).copy()
+    draw_mask = np.arange(W, dtype=np.int64)[None, :] < draw_count[:, None]
+    uniform_draws = np.zeros((C, W), dtype=np.float64)
+    replacement_raw = np.zeros((C, W), dtype=np.uint8)
+    replacement_mask = np.zeros((C, W), dtype=bool)
+    for ci in range(N):
+        error = float(effective_error[ci])
+        for rank in range(int(draw_count[ci])):
+            uniform = float(generator.random())
+            # The frozen direct CPU and the independent NumPy plan can differ
+            # by a few ulps in effective_error.  Do not discretise that tiny
+            # difference into a different mutation decision.
+            if _numpy_fp64_comparison_boundary(uniform, error):
+                raise A4ReplicationScopeError(
+                    'substitution RNG comparison is fp64-ambiguous'
+                )
+            uniform_draws[ci, rank] = uniform
+            if uniform < error:
+                replacement_mask[ci, rank] = True
+                replacement_raw[ci, rank] = int(generator.integers(0, 7))
+    substitution_count = np.sum(
+        replacement_mask, axis=1, dtype=np.int64,
+    )
+    values = {
+        'schema_version': RNG_TAPE_SCHEMA_VERSION,
+        'cell_capacity': C,
+        'append_capacity': W,
+        'cell_count': N,
+        'source_provenance': str(plan.source_provenance),
+        'dt_hex': float(dt).hex(),
+        'config_sha256': str(config_sha256),
+        'schedule_sha256': '0' * 64,
+        'rng_before_state': copy.deepcopy(before),
+        'rng_after_state': copy.deepcopy(generator.bit_generator.state),
+        'cell_ids': np.asarray(plan.cell_ids, dtype=np.int64).copy(),
+        'cell_mask': np.asarray(plan.cell_mask, dtype=bool).copy(),
+        'draw_mask': draw_mask,
+        'uniform_draws': uniform_draws,
+        'replacement_raw': replacement_raw,
+        'replacement_mask': replacement_mask,
+        'draw_count': draw_count,
+        'substitution_count': substitution_count,
+        'effective_error': effective_error,
+    }
+    draft = _make_rng_tape(**values)
+    values['schedule_sha256'] = _rng_schedule_digest(draft)
+    tape = _make_rng_tape(**values)
+    return validate_a4_substitution_rng_tape(tape)
+
+
+def _numpy_apply_substitution_tape(plan, tape):
+    if (not np.array_equal(plan.cell_ids, tape.cell_ids)
+            or not np.array_equal(plan.cell_mask, tape.cell_mask)
+            or not np.array_equal(plan.append_count, tape.draw_count)
+            or not np.array_equal(
+                np.asarray(plan.last_effective_error_rate).view(np.uint64),
+                np.asarray(tape.effective_error).view(np.uint64),
+            )):
+        raise A4ReplicationScopeError(
+            'substitution RNG tape schedule differs from elongation plan'
+        )
+    result = plan.clone()
+    N = int(result.cell_count)
+    for ci in range(N):
+        for rank in range(int(result.append_count[ci])):
+            if not bool(tape.replacement_mask[ci, rank]):
+                continue
+            old = int(result.append_symbols[ci, rank])
+            new = int(tape.replacement_raw[ci, rank])
+            if new >= old:
+                new += 1
+            result.append_symbols[ci, rank] = new % int(a4.g2.ALPHABET_SIZE)
+    result.substitution_events = np.asarray(
+        tape.substitution_count, dtype=np.int64,
+    ).copy()
+    return validate_a4_paid_elongation_plan(result)
+
+
+def paid_replication_substitution_numpy(binding, dt, config, tape):
+    """Apply a validated CPU-resolved substitution tape to a NumPy plan."""
+    a4._require_translation_binding(binding)
+    if _is_tensor(binding.state.pools):
+        raise a4.A4SchemaError('NumPy substitution requires a NumPy binding')
+    deterministic, config_sha256 = _substitution_config(config)
+    tape = validate_a4_substitution_rng_tape(tape)
+    _require_rng_tape_binding(tape, binding, dt, config_sha256)
+    plan = paid_replication_elongation_numpy(binding, dt, deterministic)
+    return _numpy_apply_substitution_tape(plan, tape)
+
+
+def paid_replication_substitution_torch(binding, dt, config, tape):
+    """Fixed-shape resident application of an attested PCG64 event tape."""
+    if torch is None:
+        raise RuntimeError('PyTorch is unavailable')
+    a4._require_translation_binding(binding)
+    if not _is_tensor(binding.state.pools):
+        raise a4.A4SchemaError('Torch substitution requires a Torch binding')
+    deterministic, config_sha256 = _substitution_config(config)
+    _require_rng_tape_binding(tape, binding, dt, config_sha256)
+    if (not _is_tensor(tape.uniform_draws)
+            or tape.uniform_draws.device != binding.state.pools.device):
+        raise a4.A4SchemaError('RNG tape must share the resident device')
+    base = paid_replication_elongation_torch(binding, dt, deterministic)
+    result = base.clone()
+    identity_ok = (
+        (tape.cell_ids == base.cell_ids)
+        & (tape.cell_mask == base.cell_mask)
+        & (tape.draw_count == base.append_count)
+    )
+    effective_error_ok = (
+        tape.effective_error == base.last_effective_error_rate
+    )
+    used_draw = tape.draw_mask & base.cell_mask[:, None]
+    device_error = base.last_effective_error_rate[:, None]
+    ambiguous_draw = used_draw & _torch_fp64_comparison_boundary(
+        tape.uniform_draws, device_error,
+    )
+    decision_mismatch = used_draw & (
+        (tape.uniform_draws < device_error) != tape.replacement_mask
+    )
+    row_boundary = torch.any(ambiguous_draw, dim=1) & base.scope_valid
+    row_mismatch = base.cell_mask & (
+        ~identity_ok
+        | ~effective_error_ok
+        | torch.any(decision_mismatch, dim=1)
+    )
+    # The PCG64 after-state is one ordered stream for the whole batch.  Any
+    # row disagreement invalidates the complete event tape, never a suffix.
+    batch_boundary = base.cell_mask & torch.any(row_boundary)
+    batch_mismatch = (
+        base.cell_mask & torch.any(row_mismatch) & ~torch.any(row_boundary)
+    )
+    failure = batch_boundary | batch_mismatch
+    mapped = tape.replacement_raw.to(torch.int64)
+    old = base.append_symbols.to(torch.int64)
+    mapped = torch.remainder(mapped + (mapped >= old).to(torch.int64), 8)
+    substituted = torch.where(
+        tape.replacement_mask, mapped.to(torch.uint8), base.append_symbols,
+    )
+    good = base.scope_valid & ~failure
+    result.append_symbols = torch.where(
+        good[:, None], substituted, torch.zeros_like(substituted),
+    )
+    result.substitution_events = torch.where(
+        good, tape.substitution_count,
+        torch.zeros_like(tape.substitution_count),
+    )
+    result.scope_error_code = torch.where(
+        batch_mismatch & base.scope_valid,
+        torch.full_like(base.scope_error_code, SCOPE_RNG_TAPE_MISMATCH),
+        base.scope_error_code,
+    )
+    result.scope_error_code = torch.where(
+        batch_boundary & base.scope_valid,
+        torch.full_like(
+            base.scope_error_code, SCOPE_FP64_DISCRETE_BOUNDARY,
+        ),
+        result.scope_error_code,
+    )
+    result.scope_valid = good
+    rollback = failure & base.scope_valid
+    result.requested_symbols = torch.where(
+        rollback, torch.zeros_like(base.requested_symbols),
+        base.requested_symbols,
+    )
+    result.append_count = torch.where(
+        rollback, torch.zeros_like(base.append_count), base.append_count,
+    )
+    result.pools_after = torch.where(
+        rollback[:, None], binding.state.pools, base.pools_after,
+    )
+    result.replication_fractional_after = torch.where(
+        rollback, torch.zeros_like(base.replication_fractional_after),
+        base.replication_fractional_after,
+    )
+    result.last_replication_symbols = torch.where(
+        rollback, torch.zeros_like(base.last_replication_symbols),
+        base.last_replication_symbols,
+    )
+    result.last_effective_error_rate = torch.where(
+        rollback, torch.zeros_like(base.last_effective_error_rate),
+        base.last_effective_error_rate,
+    )
+    result.cumulative_proofreading_atp_after = torch.where(
+        rollback, binding.state.cumulative_proofreading_atp,
+        base.cumulative_proofreading_atp_after,
+    )
+    _validate_plan_metadata(result)
+    return result
+
+
+def paid_replication_substitution_plan(binding, dt, config, tape):
+    a4._require_translation_binding(binding)
+    if _is_tensor(binding.state.pools):
+        return paid_replication_substitution_torch(
+            binding, dt, config, tape,
+        )
+    return paid_replication_substitution_numpy(binding, dt, config, tape)
 
 
 def paid_replication_elongation_plan(binding, dt, config):
@@ -1086,8 +1755,9 @@ def paid_replication_elongation_plan(binding, dt, config):
 PORT_STATUS = dict(a4.PORT_STATUS)
 PORT_STATUS.update({
     'genome_replication': (
-        'a4.4b-active-template-mutation-free-deterministic-proofreading-'
-        'quiescence-noncompletion-paid-plan-not-integrated-cpu-authoritative'
+        'a4.5a-active-template-substitution-rng-tape-deterministic-'
+        'proofreading-quiescence-noncompletion-plan-not-integrated-'
+        'cpu-authoritative'
     ),
     'material_mutation': 'cpu-authoritative-later-a4-slice',
     'full_gpu_world_step': False,

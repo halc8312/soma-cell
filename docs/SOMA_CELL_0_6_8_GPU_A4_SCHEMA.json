@@ -1,5 +1,5 @@
 {
-  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.4b-resident-proofreading-dna-elongation-plan",
+  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.5a-transactional-substitution-rng-tape-plan",
   "status": "development_slice_not_promoted",
   "full_gpu_world_step": false,
   "authoritative_state": "A4RaggedGenomeBatch",
@@ -143,7 +143,7 @@
     ]
   },
   "derived_paid_dna_elongation_plan": {
-    "schema_version": "0.6.8-GPU-A4.4b-paid-dna-elongation-plan",
+    "schema_version": "0.6.8-GPU-A4.5a-substitution-rng-elongation-plan",
     "ownership": "pure_nonserializable_plan_not_world_or_save_authority",
     "source_binding": "same_attested_A4TranslationBinding_as_the_validated_ragged_cache_and_physiology_snapshot",
     "supported_scope": [
@@ -152,7 +152,8 @@
       "partial_copy_shorter_than_template",
       "effective_endogenous_plus_optional_external_replicase_above_frozen_gate",
       "at_least_one_complete_genome",
-      "mutation_disabled",
+      "deterministic_base_requires_mutation_disabled",
+      "substitution_overlay_requires_mutation_enabled",
       "proofreading_may_be_enabled_or_disabled",
       "external_replicase_may_be_enabled_or_disabled",
       "inherited_quiescence_may_be_enabled_or_disabled",
@@ -169,7 +170,8 @@
       "3": "completion_transaction_required",
       "4": "fixed_symbol_capacity_exceeded",
       "5": "negative_replication_entry_ATP_not_supported",
-      "6": "fp64_derived_discrete_boundary_is_cpu_authoritative"
+      "6": "fp64_derived_discrete_boundary_is_cpu_authoritative",
+      "7": "substitution_rng_tape_schedule_or_decision_mismatch"
     },
     "arrays": {
       "cell_ids": {"dtype": "int64", "shape": ["cell_capacity"], "unused": -1},
@@ -183,7 +185,8 @@
       "replication_fractional_after": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
       "last_replication_symbols": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
       "last_effective_error_rate": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
-      "cumulative_proofreading_atp_after": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0}
+      "cumulative_proofreading_atp_after": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
+      "substitution_events": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0}
     },
     "frozen_order": [
       "scale_dt_by_max_0.25_eco66_replication_rate_scale",
@@ -196,7 +199,8 @@
       "fail_closed_when_positive_progress_lands_within_4096_eps64_scaled_distance_of_a_positive_integer",
       "remove_full_integer_request_before_resource_tests",
       "update_proofreading_reduced_effective_error_even_though_mutation_is_disabled",
-      "for_each_requested_symbol_in_template_order_test_nucleotide_then_fail_closed_at_a_proofreading_ATP_comparison_band_else_test_ATP_reserve_copy_pay_and_accumulate_proofreading_ATP"
+      "for_each_requested_symbol_in_template_order_test_nucleotide_then_fail_closed_at_a_proofreading_ATP_comparison_band_else_test_ATP_reserve_copy_pay_and_accumulate_proofreading_ATP",
+      "when_the_A4_5a_overlay_is_used_apply_the_CPU_resolved_substitution_mask_in_paid_append_order"
     ],
     "payment": {
       "nucleotide_per_symbol": 0.00082,
@@ -218,16 +222,69 @@
       "a supported plan requires nonnegative ATP output while only inherited fuel and mineral may retain the paid-translation signed residual tolerance",
       "fp64 integer replicase and proofreading-ATP boundary rows are rejected with code 6 and any tentative row prefix is rolled back before commit",
       "input ragged cache physiology CPU cells world RNG and scheduler receipts are unchanged",
-      "supported scope consumes zero RNG draws",
+      "deterministic A4.4b base consumes zero RNG draws; A4.5a tape preparation advances only an explicit cloned PCG64 state",
       "exact future symbol capacity passes and capacity plus one fails before commit",
       "unsupported or completion rows are never reported as migrated",
       "CUDA scope errors remain device-resident until the explicit readback or future commit boundary",
+      "scope code 6 or 7 invalidates and rolls back the complete used batch because its rows share one ordered PCG64 stream",
       "no scheduler authority changes and full_gpu_world_step remains false"
+    ]
+  },
+  "derived_substitution_rng_tape": {
+    "schema_version": "0.6.8-GPU-A4.5a-substitution-rng-tape",
+    "ownership": "private_factory_ephemeral_event_tape_not_save_or_live_rng_authority",
+    "supported_scope": [
+      "preexisting_active_nonempty_template",
+      "paid_copy_remains_incomplete",
+      "mutation_enabled",
+      "same_length_symbol_substitution_only",
+      "all_deterministic_A4_4b_scope_and_capacity_checks_pass_before_any_draw"
+    ],
+    "scalar_metadata": {
+      "source_provenance": "64_character_lowercase_SHA256_of_the_validated_ragged_source",
+      "dt_hex": "exact_nonnegative_finite_float64_hex",
+      "config_sha256": "canonical_substitution_configuration_digest",
+      "schedule_sha256": "canonical_cell_draw_count_and_effective_error_digest",
+      "rng_before_state": "canonical_NumPy_PCG64_state_inc_has_uint32_uinteger",
+      "rng_after_state": "canonical_NumPy_PCG64_state_inc_has_uint32_uinteger"
+    },
+    "arrays": {
+      "cell_ids": {"dtype": "int64", "shape": ["cell_capacity"], "unused": -1},
+      "cell_mask": {"dtype": "bool", "shape": ["cell_capacity"], "unused": false},
+      "draw_mask": {"dtype": "bool", "shape": ["cell_capacity", "append_capacity"], "unused": false},
+      "uniform_draws": {"dtype": "float64", "shape": ["cell_capacity", "append_capacity"], "unused": 0.0},
+      "replacement_raw": {"dtype": "uint8", "shape": ["cell_capacity", "append_capacity"], "unused": 0},
+      "replacement_mask": {"dtype": "bool", "shape": ["cell_capacity", "append_capacity"], "unused": false},
+      "draw_count": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
+      "substitution_count": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
+      "effective_error": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0}
+    },
+    "frozen_rng_order": [
+      "iterate_cells_in_input_order",
+      "iterate_only_paid_appends_in_symbol_order",
+      "call_scalar_random_once_even_when_effective_error_is_zero",
+      "on_strict_uniform_less_than_effective_error_call_scalar_integers_0_7_immediately",
+      "map_the_0_6_draw_around_the_old_symbol_without_changing_length"
+    ],
+    "runtime_attestation": {
+      "host": "full_high_level_PCG64_replay_proves_draws_decisions_integer_results_and_after_state",
+      "resident": "scalar_and_PCG64_metadata_plus_all_tensor_data_ptrs_and_versions_are_snapshotted_at_upload",
+      "plan": "device_recomputes_identity_append_counts_effective_error_bits_decision_boundaries_and_decisions_before_application"
+    },
+    "invariants": [
+      "the live world RNG is unchanged; rng_after_state is only future atomic commit evidence",
+      "resource-blocked requests consume no threshold or integer draw",
+      "bounded integer raw-draw counts are never assumed or reimplemented",
+      "uniform/effective-error comparisons inside the 4096-eps64 band fail closed with code 6",
+      "nonambiguous schedule effective-error or decision mismatch fails closed with code 7",
+      "code 6 or 7 rolls back every used row because one PCG64 stream orders the batch",
+      "caller-supplied or post-upload changed tape metadata arrays or PCG64 states are rejected",
+      "the tape is direct-call evidence only and does not replace the interleaved world scheduler RNG order"
     ]
   },
   "cpu_authoritative_after_slice": [
     "paid_translation_world_commit_and_scheduler_event",
-    "replication_template_selection_completion_mutation_hydrolysis_rng_and_world_commit",
+    "replication_inactive_template_start_completion_structural_material_mutation_hydrolysis_live_RNG_commit_and_world_commit",
     "division_death_corpse_edna_hgt",
     "neural_and_causal_systems"
   ]
