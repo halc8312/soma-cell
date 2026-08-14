@@ -1,5 +1,5 @@
 {
-  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.5a-transactional-substitution-rng-tape-plan",
+  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.5b-template-start-transactional-substitution-rng-tape-plan",
   "status": "development_slice_not_promoted",
   "full_gpu_world_step": false,
   "authoritative_state": "A4RaggedGenomeBatch",
@@ -143,16 +143,16 @@
     ]
   },
   "derived_paid_dna_elongation_plan": {
-    "schema_version": "0.6.8-GPU-A4.5a-substitution-rng-elongation-plan",
+    "schema_version": "0.6.8-GPU-A4.5b-template-start-substitution-plan",
     "ownership": "pure_nonserializable_plan_not_world_or_save_authority",
     "source_binding": "same_attested_A4TranslationBinding_as_the_validated_ragged_cache_and_physiology_snapshot",
     "supported_scope": [
       "genome_replication_enabled",
-      "preexisting_active_nonempty_template",
+      "preexisting_active_nonempty_template_or_mutation_enabled_index_zero_start_from_exactly_one_nonempty_complete_genome",
       "partial_copy_shorter_than_template",
       "effective_endogenous_plus_optional_external_replicase_above_frozen_gate",
       "at_least_one_complete_genome",
-      "deterministic_base_requires_mutation_disabled",
+      "public_deterministic_base_requires_mutation_disabled_and_a_preexisting_active_template",
       "substitution_overlay_requires_mutation_enabled",
       "proofreading_may_be_enabled_or_disabled",
       "external_replicase_may_be_enabled_or_disabled",
@@ -165,10 +165,10 @@
     ],
     "scope_error_codes": {
       "0": "supported",
-      "1": "inactive_missing_or_already_complete_template",
+      "1": "unsupported_zero_or_multiple_genome_start_missing_or_already_complete_template",
       "2": "replicase_gate_not_reached",
       "3": "completion_transaction_required",
-      "4": "fixed_symbol_capacity_exceeded",
+      "4": "fixed_future_sequence_or_symbol_capacity_exceeded",
       "5": "negative_replication_entry_ATP_not_supported",
       "6": "fp64_derived_discrete_boundary_is_cpu_authoritative",
       "7": "substitution_rng_tape_schedule_or_decision_mismatch"
@@ -186,13 +186,17 @@
       "last_replication_symbols": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
       "last_effective_error_rate": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
       "cumulative_proofreading_atp_after": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
-      "substitution_events": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0}
+      "substitution_events": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
+      "template_start_events": {"dtype": "bool", "shape": ["cell_capacity"], "unused": false},
+      "selected_template_indices": {"dtype": "int64", "shape": ["cell_capacity"], "unused": -1},
+      "template_storage_symbols": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0}
     },
     "frozen_order": [
       "scale_dt_by_max_0.25_eco66_replication_rate_scale",
       "derive_endogenous_replicase_from_active_dictionary_order",
       "add_optional_external_replicase_after_endogenous_attenuation",
       "fail_closed_at_the_derived_effective_replicase_comparison_band",
+      "for_the_mutation_enabled_A4_5b_overlay_only_start_an_inactive_exactly_one_genome_row_with_scalar_integers_0_1_then_virtual_template_zero_empty_copy_zero_fractional_and_selected_lesion",
       "derive_proofreading_and_quiescence_with_literal_active_dictionary_left_folds",
       "apply_proofreading_and_inherited_then_behavioural_quiescence_speed_factors",
       "add_speed_to_fractional_progress",
@@ -200,7 +204,7 @@
       "remove_full_integer_request_before_resource_tests",
       "update_proofreading_reduced_effective_error_even_though_mutation_is_disabled",
       "for_each_requested_symbol_in_template_order_test_nucleotide_then_fail_closed_at_a_proofreading_ATP_comparison_band_else_test_ATP_reserve_copy_pay_and_accumulate_proofreading_ATP",
-      "when_the_A4_5a_overlay_is_used_apply_the_CPU_resolved_substitution_mask_in_paid_append_order"
+      "when_the_A4_5b_overlay_is_used_apply_the_CPU_resolved_substitution_mask_in_paid_append_order"
     ],
     "payment": {
       "nucleotide_per_symbol": 0.00082,
@@ -215,15 +219,16 @@
       "effect": "no requested symbols payment or replication telemetry are committed; CPU authority is retained"
     },
     "invariants": [
-      "append bytes equal the next template bytes exactly and retain order",
+      "base append bytes equal the next template bytes exactly and retain order while an attested substitution event may replace only that paid byte without changing length",
       "requested integer progress is not refunded when resources stop copying",
       "cumulative_proofreading_atp_after starts at the input value and is incremented once per accepted symbol in CPU order",
       "negative replication-entry ATP is rejected even when it is within the earlier paid-translation residual tolerance",
       "a supported plan requires nonnegative ATP output while only inherited fuel and mineral may retain the paid-translation signed residual tolerance",
       "fp64 integer replicase and proofreading-ATP boundary rows are rejected with code 6 and any tentative row prefix is rolled back before commit",
       "input ragged cache physiology CPU cells world RNG and scheduler receipts are unchanged",
-      "deterministic A4.4b base consumes zero RNG draws; A4.5a tape preparation advances only an explicit cloned PCG64 state",
-      "exact future symbol capacity passes and capacity plus one fails before commit",
+      "deterministic A4.4b base consumes zero RNG draws; A4.5b tape preparation advances only an explicit cloned PCG64 state",
+      "a template start records index zero plus two future sequence slots and the complete template storage length without mutating the source arena",
+      "exact future sequence and symbol capacities including template storage and paid append bytes pass and either capacity one short fails before commit",
       "unsupported or completion rows are never reported as migrated",
       "CUDA scope errors remain device-resident until the explicit readback or future commit boundary",
       "scope code 6 or 7 invalidates and rolls back the complete used batch because its rows share one ordered PCG64 stream",
@@ -231,10 +236,10 @@
     ]
   },
   "derived_substitution_rng_tape": {
-    "schema_version": "0.6.8-GPU-A4.5a-substitution-rng-tape",
+    "schema_version": "0.6.8-GPU-A4.5b-template-start-rng-tape",
     "ownership": "private_factory_ephemeral_event_tape_not_save_or_live_rng_authority",
     "supported_scope": [
-      "preexisting_active_nonempty_template",
+      "preexisting_active_nonempty_template_or_exactly_one_nonempty_complete_genome_for_index_zero_start",
       "paid_copy_remains_incomplete",
       "mutation_enabled",
       "same_length_symbol_substitution_only",
@@ -244,7 +249,7 @@
       "source_provenance": "64_character_lowercase_SHA256_of_the_validated_ragged_source",
       "dt_hex": "exact_nonnegative_finite_float64_hex",
       "config_sha256": "canonical_substitution_configuration_digest",
-      "schedule_sha256": "canonical_cell_draw_count_and_effective_error_digest",
+      "schedule_sha256": "canonical_cell_template_start_selection_draw_count_and_effective_error_digest",
       "rng_before_state": "canonical_NumPy_PCG64_state_inc_has_uint32_uinteger",
       "rng_after_state": "canonical_NumPy_PCG64_state_inc_has_uint32_uinteger"
     },
@@ -257,10 +262,13 @@
       "replacement_mask": {"dtype": "bool", "shape": ["cell_capacity", "append_capacity"], "unused": false},
       "draw_count": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
       "substitution_count": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
-      "effective_error": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0}
+      "effective_error": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
+      "template_start_mask": {"dtype": "bool", "shape": ["cell_capacity"], "unused": false},
+      "template_selection_indices": {"dtype": "int64", "shape": ["cell_capacity"], "unused": -1}
     },
     "frozen_rng_order": [
       "iterate_cells_in_input_order",
+      "for_an_eligible_inactive_row_call_scalar_integers_0_1_before_that_cells_threshold_draws",
       "iterate_only_paid_appends_in_symbol_order",
       "call_scalar_random_once_even_when_effective_error_is_zero",
       "on_strict_uniform_less_than_effective_error_call_scalar_integers_0_7_immediately",
@@ -273,6 +281,7 @@
     },
     "invariants": [
       "the live world RNG is unchanged; rng_after_state is only future atomic commit evidence",
+      "index_zero_selection_is_replayed_as_a_high_level_call_even_when_the_recorded_PCG64_state_is_unchanged",
       "resource-blocked requests consume no threshold or integer draw",
       "bounded integer raw-draw counts are never assumed or reimplemented",
       "uniform/effective-error comparisons inside the 4096-eps64 band fail closed with code 6",
@@ -284,7 +293,7 @@
   },
   "cpu_authoritative_after_slice": [
     "paid_translation_world_commit_and_scheduler_event",
-    "replication_inactive_template_start_completion_structural_material_mutation_hydrolysis_live_RNG_commit_and_world_commit",
+    "replication_mutation_free_inactive_template_start_actual_template_copy_arena_commit_completion_structural_material_mutation_hydrolysis_live_RNG_commit_and_world_commit",
     "division_death_corpse_edna_hgt",
     "neural_and_causal_systems"
   ]

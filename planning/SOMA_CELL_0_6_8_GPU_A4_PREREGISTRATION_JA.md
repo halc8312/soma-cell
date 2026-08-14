@@ -1,6 +1,6 @@
-# SOMA-CELL 0.6.8-GPU A4.5a 事前登録（A4.1〜A4.4b継承）
+# SOMA-CELL 0.6.8-GPU A4.5b 事前登録（A4.1〜A4.5a継承）
 
-状態: A4.4bまでを継承する開発用の最小slice。A4昇格判定ではない。
+状態: A4.5aまでを継承する開発用の最小slice。A4昇格判定ではない。
 
 ## 継承する基盤
 
@@ -320,6 +320,72 @@ world-stepへ接続しない。
 - schedule mismatchをrow-local成功へ縮退したり、live RNGを部分的に進めたりしない。
 - A4.5a単独の速度測定・scheduler統合・A4昇格は行わない。
 
-次はA4.5bとしてinactive template startとarena topology transactionを実装する。
-その後completion/structural mutation、hydrolysisを別sliceで進める。scheduler置換は、
-連続したresident chainをhost/device往復なしでatomic commitできる段階まで延期する。
+## A4.5b追加仮説
+
+mutation有効、complete genomeがexactly 1本、replicase gate通過という凍結境界なら、
+inactive template startを同じreplication call内のproofreading/quiescence/支払い/
+substitutionまで含めたpure transaction planとして固定できる。startだけを中間commitせず、
+cellごとに `integers(0,1) -> paid symbolのrandom -> hit直後integers(0,7)` を完結して
+から次cellへ進む。
+
+現NumPy PCG64ではscalar `integers(0,1)`がstate/inc/has_uint32/uintegerを変えないが、
+この挙動をindex直接代入の根拠にはしない。clone generatorで高水準callを実行し、完全
+before/after stateをA4.5aと同じreplayで照合する。
+
+## A4.5bで実装するもの
+
+- mutation有効のsubstitution-tape経路だけで、inactiveかつcomplete genome exactly 1本の
+  index 0 template start
+- complete genome 0のbyte-exact template参照、対応lesion（欠損時0）、empty copy、
+  fractional 0からの同一call継続
+- planの`template_start_events`、`selected_template_indices`、
+  `template_storage_symbols`
+- tapeの`template_start_mask`、`template_selection_indices`とschedule digest/replay
+- cell入力順にselectionとそのcellのsubstitution drawをinterleaveする完全PCG64順
+- future sequence capacity `Q + 2*start_count` とfuture symbol capacity
+  `S + sum(template length) + sum(paid append)` の同時事前検証
+- dt=0でも2 sequence slotとtemplate storageを必要とし、threshold drawは0という境界
+- NumPy/Torch CPU/CUDA parity、source/tape/live RNG不変、start metadata trust
+
+## A4.5bで実装しないもの
+
+- mutation無効時のinactive start
+- complete genome 0本/2本以上やreplicase-gated cellを通常no-opとして混載するworld commit
+- actual ragged template/copy arena mutation、provenance再発行、live RNG after-state commit
+- completion、新complete genome、lesion/cycle/cache/novel-path更新
+- structural/material mutation、hydrolysis RNG
+- A3 scheduler置換、global interleaved world RNG transaction
+- device RNG kernel、汎用allocator/RNG framework、fp32、compile/custom CUDA、速度向上主張
+
+start後のpaid appendがtemplate長へ到達するrowは、容量に余裕があればcode 3、同じbatchの
+future capacityも超える場合は継承した後段のcode 4優先でfail closedとし、startだけをGPUで
+行ってcompletionをCPUで二重実行しない。0本/2本以上やreplicase gateの凍結no-opは、
+prior `last_effective_error_rate`をinput stateに持たない現pure planではcommit authorityに
+しない。
+
+## A4.5b固定テスト
+
+1. inactive/active/inactiveの3 Formal066 cellで、selection call、suffix、lesion、pools、
+   fractional/effective-error/proof ATP、substitution count、完全PCG64 after-stateをdirect
+   CPU oracleと照合する。primed uint32 cacheを含める。
+2. dt=0 startで+2 sequenceとtemplate bytesをexact capacity PASS、各1不足FAILとする。
+   非zero paid appendではtemplate+appendのfuture symbol exact/1不足もatomicに固定する。
+3. NumPy/Torch CPU/明示RTX CUDAでplan/tape/start metadataを照合し、pointer/source/live RNG
+   不変を確認する。host/resident start mask/index改ざんを拒否する。
+4. genome 0本/2本、replicase gate、mutation off、同一call completionをscope外とし、
+   A3 `replication_cpu` exactly onceと`full_gpu_world_step=false`を維持する。
+5. A4.1〜A4.5aの28テストを変更せず継続し、合計31/31をCUDA必須でPASSさせる。
+
+## A4.5b判定
+
+- 31/31、direct Formal066 state/PCG64、NumPy/Torch CPU/CUDA、future capacity、trust/scopeが
+  全てPASSした場合だけ「mutation-enabled index-zero template-start + noncompletion
+  substitution RNG tape pure plan、未統合」と記録する。
+- start call順、lesion、arena容量、PCG64 full state、material ledgerのどれかが違えば
+  A4.5aを維持する。
+- actual arena/RNG commit、通常no-op混載、completionをこのsliceへ追加しない。
+- A4.5b単独の速度測定・scheduler統合・A4昇格は行わない。
+
+次はA4.6としてcompletionとstructural/material mutationを小さく分離する。その後
+hydrolysisを別sliceで進める。scheduler置換は、連続したresident chainをhost/device往復
+なしでatomic commitできる段階まで延期する。

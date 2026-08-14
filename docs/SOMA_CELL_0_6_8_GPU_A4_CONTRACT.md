@@ -1,6 +1,6 @@
 # SOMA-CELL 0.6.8-GPU A4 contract
 
-Status: A4 development contract through slice A4.5a. This is not an A4
+Status: A4 development contract through slice A4.5b. This is not an A4
 promotion.
 
 ## Authority
@@ -217,6 +217,46 @@ a scheduler integration: the current world step interleaves other per-cell RNG
 events between replication calls, so a batched tape cannot be installed as
 world authority until that global order is represented transactionally.
 
+## A4.5b scope
+
+A4.5b extends only the mutation-enabled A4.5a substitution-tape path to the
+frozen inactive-template start case with exactly one non-empty complete genome.
+The public mutation-free deterministic elongation path remains unchanged and
+CPU-authoritative for inactive starts.  Rows with zero or two-or-more complete
+genomes, rows below the replicase gate, and rows which complete in the same
+call remain explicit scope failures rather than ordinary no-op integration.
+
+After the frozen early gates, an eligible row performs scalar
+`integers(0, 1)` on the cloned PCG64 generator, records selected index zero,
+uses a byte-exact copy of complete genome zero as its virtual template, takes
+the corresponding lesion or `0.0` when absent, and starts from an empty copy
+and zero fractional progress.  It then continues proofreading, quiescence,
+payment, threshold draws, and conditional replacement draws in that same
+cell call.  Across cells the only allowed replay order is therefore
+`selection-if-needed -> that cell's threshold/conditional-integer draws ->
+next cell`; selections are never batched ahead of substitution draws.  The
+high-level index-zero call is replayed even though the recorded NumPy/PCG64
+implementation leaves the complete before-state, including its uint32 cache,
+unchanged.
+
+The pure plan adds `template_start_events`, `selected_template_indices`, and
+`template_storage_symbols`; the tape independently attests the start mask and
+selection indices in its schedule digest and replay.  These fields describe a
+future atomic topology transaction only.  A4.5b does not modify or re-attest
+the resident ragged arena, does not commit the live RNG after-state, and is not
+save or scheduler authority.
+
+Before a start is reported successful the batch proves both future capacities:
+`sequence_count + 2 * start_count <= sequence_capacity` and
+`symbol_count + sum(start_template_lengths) + sum(paid_append_counts) <=
+symbol_capacity`.  The empty copy still consumes one of the two sequence
+slots.  Exact capacity passes; either capacity one short fails atomically
+before a tape or plan can become commit authority.  With sufficient capacity,
+a start which reaches completion stays code 3 for A4.6; the inherited
+batch-global capacity check retains its later precedence and may instead make
+the whole invalid batch code 4.  Neither result is exposed as a partial start
+plus a second CPU replication call.
+
 ## Fail-closed invariants
 
 Ragged foundation invariants remain unchanged:
@@ -293,7 +333,10 @@ Replication-elongation-plan invariants are:
 - Every used row is bound to the same attested ragged/cache/physiology source.
 - Template and partial-copy order are derived from the A4.1 sequence layout;
   no genome, template, or copy is sorted or sliced.
-- Every supported append symbol equals the next template byte exactly.
+- Before the mutation-enabled tape overlay, every paid append symbol equals the
+  next template byte exactly.  A recorded substitution may replace that byte
+  only with a different symbol from the same frozen alphabet and never changes
+  length or payment.
 - Fractional progress consumes the entire integer request before material
   gates, matching the frozen CPU even when no symbol can be paid.
 - Nucleotide and ATP are subtracted in symbol order with no free DNA, refund,
@@ -302,16 +345,19 @@ Replication-elongation-plan invariants are:
   is rejected before any commit.
 - The plan is pure: input ragged/cache/physiology, CPU cells, world, RNG, and
   scheduler receipts remain unchanged.
-- Template selection, completion, or any enabled postponed mechanism makes the
-  row explicitly unsupported; it cannot silently fall through to a partial
-  GPU result plus a second CPU replication call.
+- A4.4b's mutation-free plan still rejects template selection.  A4.5b may plan
+  only the attested index-zero, mutation-enabled start above; every other
+  selection, completion, or postponed mechanism remains explicitly
+  unsupported and cannot fall through to a partial GPU result plus a second
+  CPU replication call.
 
-## Explicit exclusions through A4.5a
+## Explicit exclusions through A4.5b
 
 - No scheduler/world integration or CPU-cell protein/material commit.
-- No inactive-template start, completion transaction, new complete genome,
-  lesion inheritance, gene-cache refresh, structural/material mutation,
-  symbol hydrolysis, or device RNG kernel.
+- No mutation-free inactive-template start, actual template/copy arena commit,
+  completion transaction, new complete genome, lesion inheritance, gene-cache
+  refresh, structural/material mutation, symbol hydrolysis, or device RNG
+  kernel.
 - No scheduler replacement and no change to A3 `gene_refresh`,
   `translation_cpu`, or `replication_cpu` authority.
 - No division, death, corpse/eDNA/HGT, neural, or causal-system port.
@@ -319,7 +365,7 @@ Replication-elongation-plan invariants are:
   CUDA, multi-stream, multi-GPU, or online-GPU abstraction.
 - No formal 13-spec/65-measurement benchmark and no speedup claim.
 
-## Acceptance through A4.5a
+## Acceptance through A4.5b
 
 - All A4.1 lossless/corruption/capacity/residency tests remain PASS.
 - Nested valid markers and invalid-outer/valid-inner recovery match frozen
@@ -383,7 +429,19 @@ Replication-elongation-plan invariants are:
 - Forged/tampered scalar, PCG64, tail, config, dt, and source schedules fail
   closed. A foreign-physiology tape is code 7; an on-device decision boundary
   is code 6; both invalidate and roll back the whole used batch.
-- All 28 A4 development tests and the focused A3 regressions pass while A3
+- A mutation-enabled inactive/active/inactive fixture matches direct Formal066
+  state, lesion selection, copied suffix, telemetry, substitution counts, and
+  complete PCG64 after-state in literal cell-call order.  Its index-zero start
+  is replayed from both an ordinary and a primed uint32-cache state.
+- A zero-dt start proves the two sequence slots and template-storage bytes with
+  zero threshold draws; a paid start additionally proves all append bytes.
+  Exact future sequence/symbol capacities pass and each one-short capacity
+  fails atomically.
+- NumPy, Torch CPU, and explicit RTX CUDA agree on start topology metadata and
+  substitution results.  Start-mask/index tampering is rejected, while
+  zero/two-genome, replicase-gated, mutation-off, and completing starts remain
+  explicit CPU scope.
+- All 31 A4 development tests and the focused A3 regressions pass while A3
   `replication_cpu` remains the only scheduler authority.
 
 Known A4.4b integration blockers are recorded rather than hidden.  On the
@@ -403,7 +461,7 @@ division was rejected as disproportionate complexity.  The launch-heavy path
 must be redesigned and remeasured before scheduler authority, promotion, or
 any speedup claim.
 
-Inactive-template start, completion/structural mutation, and hydrolysis remain
-separate later slices. Scheduler replacement remains later,
+Actual ragged/RNG commit, mutation-free inactive start, completion/structural
+mutation, and hydrolysis remain separate later slices. Scheduler replacement remains later,
 after a contiguous resident chain can commit without recreating A3's per-cell
 host/device round trips.

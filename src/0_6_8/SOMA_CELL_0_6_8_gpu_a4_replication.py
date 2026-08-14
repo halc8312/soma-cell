@@ -1,13 +1,15 @@
 # coding: utf-8
-"""A4.5a pure resident paid DNA-elongation and substitution-RNG plan.
+"""A4.5b pure resident template-start and substitution-RNG plan.
 
-This deliberately narrow development slice handles only a pre-existing active
-replication template whose partial copy remains incomplete in this call.  It
-adds deterministic proofreading, inherited/behavioural quiescence, an
-external-replicase contribution, and an event-local PCG64 substitution tape.
-It does not select a template, complete a genome, perform structural mutation,
-advance the live world RNG, or replace the A3 scheduler.  Frozen Formal066 CPU
-behavior remains authority.
+This deliberately narrow development slice handles a pre-existing active
+replication template or, only in its mutation-enabled tape path, the frozen
+index-zero start from exactly one complete genome.  The partial copy must
+remain incomplete in this call.  It retains deterministic proofreading,
+inherited/behavioural quiescence, an external-replicase contribution, and an
+event-local PCG64 substitution tape.  It does not commit the
+ragged topology, complete a genome, perform structural mutation, advance the
+live world RNG, or replace the A3 scheduler.  Frozen Formal066 CPU behavior
+remains authority.
 """
 from __future__ import division
 
@@ -27,11 +29,11 @@ except Exception:  # pragma: no cover - NumPy reference remains importable
     torch = None
 
 
-BUILD = 'SOMA-CELL 0.6.8-GPU A4.5a'
+BUILD = 'SOMA-CELL 0.6.8-GPU A4.5b'
 BUILD_ID = BUILD
-BUILD_LONG = BUILD + ' | PCG64 substitution-tape elongation plan'
-SCHEMA_VERSION = '0.6.8-GPU-A4.5a-substitution-rng-elongation-plan'
-RNG_TAPE_SCHEMA_VERSION = '0.6.8-GPU-A4.5a-substitution-rng-tape'
+BUILD_LONG = BUILD + ' | template-start and PCG64 substitution-tape plan'
+SCHEMA_VERSION = '0.6.8-GPU-A4.5b-template-start-substitution-plan'
+RNG_TAPE_SCHEMA_VERSION = '0.6.8-GPU-A4.5b-template-start-rng-tape'
 FULL_GPU_WORLD_STEP = False
 
 SCOPE_OK = 0
@@ -55,15 +57,17 @@ _PLAN_ARRAY_FIELDS = (
     'requested_symbols', 'append_symbols', 'append_count', 'pools_after',
     'replication_fractional_after', 'last_replication_symbols',
     'last_effective_error_rate', 'cumulative_proofreading_atp_after',
-    'substitution_events',
+    'substitution_events', 'template_start_events',
+    'selected_template_indices', 'template_storage_symbols',
 )
 _PLAN_UINT8_FIELDS = ('append_symbols',)
 _PLAN_INT64_FIELDS = (
     'cell_ids', 'scope_error_code', 'requested_symbols', 'append_count',
     'last_replication_symbols',
-    'substitution_events',
+    'substitution_events', 'selected_template_indices',
+    'template_storage_symbols',
 )
-_PLAN_BOOL_FIELDS = ('cell_mask', 'scope_valid')
+_PLAN_BOOL_FIELDS = ('cell_mask', 'scope_valid', 'template_start_events')
 _PLAN_FLOAT64_FIELDS = (
     'pools_after', 'replication_fractional_after',
     'last_effective_error_rate', 'cumulative_proofreading_atp_after',
@@ -72,13 +76,17 @@ _PLAN_FLOAT64_FIELDS = (
 _RNG_TAPE_ARRAY_FIELDS = (
     'cell_ids', 'cell_mask', 'draw_mask', 'uniform_draws',
     'replacement_raw', 'replacement_mask', 'draw_count',
-    'substitution_count', 'effective_error',
+    'substitution_count', 'effective_error', 'template_start_mask',
+    'template_selection_indices',
 )
 _RNG_TAPE_UINT8_FIELDS = ('replacement_raw',)
 _RNG_TAPE_INT64_FIELDS = (
     'cell_ids', 'draw_count', 'substitution_count',
+    'template_selection_indices',
 )
-_RNG_TAPE_BOOL_FIELDS = ('cell_mask', 'draw_mask', 'replacement_mask')
+_RNG_TAPE_BOOL_FIELDS = (
+    'cell_mask', 'draw_mask', 'replacement_mask', 'template_start_mask',
+)
 _RNG_TAPE_FLOAT64_FIELDS = ('uniform_draws', 'effective_error')
 _RNG_TAPE_FACTORY_TOKEN = object()
 
@@ -124,7 +132,7 @@ def _strict_bool(value, label):
 
 
 def _supported_config(config):
-    """Extract exactly the deterministic host flags supported by A4.5a."""
+    """Extract exactly the deterministic host flags used by A4.5b."""
     required = {
         'genome_replication': True,
         'mutation': False,
@@ -163,7 +171,7 @@ def _substitution_config(config):
     if not hasattr(config, 'mutation') or not _strict_bool(
             getattr(config, 'mutation'), 'config.mutation'):
         raise A4ReplicationScopeError(
-            'A4.5a substitution planning requires config.mutation=True'
+            'A4.5b substitution planning requires config.mutation=True'
         )
     deterministic = copy.deepcopy(config)
     deterministic.mutation = False
@@ -251,7 +259,7 @@ def _require_binding_scope_flags(state, flags):
             or bool(state.quiescence_effector)
             != bool(flags['quiescence_effector'])):
         raise A4ReplicationScopeError(
-            'A4.5a config quiescence flags differ from the packed snapshot'
+            'A4.5b config quiescence flags differ from the packed snapshot'
         )
 
 
@@ -277,6 +285,9 @@ class A4PaidElongationPlan:
     last_effective_error_rate: object
     cumulative_proofreading_atp_after: object
     substitution_events: object
+    template_start_events: object
+    selected_template_indices: object
+    template_storage_symbols: object
 
     def clone(self):
         values = {}
@@ -352,6 +363,8 @@ class A4SubstitutionRngTape:
     draw_count: object
     substitution_count: object
     effective_error: object
+    template_start_mask: object
+    template_selection_indices: object
 
     def clone(self):
         _require_rng_tape(self)
@@ -550,6 +563,13 @@ def _rng_schedule_digest(tape):
         'draw_count': [
             int(value) for value in np.asarray(tape.draw_count)[:N]
         ],
+        'template_start_mask': [
+            bool(value) for value in np.asarray(tape.template_start_mask)[:N]
+        ],
+        'template_selection_indices': [
+            int(value)
+            for value in np.asarray(tape.template_selection_indices)[:N]
+        ],
         'effective_error_hex': [
             float(value).hex()
             for value in np.asarray(tape.effective_error)[:N]
@@ -619,6 +639,8 @@ def _validate_rng_tape_metadata(tape):
         'replacement_raw': (C, W), 'replacement_mask': (C, W),
         'draw_count': (C,), 'substitution_count': (C,),
         'effective_error': (C,),
+        'template_start_mask': (C,),
+        'template_selection_indices': (C,),
     }
     for name, shape in shapes.items():
         if tuple(getattr(tape, name).shape) != shape:
@@ -677,6 +699,12 @@ def validate_a4_substitution_rng_tape(tape):
             or np.any(raw['replacement_raw'][~raw['replacement_mask']] != 0)
             or np.any(raw['uniform_draws'][~raw['draw_mask']] != 0.0)):
         raise a4.A4SchemaError('RNG tape replacement/tail is invalid')
+    if (np.any(raw['template_start_mask'] & ~raw['cell_mask'])
+            or np.any(raw['template_selection_indices'][
+                raw['template_start_mask']] != 0)
+            or np.any(raw['template_selection_indices'][
+                ~raw['template_start_mask']] != -1)):
+        raise a4.A4SchemaError('RNG tape template selection is invalid')
     expected_counts = np.sum(
         raw['replacement_mask'], axis=1, dtype=np.int64,
     )
@@ -691,6 +719,12 @@ def validate_a4_substitution_rng_tape(tape):
     generator = np.random.Generator(np.random.PCG64())
     generator.bit_generator.state = copy.deepcopy(before)
     for ci in range(N):
+        if bool(raw['template_start_mask'][ci]):
+            selected = int(generator.integers(0, 1))
+            if selected != int(raw['template_selection_indices'][ci]):
+                raise a4.A4SchemaError(
+                    'RNG tape template selection replay differs'
+                )
         for rank in range(int(raw['draw_count'][ci])):
             uniform = float(generator.random())
             if np.float64(uniform).view(np.uint64) != np.float64(
@@ -772,6 +806,9 @@ def _validate_plan_metadata(plan):
         'last_effective_error_rate': (C,),
         'cumulative_proofreading_atp_after': (C,),
         'substitution_events': (C,),
+        'template_start_events': (C,),
+        'selected_template_indices': (C,),
+        'template_storage_symbols': (C,),
     }
     for name, shape in shapes.items():
         if tuple(getattr(plan, name).shape) != shape:
@@ -798,7 +835,7 @@ def validate_a4_paid_elongation_plan(plan):
         raise a4.A4CapacityError('paid elongation exceeds symbol capacity')
     if np.any(error_codes != SCOPE_OK) or not np.all(raw['scope_valid'][:N]):
         raise A4ReplicationScopeError(
-            'paid elongation row is outside A4.4b scope: %s' %
+            'paid elongation row is outside A4.5b scope: %s' %
             [int(value) for value in error_codes]
         )
     if np.any(raw['scope_valid'][N:]) or np.any(
@@ -812,6 +849,14 @@ def validate_a4_paid_elongation_plan(plan):
             or np.any(raw['substitution_events'][:N]
                       > raw['append_count'][:N])):
         raise a4.A4SchemaError('replication counts are invalid')
+    start = raw['template_start_events']
+    if (np.any(start & ~raw['scope_valid'])
+            or np.any(raw['selected_template_indices'][start] != 0)
+            or np.any(raw['selected_template_indices'][~start] != -1)
+            or np.any(raw['template_storage_symbols'][start] <= 0)
+            or np.any(raw['template_storage_symbols'][~start] != 0)
+            or np.any(raw['template_storage_symbols'][:N] > W)):
+        raise a4.A4SchemaError('template-start topology metadata is invalid')
     if not np.array_equal(
             raw['last_replication_symbols'], raw['append_count']):
         raise a4.A4SchemaError('last replication count differs from append count')
@@ -844,11 +889,15 @@ def validate_a4_paid_elongation_plan(plan):
         if np.any(raw['append_symbols'][ci, count:] != 0):
             raise a4.A4SchemaError('append tail is not zero')
     for name in _PLAN_ARRAY_FIELDS:
-        if name in ('cell_ids', 'cell_mask', 'scope_valid', 'scope_error_code'):
+        if name in (
+                'cell_ids', 'cell_mask', 'scope_valid', 'scope_error_code',
+                'selected_template_indices'):
             continue
         tail = raw[name][N:]
         if tail.size and np.any(tail != 0):
             raise a4.A4SchemaError('%s unused cell tail is not zero' % name)
+    if np.any(raw['selected_template_indices'][N:] != -1):
+        raise a4.A4SchemaError('selected-template tail is not -1')
     return plan
 
 
@@ -899,20 +948,39 @@ def _numpy_raw_repair(binding, ci, specs, kind, aggregate):
     return float((total / 0.014) * inhibition)
 
 
-def _numpy_template_copy(binding, ci):
+def _numpy_template_copy(binding, ci, allow_template_start=False):
     ragged = binding.ragged
-    if not bool(ragged.replication_active[ci]):
-        return None, None
-    sequence_end = int(ragged.cell_sequence_offsets[ci + 1])
-    template_index = sequence_end - 2
-    copy_index = sequence_end - 1
+    if bool(ragged.replication_active[ci]):
+        sequence_end = int(ragged.cell_sequence_offsets[ci + 1])
+        template_index = sequence_end - 2
+        copy_index = sequence_end - 1
+        template_lesion = float(ragged.replication_template_lesions[ci])
+        start_event = False
+    elif allow_template_start and int(ragged.genome_counts[ci]) == 1:
+        template_index = int(ragged.cell_sequence_offsets[ci])
+        copy_index = None
+        lesion_first = int(ragged.lesion_offsets[ci])
+        lesion_last = int(ragged.lesion_offsets[ci + 1])
+        template_lesion = (
+            float(ragged.genome_lesions[lesion_first])
+            if lesion_last > lesion_first else 0.0
+        )
+        start_event = True
+    else:
+        return None, None, False, -1, 0.0
     template_start = int(ragged.sequence_offsets[template_index])
     template_end = int(ragged.sequence_offsets[template_index + 1])
-    copy_start = int(ragged.sequence_offsets[copy_index])
-    copy_end = int(ragged.sequence_offsets[copy_index + 1])
+    if copy_index is None:
+        partial = np.zeros((0,), dtype=np.uint8)
+    else:
+        copy_start = int(ragged.sequence_offsets[copy_index])
+        copy_end = int(ragged.sequence_offsets[copy_index + 1])
+        partial = np.asarray(
+            ragged.symbols[copy_start:copy_end], dtype=np.uint8,
+        )
     return (
         np.asarray(ragged.symbols[template_start:template_end], dtype=np.uint8),
-        np.asarray(ragged.symbols[copy_start:copy_end], dtype=np.uint8),
+        partial, start_event, 0 if start_event else -1, template_lesion,
     )
 
 
@@ -982,10 +1050,14 @@ def _empty_numpy_plan(binding):
             state.cumulative_proofreading_atp, dtype=np.float64,
         ).copy(),
         substitution_events=np.zeros((C,), dtype=np.int64),
+        template_start_events=np.zeros((C,), dtype=bool),
+        selected_template_indices=np.full((C,), -1, dtype=np.int64),
+        template_storage_symbols=np.zeros((C,), dtype=np.int64),
     )
 
 
-def paid_replication_elongation_numpy(binding, dt, config):
+def _paid_replication_elongation_numpy(
+        binding, dt, config, allow_template_start=False):
     """Literal NumPy reference for the bounded Formal066 continuation."""
     a4._require_translation_binding(binding)
     if _is_tensor(binding.state.pools):
@@ -1002,8 +1074,14 @@ def paid_replication_elongation_numpy(binding, dt, config):
     N = int(state.cell_count)
     specs_by_cell = binding.cache.materialize_gene_specs_host()
     total_appended = 0
+    total_template_storage = 0
+    total_start_events = 0
     for ci in range(N):
-        template, partial = _numpy_template_copy(binding, ci)
+        (
+            template, partial, start_event, selected_index, template_lesion,
+        ) = _numpy_template_copy(
+            binding, ci, allow_template_start=allow_template_start,
+        )
         if (int(state.genome_count[ci]) <= 0 or template is None
                 or len(template) == 0 or len(partial) >= len(template)):
             result.scope_error_code[ci] = SCOPE_INACTIVE_TEMPLATE
@@ -1080,7 +1158,7 @@ def paid_replication_elongation_numpy(binding, dt, config):
         raw_error = max(
             0.0,
             mutation_rate
-            + 0.0012 * float(ragged.replication_template_lesions[ci])
+            + 0.0012 * float(template_lesion)
             + 0.0010 * reactive,
         )
         result.last_effective_error_rate[ci] = (
@@ -1130,9 +1208,30 @@ def paid_replication_elongation_numpy(binding, dt, config):
             result.scope_error_code[ci] = SCOPE_COMPLETION
         else:
             result.scope_valid[ci] = True
-    if int(ragged.symbol_count) + total_appended > int(ragged.symbol_capacity):
-        raise a4.A4CapacityError('paid elongation exceeds symbol capacity')
+            if start_event:
+                result.template_start_events[ci] = True
+                result.selected_template_indices[ci] = selected_index
+                result.template_storage_symbols[ci] = len(template)
+                total_template_storage += len(template)
+                total_start_events += 1
+    if (int(ragged.sequence_count) + 2 * total_start_events
+            > int(ragged.sequence_capacity)):
+        raise a4.A4CapacityError(
+            'template start exceeds sequence capacity'
+        )
+    if (int(ragged.symbol_count) + total_template_storage + total_appended
+            > int(ragged.symbol_capacity)):
+        raise a4.A4CapacityError(
+            'template start/elongation exceeds symbol capacity'
+        )
     return validate_a4_paid_elongation_plan(result)
+
+
+def paid_replication_elongation_numpy(binding, dt, config):
+    """Public deterministic A4.4b path; inactive start stays CPU authority."""
+    return _paid_replication_elongation_numpy(
+        binding, dt, config, allow_template_start=False,
+    )
 
 
 def _torch_replicase(
@@ -1226,7 +1325,8 @@ def _torch_replicase(
     )
 
 
-def paid_replication_elongation_torch(binding, dt, config):
+def _paid_replication_elongation_torch(
+        binding, dt, config, allow_template_start=False):
     """Fixed-shape resident plan with no scalar readback or dynamic output."""
     if torch is None:
         raise RuntimeError('PyTorch is unavailable')
@@ -1305,8 +1405,19 @@ def paid_replication_elongation_torch(binding, dt, config):
         ), min=0.0, max=0.86)
 
     sequence_end = ragged.cell_sequence_offsets[1:C + 1]
-    template_index = torch.clamp(
+    active_template_index = torch.clamp(
         sequence_end - 2, min=0, max=int(ragged.sequence_capacity) - 1,
+    )
+    first_sequence = torch.clamp(
+        ragged.cell_sequence_offsets[:C],
+        min=0, max=int(ragged.sequence_capacity) - 1,
+    )
+    start_candidate = (
+        state.cell_mask & (~ragged.replication_active)
+        & (state.genome_count == 1) & bool(allow_template_start)
+    )
+    template_index = torch.where(
+        start_candidate, first_sequence, active_template_index,
     )
     copy_index = torch.clamp(
         sequence_end - 1, min=0, max=int(ragged.sequence_capacity) - 1,
@@ -1316,11 +1427,33 @@ def paid_replication_elongation_torch(binding, dt, config):
     copy_start = ragged.sequence_offsets[copy_index]
     copy_end = ragged.sequence_offsets[copy_index + 1]
     template_length = torch.clamp(template_end - template_start, min=0)
-    copy_length = torch.clamp(copy_end - copy_start, min=0)
-    structural = (
+    copy_length = torch.where(
+        start_candidate, torch.zeros_like(copy_end),
+        torch.clamp(copy_end - copy_start, min=0),
+    )
+    existing_structural = (
         state.cell_mask & ragged.replication_active
         & (state.genome_count > 0)
         & (template_length > 0) & (copy_length < template_length)
+    )
+    structural = existing_structural | (
+        start_candidate & (template_length > 0)
+    )
+    safe_lesion_index = torch.clamp(
+        ragged.lesion_offsets[:C],
+        min=0, max=int(ragged.sequence_capacity) - 1,
+    )
+    has_selected_lesion = (
+        ragged.lesion_offsets[1:C + 1] > ragged.lesion_offsets[:C]
+    )
+    selected_lesion = torch.where(
+        has_selected_lesion,
+        ragged.genome_lesions[safe_lesion_index],
+        torch.zeros_like(ragged.replication_template_lesions),
+    )
+    template_lesion = torch.where(
+        start_candidate, selected_lesion,
+        ragged.replication_template_lesions,
     )
     replicase_boundary = _torch_fp64_comparison_boundary(replicase, 1e-6)
     replicase_gate = (replicase > 1e-6) & (~replicase_boundary)
@@ -1341,7 +1474,11 @@ def paid_replication_elongation_torch(binding, dt, config):
         * (1.0 - 0.78 * quiescence)
     )
     increment = speed * float(dt * scale)
-    fractional_total = ragged.replication_fractional + increment
+    fractional_input = torch.where(
+        start_candidate, torch.zeros_like(ragged.replication_fractional),
+        ragged.replication_fractional,
+    )
+    fractional_total = fractional_input + increment
     fp64_integer_boundary = (
         kinetics_supported
         & _torch_fp64_integer_boundary(fractional_total, increment)
@@ -1356,7 +1493,7 @@ def paid_replication_elongation_torch(binding, dt, config):
     reactive = pools_after[:, a4.a3.POOL_REACTIVE] / volume
     raw_error = torch.clamp(
         float(mutation_rate)
-        + 0.0012 * ragged.replication_template_lesions
+        + 0.0012 * template_lesion
         + 0.0010 * reactive,
         min=0.0,
     )
@@ -1466,15 +1603,26 @@ def paid_replication_elongation_torch(binding, dt, config):
     error = torch.where(
         completion, torch.full_like(error, SCOPE_COMPLETION), error,
     )
-    capacity_overflow = (
-        int(ragged.symbol_count) + torch.sum(append_count)
-        > int(ragged.symbol_capacity)
+    start_before_capacity = start_candidate & (error == SCOPE_OK)
+    sequence_capacity_overflow = (
+        int(ragged.sequence_count)
+        + 2 * torch.sum(start_before_capacity.to(torch.int64))
+        > int(ragged.sequence_capacity)
     )
+    symbol_capacity_overflow = (
+        int(ragged.symbol_count) + torch.sum(append_count)
+        + torch.sum(torch.where(
+            start_before_capacity, template_length,
+            torch.zeros_like(template_length),
+        )) > int(ragged.symbol_capacity)
+    )
+    capacity_overflow = sequence_capacity_overflow | symbol_capacity_overflow
     error = torch.where(
         state.cell_mask & capacity_overflow,
         torch.full_like(error, SCOPE_CAPACITY), error,
     )
     scope_valid = state.cell_mask & (error == SCOPE_OK)
+    template_start_events = start_candidate & scope_valid
 
     plan = A4PaidElongationPlan(
         schema_version=SCHEMA_VERSION,
@@ -1506,9 +1654,25 @@ def paid_replication_elongation_torch(binding, dt, config):
         ),
         cumulative_proofreading_atp_after=cumulative_proofreading_atp_after,
         substitution_events=torch.zeros_like(append_count),
+        template_start_events=template_start_events,
+        selected_template_indices=torch.where(
+            template_start_events, torch.zeros_like(append_count),
+            torch.full_like(append_count, -1),
+        ),
+        template_storage_symbols=torch.where(
+            template_start_events, template_length,
+            torch.zeros_like(template_length),
+        ),
     )
     _validate_plan_metadata(plan)
     return plan
+
+
+def paid_replication_elongation_torch(binding, dt, config):
+    """Public deterministic A4.4b path; inactive start stays CPU authority."""
+    return _paid_replication_elongation_torch(
+        binding, dt, config, allow_template_start=False,
+    )
 
 
 def _require_rng_tape_binding(tape, binding, dt, config_sha256):
@@ -1535,7 +1699,9 @@ def prepare_substitution_rng_tape(
         raise a4.A4SchemaError('RNG tape preparation requires a NumPy binding')
     deterministic, config_sha256 = _substitution_config(config)
     dt = _strict_dt(dt)
-    plan = paid_replication_elongation_numpy(binding, dt, deterministic)
+    plan = _paid_replication_elongation_numpy(
+        binding, dt, deterministic, allow_template_start=True,
+    )
     before = _canonical_pcg64_state(rng_state_before, 'rng_state_before')
     generator = np.random.Generator(np.random.PCG64())
     generator.bit_generator.state = copy.deepcopy(before)
@@ -1550,7 +1716,24 @@ def prepare_substitution_rng_tape(
     uniform_draws = np.zeros((C, W), dtype=np.float64)
     replacement_raw = np.zeros((C, W), dtype=np.uint8)
     replacement_mask = np.zeros((C, W), dtype=bool)
+    template_start_mask = np.asarray(
+        plan.template_start_events, dtype=bool,
+    ).copy()
+    template_selection_indices = np.asarray(
+        plan.selected_template_indices, dtype=np.int64,
+    ).copy()
     for ci in range(N):
+        # Frozen Formal066 performs the scalar high-level selection call at
+        # this exact point, before this cell's threshold/integer draws.  The
+        # present CPU/NumPy PCG64 returns index zero without advancing its
+        # state, but replay the call rather than encoding that implementation
+        # detail as an RNG rule.
+        if bool(template_start_mask[ci]):
+            selected = int(generator.integers(0, 1))
+            if selected != int(template_selection_indices[ci]):
+                raise A4ReplicationScopeError(
+                    'template selection replay differs from its plan'
+                )
         error = float(effective_error[ci])
         for rank in range(int(draw_count[ci])):
             uniform = float(generator.random())
@@ -1588,6 +1771,8 @@ def prepare_substitution_rng_tape(
         'draw_count': draw_count,
         'substitution_count': substitution_count,
         'effective_error': effective_error,
+        'template_start_mask': template_start_mask,
+        'template_selection_indices': template_selection_indices,
     }
     draft = _make_rng_tape(**values)
     values['schedule_sha256'] = _rng_schedule_digest(draft)
@@ -1599,6 +1784,13 @@ def _numpy_apply_substitution_tape(plan, tape):
     if (not np.array_equal(plan.cell_ids, tape.cell_ids)
             or not np.array_equal(plan.cell_mask, tape.cell_mask)
             or not np.array_equal(plan.append_count, tape.draw_count)
+            or not np.array_equal(
+                plan.template_start_events, tape.template_start_mask,
+            )
+            or not np.array_equal(
+                plan.selected_template_indices,
+                tape.template_selection_indices,
+            )
             or not np.array_equal(
                 np.asarray(plan.last_effective_error_rate).view(np.uint64),
                 np.asarray(tape.effective_error).view(np.uint64),
@@ -1631,7 +1823,9 @@ def paid_replication_substitution_numpy(binding, dt, config, tape):
     deterministic, config_sha256 = _substitution_config(config)
     tape = validate_a4_substitution_rng_tape(tape)
     _require_rng_tape_binding(tape, binding, dt, config_sha256)
-    plan = paid_replication_elongation_numpy(binding, dt, deterministic)
+    plan = _paid_replication_elongation_numpy(
+        binding, dt, deterministic, allow_template_start=True,
+    )
     return _numpy_apply_substitution_tape(plan, tape)
 
 
@@ -1647,12 +1841,19 @@ def paid_replication_substitution_torch(binding, dt, config, tape):
     if (not _is_tensor(tape.uniform_draws)
             or tape.uniform_draws.device != binding.state.pools.device):
         raise a4.A4SchemaError('RNG tape must share the resident device')
-    base = paid_replication_elongation_torch(binding, dt, deterministic)
+    base = _paid_replication_elongation_torch(
+        binding, dt, deterministic, allow_template_start=True,
+    )
     result = base.clone()
     identity_ok = (
         (tape.cell_ids == base.cell_ids)
         & (tape.cell_mask == base.cell_mask)
         & (tape.draw_count == base.append_count)
+        & (tape.template_start_mask == base.template_start_events)
+        & (
+            tape.template_selection_indices
+            == base.selected_template_indices
+        )
     )
     effective_error_ok = (
         tape.effective_error == base.last_effective_error_rate
@@ -1732,6 +1933,18 @@ def paid_replication_substitution_torch(binding, dt, config, tape):
         rollback, binding.state.cumulative_proofreading_atp,
         base.cumulative_proofreading_atp_after,
     )
+    result.template_start_events = torch.where(
+        rollback, torch.zeros_like(base.template_start_events),
+        base.template_start_events,
+    )
+    result.selected_template_indices = torch.where(
+        rollback, torch.full_like(base.selected_template_indices, -1),
+        base.selected_template_indices,
+    )
+    result.template_storage_symbols = torch.where(
+        rollback, torch.zeros_like(base.template_storage_symbols),
+        base.template_storage_symbols,
+    )
     _validate_plan_metadata(result)
     return result
 
@@ -1755,7 +1968,7 @@ def paid_replication_elongation_plan(binding, dt, config):
 PORT_STATUS = dict(a4.PORT_STATUS)
 PORT_STATUS.update({
     'genome_replication': (
-        'a4.5a-active-template-substitution-rng-tape-deterministic-'
+        'a4.5b-template-start-active-substitution-rng-tape-deterministic-'
         'proofreading-quiescence-noncompletion-plan-not-integrated-'
         'cpu-authoritative'
     ),
