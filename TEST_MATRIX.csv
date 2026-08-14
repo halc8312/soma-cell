@@ -198,5 +198,5 @@ F068G-A3-012,0.6.8-GPU-A3,A1 and A2 rerun,PASS,A1 32/32 and A2 32/32
 F068G-A3-013,0.6.8-GPU-A3,controlled native historical chain,PASS,Windows CPython 3.12.10 NumPy 2.3.5 ran all eleven validators 279/279
 F068G-A3-014,0.6.8-GPU-A3,cross-platform historical sensitivity,LIMITED,same P2 source is Windows 22/22 gain 1.929382 but WSL NumPy 2.5.2 is 21/22 gain 0.077189851
 F068G-A3-015,0.6.8-GPU-A3,final performance benchmark,PASS,13 specs 65 rows complete; CUDA fp64 is 570.096x to 590.276x slower than frozen CPU on world axis and no speedup is claimed
-F068G-A3-016,0.6.8-GPU-A3,deterministic flat release,PENDING,blocked until regression and benchmark evidence contain no unfinished marker
+F068G-A3-016,0.6.8-GPU-A3,deterministic flat release,PASS,two byte-identical builds SHA256 24401e678ed0429d29a7ca762bb563a217875ae9dac713c23af0987af41751f2; flat-package CUDA validation 36/36 PASS
 F068G-A3-017,0.6.8-GPU-A3,full GPU world step,NOT_COMPLETE,translation replication division death corpse eDNA HGT neural and emission RNG remain CPU-authoritative
