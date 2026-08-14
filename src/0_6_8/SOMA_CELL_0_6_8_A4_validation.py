@@ -1,11 +1,12 @@
 # coding: utf-8
-"""Focused validation for the SOMA-CELL 0.6.8-GPU A4.1 slice."""
+"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1/A4.2 slices."""
 from __future__ import division
 
 import argparse
 import copy
 import csv
 import hashlib
+import inspect
 import json
 import os
 import sys
@@ -26,9 +27,9 @@ try:
 except Exception:  # pragma: no cover
     torch = None
 
-RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_1_VALIDATION_RESULTS.json'
-RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_1_validation.csv'
-RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_1_VALIDATION_RESULTS.txt'
+RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_2_VALIDATION_RESULTS.json'
+RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_2_validation.csv'
+RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_2_VALIDATION_RESULTS.txt'
 
 SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4.py',
@@ -37,6 +38,8 @@ SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3_scheduler.py',
     'src/0_6_8/SOMA_CELL_0_6_8_A3_validation.py',
     'src/0_6_6/SOMA_CELL_0_6_6_pythonista.py',
+    'src/0_6_5/SOMA_CELL_0_6_5_pythonista.py',
+    'src/baseline/SOMA_CELL_0_2_pythonista.py',
     'docs/SOMA_CELL_0_6_8_GPU_A4_CONTRACT.md',
     'docs/SOMA_CELL_0_6_8_GPU_A4_SCHEMA.json',
     'planning/SOMA_CELL_0_6_8_GPU_A4_PREREGISTRATION_JA.md',
@@ -147,6 +150,75 @@ def _target_cells(seed=7501):
     return world, world.cells
 
 
+def _gene_decode_fixture(seed=7601):
+    """One-cell fixture fixing malformed-marker and cache-order semantics."""
+    world = v3.make_world(seed=seed, cells=1)
+    cell = world.cells[0]
+    non_generic = a4.g2.make_gene(
+        a4.g2.ROLE_TRANSLATOR,
+        parameter=5, regulator=2, promoter=7, efficiency=0,
+        fidelity=6, localisation=7, spare=(1, 2, 3, 4),
+    )
+    generic = a4.g2.make_gene(
+        a4.g2.ROLE_GENERIC,
+        parameter=a4.g2.REACTION_WASTE_TO_INTERMEDIATE,
+        regulator=7, promoter=0, efficiency=7,
+        fidelity=0, localisation=6, spare=(4, 5, 6, 7),
+    )
+    grammar = a4.s65.make_grammar_gene(
+        a4.s65.GRAMMAR_READINESS,
+        value=6, promoter=5, efficiency=4, fidelity=6,
+    )
+    bad_start = np.asarray([7, 6] + [1] * 12 + [0, 0], dtype=np.uint8)
+    bad_stop = np.asarray([7, 7] + [1] * 12 + [0, 1], dtype=np.uint8)
+    # Both outer @0 and nested @2 are syntactically valid.  Frozen parsing
+    # accepts outer then advances 16, suppressing the nested candidate.
+    overlapping_valid = np.concatenate((
+        grammar, np.asarray([0, 0], dtype=np.uint8),
+    ))
+    # Outer @0 has the wrong stop; one-symbol recovery finds generic @2.
+    invalid_outer_valid_inner = np.concatenate((
+        np.asarray([7, 7], dtype=np.uint8), generic,
+    ))
+    genome0 = np.concatenate((
+        bad_start, np.asarray([3, 4, 5], dtype=np.uint8),
+        non_generic, generic,
+    )).astype(np.uint8)
+    genome1 = np.concatenate((
+        generic, np.asarray([1, 2, 3], dtype=np.uint8),
+        overlapping_valid, bad_stop,
+    )).astype(np.uint8)
+    genome2 = np.concatenate((
+        np.asarray([1, 2], dtype=np.uint8), non_generic,
+        invalid_outer_valid_inner, bad_stop, non_generic[:-1],
+    )).astype(np.uint8)
+    template_only = a4.g2.make_gene(
+        a4.g2.ROLE_MEMBRANE, parameter=0, promoter=6, efficiency=5,
+    )
+    template = np.concatenate((template_only, non_generic)).astype(np.uint8)
+
+    cell.genomes = [genome0, genome1, genome2]
+    cell.genome_lesions = [0.1, 0.2, 0.3]
+    cell.replication_template = template
+    cell.replication_copy = [int(value) for value in template[:7]]
+    cell.replication_template_lesion = 0.25
+    cell.replication_fractional = 0.5
+    cell._refresh_gene_cache()
+    config = a4.GPU068A4Config(
+        max_cells=1, max_sequences=5, max_symbols=210,
+        max_sequence_symbols=67,
+    )
+    return world, cell, config
+
+
+def _assert_gene_specs_equal(expected, actual, label):
+    if list(expected.keys()) != list(actual.keys()):
+        raise AssertionError('%s insertion order differs' % label)
+    v3.assert_recursive_close(
+        expected, actual, atol=0.0, rtol=0.0, path=label,
+    )
+
+
 def _assert_raises(kind, fn):
     try:
         fn()
@@ -159,18 +231,28 @@ def test_api_scope():
     required = (
         'GPU068A4Config', 'A4RaggedGenomeBatch',
         'FullFidelityA4GenomeAdapter', 'validate_a4_ragged',
-        'pack_a4_cells', 'unpack_a4_cells',
+        'pack_a4_cells', 'unpack_a4_cells', 'A4GeneCacheBatch',
+        'validate_a4_gene_cache', 'decode_a4_gene_cache_numpy',
+        'decode_a4_gene_cache_torch', 'decode_a4_gene_cache',
     )
     missing = [name for name in required if not hasattr(a4, name)]
     if missing:
-        raise AssertionError('missing A4.1 API: %s' % missing)
+        raise AssertionError('missing A4 API: %s' % missing)
     if a4.FULL_GPU_WORLD_STEP is not False:
         raise AssertionError('A4.1 must not claim full GPU world-step')
-    if a4.PORT_STATUS.get('translation') != 'cpu-authoritative-next-a4-slice':
-        raise AssertionError('translation authority changed in representation slice')
+    if hasattr(a4.A4GeneCacheBatch, 'from_state_dict'):
+        raise AssertionError('derived cache must not expose a deserialize authority')
+    if a4.PORT_STATUS.get('gene_cache_decode') != (
+            'a4.2-batched-resident-derived-cache'):
+        raise AssertionError('A4.2 gene-cache status is missing')
+    if a4.PORT_STATUS.get('translation') != (
+            'cpu-authoritative-next-a4-slice-after-gene-decode'):
+        raise AssertionError('translation authority changed in decode slice')
     if a4.PORT_STATUS.get('genome_replication') != 'cpu-authoritative-next-a4-slice':
         raise AssertionError('replication authority changed in representation slice')
-    return '%s / %s / full_gpu=false' % (a4.BUILD, a4.SCHEMA_VERSION)
+    return '%s / %s + %s / full_gpu=false' % (
+        a4.BUILD, a4.SCHEMA_VERSION, a4.GENE_CACHE_SCHEMA_VERSION,
+    )
 
 
 def test_source_hash_inputs_present():
@@ -411,6 +493,206 @@ def test_explicit_device_residency_checksum_smoke():
     )
 
 
+def test_a4_gene_decode_frozen_oracle():
+    world, cell, config = _gene_decode_fixture()
+    before = v3.pickle_clone(world.state_dict())
+    packed = a4.FullFidelityA4GenomeAdapter(config).pack_cells([cell])
+    cache = a4.decode_a4_gene_cache_numpy(packed)
+    if int(cache.entry_count) != 3:
+        raise AssertionError('unique gene count differs from frozen cache')
+    expected_order = [40116138652, 55715248503, 68679218097]
+    if list(cache.fingerprints[:3]) != expected_order:
+        raise AssertionError('first-occurrence fingerprint order differs')
+    if list(cache.copy_numbers[:3]) != [2, 3, 1]:
+        raise AssertionError('duplicate copy counts differ')
+    if list(cache.starts[:3]) != [19, 35, 19]:
+        raise AssertionError('first record starts differ')
+    materialized = cache.materialize_gene_specs_host()[0]
+    _assert_gene_specs_equal(cell.gene_specs, materialized, 'gene_specs')
+    if 9105062057 in materialized:
+        raise AssertionError('replication template was decoded as a genome')
+    if int(materialized[40116138652]['copy_number']) != 2:
+        raise AssertionError('template duplicate changed complete-genome count')
+    grammar = materialized[68679218097]
+    if not a4.s65.is_grammar_spec(grammar):
+        raise AssertionError('0.6.5 grammar payload was not preserved')
+    if tuple(grammar['payload'][8:10]) != (1, 6):
+        raise AssertionError('grammar module/value payload was truncated')
+    for fingerprint, spec in materialized.items():
+        if spec['role'] == a4.g2.ROLE_GENERIC:
+            if 'reaction' not in spec or 'reaction_name' not in spec:
+                raise AssertionError('generic reaction fields are missing')
+        elif 'reaction' in spec or 'reaction_name' in spec:
+            raise AssertionError('non-generic cache fabricated reaction fields')
+    v3.assert_recursive_close(
+        before, world.state_dict(), atol=0.0, rtol=0.0,
+        path='gene_decode_source',
+    )
+    return '6 accepted -> 3 unique; overlap/recovery/order/template exclusion exact'
+
+
+def test_a4_gene_decode_numpy_torch_devices():
+    if torch is None:
+        raise AssertionError('PyTorch is required for A4.2')
+    if _REQUIRE_CUDA and not torch.cuda.is_available():
+        raise AssertionError('CUDA required but unavailable; CPU fallback forbidden')
+    _, cell, config = _gene_decode_fixture(seed=7602)
+    packed = a4.FullFidelityA4GenomeAdapter(config).pack_cells([cell])
+    expected = a4.decode_a4_gene_cache_numpy(packed)
+    expected_specs = expected.materialize_gene_specs_host()
+
+    source = '\n'.join(inspect.getsource(item) for item in (
+        a4.decode_a4_gene_cache_torch,
+        a4._validate_resident_ragged_metadata,
+        a4._gene_decode_dimensions,
+        a4._validate_gene_backend_and_dtypes,
+    ))
+    forbidden = ('.item(', '.cpu(', '.numpy(', '.tolist(',
+                 'nonzero(', 'masked_select(', 'unique(')
+    found = [token for token in forbidden if token in source]
+    if found:
+        raise AssertionError('resident decoder contains host/dynamic op: %s' % found)
+
+    devices = ['cpu']
+    if torch.cuda.is_available():
+        devices.append('cuda')
+    details = []
+    for device in devices:
+        resident = packed.to_torch(device=device)
+        pointers_before = resident.data_ptrs()
+        cache = a4.decode_a4_gene_cache_torch(resident)
+        if any(getattr(cache, name).device.type != device
+               for name in a4._GENE_ARRAY_FIELDS):
+            raise AssertionError('%s cache escaped requested device' % device)
+        if pointers_before != resident.data_ptrs():
+            raise AssertionError('%s decode reallocated source arena' % device)
+        if device == 'cuda':
+            torch.cuda.synchronize()
+        back = cache.to_numpy()
+        v3.assert_recursive_close(
+            expected.state_dict(), back.state_dict(),
+            atol=0.0, rtol=0.0, path='gene_cache.%s' % device,
+        )
+        actual_specs = back.materialize_gene_specs_host()
+        for ci, (left, right) in enumerate(zip(expected_specs, actual_specs)):
+            _assert_gene_specs_equal(left, right, '%s.cell[%d]' % (device, ci))
+        v3.assert_recursive_close(
+            packed.state_dict(), resident.to_numpy().state_dict(),
+            atol=0.0, rtol=0.0, path='resident_source.%s' % device,
+        )
+        details.append(device)
+    return 'NumPy/Torch %s fixed-shape exact; no decoder D2H/dynamic op' % '/'.join(details)
+
+
+def test_a4_gene_decode_capacity_exact_and_plus_one():
+    _assert_raises(
+        ValueError,
+        lambda: a4.GPU068A4Config(
+            max_cells=a4.MAX_CELL_CAPACITY_FOR_FINGERPRINT_KEY + 1,
+        ),
+    )
+    world = v3.make_world(seed=7603, cells=1)
+    cell = world.cells[0]
+    genes = [a4.g2.make_gene(
+        role, parameter=role, regulator=role,
+        promoter=role, efficiency=7 - role,
+    ) for role in range(6)]
+    cell.genomes = [np.concatenate(genes).astype(np.uint8)]
+    cell.genome_lesions = [0.0]
+    cell.replication_template = None
+    cell.replication_copy = []
+    cell.replication_template_lesion = 0.0
+    cell.replication_fractional = 0.0
+    cell._refresh_gene_cache()
+    config = a4.GPU068A4Config(
+        max_cells=1, max_sequences=1, max_symbols=6 * a4.GENE_SPAN,
+        max_sequence_symbols=6 * a4.GENE_SPAN,
+    )
+    before = v3.pickle_clone(world.state_dict())
+    packed = a4.FullFidelityA4GenomeAdapter(config).pack_cells([cell])
+    decoded = a4.decode_a4_gene_cache_numpy(packed)
+    if decoded.entry_capacity != 6 or int(decoded.entry_count) != 6:
+        raise AssertionError('exact derived entry capacity did not pass')
+    resident = packed.to_torch(device='cuda' if torch.cuda.is_available() else 'cpu')
+    resident_cache = a4.decode_a4_gene_cache_torch(resident).to_numpy()
+    if resident_cache.entry_capacity != 6 or int(resident_cache.entry_count) != 6:
+        raise AssertionError('Torch exact derived entry capacity did not pass')
+
+    overflow = copy.deepcopy(cell)
+    overflow.genomes[0] = np.concatenate((
+        overflow.genomes[0],
+        a4.g2.make_gene(a4.g2.ROLE_GENERIC, parameter=7, spare=(7, 7, 7, 7)),
+    )).astype(np.uint8)
+    overflow._refresh_gene_cache()
+    _assert_raises(
+        a4.A4CapacityError,
+        lambda: a4.FullFidelityA4GenomeAdapter(config).pack_cells([overflow]),
+    )
+    v3.assert_recursive_close(
+        before, world.state_dict(), atol=0.0, rtol=0.0,
+        path='gene_capacity_source',
+    )
+
+    empty = copy.deepcopy(cell)
+    empty.genomes = []
+    empty.genome_lesions = []
+    empty._refresh_gene_cache()
+    empty_config = a4.GPU068A4Config(
+        max_cells=1, max_sequences=1, max_symbols=1,
+        max_sequence_symbols=15,
+    )
+    empty_batch = a4.FullFidelityA4GenomeAdapter(empty_config).pack_cells([empty])
+    empty_cache = a4.decode_a4_gene_cache_numpy(empty_batch)
+    if empty_cache.entry_capacity != 0 or int(empty_cache.entry_count) != 0:
+        raise AssertionError('zero-gene capacity is not represented exactly')
+    return 'key bound + derived capacity 6 exact / seventh fails before pack / zero exact'
+
+
+def test_a4_gene_cache_schema_and_decode_nonmutation():
+    world, cell, config = _gene_decode_fixture(seed=7604)
+    world_before = v3.pickle_clone(world.state_dict())
+    packed = a4.FullFidelityA4GenomeAdapter(config).pack_cells([cell])
+    packed_before = packed.state_dict()
+    cache = a4.decode_a4_gene_cache_numpy(packed)
+    v3.assert_recursive_close(
+        packed_before, packed.state_dict(), atol=0.0, rtol=0.0,
+        path='numpy_decode_input',
+    )
+    v3.assert_recursive_close(
+        world_before, world.state_dict(), atol=0.0, rtol=0.0,
+        path='numpy_decode_cells',
+    )
+
+    corruptions = []
+    def add(name, mutate):
+        item = cache.clone()
+        mutate(item)
+        corruptions.append((name, item))
+    add('mask', lambda x: x.entry_mask.__setitem__(0, False))
+    add('offset', lambda x: x.cell_entry_offsets.__setitem__(1, 0))
+    add('fingerprint', lambda x: x.fingerprints.__setitem__(0, 0))
+    add('payload', lambda x: x.payloads.__setitem__((0, 0), a4.ALPHABET_SIZE))
+    add('copy_number', lambda x: x.copy_numbers.__setitem__(0, 0))
+    add('unused_tail', lambda x: x.starts.__setitem__(int(x.entry_count), 0))
+    add('frozen_length_limit', lambda x: setattr(
+        x, 'max_sequence_symbols', a4.MAX_FROZEN_GENOME_SYMBOLS + 1,
+    ))
+    for name, item in corruptions:
+        _assert_raises(
+            a4.A4SchemaError,
+            lambda item=item: a4.validate_a4_gene_cache(item),
+        )
+    resident = packed.to_torch(device='cpu')
+    for value in (0, a4.MAX_FROZEN_GENOME_SYMBOLS + 1):
+        malformed = resident.clone()
+        malformed.max_sequence_symbols = value
+        _assert_raises(
+            a4.A4SchemaError,
+            lambda malformed=malformed: a4.decode_a4_gene_cache_torch(malformed),
+        )
+    return '%d cache + 2 resident metadata corruptions rejected; source/cells unchanged' % len(corruptions)
+
+
 def test_a3_focused_regression():
     # Invoke named tests only; never call A3 run_all or overwrite A3 evidence.
     for fn in (
@@ -433,6 +715,10 @@ TESTS = (
     test_capacity_exact_and_plus_one_atomic,
     test_cell_identity_order_and_duplicate_rejected,
     test_explicit_device_residency_checksum_smoke,
+    test_a4_gene_decode_frozen_oracle,
+    test_a4_gene_decode_numpy_torch_devices,
+    test_a4_gene_decode_capacity_exact_and_plus_one,
+    test_a4_gene_cache_schema_and_decode_nonmutation,
     test_a3_focused_regression,
 )
 
@@ -462,8 +748,11 @@ def run_all(write=False, output_dir=None):
     elapsed = time.time() - started
     payload = {
         'build': a4.BUILD,
-        'schema': a4.SCHEMA_VERSION,
-        'development_slice': 'A4.1-ragged-genome-foundation',
+        'schema': {
+            'ragged_genome': a4.SCHEMA_VERSION,
+            'gene_cache': a4.GENE_CACHE_SCHEMA_VERSION,
+        },
+        'development_slice': 'A4.2-batched-resident-gene-decode',
         'promoted_baseline_unchanged': 'SOMA-CELL 0.6.8-GPU A3',
         'full_gpu_world_step': False,
         'require_cuda': bool(_REQUIRE_CUDA),
@@ -484,7 +773,7 @@ def run_all(write=False, output_dir=None):
             writer.writeheader()
             writer.writerows(rows)
         lines = [
-            'SOMA-CELL 0.6.8-GPU A4.1 VALIDATION',
+            'SOMA-CELL 0.6.8-GPU A4.2 VALIDATION',
             '%d PASS / %d FAIL / %d TOTAL' % (passed, failed, len(rows)),
             'elapsed %.6fs' % elapsed,
             '',

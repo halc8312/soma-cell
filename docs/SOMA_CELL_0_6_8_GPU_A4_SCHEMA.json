@@ -1,42 +1,72 @@
 {
-  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.1-ragged-genome",
+  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.2-resident-ragged-gene-cache",
   "status": "development_slice_not_promoted",
   "full_gpu_world_step": false,
-  "scope": "one_world_structural_genome_state",
-  "sequence_order": [
-    "complete_genomes_in_list_order",
-    "replication_template_when_active",
-    "replication_copy_when_active_including_empty"
-  ],
-  "arrays": {
-    "symbols": {"dtype": "uint8", "shape": ["symbol_capacity"], "unused": 0},
-    "sequence_offsets": {"dtype": "int64", "shape": ["sequence_capacity + 1"], "unused": -1},
-    "cell_sequence_offsets": {"dtype": "int64", "shape": ["cell_capacity + 1"], "unused": -1},
-    "cell_ids": {"dtype": "int64", "shape": ["cell_capacity"], "unused": -1},
-    "cell_mask": {"dtype": "bool", "shape": ["cell_capacity"], "unused": false},
-    "genome_counts": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
-    "lesion_offsets": {"dtype": "int64", "shape": ["cell_capacity + 1"], "unused": -1},
-    "genome_lesions": {"dtype": "float64", "shape": ["sequence_capacity"], "unused": 0.0},
-    "replication_active": {"dtype": "bool", "shape": ["cell_capacity"], "unused": false},
-    "replication_template_lesions": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
-    "replication_fractional": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0}
+  "authoritative_state": "A4RaggedGenomeBatch",
+  "ragged_genome": {
+    "schema_version": "0.6.8-GPU-A4.1-ragged-genome",
+    "sequence_order": [
+      "complete_genomes_in_list_order",
+      "replication_template_when_active",
+      "replication_copy_when_active_including_empty"
+    ],
+    "arrays": {
+      "symbols": {"dtype": "uint8", "shape": ["symbol_capacity"], "unused": 0},
+      "sequence_offsets": {"dtype": "int64", "shape": ["sequence_capacity + 1"], "unused": -1},
+      "cell_sequence_offsets": {"dtype": "int64", "shape": ["cell_capacity + 1"], "unused": -1},
+      "cell_ids": {"dtype": "int64", "shape": ["cell_capacity"], "unused": -1},
+      "cell_mask": {"dtype": "bool", "shape": ["cell_capacity"], "unused": false},
+      "genome_counts": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
+      "lesion_offsets": {"dtype": "int64", "shape": ["cell_capacity + 1"], "unused": -1},
+      "genome_lesions": {"dtype": "float64", "shape": ["sequence_capacity"], "unused": 0.0},
+      "replication_active": {"dtype": "bool", "shape": ["cell_capacity"], "unused": false},
+      "replication_template_lesions": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
+      "replication_fractional": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0}
+    },
+    "scalar_counts": ["cell_count", "sequence_count", "symbol_count", "lesion_count"],
+    "capacities": ["cell_capacity", "sequence_capacity", "symbol_capacity", "max_sequence_symbols"]
   },
-  "scalar_counts": ["cell_count", "sequence_count", "symbol_count", "lesion_count"],
-  "capacities": ["cell_capacity", "sequence_capacity", "symbol_capacity", "max_sequence_symbols"],
-  "invariants": [
-    "all used symbols are integers in [0,7]",
-    "used offsets start at zero and are monotonic",
-    "terminal offsets equal used counts",
-    "unused tails contain only their declared sentinel",
-    "cell_sequence_count equals genome_count plus two when replication is active",
-    "lesion_count per cell does not exceed complete genome count",
-    "active template length is positive and copy length does not exceed template length",
-    "inactive replication has zero template lesion and zero fractional progress",
-    "material symbols exclude the replication template",
-    "capacity overflow fails before mutation"
-  ],
+  "derived_gene_cache": {
+    "schema_version": "0.6.8-GPU-A4.2-gene-cache",
+    "ownership": "discardable_derivative_of_complete_genomes_only_no_deserialization_authority",
+    "entry_order": "cell_then_complete_genome_list_then_local_start_first_occurrence",
+    "entry_capacity_formula": "min(symbol_capacity // 16, sequence_capacity * (max_sequence_symbols // 16))",
+    "arrays": {
+      "cell_ids": {"dtype": "int64", "shape": ["cell_capacity"], "unused": -1},
+      "cell_mask": {"dtype": "bool", "shape": ["cell_capacity"], "unused": false},
+      "cell_entry_offsets": {"dtype": "int64", "shape": ["cell_capacity + 1"], "unused": -1},
+      "entry_count": {"dtype": "int64", "shape": []},
+      "entry_mask": {"dtype": "bool", "shape": ["entry_capacity"], "unused": false},
+      "fingerprints": {"dtype": "int64", "shape": ["entry_capacity"], "unused": -1},
+      "starts": {"dtype": "int64", "shape": ["entry_capacity"], "unused": -1},
+      "payloads": {"dtype": "uint8", "shape": ["entry_capacity", 12], "unused": 0},
+      "copy_numbers": {"dtype": "int64", "shape": ["entry_capacity"], "unused": 0}
+    },
+    "invariants": [
+      "only complete genomes are decoded; template and partial copy are excluded",
+      "valid gene advances the frozen parser by 16 symbols",
+      "invalid delimiter candidate advances by one symbol",
+      "entry mask is a true prefix",
+      "cell entry offsets are monotonic and terminate at entry_count",
+      "payload symbols are integers in [0,7]",
+      "fingerprint equals the exact base-8 value of all 12 payload symbols",
+      "fingerprint is unique within each cell cache",
+      "copy_number is the count of all same-cell occurrences",
+      "cell_capacity is at most 134217727 so composite int64 keys cannot collide with the reserved sentinel",
+      "unused tails contain only declared sentinels",
+      "decode does not mutate source arena or CPU biological state"
+    ],
+    "host_materialization": {
+      "derived_fields": [
+        "role", "role_name", "parameter", "promoter", "efficiency",
+        "fidelity", "localisation", "regulator"
+      ],
+      "generic_only_fields": ["reaction", "reaction_name"],
+      "preserved_fields": ["start", "payload", "fingerprint", "copy_number"]
+    }
+  },
   "cpu_authoritative_after_slice": [
-    "gene_cache_and_translation",
+    "paid_translation_and_protein_commit",
     "replication_proofreading_mutation_hydrolysis_rng",
     "division_death_corpse_edna_hgt",
     "neural_and_causal_systems"
