@@ -1,5 +1,5 @@
 # coding: utf-8
-"""A4.6b1 attested completion-mutation PCG64 event tape.
+"""A4.6b2 resident completion-mutation transformation plan.
 
 This deliberately narrow development slice retains every A4.6a plan and the
 A4.5 substitution tape, then adds a separate, binding-aware host replay for a
@@ -7,11 +7,12 @@ pre-existing active template that completes with mutation enabled.  One
 combined PCG64 stream records each cell's paid append substitutions followed
 immediately by that same cell's insertion/deletion/duplication/inversion/
 transposition and padding calls.  The tape contains semantic draws and bounded
-integer payloads, never a precomputed final genome.  It can be attested and
-uploaded to Torch CPU/CUDA, but this slice does not yet apply those operations
-on device, mutate the ragged arena, advance a live RNG, refresh a gene cache,
-commit a CPU cell, or replace the A3 scheduler.  Frozen Formal066 CPU behavior
-remains authority.
+integer payloads, never a precomputed final genome.  This slice consumes that
+tape with fixed-shape NumPy or Torch CPU/CUDA operations and returns a pure
+structural/material/lifecycle descriptor.  It still does not mutate the ragged
+arena, advance a live RNG, refresh a gene cache, commit a CPU cell, hydrolyse
+proteins, or replace the A3 scheduler.  Frozen Formal066 CPU behavior remains
+authority.
 """
 from __future__ import division
 
@@ -31,13 +32,16 @@ except Exception:  # pragma: no cover - NumPy reference remains importable
     torch = None
 
 
-BUILD = 'SOMA-CELL 0.6.8-GPU A4.6b1'
+BUILD = 'SOMA-CELL 0.6.8-GPU A4.6b2'
 BUILD_ID = BUILD
-BUILD_LONG = BUILD + ' | completion structural/material mutation RNG tape'
+BUILD_LONG = BUILD + ' | resident completion mutation transformation plan'
 SCHEMA_VERSION = '0.6.8-GPU-A4.6a-replication-completion-plan'
 RNG_TAPE_SCHEMA_VERSION = '0.6.8-GPU-A4.5b-template-start-rng-tape'
 COMPLETION_MUTATION_RNG_TAPE_SCHEMA_VERSION = (
     '0.6.8-GPU-A4.6b1-completion-mutation-rng-tape'
+)
+COMPLETION_MUTATION_PLAN_SCHEMA_VERSION = (
+    '0.6.8-GPU-A4.6b2-completion-mutation-plan'
 )
 FULL_GPU_WORLD_STEP = False
 
@@ -157,6 +161,40 @@ _COMPLETION_TAPE_FLOAT64_FIELDS = (
     'append_uniform_draws', 'effective_error', 'threshold_uniform_draws',
 )
 _COMPLETION_TAPE_FACTORY_TOKEN = object()
+
+_COMPLETION_PLAN_ARRAY_FIELDS = (
+    'cell_ids', 'cell_mask', 'scope_valid', 'scope_error_code',
+    'completion_events', 'pre_structural_lengths', 'final_symbols',
+    'final_lengths', 'pools_after', 'requested_symbols', 'append_count',
+    'last_replication_symbols', 'last_effective_error_rate',
+    'cumulative_proofreading_atp_after', 'substitution_events',
+    'structural_event_counts', 'material_delta_symbols',
+    'new_genome_lesions', 'replication_cycle_deltas',
+    'topology_sequence_deltas', 'topology_symbol_deltas',
+    'replication_active_after', 'replication_template_lesions_after',
+    'replication_fractional_after', 'genome_count_after',
+    'genome_material_symbols_after', 'genome_lesion_mean_after',
+)
+_COMPLETION_PLAN_UINT8_FIELDS = ('final_symbols',)
+_COMPLETION_PLAN_INT64_FIELDS = (
+    'cell_ids', 'scope_error_code', 'pre_structural_lengths',
+    'final_lengths', 'requested_symbols', 'append_count',
+    'last_replication_symbols', 'substitution_events',
+    'structural_event_counts', 'material_delta_symbols',
+    'replication_cycle_deltas', 'topology_sequence_deltas',
+    'topology_symbol_deltas', 'genome_count_after',
+    'genome_material_symbols_after',
+)
+_COMPLETION_PLAN_BOOL_FIELDS = (
+    'cell_mask', 'scope_valid', 'completion_events',
+    'replication_active_after',
+)
+_COMPLETION_PLAN_FLOAT64_FIELDS = (
+    'pools_after', 'last_effective_error_rate',
+    'cumulative_proofreading_atp_after', 'new_genome_lesions',
+    'replication_template_lesions_after',
+    'replication_fractional_after', 'genome_lesion_mean_after',
+)
 
 
 class A4ReplicationError(a4.A4Error):
@@ -652,6 +690,11 @@ class A4CompletionMutationRngTape:
         values['_expected_host_array_sha256'] = (
             self._expected_host_array_sha256
         )
+        if _is_tensor(self.append_uniform_draws):
+            values['_resident_expected_arrays'] = {
+                name: self._resident_expected_arrays[name].clone()
+                for name in _COMPLETION_TAPE_ARRAY_FIELDS
+            }
         return _make_completion_mutation_rng_tape(**values)
 
     def to_torch(self, binding, dt, config, device='cpu'):
@@ -748,6 +791,101 @@ class A4CompletionMutationRngTape:
         }
 
 
+@dataclass
+class A4CompletionMutationPlan:
+    """Pure fixed-shape completion result; never arena or live-RNG authority."""
+
+    schema_version: str
+    cell_capacity: int
+    symbol_capacity: int
+    cell_count: int
+    source_provenance: str
+    cell_ids: object
+    cell_mask: object
+    scope_valid: object
+    scope_error_code: object
+    completion_events: object
+    pre_structural_lengths: object
+    final_symbols: object
+    final_lengths: object
+    pools_after: object
+    requested_symbols: object
+    append_count: object
+    last_replication_symbols: object
+    last_effective_error_rate: object
+    cumulative_proofreading_atp_after: object
+    substitution_events: object
+    structural_event_counts: object
+    material_delta_symbols: object
+    new_genome_lesions: object
+    replication_cycle_deltas: object
+    topology_sequence_deltas: object
+    topology_symbol_deltas: object
+    replication_active_after: object
+    replication_template_lesions_after: object
+    replication_fractional_after: object
+    genome_count_after: object
+    genome_material_symbols_after: object
+    genome_lesion_mean_after: object
+
+    def clone(self):
+        values = {}
+        for item in fields(self):
+            value = getattr(self, item.name)
+            values[item.name] = (
+                _clone_array(value)
+                if item.name in _COMPLETION_PLAN_ARRAY_FIELDS
+                else copy.deepcopy(value)
+            )
+        return A4CompletionMutationPlan(**values)
+
+    def to_numpy(self):
+        if _is_tensor(self.final_symbols):
+            _validate_completion_mutation_plan_metadata(self)
+        else:
+            return validate_a4_completion_mutation_plan(self).clone()
+        values = {}
+        for item in fields(self):
+            value = getattr(self, item.name)
+            if item.name in _COMPLETION_PLAN_ARRAY_FIELDS:
+                value = _host_array(value)
+                if item.name in _COMPLETION_PLAN_UINT8_FIELDS:
+                    value = value.astype(np.uint8, copy=False)
+                elif item.name in _COMPLETION_PLAN_INT64_FIELDS:
+                    value = value.astype(np.int64, copy=False)
+                elif item.name in _COMPLETION_PLAN_BOOL_FIELDS:
+                    value = value.astype(bool, copy=False)
+                else:
+                    value = value.astype(np.float64, copy=False)
+            else:
+                value = copy.deepcopy(value)
+            values[item.name] = value
+        return validate_a4_completion_mutation_plan(
+            A4CompletionMutationPlan(**values)
+        )
+
+    def data_ptrs(self):
+        if not all(_is_tensor(getattr(self, name))
+                   for name in _COMPLETION_PLAN_ARRAY_FIELDS):
+            raise TypeError(
+                'data_ptrs requires a Torch-backed completion mutation plan'
+            )
+        return {
+            name: int(getattr(self, name).data_ptr())
+            for name in _COMPLETION_PLAN_ARRAY_FIELDS
+        }
+
+    def state_dict(self):
+        return {
+            item.name: (
+                _clone_array(getattr(self, item.name))
+                if item.name in _COMPLETION_PLAN_ARRAY_FIELDS
+                else copy.deepcopy(getattr(self, item.name))
+            )
+            for item in fields(self)
+        }
+
+
 def _make_rng_tape(**values):
     tape = A4SubstitutionRngTape(
         _factory_token=_RNG_TAPE_FACTORY_TOKEN, **values
@@ -795,6 +933,9 @@ def _make_completion_mutation_rng_tape(**values):
     expected_host_array_sha256 = values.pop(
         '_expected_host_array_sha256', None,
     )
+    resident_expected_arrays = values.pop(
+        '_resident_expected_arrays', None,
+    )
     tape = A4CompletionMutationRngTape(
         _factory_token=_COMPLETION_TAPE_FACTORY_TOKEN, **values
     )
@@ -808,6 +949,38 @@ def _make_completion_mutation_rng_tape(**values):
         tape._resident_versions = {
             name: int(getattr(tape, name)._version)
             for name in _COMPLETION_TAPE_ARRAY_FIELDS
+        }
+        if resident_expected_arrays is None:
+            resident_expected_arrays = {
+                name: getattr(tape, name).clone()
+                for name in _COMPLETION_TAPE_ARRAY_FIELDS
+            }
+        elif set(resident_expected_arrays) != set(
+                _COMPLETION_TAPE_ARRAY_FIELDS):
+            raise a4.A4SchemaError(
+                'resident completion tape expected-array set is invalid'
+            )
+        tape._resident_expected_arrays = {
+            name: resident_expected_arrays[name].clone()
+            for name in _COMPLETION_TAPE_ARRAY_FIELDS
+        }
+        for name in _COMPLETION_TAPE_ARRAY_FIELDS:
+            expected = tape._resident_expected_arrays[name]
+            actual = getattr(tape, name)
+            if (not _is_tensor(expected)
+                    or expected.device != actual.device
+                    or expected.dtype != actual.dtype
+                    or tuple(expected.shape) != tuple(actual.shape)):
+                raise a4.A4SchemaError(
+                    'resident completion tape expected %s is invalid' % name
+                )
+        tape._resident_expected_data_ptrs = {
+            name: int(value.data_ptr())
+            for name, value in tape._resident_expected_arrays.items()
+        }
+        tape._resident_expected_versions = {
+            name: int(value._version)
+            for name, value in tape._resident_expected_arrays.items()
         }
     else:
         tape._host_array_sha256 = _completion_mutation_tape_array_digest(tape)
@@ -947,12 +1120,43 @@ def _require_completion_mutation_rng_tape(tape):
             raise a4.A4SchemaError(
                 'resident completion-mutation RNG tape changed after upload'
             )
+        expected = getattr(tape, '_resident_expected_arrays', None)
+        if (not isinstance(expected, dict)
+                or set(expected) != set(_COMPLETION_TAPE_ARRAY_FIELDS)
+                or getattr(tape, '_resident_expected_data_ptrs', None) != {
+                    name: int(expected[name].data_ptr())
+                    for name in _COMPLETION_TAPE_ARRAY_FIELDS
+                }
+                or getattr(tape, '_resident_expected_versions', None) != {
+                    name: int(expected[name]._version)
+                    for name in _COMPLETION_TAPE_ARRAY_FIELDS
+                }):
+            raise a4.A4SchemaError(
+                'resident completion-mutation expected values changed'
+            )
     elif getattr(tape, '_host_array_sha256', None) != (
             _completion_mutation_tape_array_digest(tape)):
         raise a4.A4SchemaError(
             'host completion-mutation RNG tape changed after creation'
         )
     return tape
+
+
+def _completion_mutation_tape_resident_unchanged(tape):
+    """Exact device scalar guarding `.data` writes before semantic use."""
+    _require_completion_mutation_rng_tape(tape)
+    if not _is_tensor(tape.append_uniform_draws):
+        raise a4.A4SchemaError(
+            'resident content comparison requires a Torch tape'
+        )
+    unchanged = torch.ones(
+        (), dtype=torch.bool, device=tape.append_uniform_draws.device,
+    )
+    for name in _COMPLETION_TAPE_ARRAY_FIELDS:
+        unchanged = unchanged & torch.all(
+            getattr(tape, name) == tape._resident_expected_arrays[name]
+        )
+    return unchanged
 
 
 def _is_lower_hex_digest(value):
@@ -1429,6 +1633,201 @@ def validate_a4_paid_elongation_plan(plan):
             raise a4.A4SchemaError('%s unused cell tail is not zero' % name)
     if np.any(raw['selected_template_indices'][N:] != -1):
         raise a4.A4SchemaError('selected-template tail is not -1')
+    return plan
+
+
+def _validate_completion_mutation_plan_metadata(plan):
+    if not isinstance(plan, A4CompletionMutationPlan):
+        raise a4.A4SchemaError('expected A4CompletionMutationPlan')
+    if plan.schema_version != COMPLETION_MUTATION_PLAN_SCHEMA_VERSION:
+        raise a4.A4SchemaError('completion mutation plan schema mismatch')
+    for name in ('cell_capacity', 'symbol_capacity', 'cell_count'):
+        value = getattr(plan, name)
+        if isinstance(value, (bool, np.bool_)) or not isinstance(
+                value, (int, np.integer)):
+            raise a4.A4SchemaError('%s must be an integer scalar' % name)
+    C = int(plan.cell_capacity)
+    W = int(plan.symbol_capacity)
+    N = int(plan.cell_count)
+    if C <= 0 or W <= 0 or W > int(a4.g2.MAX_GENOME_LENGTH):
+        raise a4.A4SchemaError(
+            'completion mutation plan capacities are invalid'
+        )
+    if N < 0 or N > C:
+        raise a4.A4SchemaError(
+            'completion mutation plan cell count is invalid'
+        )
+    if not _is_lower_hex_digest(plan.source_provenance):
+        raise a4.A4SchemaError(
+            'completion mutation plan source provenance is invalid'
+        )
+    kinds = set()
+    devices = set()
+    for name in _COMPLETION_PLAN_ARRAY_FIELDS:
+        value = getattr(plan, name)
+        if _is_tensor(value):
+            kinds.add('torch')
+            devices.add(str(value.device))
+        elif isinstance(value, np.ndarray):
+            kinds.add('numpy')
+        else:
+            raise a4.A4SchemaError('%s is not an array/tensor' % name)
+    if len(kinds) != 1 or len(devices) > 1:
+        raise a4.A4SchemaError(
+            'mixed completion mutation plan backend/device is forbidden'
+        )
+    backend = next(iter(kinds))
+    for names, numpy_dtype, torch_dtype in (
+        (_COMPLETION_PLAN_UINT8_FIELDS, np.dtype(np.uint8),
+         getattr(torch, 'uint8', None)),
+        (_COMPLETION_PLAN_INT64_FIELDS, np.dtype(np.int64),
+         getattr(torch, 'int64', None)),
+        (_COMPLETION_PLAN_BOOL_FIELDS, np.dtype(bool),
+         getattr(torch, 'bool', None)),
+        (_COMPLETION_PLAN_FLOAT64_FIELDS, np.dtype(np.float64),
+         getattr(torch, 'float64', None)),
+    ):
+        for name in names:
+            expected = torch_dtype if backend == 'torch' else numpy_dtype
+            if getattr(plan, name).dtype != expected:
+                raise a4.A4SchemaError('%s has noncanonical dtype' % name)
+    shapes = {
+        'cell_ids': (C,), 'cell_mask': (C,), 'scope_valid': (C,),
+        'scope_error_code': (C,), 'completion_events': (C,),
+        'pre_structural_lengths': (C,), 'final_symbols': (C, W),
+        'final_lengths': (C,),
+        'pools_after': (C, int(a4.a3.POOL_COUNT)),
+        'requested_symbols': (C,), 'append_count': (C,),
+        'last_replication_symbols': (C,),
+        'last_effective_error_rate': (C,),
+        'cumulative_proofreading_atp_after': (C,),
+        'substitution_events': (C,),
+        'structural_event_counts': (C, STRUCTURAL_EVENT_COUNT),
+        'material_delta_symbols': (C,), 'new_genome_lesions': (C,),
+        'replication_cycle_deltas': (C,),
+        'topology_sequence_deltas': (C,),
+        'topology_symbol_deltas': (C,),
+        'replication_active_after': (C,),
+        'replication_template_lesions_after': (C,),
+        'replication_fractional_after': (C,),
+        'genome_count_after': (C,),
+        'genome_material_symbols_after': (C,),
+        'genome_lesion_mean_after': (C,),
+    }
+    for name, shape in shapes.items():
+        if tuple(getattr(plan, name).shape) != shape:
+            raise a4.A4SchemaError('%s shape mismatch' % name)
+    return backend
+
+
+def validate_a4_completion_mutation_plan(plan):
+    """Validate a host final-polymer descriptor before any future commit."""
+    if _validate_completion_mutation_plan_metadata(plan) != 'numpy':
+        raise a4.A4SchemaError(
+            'full completion mutation plan validation requires NumPy'
+        )
+    raw = {
+        name: np.asarray(getattr(plan, name))
+        for name in _COMPLETION_PLAN_ARRAY_FIELDS
+    }
+    C = int(plan.cell_capacity)
+    W = int(plan.symbol_capacity)
+    N = int(plan.cell_count)
+    used = np.arange(C) < N
+    if not np.array_equal(raw['cell_mask'], used):
+        raise a4.A4SchemaError(
+            'completion mutation plan mask is not a true prefix'
+        )
+    if (np.any(raw['cell_ids'][:N] < 0)
+            or len(set(int(value) for value in raw['cell_ids'][:N])) != N
+            or np.any(raw['cell_ids'][N:] != -1)):
+        raise a4.A4SchemaError(
+            'completion mutation plan cell identity is invalid'
+        )
+    if (not np.all(raw['scope_valid'][:N])
+            or np.any(raw['scope_error_code'][:N] != SCOPE_OK)):
+        if np.any(raw['scope_error_code'][:N] == SCOPE_CAPACITY):
+            raise a4.A4CapacityError(
+                'completion mutation plan exceeds fixed capacity'
+            )
+        raise A4ReplicationScopeError(
+            'completion mutation plan is outside resident scope: %s' %
+            [int(value) for value in raw['scope_error_code'][:N]]
+        )
+    if not np.all(raw['completion_events'][:N]):
+        raise a4.A4SchemaError(
+            'completion mutation plan lacks a used completion event'
+        )
+    pre = raw['pre_structural_lengths'][:N]
+    final = raw['final_lengths'][:N]
+    delta = raw['material_delta_symbols'][:N]
+    append = raw['append_count'][:N]
+    requested = raw['requested_symbols'][:N]
+    minimum_final = np.minimum(
+        pre, np.full_like(pre, int(a4.g2.MIN_GENOME_LENGTH)),
+    )
+    if (np.any(pre <= 0) or np.any(pre > W)
+            or np.any(final < minimum_final)
+            or np.any(final > W)
+            or not np.array_equal(final - pre, delta)
+            or np.any(append <= 0) or np.any(append > pre)
+            or np.any(append > requested)
+            or not np.array_equal(
+                raw['last_replication_symbols'][:N], append,
+            )
+            or np.any(raw['substitution_events'][:N] < 0)
+            or np.any(raw['substitution_events'][:N] > append)
+            or np.any(raw['structural_event_counts'][:N] < 0)):
+        raise a4.A4SchemaError(
+            'completion mutation counts or lengths are invalid'
+        )
+    if (not np.array_equal(
+            raw['replication_cycle_deltas'][:N],
+            np.ones((N,), dtype=np.int64),
+        ) or not np.array_equal(
+            raw['topology_sequence_deltas'][:N],
+            -np.ones((N,), dtype=np.int64),
+        ) or not np.array_equal(
+            raw['topology_symbol_deltas'][:N],
+            -pre + append + delta,
+        ) or np.any(raw['replication_active_after'][:N])
+            or np.any(raw['replication_template_lesions_after'][:N] != 0.0)
+            or np.any(raw['replication_fractional_after'][:N] != 0.0)
+            or np.any(raw['genome_count_after'][:N] <= 0)
+            or np.any(raw['genome_material_symbols_after'][:N] <= 0)):
+        raise a4.A4SchemaError(
+            'completion mutation lifecycle descriptor is invalid'
+        )
+    if (not np.isfinite(raw['pools_after']).all()
+            or not np.isfinite(raw['last_effective_error_rate']).all()
+            or not np.isfinite(
+                raw['cumulative_proofreading_atp_after']).all()
+            or not np.isfinite(raw['new_genome_lesions']).all()
+            or not np.isfinite(raw['genome_lesion_mean_after']).all()
+            or np.any(raw['pools_after'][:N, a4.a3.POOL_NUCLEOTIDE] < 0.0)
+            or np.any(raw['last_effective_error_rate'][:N] < 0.0)
+            or np.any(raw['cumulative_proofreading_atp_after'][:N] < 0.0)
+            or np.any(raw['new_genome_lesions'][:N] < 0.0)
+            or np.any(raw['genome_lesion_mean_after'][:N] < 0.0)):
+        raise a4.A4SchemaError(
+            'completion mutation chemistry contains invalid values'
+        )
+    for ci in range(N):
+        length = int(final[ci])
+        if (np.any(raw['final_symbols'][ci, :length]
+                   >= int(a4.g2.ALPHABET_SIZE))
+                or np.any(raw['final_symbols'][ci, length:] != 0)):
+            raise a4.A4SchemaError(
+                'completion mutation final polymer is invalid'
+            )
+    for name in _COMPLETION_PLAN_ARRAY_FIELDS:
+        if name in ('cell_ids', 'cell_mask'):
+            continue
+        tail = raw[name][N:]
+        if tail.size and np.any(tail != 0):
+            raise a4.A4SchemaError(
+                '%s unused cell tail is not zero' % name
+            )
     return plan
 
 
@@ -2854,6 +3253,1016 @@ def validate_a4_completion_mutation_rng_tape(
     return tape
 
 
+def _require_completion_mutation_tape_binding(
+        tape, binding, dt, config_sha256):
+    """Check host-known identity without reading any resident tensor."""
+    _require_completion_mutation_rng_tape(tape)
+    dt = _strict_dt(dt)
+    if (tape.source_provenance != str(binding.state.source_provenance)
+            or tape.dt_hex != float(dt).hex()
+            or tape.config_sha256 != str(config_sha256)
+            or int(tape.cell_capacity) != int(binding.state.cell_capacity)
+            or int(tape.append_capacity)
+            != int(binding.ragged.max_sequence_symbols)
+            or int(tape.mutation_capacity)
+            != int(a4.g2.MAX_GENOME_LENGTH)
+            or int(tape.cell_count) != int(binding.state.cell_count)):
+        raise A4ReplicationScopeError(
+            'completion-mutation tape does not bind this resident source'
+        )
+    return tape
+
+
+def _numpy_apply_completion_mutation_tape(binding, base, tape, config):
+    """Apply recorded operations without calling the frozen mutator."""
+    C = int(base.cell_capacity)
+    W = int(base.append_capacity)
+    F = int(tape.mutation_capacity)
+    N = int(base.cell_count)
+    mass = float(a4.g2.MONOMER_MASS)
+    alphabet = int(a4.g2.ALPHABET_SIZE)
+    gene_span = int(a4.g2.GENE_SPAN)
+    final_symbols = np.zeros((C, W), dtype=np.uint8)
+    final_lengths = np.zeros((C,), dtype=np.int64)
+    pools_after = np.asarray(base.pools_after, dtype=np.float64).copy()
+    new_lesions = np.zeros((C,), dtype=np.float64)
+    lesion_means_after = np.zeros((C,), dtype=np.float64)
+    _, _, flags = _supported_config(config)
+    specs_by_cell = binding.cache.materialize_gene_specs_host()
+
+    for ci in range(N):
+        pre_length = int(base.completed_lengths[ci])
+        append_count = int(base.append_count[ci])
+        candidate = np.asarray(
+            base.completed_symbols[ci, :pre_length], dtype=np.uint8,
+        ).copy()
+        append_start = pre_length - append_count
+        for rank in range(append_count):
+            if not bool(tape.replacement_mask[ci, rank]):
+                continue
+            index = append_start + rank
+            old = int(candidate[index])
+            raw = int(tape.replacement_raw[ci, rank])
+            candidate[index] = (
+                raw + (1 if raw >= old else 0)
+            ) % alphabet
+
+        count = int(tape.insertion_count[ci])
+        if count:
+            position = int(tape.insertion_position[ci])
+            inserted = np.asarray(
+                tape.insertion_symbols[ci, :count], dtype=np.uint8,
+            )
+            candidate = np.concatenate([
+                candidate[:position], inserted, candidate[position:],
+            ])
+        count = int(tape.deletion_count[ci])
+        if count:
+            position = int(tape.deletion_position[ci])
+            candidate = np.concatenate([
+                candidate[:position], candidate[position + count:],
+            ])
+        source = int(tape.duplication_source_start[ci])
+        if source >= 0:
+            position = int(tape.duplication_position[ci])
+            fragment = candidate[source:source + gene_span].copy()
+            candidate = np.concatenate([
+                candidate[:position], fragment, candidate[position:],
+            ])
+        left = int(tape.inversion_left[ci])
+        if left >= 0:
+            right = int(tape.inversion_right[ci])
+            candidate[left:right] = candidate[left:right][::-1]
+        count = int(tape.transposition_count[ci])
+        if count:
+            start = int(tape.transposition_start[ci])
+            position = int(tape.transposition_position[ci])
+            fragment = candidate[start:start + count].copy()
+            remainder = np.concatenate([
+                candidate[:start], candidate[start + count:],
+            ])
+            candidate = np.concatenate([
+                remainder[:position], fragment, remainder[position:],
+            ])
+        count = int(tape.padding_count[ci])
+        if count:
+            candidate = np.concatenate([
+                candidate,
+                np.asarray(tape.padding_symbols[ci, :count], dtype=np.uint8),
+            ])
+        if len(candidate) > F:
+            candidate = candidate[:F]
+        budget = int(tape.nucleotide_budget_symbols[ci])
+        delta = int(len(candidate) - pre_length)
+        if delta > budget:
+            candidate = candidate[:pre_length + budget]
+            delta = int(len(candidate) - pre_length)
+        if (len(candidate) != int(tape.post_structural_lengths[ci])
+                or delta != int(tape.material_delta_symbols[ci])):
+            raise a4.A4SchemaError(
+                'completion mutation application differs from tape lengths'
+            )
+        if len(candidate) > W:
+            raise a4.A4CapacityError(
+                'completion mutation final polymer exceeds output capacity'
+            )
+        final_symbols[ci, :len(candidate)] = candidate
+        final_lengths[ci] = len(candidate)
+        if delta > 0:
+            pools_after[ci, a4.a3.POOL_NUCLEOTIDE] -= delta * mass
+        elif delta < 0:
+            pools_after[ci, a4.a3.POOL_NUCLEOTIDE] += (-delta) * mass
+        effective_error = float(base.last_effective_error_rate[ci])
+        if flags['proofreading']:
+            metrics = a4._numpy_translation_cell_metrics(binding.state, ci)
+            proofreading = _numpy_raw_repair(
+                binding, ci, specs_by_cell[ci],
+                a4.a3.REPAIR_PROOFREADING, metrics['aggregate'],
+            )
+            proof_fraction = proofreading / (0.75 + proofreading)
+        else:
+            proof_fraction = 0.0
+        inherited = float(
+            binding.ragged.replication_template_lesions[ci]
+        ) * (0.28 + 0.22 * (1.0 - proof_fraction))
+        new_lesions[ci] = inherited + (
+            effective_error * len(candidate) * 0.06
+        )
+        lesion_first = int(binding.ragged.lesion_offsets[ci])
+        lesion_last = int(binding.ragged.lesion_offsets[ci + 1])
+        combined_lesions = np.concatenate((
+            np.asarray(
+                binding.ragged.genome_lesions[
+                    lesion_first:lesion_last
+                ],
+                dtype=np.float64,
+            ),
+            np.asarray([new_lesions[ci]], dtype=np.float64),
+        ))
+        lesion_means_after[ci] = float(np.mean(
+            combined_lesions, dtype=np.float64,
+        ))
+
+    result = A4CompletionMutationPlan(
+        schema_version=COMPLETION_MUTATION_PLAN_SCHEMA_VERSION,
+        cell_capacity=C,
+        symbol_capacity=W,
+        cell_count=N,
+        source_provenance=str(base.source_provenance),
+        cell_ids=np.asarray(base.cell_ids, dtype=np.int64).copy(),
+        cell_mask=np.asarray(base.cell_mask, dtype=bool).copy(),
+        scope_valid=np.asarray(base.scope_valid, dtype=bool).copy(),
+        scope_error_code=np.asarray(
+            base.scope_error_code, dtype=np.int64,
+        ).copy(),
+        completion_events=np.asarray(
+            base.completion_events, dtype=bool,
+        ).copy(),
+        pre_structural_lengths=np.asarray(
+            base.completed_lengths, dtype=np.int64,
+        ).copy(),
+        final_symbols=final_symbols,
+        final_lengths=final_lengths,
+        pools_after=pools_after,
+        requested_symbols=np.asarray(
+            base.requested_symbols, dtype=np.int64,
+        ).copy(),
+        append_count=np.asarray(base.append_count, dtype=np.int64).copy(),
+        last_replication_symbols=np.asarray(
+            base.last_replication_symbols, dtype=np.int64,
+        ).copy(),
+        last_effective_error_rate=np.asarray(
+            base.last_effective_error_rate, dtype=np.float64,
+        ).copy(),
+        cumulative_proofreading_atp_after=np.asarray(
+            base.cumulative_proofreading_atp_after, dtype=np.float64,
+        ).copy(),
+        substitution_events=np.asarray(
+            tape.substitution_count, dtype=np.int64,
+        ).copy(),
+        structural_event_counts=np.asarray(
+            tape.structural_event_counts, dtype=np.int64,
+        ).copy(),
+        material_delta_symbols=np.asarray(
+            tape.material_delta_symbols, dtype=np.int64,
+        ).copy(),
+        new_genome_lesions=new_lesions,
+        replication_cycle_deltas=np.asarray(
+            base.replication_cycle_deltas, dtype=np.int64,
+        ).copy(),
+        topology_sequence_deltas=np.asarray(
+            base.topology_sequence_deltas, dtype=np.int64,
+        ).copy(),
+        topology_symbol_deltas=(
+            np.asarray(base.topology_symbol_deltas, dtype=np.int64)
+            + np.asarray(tape.material_delta_symbols, dtype=np.int64)
+        ),
+        replication_active_after=np.zeros((C,), dtype=bool),
+        replication_template_lesions_after=np.zeros(
+            (C,), dtype=np.float64,
+        ),
+        replication_fractional_after=np.zeros((C,), dtype=np.float64),
+        genome_count_after=(
+            np.asarray(binding.state.genome_count, dtype=np.int64)
+            + np.asarray(base.completion_events, dtype=np.int64)
+        ),
+        genome_material_symbols_after=(
+            np.asarray(
+                binding.state.genome_material_symbols, dtype=np.int64,
+            )
+            + np.asarray(base.append_count, dtype=np.int64)
+            + np.asarray(tape.material_delta_symbols, dtype=np.int64)
+        ),
+        genome_lesion_mean_after=lesion_means_after,
+    )
+    return validate_a4_completion_mutation_plan(result)
+
+
+def paid_replication_completion_mutation_numpy(
+        binding, dt, config, tape):
+    """Apply a fully replayed host tape to a pure NumPy completion plan."""
+    a4._require_translation_binding(binding)
+    if _is_tensor(binding.state.pools):
+        raise a4.A4SchemaError(
+            'NumPy completion mutation requires a NumPy binding'
+        )
+    deterministic, _, config_sha256 = _completion_mutation_config(config)
+    tape = validate_a4_completion_mutation_rng_tape(
+        tape, binding, dt, config,
+    )
+    _require_completion_mutation_tape_binding(
+        tape, binding, dt, config_sha256,
+    )
+    base = _paid_replication_completion_numpy(
+        binding, dt, deterministic,
+    )
+    return _numpy_apply_completion_mutation_tape(
+        binding, base, tape, deterministic,
+    )
+
+
+def _torch_completion_proof_fraction(binding, enabled):
+    """Recompute the frozen proofreading fraction without host readback."""
+    state = binding.state
+    cache = binding.cache
+    C = int(state.cell_capacity)
+    K = int(cache.entry_capacity)
+    device = state.pools.device
+    dtype = state.pools.dtype
+    if not enabled:
+        return torch.zeros((C,), dtype=dtype, device=device)
+    rank = torch.arange(K, dtype=torch.int64, device=device)
+    if K:
+        first = torch.clamp(cache.cell_entry_offsets[:C], min=0)
+        last = torch.clamp(cache.cell_entry_offsets[1:C + 1], min=0)
+        counts = torch.clamp(last - first, min=0, max=K)
+        indices = first[:, None] + rank[None, :]
+        safe_indices = torch.clamp(indices, min=0, max=K - 1)
+        valid_entries = (
+            state.cell_mask[:, None] & (rank[None, :] < counts[:, None])
+            & cache.entry_mask[safe_indices]
+        )
+        payload = cache.payloads[safe_indices]
+        fingerprints = cache.fingerprints[safe_indices]
+        role = torch.remainder(payload[:, :, 0].to(torch.int64), 8)
+        parameter = torch.remainder(payload[:, :, 1].to(torch.int64), 8)
+        promoter = 0.18 + 1.22 * (payload[:, :, 3].to(dtype) / 7.0)
+        efficiency = 0.52 + 0.96 * (payload[:, :, 4].to(dtype) / 7.0)
+        localisation = torch.remainder(payload[:, :, 6].to(torch.int64), 4)
+    else:
+        valid_entries = torch.zeros((C, 0), dtype=torch.bool, device=device)
+        fingerprints = torch.zeros((C, 0), dtype=torch.int64, device=device)
+        role = torch.zeros((C, 0), dtype=torch.int64, device=device)
+        parameter = torch.zeros((C, 0), dtype=torch.int64, device=device)
+        promoter = torch.zeros((C, 0), dtype=dtype, device=device)
+        efficiency = torch.zeros((C, 0), dtype=dtype, device=device)
+        localisation = torch.zeros((C, 0), dtype=torch.int64, device=device)
+    _, _, _, _, proofreading_signal, _ = _torch_replicase(
+        binding, valid_entries, fingerprints, role, parameter, localisation,
+        promoter, efficiency,
+    )
+    return proofreading_signal / (0.75 + proofreading_signal)
+
+
+def paid_replication_completion_mutation_torch(
+        binding, dt, config, tape):
+    """Apply one attested tape with fixed resident CPU/CUDA operations."""
+    if torch is None:
+        raise RuntimeError('PyTorch is unavailable')
+    a4._require_translation_binding(binding)
+    if not _is_tensor(binding.state.pools):
+        raise a4.A4SchemaError(
+            'Torch completion mutation requires a Torch binding'
+        )
+    deterministic, options, config_sha256 = _completion_mutation_config(
+        config,
+    )
+    _, _, deterministic_flags = _supported_config(deterministic)
+    _require_completion_mutation_tape_binding(
+        tape, binding, dt, config_sha256,
+    )
+    device = binding.state.pools.device
+    if (not _is_tensor(tape.append_uniform_draws)
+            or tape.append_uniform_draws.device != device):
+        raise a4.A4SchemaError(
+            'completion mutation tape must share the resident device'
+        )
+    resident_unchanged = _completion_mutation_tape_resident_unchanged(tape)
+    base = _paid_replication_completion_torch(
+        binding, dt, deterministic,
+    )
+    C = int(base.cell_capacity)
+    W = int(base.append_capacity)
+    F = int(tape.mutation_capacity)
+    minimum = int(a4.g2.MIN_GENOME_LENGTH)
+    alphabet = int(a4.g2.ALPHABET_SIZE)
+    gene_span = int(a4.g2.GENE_SPAN)
+    dtype = binding.state.pools.dtype
+    used = base.cell_mask
+    rank_w = torch.arange(W, dtype=torch.int64, device=device)
+    rank_f = torch.arange(F, dtype=torch.int64, device=device)
+    rank_grid = rank_f[None, :].expand(C, F)
+    semantic_ok = (
+        (tape.cell_ids == base.cell_ids)
+        & (tape.cell_mask == base.cell_mask)
+        & (tape.append_count == base.append_count)
+        & (tape.pre_structural_lengths == base.completed_lengths)
+        & (tape.effective_error == base.last_effective_error_rate)
+    )
+    base_failure = torch.any(
+        used & ((~base.scope_valid) | (~base.completion_events))
+    )
+    boundary_rows = torch.zeros((C,), dtype=torch.bool, device=device)
+
+    expected_append_mask = (
+        rank_w[None, :] < base.append_count[:, None]
+    )
+    append_uniform_valid = (
+        torch.isfinite(tape.append_uniform_draws)
+        & (tape.append_uniform_draws >= 0.0)
+        & (tape.append_uniform_draws < 1.0)
+    )
+    append_boundary = expected_append_mask & (
+        _torch_fp64_comparison_boundary(
+            tape.append_uniform_draws,
+            base.last_effective_error_rate[:, None],
+        )
+    )
+    expected_replacement = expected_append_mask & (
+        tape.append_uniform_draws
+        < base.last_effective_error_rate[:, None]
+    )
+    append_semantic = (
+        torch.all(tape.append_draw_mask == expected_append_mask, dim=1)
+        & torch.all(
+            torch.where(
+                expected_append_mask,
+                append_uniform_valid,
+                tape.append_uniform_draws == 0.0,
+            ),
+            dim=1,
+        )
+        & torch.all(
+            tape.replacement_mask == expected_replacement, dim=1,
+        )
+        & torch.all(
+            torch.where(
+                expected_replacement,
+                tape.replacement_raw < 7,
+                tape.replacement_raw == 0,
+            ),
+            dim=1,
+        )
+        & (
+            tape.substitution_count
+            == torch.sum(expected_replacement.to(torch.int64), dim=1)
+        )
+    )
+    semantic_ok = semantic_ok & append_semantic
+    boundary_rows = boundary_rows | torch.any(append_boundary, dim=1)
+
+    raw_budget = (
+        base.pools_after[:, a4.a3.POOL_NUCLEOTIDE]
+        / float(a4.g2.MONOMER_MASS)
+    )
+    finite_budget = torch.isfinite(raw_budget) & (raw_budget >= 0.0)
+    # The binding-aware host tape owns Python's frozen float64 division/int
+    # result.  Re-truncating the quotient on CUDA can move an exact CPU integer
+    # one ulp below its boundary and invent a different material budget.  Check
+    # the resident quotient against the attested integer bucket, allowing only
+    # the registered fp64 comparison band, then apply the tape integer.
+    computed_budget = tape.nucleotide_budget_symbols
+    budget_f64 = computed_budget.to(dtype)
+    budget_in_range = (computed_budget >= 0) & (computed_budget <= F)
+    lower_matches = (raw_budget >= budget_f64) | (
+        _torch_fp64_comparison_boundary(raw_budget, budget_f64)
+    )
+    upper_f64 = budget_f64 + 1.0
+    upper_matches = (computed_budget == F) | (raw_budget < upper_f64) | (
+        _torch_fp64_comparison_boundary(raw_budget, upper_f64)
+    )
+    semantic_ok = (
+        semantic_ok & finite_budget & budget_in_range
+        & lower_matches & upper_matches
+    )
+
+    if F > W:
+        candidate = torch.cat([
+            base.completed_symbols,
+            torch.zeros(
+                (C, F - W), dtype=torch.uint8, device=device,
+            ),
+        ], dim=1)
+    else:
+        candidate = base.completed_symbols[:, :F].clone()
+    pre_length = base.completed_lengths
+    append_start = pre_length - base.append_count
+    old_append = base.append_symbols.to(torch.int64)
+    replacement = tape.replacement_raw.to(torch.int64)
+    replacement = torch.remainder(
+        replacement + (replacement >= old_append).to(torch.int64),
+        alphabet,
+    ).to(torch.uint8)
+    substituted_append = torch.where(
+        tape.replacement_mask, replacement, base.append_symbols,
+    )
+    append_source = torch.clamp(
+        rank_grid - append_start[:, None], min=0, max=W - 1,
+    )
+    appended_full = torch.gather(substituted_append, 1, append_source)
+    candidate = torch.where(
+        rank_grid < append_start[:, None], candidate, appended_full,
+    )
+    candidate = torch.where(
+        rank_grid < pre_length[:, None], candidate,
+        torch.zeros_like(candidate),
+    )
+    length = pre_length.clone()
+    outer_structural = (
+        used & bool(options['variable_length']) & (pre_length > 0)
+    )
+
+    def threshold(operation, draw_expected):
+        uniform = tape.threshold_uniform_draws[:, operation]
+        limit = float(options['structural_rate']) * float(
+            STRUCTURAL_THRESHOLD_FACTORS[operation]
+        )
+        uniform_valid = (
+            torch.isfinite(uniform) & (uniform >= 0.0) & (uniform < 1.0)
+        )
+        expected_hit = draw_expected & (uniform < limit)
+        valid = (
+            (tape.threshold_draw_mask[:, operation] == draw_expected)
+            & (
+                tape.threshold_hit_mask[:, operation] == expected_hit
+            )
+            & torch.where(draw_expected, uniform_valid, uniform == 0.0)
+        )
+        boundary = draw_expected & _torch_fp64_comparison_boundary(
+            uniform, limit,
+        )
+        return expected_hit, valid, boundary
+
+    insertion_hit, valid, boundary = threshold(
+        STRUCTURAL_INSERTION, outer_structural,
+    )
+    semantic_ok = semantic_ok & valid
+    boundary_rows = boundary_rows | boundary
+    insertion_execute = insertion_hit & (length < F)
+    insertion_limit = torch.clamp(F - length, min=0, max=5)
+    insertion_count = tape.insertion_count
+    insertion_position = tape.insertion_position
+    insertion_fields_ok = torch.where(
+        insertion_execute,
+        (insertion_count >= 1)
+        & (insertion_count <= insertion_limit)
+        & (insertion_position >= 0)
+        & (insertion_position <= length),
+        (insertion_count == 0) & (insertion_position == -1),
+    )
+    short_rank = torch.arange(
+        STRUCTURAL_SHORT_EDIT_MAX, dtype=torch.int64, device=device,
+    )
+    insertion_payload_ok = torch.all(torch.where(
+        short_rank[None, :] < insertion_count[:, None],
+        tape.insertion_symbols < alphabet,
+        tape.insertion_symbols == 0,
+    ), dim=1)
+    semantic_ok = semantic_ok & insertion_fields_ok & insertion_payload_ok
+    insertion_apply = insertion_execute & insertion_fields_ok
+    safe_count = torch.where(
+        insertion_apply, insertion_count, torch.zeros_like(insertion_count),
+    )
+    safe_position = torch.clamp(insertion_position, min=0, max=F)
+    old_source = torch.where(
+        rank_grid < safe_position[:, None], rank_grid,
+        rank_grid - safe_count[:, None],
+    )
+    old_source = torch.clamp(old_source, min=0, max=F - 1)
+    shifted = torch.gather(candidate, 1, old_source)
+    inserted_rank = torch.clamp(
+        rank_grid - safe_position[:, None],
+        min=0, max=STRUCTURAL_SHORT_EDIT_MAX - 1,
+    )
+    inserted = torch.gather(tape.insertion_symbols, 1, inserted_rank)
+    in_insert = (
+        (rank_grid >= safe_position[:, None])
+        & (rank_grid < safe_position[:, None] + safe_count[:, None])
+    )
+    inserted_candidate = torch.where(in_insert, inserted, shifted)
+    length_after = length + safe_count
+    candidate = torch.where(
+        insertion_apply[:, None]
+        & (rank_grid < length_after[:, None]),
+        inserted_candidate, candidate,
+    )
+    length = length_after
+
+    deletion_hit, valid, boundary = threshold(
+        STRUCTURAL_DELETION, outer_structural,
+    )
+    semantic_ok = semantic_ok & valid
+    boundary_rows = boundary_rows | boundary
+    deletion_execute = deletion_hit & (length > minimum)
+    deletion_limit = torch.clamp(length - minimum, min=0, max=5)
+    deletion_count = tape.deletion_count
+    deletion_position = tape.deletion_position
+    deletion_fields_ok = torch.where(
+        deletion_execute,
+        (deletion_count >= 1)
+        & (deletion_count <= deletion_limit)
+        & (deletion_position >= 0)
+        & (deletion_position + deletion_count <= length),
+        (deletion_count == 0) & (deletion_position == -1),
+    )
+    semantic_ok = semantic_ok & deletion_fields_ok
+    deletion_apply = deletion_execute & deletion_fields_ok
+    safe_count_delete = torch.where(
+        deletion_apply, deletion_count, torch.zeros_like(deletion_count),
+    )
+    safe_position_delete = torch.clamp(
+        deletion_position, min=0, max=F - 1,
+    )
+    delete_source = torch.where(
+        rank_grid < safe_position_delete[:, None], rank_grid,
+        rank_grid + safe_count_delete[:, None],
+    )
+    delete_source = torch.clamp(delete_source, min=0, max=F - 1)
+    deleted_candidate = torch.gather(candidate, 1, delete_source)
+    length_after = length - safe_count_delete
+    candidate = torch.where(
+        deletion_apply[:, None],
+        torch.where(
+            rank_grid < length_after[:, None], deleted_candidate,
+            torch.zeros_like(candidate),
+        ),
+        candidate,
+    )
+    length = length_after
+
+    duplication_draw = outer_structural & bool(options['gene_duplication'])
+    duplication_hit, valid, boundary = threshold(
+        STRUCTURAL_DUPLICATION, duplication_draw,
+    )
+    semantic_ok = semantic_ok & valid
+    boundary_rows = boundary_rows | boundary
+    gene_count = torch.zeros((C,), dtype=torch.int64, device=device)
+    selected_start = torch.full(
+        (C,), -1, dtype=torch.int64, device=device,
+    )
+    next_allowed = torch.zeros((C,), dtype=torch.int64, device=device)
+    ordinal = tape.duplication_gene_ordinal
+    start_marker = tuple(int(value) for value in a4.g2.START_MARKER)
+    stop_marker = tuple(int(value) for value in a4.g2.STOP_MARKER)
+    stop_offset = 2 + int(a4.g2.GENE_PAYLOAD)
+    for position in range(max(0, F - gene_span + 1)):
+        parse_here = (
+            (position >= next_allowed)
+            & (position + gene_span <= length)
+            & (candidate[:, position] == start_marker[0])
+            & (candidate[:, position + 1] == start_marker[1])
+            & (candidate[:, position + stop_offset] == stop_marker[0])
+            & (candidate[:, position + stop_offset + 1] == stop_marker[1])
+        )
+        selected_start = torch.where(
+            parse_here & (gene_count == ordinal),
+            torch.full_like(selected_start, position), selected_start,
+        )
+        gene_count = gene_count + parse_here.to(torch.int64)
+        next_allowed = torch.where(
+            parse_here,
+            torch.full_like(next_allowed, position + gene_span),
+            next_allowed,
+        )
+    duplication_execute = (
+        duplication_hit & (length + gene_span <= F) & (gene_count > 0)
+    )
+    duplication_position = tape.duplication_position
+    duplication_fields_ok = torch.where(
+        duplication_execute,
+        (ordinal >= 0) & (ordinal < gene_count)
+        & (tape.duplication_source_start == selected_start)
+        & (duplication_position >= 0)
+        & (duplication_position <= length),
+        (ordinal == -1)
+        & (tape.duplication_source_start == -1)
+        & (duplication_position == -1),
+    )
+    semantic_ok = semantic_ok & duplication_fields_ok
+    duplication_apply = duplication_execute & duplication_fields_ok
+    safe_dup_position = torch.clamp(
+        duplication_position, min=0, max=F,
+    )
+    safe_dup_source = torch.clamp(selected_start, min=0, max=F - gene_span)
+    dup_old_source = torch.where(
+        rank_grid < safe_dup_position[:, None], rank_grid,
+        rank_grid - gene_span,
+    )
+    dup_old_source = torch.clamp(dup_old_source, min=0, max=F - 1)
+    dup_shifted = torch.gather(candidate, 1, dup_old_source)
+    dup_fragment_source = torch.clamp(
+        safe_dup_source[:, None]
+        + rank_grid - safe_dup_position[:, None],
+        min=0, max=F - 1,
+    )
+    dup_fragment = torch.gather(candidate, 1, dup_fragment_source)
+    in_duplication = (
+        (rank_grid >= safe_dup_position[:, None])
+        & (rank_grid < safe_dup_position[:, None] + gene_span)
+    )
+    duplicated_candidate = torch.where(
+        in_duplication, dup_fragment, dup_shifted,
+    )
+    length_after = length + duplication_apply.to(torch.int64) * gene_span
+    candidate = torch.where(
+        duplication_apply[:, None]
+        & (rank_grid < length_after[:, None]),
+        duplicated_candidate, candidate,
+    )
+    length = length_after
+
+    inversion_draw = used & (length >= 4)
+    inversion_hit, valid, boundary = threshold(
+        STRUCTURAL_INVERSION, inversion_draw,
+    )
+    semantic_ok = semantic_ok & valid
+    boundary_rows = boundary_rows | boundary
+    inversion_left = tape.inversion_left
+    inversion_right = tape.inversion_right
+    inversion_fields_ok = torch.where(
+        inversion_hit,
+        (inversion_left >= 0)
+        & (inversion_left <= length - 3)
+        & (inversion_right >= inversion_left + 2)
+        & (inversion_right <= length)
+        & (inversion_right <= inversion_left + 28),
+        (inversion_left == -1) & (inversion_right == -1),
+    )
+    semantic_ok = semantic_ok & inversion_fields_ok
+    inversion_apply = inversion_hit & inversion_fields_ok
+    safe_left = torch.clamp(inversion_left, min=0, max=F - 1)
+    safe_right = torch.clamp(inversion_right, min=0, max=F)
+    inversion_source = torch.where(
+        (rank_grid >= safe_left[:, None])
+        & (rank_grid < safe_right[:, None]),
+        safe_left[:, None] + safe_right[:, None] - 1 - rank_grid,
+        rank_grid,
+    )
+    inversion_source = torch.clamp(
+        inversion_source, min=0, max=F - 1,
+    )
+    inverted_candidate = torch.gather(candidate, 1, inversion_source)
+    candidate = torch.where(
+        inversion_apply[:, None], inverted_candidate, candidate,
+    )
+
+    transposition_draw = used & (length >= 8)
+    transposition_hit, valid, boundary = threshold(
+        STRUCTURAL_TRANSPOSITION, transposition_draw,
+    )
+    semantic_ok = semantic_ok & valid
+    boundary_rows = boundary_rows | boundary
+    transposition_count = tape.transposition_count
+    transposition_start = tape.transposition_start
+    transposition_position = tape.transposition_position
+    transposition_limit = torch.minimum(
+        torch.full_like(length, 12), torch.div(length, 3, rounding_mode='floor'),
+    )
+    transposition_fields_ok = torch.where(
+        transposition_hit,
+        (transposition_count >= 2)
+        & (transposition_count <= transposition_limit)
+        & (transposition_start >= 0)
+        & (transposition_start + transposition_count <= length)
+        & (transposition_position >= 0)
+        & (transposition_position <= length - transposition_count),
+        (transposition_count == 0)
+        & (transposition_start == -1)
+        & (transposition_position == -1),
+    )
+    semantic_ok = semantic_ok & transposition_fields_ok
+    transposition_apply = transposition_hit & transposition_fields_ok
+    safe_trans_count = torch.where(
+        transposition_apply, transposition_count,
+        torch.zeros_like(transposition_count),
+    )
+    safe_trans_start = torch.clamp(
+        transposition_start, min=0, max=F - 1,
+    )
+    safe_trans_position = torch.clamp(
+        transposition_position, min=0, max=F,
+    )
+    remainder_source = torch.where(
+        rank_grid < safe_trans_start[:, None], rank_grid,
+        rank_grid + safe_trans_count[:, None],
+    )
+    remainder_source = torch.clamp(
+        remainder_source, min=0, max=F - 1,
+    )
+    remainder = torch.gather(candidate, 1, remainder_source)
+    final_remainder_source = torch.where(
+        rank_grid < safe_trans_position[:, None], rank_grid,
+        rank_grid - safe_trans_count[:, None],
+    )
+    final_remainder_source = torch.clamp(
+        final_remainder_source, min=0, max=F - 1,
+    )
+    moved_remainder = torch.gather(remainder, 1, final_remainder_source)
+    fragment_source = torch.clamp(
+        safe_trans_start[:, None]
+        + rank_grid - safe_trans_position[:, None],
+        min=0, max=F - 1,
+    )
+    moved_fragment = torch.gather(candidate, 1, fragment_source)
+    in_fragment = (
+        (rank_grid >= safe_trans_position[:, None])
+        & (
+            rank_grid
+            < safe_trans_position[:, None] + safe_trans_count[:, None]
+        )
+    )
+    transposed_candidate = torch.where(
+        in_fragment, moved_fragment, moved_remainder,
+    )
+    candidate = torch.where(
+        transposition_apply[:, None], transposed_candidate, candidate,
+    )
+
+    expected_padding = torch.clamp(minimum - length, min=0)
+    padding_semantic = tape.padding_count == expected_padding
+    padding_rank = torch.arange(
+        minimum, dtype=torch.int64, device=device,
+    )
+    padding_payload_ok = torch.all(torch.where(
+        padding_rank[None, :] < tape.padding_count[:, None],
+        tape.padding_symbols < alphabet,
+        tape.padding_symbols == 0,
+    ), dim=1)
+    semantic_ok = semantic_ok & padding_semantic & padding_payload_ok
+    padding_source = torch.clamp(
+        rank_grid - length[:, None], min=0, max=minimum - 1,
+    )
+    padding_values = torch.gather(
+        tape.padding_symbols, 1, padding_source,
+    )
+    in_padding = (
+        (rank_grid >= length[:, None])
+        & (rank_grid < length[:, None] + expected_padding[:, None])
+    )
+    candidate = torch.where(in_padding, padding_values, candidate)
+    length = length + expected_padding
+
+    raw_delta = length - pre_length
+    budget_trim = raw_delta > computed_budget
+    final_length = torch.where(
+        budget_trim, pre_length + computed_budget, length,
+    )
+    material_delta = final_length - pre_length
+    candidate = torch.where(
+        rank_grid < final_length[:, None], candidate,
+        torch.zeros_like(candidate),
+    )
+    semantic_ok = semantic_ok & (
+        tape.post_structural_lengths == final_length
+    ) & (tape.material_delta_symbols == material_delta)
+    per_sequence_capacity = final_length <= W
+
+    expected_events = torch.stack([
+        torch.where(
+            insertion_execute, insertion_count,
+            torch.zeros_like(insertion_count),
+        ),
+        torch.where(
+            deletion_execute, deletion_count,
+            torch.zeros_like(deletion_count),
+        ),
+        duplication_execute.to(torch.int64) * gene_span,
+        inversion_hit.to(torch.int64),
+        transposition_hit.to(torch.int64),
+    ], dim=1)
+    semantic_ok = semantic_ok & torch.all(
+        tape.structural_event_counts == expected_events, dim=1,
+    )
+
+    pools_after = base.pools_after.clone()
+    nucleotide_before = base.pools_after[:, a4.a3.POOL_NUCLEOTIDE]
+    positive_nucleotide = nucleotide_before - (
+        material_delta.to(dtype) * float(a4.g2.MONOMER_MASS)
+    )
+    negative_nucleotide = nucleotide_before + (
+        (-material_delta).to(dtype) * float(a4.g2.MONOMER_MASS)
+    )
+    nucleotide_after = torch.where(
+        material_delta > 0, positive_nucleotide,
+        torch.where(
+            material_delta < 0, negative_nucleotide, nucleotide_before,
+        ),
+    )
+    pools_after[:, a4.a3.POOL_NUCLEOTIDE] = nucleotide_after
+    chemistry_ok = torch.isfinite(nucleotide_after) & (
+        nucleotide_after >= 0.0
+    )
+    semantic_ok = semantic_ok & chemistry_ok
+
+    effective_error = base.last_effective_error_rate
+    proof_fraction = _torch_completion_proof_fraction(
+        binding, deterministic_flags['proofreading'],
+    )
+    inherited_lesion = binding.ragged.replication_template_lesions * (
+        0.28 + 0.22 * (1.0 - proof_fraction)
+    )
+    new_lesion = inherited_lesion + (
+        effective_error * final_length.to(dtype) * 0.06
+    )
+    semantic_ok = semantic_ok & torch.isfinite(new_lesion) & (
+        new_lesion >= 0.0
+    )
+
+    lesion_capacity = int(binding.ragged.sequence_capacity)
+    lesion_rank = torch.arange(
+        lesion_capacity, dtype=torch.int64, device=device,
+    )
+    lesion_first = binding.ragged.lesion_offsets[:C]
+    lesion_last = binding.ragged.lesion_offsets[1:C + 1]
+    lesion_count = lesion_last - lesion_first
+    lesion_indices = torch.clamp(
+        lesion_first[:, None] + lesion_rank[None, :],
+        min=0, max=lesion_capacity - 1,
+    )
+    lesion_values = binding.ragged.genome_lesions[lesion_indices]
+    lesion_values = torch.where(
+        lesion_rank[None, :] < lesion_count[:, None],
+        lesion_values, torch.zeros_like(lesion_values),
+    )
+    # NumPy groups the complete post-state lesion prefix, including the new
+    # lesion, in one reduction.  Appending it after an old-prefix sum changes
+    # fp64 association at widths such as seven -> eight.  Build the combined
+    # prefix first, then select the same fixed-width pairwise candidate.
+    combined_lesion_values = torch.cat([
+        lesion_values,
+        torch.zeros((C, 1), dtype=dtype, device=device),
+    ], dim=1)
+    combined_rank = torch.arange(
+        lesion_capacity + 1, dtype=torch.int64, device=device,
+    )
+    combined_lesion_values = torch.where(
+        combined_rank[None, :] == lesion_count[:, None],
+        new_lesion[:, None], combined_lesion_values,
+    )
+    post_lesion_count = lesion_count + 1
+    lesion_total = torch.zeros((C,), dtype=dtype, device=device)
+    for prefix_count in range(1, lesion_capacity + 2):
+        prefix_total = _torch_numpy_pairwise_sum_rows(
+            combined_lesion_values[:, :prefix_count]
+        )
+        lesion_total = torch.where(
+            post_lesion_count == prefix_count, prefix_total, lesion_total,
+        )
+    genome_lesion_mean_after = lesion_total / post_lesion_count.to(dtype)
+
+    aggregate_capacity_overflow = (
+        int(binding.ragged.symbol_count)
+        + torch.sum(base.topology_symbol_deltas)
+        + torch.sum(material_delta)
+        > int(binding.ragged.symbol_capacity)
+    )
+    capacity_overflow = (
+        aggregate_capacity_overflow
+        | torch.any(used & (~per_sequence_capacity))
+    )
+    boundary_failure = torch.any(used & boundary_rows)
+    semantic_failure = (
+        (~resident_unchanged)
+        | torch.any(used & (~semantic_ok) & (~boundary_rows))
+    ) & (~boundary_failure) & (~base_failure)
+    batch_failure = (
+        base_failure | boundary_failure | semantic_failure
+        | capacity_overflow
+    )
+    success = used & (~batch_failure)
+    error = base.scope_error_code.clone()
+    error = torch.where(
+        used & semantic_failure & (error == SCOPE_OK),
+        torch.full_like(error, SCOPE_RNG_TAPE_MISMATCH), error,
+    )
+    error = torch.where(
+        used & boundary_failure & (error == SCOPE_OK),
+        torch.full_like(error, SCOPE_FP64_DISCRETE_BOUNDARY), error,
+    )
+    error = torch.where(
+        used & capacity_overflow & (error == SCOPE_OK),
+        torch.full_like(error, SCOPE_CAPACITY), error,
+    )
+
+    zero_i64 = torch.zeros((C,), dtype=torch.int64, device=device)
+    zero_f64 = torch.zeros((C,), dtype=dtype, device=device)
+    output = A4CompletionMutationPlan(
+        schema_version=COMPLETION_MUTATION_PLAN_SCHEMA_VERSION,
+        cell_capacity=C,
+        symbol_capacity=W,
+        cell_count=int(base.cell_count),
+        source_provenance=str(base.source_provenance),
+        cell_ids=base.cell_ids.clone(),
+        cell_mask=base.cell_mask.clone(),
+        scope_valid=success,
+        scope_error_code=error,
+        completion_events=success.clone(),
+        pre_structural_lengths=torch.where(
+            success, pre_length, zero_i64,
+        ),
+        final_symbols=torch.where(
+            success[:, None], candidate[:, :W],
+            torch.zeros((C, W), dtype=torch.uint8, device=device),
+        ),
+        final_lengths=torch.where(success, final_length, zero_i64),
+        pools_after=torch.where(
+            success[:, None], pools_after,
+            torch.where(
+                used[:, None], binding.state.pools,
+                torch.zeros_like(binding.state.pools),
+            ),
+        ),
+        requested_symbols=torch.where(
+            success, base.requested_symbols, zero_i64,
+        ),
+        append_count=torch.where(success, base.append_count, zero_i64),
+        last_replication_symbols=torch.where(
+            success, base.last_replication_symbols, zero_i64,
+        ),
+        last_effective_error_rate=torch.where(
+            success, effective_error, zero_f64,
+        ),
+        cumulative_proofreading_atp_after=torch.where(
+            success, base.cumulative_proofreading_atp_after,
+            torch.where(
+                used, binding.state.cumulative_proofreading_atp, zero_f64,
+            ),
+        ),
+        substitution_events=torch.where(
+            success, tape.substitution_count, zero_i64,
+        ),
+        structural_event_counts=torch.where(
+            success[:, None], tape.structural_event_counts,
+            torch.zeros_like(tape.structural_event_counts),
+        ),
+        material_delta_symbols=torch.where(
+            success, material_delta, zero_i64,
+        ),
+        new_genome_lesions=torch.where(success, new_lesion, zero_f64),
+        replication_cycle_deltas=success.to(torch.int64),
+        topology_sequence_deltas=-success.to(torch.int64),
+        topology_symbol_deltas=torch.where(
+            success, base.topology_symbol_deltas + material_delta, zero_i64,
+        ),
+        replication_active_after=torch.where(
+            success, torch.zeros_like(binding.ragged.replication_active),
+            binding.ragged.replication_active,
+        ),
+        replication_template_lesions_after=torch.where(
+            success, zero_f64, binding.ragged.replication_template_lesions,
+        ),
+        replication_fractional_after=torch.where(
+            success, zero_f64, binding.ragged.replication_fractional,
+        ),
+        genome_count_after=torch.where(
+            success, binding.state.genome_count + 1,
+            binding.state.genome_count,
+        ),
+        genome_material_symbols_after=torch.where(
+            success,
+            binding.state.genome_material_symbols
+            + base.append_count + material_delta,
+            binding.state.genome_material_symbols,
+        ),
+        genome_lesion_mean_after=torch.where(
+            success, genome_lesion_mean_after,
+            binding.state.genome_lesion_mean,
+        ),
+    )
+    _validate_completion_mutation_plan_metadata(output)
+    return output
+
+
 def _require_rng_tape_binding(tape, binding, dt, config_sha256):
     _require_rng_tape(tape)
     dt = _strict_dt(dt)
@@ -3152,16 +4561,29 @@ def paid_replication_completion_plan(binding, dt, config):
     return _paid_replication_completion_numpy(binding, dt, config)
 
 
+def paid_replication_completion_mutation_plan(
+        binding, dt, config, tape):
+    """Dispatch the pure A4.6b2 descriptor without committing any state."""
+    a4._require_translation_binding(binding)
+    if _is_tensor(binding.state.pools):
+        return paid_replication_completion_mutation_torch(
+            binding, dt, config, tape,
+        )
+    return paid_replication_completion_mutation_numpy(
+        binding, dt, config, tape,
+    )
+
+
 PORT_STATUS = dict(a4.PORT_STATUS)
 PORT_STATUS.update({
     'genome_replication': (
-        'a4.6b1-pre-existing-active-all-row-completion-combined-pcg64-'
-        'substitution-structural-material-rng-tape-not-device-applied-'
+        'a4.6b2-pre-existing-active-all-row-completion-combined-pcg64-'
+        'substitution-structural-material-fixed-resident-plan-'
         'not-arena-committed-not-integrated-cpu-authoritative'
     ),
     'material_mutation': (
-        'a4.6b1-binding-aware-host-replayed-attested-rng-tape-'
-        'not-device-applied-not-live-rng-authority-cpu-authoritative'
+        'a4.6b2-binding-aware-attested-tape-applied-to-pure-resident-'
+        'descriptor-not-live-rng-authority-cpu-authoritative'
     ),
     'full_gpu_world_step': False,
 })

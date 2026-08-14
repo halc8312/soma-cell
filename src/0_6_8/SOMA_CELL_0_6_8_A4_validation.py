@@ -1,5 +1,5 @@
 # coding: utf-8
-"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.6b1 slices."""
+"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.6b2 slices."""
 from __future__ import division
 
 import argparse
@@ -28,9 +28,9 @@ try:
 except Exception:  # pragma: no cover
     torch = None
 
-RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_6B1_VALIDATION_RESULTS.json'
-RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_6b1_validation.csv'
-RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_6B1_VALIDATION_RESULTS.txt'
+RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_6B2_VALIDATION_RESULTS.json'
+RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_6b2_validation.csv'
+RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_6B2_VALIDATION_RESULTS.txt'
 
 SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4.py',
@@ -845,10 +845,15 @@ def test_api_scope():
         'A4CompletionMutationRngTape',
         'prepare_completion_mutation_rng_tape',
         'validate_a4_completion_mutation_rng_tape',
+        'A4CompletionMutationPlan',
+        'validate_a4_completion_mutation_plan',
+        'paid_replication_completion_mutation_numpy',
+        'paid_replication_completion_mutation_torch',
+        'paid_replication_completion_mutation_plan',
     )
     missing = [name for name in replication_required if not hasattr(a44, name)]
     if missing:
-        raise AssertionError('missing A4.6b1 API: %s' % missing)
+        raise AssertionError('missing A4.6b2 API: %s' % missing)
     if a4.FULL_GPU_WORLD_STEP is not False:
         raise AssertionError('A4.1 must not claim full GPU world-step')
     if hasattr(a4.A4GeneCacheBatch, 'from_state_dict'):
@@ -861,8 +866,8 @@ def test_api_scope():
         raise AssertionError('A4.3 translation plan status is missing')
     if a4.PORT_STATUS.get('genome_replication') != 'cpu-authoritative-next-a4-slice':
         raise AssertionError('replication authority changed in representation slice')
-    if a44.BUILD != 'SOMA-CELL 0.6.8-GPU A4.6b1':
-        raise AssertionError('A4.6b1 build identity differs')
+    if a44.BUILD != 'SOMA-CELL 0.6.8-GPU A4.6b2':
+        raise AssertionError('A4.6b2 build identity differs')
     if a44.SCHEMA_VERSION != (
             '0.6.8-GPU-A4.6a-replication-completion-plan'):
         raise AssertionError('A4.6a schema identity differs')
@@ -872,6 +877,9 @@ def test_api_scope():
     if a44.COMPLETION_MUTATION_RNG_TAPE_SCHEMA_VERSION != (
             '0.6.8-GPU-A4.6b1-completion-mutation-rng-tape'):
         raise AssertionError('A4.6b1 RNG tape schema identity differs')
+    if a44.COMPLETION_MUTATION_PLAN_SCHEMA_VERSION != (
+            '0.6.8-GPU-A4.6b2-completion-mutation-plan'):
+        raise AssertionError('A4.6b2 completion plan schema differs')
     if tuple(a44.STRUCTURAL_EVENT_NAMES) != (
             'insertion', 'deletion', 'duplication',
             'inversion', 'transposition'):
@@ -887,8 +895,13 @@ def test_api_scope():
         raise AssertionError(
             'A4.6b1 tape exposed a final genome or duplicate field'
         )
+    plan_fields = tuple(a44._COMPLETION_PLAN_ARRAY_FIELDS)
+    if (len(plan_fields) != len(set(plan_fields))
+            or 'final_symbols' not in plan_fields
+            or 'genome_material_symbols_after' not in plan_fields):
+        raise AssertionError('A4.6b2 completion plan field set differs')
     if a44.FULL_GPU_WORLD_STEP is not False:
-        raise AssertionError('A4.6b1 must not claim full GPU world-step')
+        raise AssertionError('A4.6b2 must not claim full GPU world-step')
     if (a44.SCOPE_FP64_DISCRETE_BOUNDARY != 6
             or a44.FP64_DISCRETE_GUARD_EPS != 4096.0):
         raise AssertionError('A4.5b fp64 discrete guard contract differs')
@@ -897,18 +910,18 @@ def test_api_scope():
     if a44.SCOPE_NONCOMPLETION != 8:
         raise AssertionError('A4.6a noncompletion scope code differs')
     expected_replication = (
-        'a4.6b1-pre-existing-active-all-row-completion-combined-pcg64-'
-        'substitution-structural-material-rng-tape-not-device-applied-'
+        'a4.6b2-pre-existing-active-all-row-completion-combined-pcg64-'
+        'substitution-structural-material-fixed-resident-plan-'
         'not-arena-committed-not-integrated-cpu-authoritative'
     )
     expected_material = (
-        'a4.6b1-binding-aware-host-replayed-attested-rng-tape-'
-        'not-device-applied-not-live-rng-authority-cpu-authoritative'
+        'a4.6b2-binding-aware-attested-tape-applied-to-pure-resident-'
+        'descriptor-not-live-rng-authority-cpu-authoritative'
     )
     if (a44.PORT_STATUS.get('genome_replication') != expected_replication
             or a44.PORT_STATUS.get('material_mutation')
             != expected_material):
-        raise AssertionError('A4.6b1 authority status differs')
+        raise AssertionError('A4.6b2 authority status differs')
     return '%s / %s + %s + %s / full_gpu=false' % (
         a44.BUILD, a4.SCHEMA_VERSION,
         a4.GENE_CACHE_SCHEMA_VERSION + ' + ' + a4.TRANSLATION_SCHEMA_VERSION,
@@ -2219,12 +2232,12 @@ def test_a44_capacity_scope_fail_closed_and_a3_authority():
     )
 
     expected_status = (
-        'a4.6b1-pre-existing-active-all-row-completion-combined-pcg64-'
-        'substitution-structural-material-rng-tape-not-device-applied-'
+        'a4.6b2-pre-existing-active-all-row-completion-combined-pcg64-'
+        'substitution-structural-material-fixed-resident-plan-'
         'not-arena-committed-not-integrated-cpu-authoritative'
     )
     if a44.PORT_STATUS.get('genome_replication') != expected_status:
-        raise AssertionError('A4.6b1 CPU authority status differs')
+        raise AssertionError('A4.6b2 CPU authority status differs')
     if (a44.FULL_GPU_WORLD_STEP is not False
             or a44.PORT_STATUS.get('full_gpu_world_step') is not False):
         raise AssertionError('A4.5b claimed full GPU authority')
@@ -3174,14 +3187,14 @@ def test_a44b_capacity_scope_and_a3_authority():
         lambda: a44.validate_a4_paid_elongation_plan(forged_atp),
     )
     expected_status = (
-        'a4.6b1-pre-existing-active-all-row-completion-combined-pcg64-'
-        'substitution-structural-material-rng-tape-not-device-applied-'
+        'a4.6b2-pre-existing-active-all-row-completion-combined-pcg64-'
+        'substitution-structural-material-fixed-resident-plan-'
         'not-arena-committed-not-integrated-cpu-authoritative'
     )
     if (a44.PORT_STATUS.get('genome_replication') != expected_status
             or a44.FULL_GPU_WORLD_STEP is not False
             or a44.PORT_STATUS.get('full_gpu_world_step') is not False):
-        raise AssertionError('A4.6b1 CPU authority status differs')
+        raise AssertionError('A4.6b2 CPU authority status differs')
     if (a4.PORT_STATUS.get('genome_replication')
             != 'cpu-authoritative-next-a4-slice'):
         raise AssertionError('A4 core replication authority changed')
@@ -4949,13 +4962,13 @@ def test_a46b1_completion_mutation_rng_tape_fail_closed_and_authority():
     )
 
     expected_replication = (
-        'a4.6b1-pre-existing-active-all-row-completion-combined-pcg64-'
-        'substitution-structural-material-rng-tape-not-device-applied-'
+        'a4.6b2-pre-existing-active-all-row-completion-combined-pcg64-'
+        'substitution-structural-material-fixed-resident-plan-'
         'not-arena-committed-not-integrated-cpu-authoritative'
     )
     expected_material = (
-        'a4.6b1-binding-aware-host-replayed-attested-rng-tape-'
-        'not-device-applied-not-live-rng-authority-cpu-authoritative'
+        'a4.6b2-binding-aware-attested-tape-applied-to-pure-resident-'
+        'descriptor-not-live-rng-authority-cpu-authoritative'
     )
     if (a44.PORT_STATUS.get('genome_replication') != expected_replication
             or a44.PORT_STATUS.get('material_mutation') != expected_material
@@ -4966,6 +4979,556 @@ def test_a46b1_completion_mutation_rng_tape_fail_closed_and_authority():
     return ('%d replay/attestation corruptions plus config/dt/source/inactive/'
             'mixed scope rejected; current/exact/one-short aggregate and '
             'per-sequence capacities fail closed; apply remains A4.6b2' %
+            len(corruptions))
+
+
+def test_a46b2_completion_mutation_apply_formal066_oracle():
+    world, cells, capacity, dt = _a46b1_completion_mutation_fixture()
+    world_before = v3.pickle_clone(world.state_dict())
+    rng_before = copy.deepcopy(world.rng.bit_generator.state)
+    source_before = [v3.pickle_clone(cell.state_dict()) for cell in cells]
+    ragged, state, binding = _paid_replication_binding(
+        cells, world.config, capacity,
+    )
+    ragged_before = ragged.state_dict()
+    state_before = state.state_dict()
+    cache_before = binding.cache.state_dict()
+    tape = a44.prepare_completion_mutation_rng_tape(
+        binding, dt, world.config, rng_before,
+    )
+    plan = a44.paid_replication_completion_mutation_numpy(
+        binding, dt, world.config, tape,
+    )
+
+    cpu_world = copy.deepcopy(world)
+    cpu_before = copy.deepcopy(cells)
+    cpu_cells = copy.deepcopy(cells)
+    for cell in cpu_cells:
+        cell._replicate_genome(cpu_world, dt, cpu_world.config)
+    if cpu_world.rng.bit_generator.state != tape.rng_after_state:
+        raise AssertionError('A4.6b2 CPU RNG after-state differs from tape')
+
+    post_ragged = a4.FullFidelityA4GenomeAdapter(capacity).pack_cells(
+        cpu_cells,
+    )
+    post_state = a4.pack_a4_translation_state(
+        cpu_cells, post_ragged, cpu_world.config, capacity,
+    )
+    for ci, (before, actual) in enumerate(zip(cpu_before, cpu_cells)):
+        length = int(plan.final_lengths[ci])
+        final = np.asarray(plan.final_symbols[ci, :length], dtype=np.uint8)
+        if (len(actual.genomes) != len(before.genomes) + 1
+                or not np.array_equal(final, actual.genomes[-1])):
+            raise AssertionError(
+                'A4.6b2 cell[%d] final polymer differs' % ci
+            )
+        v3.assert_recursive_close(
+            np.asarray(plan.pools_after[ci], dtype=np.float64),
+            np.asarray(actual.pools, dtype=np.float64),
+            atol=2e-12, rtol=0.0,
+            path='a46b2.cell[%d].pools' % ci,
+        )
+        v3.assert_recursive_close(
+            float(plan.new_genome_lesions[ci]),
+            float(actual.genome_lesions[-1]),
+            atol=2e-12, rtol=0.0,
+            path='a46b2.cell[%d].lesion' % ci,
+        )
+        for label, planned, observed in (
+                ('last_symbols', plan.last_replication_symbols[ci],
+                 actual.last_replication_symbols),
+                ('cycle_delta', plan.replication_cycle_deltas[ci],
+                 actual.replication_cycles - before.replication_cycles),
+                ('genome_count', plan.genome_count_after[ci],
+                 len(actual.genomes)),
+                ('material_symbols', plan.genome_material_symbols_after[ci],
+                 post_state.genome_material_symbols[ci])):
+            if int(planned) != int(observed):
+                raise AssertionError(
+                    'A4.6b2 cell[%d] %s differs' % (ci, label)
+                )
+        for label, planned, observed in (
+                ('effective_error', plan.last_effective_error_rate[ci],
+                 actual.last_effective_error_rate),
+                ('proof_atp', plan.cumulative_proofreading_atp_after[ci],
+                 actual.cumulative_proofreading_atp),
+                ('lesion_mean', plan.genome_lesion_mean_after[ci],
+                 post_state.genome_lesion_mean[ci])):
+            v3.assert_recursive_close(
+                float(planned), float(observed), atol=2e-12, rtol=0.0,
+                path='a46b2.cell[%d].%s' % (ci, label),
+            )
+        structural = np.asarray([
+            int(actual.mutation_events[name])
+            - int(before.mutation_events[name])
+            for name in a44.STRUCTURAL_EVENT_NAMES
+        ], dtype=np.int64)
+        substitution = (
+            int(actual.mutation_events['substitution'])
+            - int(before.mutation_events['substitution'])
+        )
+        if (not np.array_equal(
+                structural, plan.structural_event_counts[ci])
+                or substitution != int(plan.substitution_events[ci])
+                or bool(plan.replication_active_after[ci])
+                or float(plan.replication_template_lesions_after[ci]) != 0.0
+                or float(plan.replication_fractional_after[ci]) != 0.0):
+            raise AssertionError(
+                'A4.6b2 cell[%d] event/reset descriptor differs' % ci
+            )
+        pre_first = int(ragged.cell_sequence_offsets[ci])
+        pre_last = int(ragged.cell_sequence_offsets[ci + 1])
+        post_first = int(post_ragged.cell_sequence_offsets[ci])
+        post_last = int(post_ragged.cell_sequence_offsets[ci + 1])
+        pre_symbols = int(
+            ragged.sequence_offsets[pre_last]
+            - ragged.sequence_offsets[pre_first]
+        )
+        post_symbols = int(
+            post_ragged.sequence_offsets[post_last]
+            - post_ragged.sequence_offsets[post_first]
+        )
+        if (int(plan.topology_sequence_deltas[ci])
+                != (post_last - post_first) - (pre_last - pre_first)
+                or int(plan.topology_symbol_deltas[ci])
+                != post_symbols - pre_symbols):
+            raise AssertionError(
+                'A4.6b2 cell[%d] topology delta differs' % ci
+            )
+
+    if world.rng.bit_generator.state != rng_before:
+        raise AssertionError('A4.6b2 changed source world or live RNG')
+    v3.assert_recursive_close(
+        world_before, world.state_dict(), atol=0.0, rtol=0.0,
+        path='a46b2.source_world',
+    )
+    for ci, (before, cell) in enumerate(zip(source_before, cells)):
+        v3.assert_recursive_close(
+            before, cell.state_dict(), atol=0.0, rtol=0.0,
+            path='a46b2.source_cell[%d]' % ci,
+        )
+    for label, before, after in (
+            ('ragged', ragged_before, ragged.state_dict()),
+            ('state', state_before, state.state_dict()),
+            ('cache', cache_before, binding.cache.state_dict())):
+        v3.assert_recursive_close(
+            before, after, atol=0.0, rtol=0.0,
+            path='a46b2.nonmutation.%s' % label,
+        )
+
+    # A short completed polymer may be padded by the frozen mutator and then
+    # trimmed back to its pre-structural length by a zero material budget.
+    # MIN_GENOME_LENGTH is therefore not an unconditional post-mutation floor.
+    short_world = copy.deepcopy(world)
+    short_cell = copy.deepcopy(cells[2])
+    short_cell.pools[a4.a3.POOL_NUCLEOTIDE] = float(a4.g2.MONOMER_MASS)
+    short_rng_before = copy.deepcopy(short_world.rng.bit_generator.state)
+    short_ragged, short_state, short_binding = _paid_replication_binding(
+        [short_cell], short_world.config, capacity,
+    )
+    short_tape = a44.prepare_completion_mutation_rng_tape(
+        short_binding, dt, short_world.config, short_rng_before,
+    )
+    short_plan = a44.paid_replication_completion_mutation_numpy(
+        short_binding, dt, short_world.config, short_tape,
+    )
+    short_cpu_world = copy.deepcopy(short_world)
+    short_cpu = copy.deepcopy(short_cell)
+    short_cpu._replicate_genome(
+        short_cpu_world, dt, short_cpu_world.config,
+    )
+    short_length = int(short_plan.final_lengths[0])
+    if (int(short_tape.pre_structural_lengths[0]) != 8
+            or int(short_tape.nucleotide_budget_symbols[0]) != 0
+            or int(short_tape.padding_count[0]) <= 0
+            or int(short_plan.material_delta_symbols[0]) != 0
+            or short_length != 8
+            or not np.array_equal(
+                short_plan.final_symbols[0, :short_length],
+                short_cpu.genomes[-1],
+            )
+            or short_cpu_world.rng.bit_generator.state
+            != short_tape.rng_after_state):
+        raise AssertionError(
+            'A4.6b2 material-starved short completion differs'
+        )
+    short_devices = ['cpu']
+    if torch is not None and torch.cuda.is_available():
+        short_devices.append('cuda')
+    elif _REQUIRE_CUDA:
+        raise AssertionError('CUDA required but unavailable')
+    for device in short_devices:
+        short_resident_ragged = short_ragged.to_torch(device=device)
+        short_resident_state = short_state.to_torch(device=device)
+        short_resident_binding = a4.bind_a4_translation(
+            short_resident_ragged, short_resident_state,
+        )
+        short_resident_tape = short_tape.to_torch(
+            short_binding, dt, short_world.config, device=device,
+        )
+        short_back = a44.paid_replication_completion_mutation_torch(
+            short_resident_binding, dt, short_world.config,
+            short_resident_tape,
+        ).to_numpy()
+        v3.assert_recursive_close(
+            short_plan.state_dict(), short_back.state_dict(),
+            atol=2e-12, rtol=0.0,
+            path='a46b2.short_material.%s' % device,
+        )
+
+    # The host PCG64 tape owns Python's float64 division/int budget.  CUDA may
+    # evaluate an exact CPU integer quotient one ulp below the boundary; it
+    # must validate the attested bucket rather than re-truncate to 18.
+    boundary_world = copy.deepcopy(world)
+    boundary_cell = copy.deepcopy(cells[0])
+    boundary_cell.pools[a4.a3.POOL_NUCLEOTIDE] = (
+        20.0 * float(a4.g2.MONOMER_MASS)
+    )
+    boundary_rng_before = copy.deepcopy(
+        boundary_world.rng.bit_generator.state,
+    )
+    boundary_ragged, boundary_state, boundary_binding = (
+        _paid_replication_binding(
+            [boundary_cell], boundary_world.config, capacity,
+        )
+    )
+    boundary_tape = a44.prepare_completion_mutation_rng_tape(
+        boundary_binding, dt, boundary_world.config, boundary_rng_before,
+    )
+    if int(boundary_tape.nucleotide_budget_symbols[0]) != 19:
+        raise AssertionError('A4.6b2 exact material budget fixture drifted')
+    boundary_plan = a44.paid_replication_completion_mutation_numpy(
+        boundary_binding, dt, boundary_world.config, boundary_tape,
+    )
+    boundary_cpu_world = copy.deepcopy(boundary_world)
+    boundary_cpu = copy.deepcopy(boundary_cell)
+    boundary_cpu._replicate_genome(
+        boundary_cpu_world, dt, boundary_cpu_world.config,
+    )
+    boundary_length = int(boundary_plan.final_lengths[0])
+    if (not np.array_equal(
+            boundary_plan.final_symbols[0, :boundary_length],
+            boundary_cpu.genomes[-1],
+        ) or boundary_cpu_world.rng.bit_generator.state
+            != boundary_tape.rng_after_state):
+        raise AssertionError('A4.6b2 exact material budget differs')
+    for device in short_devices:
+        boundary_resident_ragged = boundary_ragged.to_torch(device=device)
+        boundary_resident_state = boundary_state.to_torch(device=device)
+        boundary_resident_binding = a4.bind_a4_translation(
+            boundary_resident_ragged, boundary_resident_state,
+        )
+        boundary_resident_tape = boundary_tape.to_torch(
+            boundary_binding, dt, boundary_world.config, device=device,
+        )
+        boundary_back = a44.paid_replication_completion_mutation_torch(
+            boundary_resident_binding, dt, boundary_world.config,
+            boundary_resident_tape,
+        ).to_numpy()
+        v3.assert_recursive_close(
+            boundary_plan.state_dict(), boundary_back.state_dict(),
+            atol=2e-12, rtol=0.0,
+            path='a46b2.exact_material.%s' % device,
+        )
+
+    # Seven old lesions plus the new lesion cross NumPy's eight-element
+    # reduction boundary.  The post-state mean must reduce the combined prefix
+    # once; summing seven and then adding the eighth changes one fp64 bit here.
+    lesion_world, lesion_cells, _, lesion_dt = (
+        _a46b1_completion_mutation_fixture(seed=16001)
+    )
+    lesion_cell = copy.deepcopy(lesion_cells[0])
+    lesion_root = np.asarray(lesion_cell.genomes[0], dtype=np.uint8).copy()
+    lesion_cell.genomes = [lesion_root.copy() for _ in range(7)]
+    lesion_cell.genome_lesions = [float.fromhex(value) for value in (
+        '0x1.3f6d854147672p+18',
+        '0x1.f8bc5d71f2247p-11',
+        '0x1.8758cfd9c680cp+38',
+        '0x1.36d1c260cd486p-29',
+        '0x1.b70768dd2cda4p+38',
+        '0x1.f4c3db9ec2057p+23',
+        '0x1.521441496b18bp-22',
+    )]
+    lesion_cell.replication_template = lesion_root.copy()
+    lesion_cell.replication_copy = [int(value) for value in lesion_root[:-1]]
+    lesion_cell.replication_template_lesion = float.fromhex(
+        '0x1.dc5dfd02182dbp-9'
+    )
+    lesion_cell._refresh_gene_cache()
+    lesion_cell._sync_protein_pool()
+    lesion_capacity = a4.GPU068A4Config(
+        max_cells=1, max_sequences=10, max_symbols=8192,
+        max_sequence_symbols=a4.MAX_FROZEN_GENOME_SYMBOLS,
+        max_proteins_per_cell=64,
+    )
+    lesion_rng_before = copy.deepcopy(
+        lesion_world.rng.bit_generator.state,
+    )
+    lesion_ragged, lesion_state, lesion_binding = _paid_replication_binding(
+        [lesion_cell], lesion_world.config, lesion_capacity,
+    )
+    lesion_tape = a44.prepare_completion_mutation_rng_tape(
+        lesion_binding, lesion_dt, lesion_world.config, lesion_rng_before,
+    )
+    lesion_plan = a44.paid_replication_completion_mutation_numpy(
+        lesion_binding, lesion_dt, lesion_world.config, lesion_tape,
+    )
+    lesion_cpu_world = copy.deepcopy(lesion_world)
+    lesion_cpu = copy.deepcopy(lesion_cell)
+    lesion_cpu._replicate_genome(
+        lesion_cpu_world, lesion_dt, lesion_cpu_world.config,
+    )
+    cpu_lesion_mean = float(np.mean(
+        np.asarray(lesion_cpu.genome_lesions, dtype=np.float64),
+        dtype=np.float64,
+    ))
+    if (float(lesion_plan.genome_lesion_mean_after[0]).hex()
+            != cpu_lesion_mean.hex()):
+        raise AssertionError('A4.6b2 combined lesion grouping differs')
+    for device in short_devices:
+        lesion_resident_ragged = lesion_ragged.to_torch(device=device)
+        lesion_resident_state = lesion_state.to_torch(device=device)
+        lesion_resident_binding = a4.bind_a4_translation(
+            lesion_resident_ragged, lesion_resident_state,
+        )
+        lesion_resident_tape = lesion_tape.to_torch(
+            lesion_binding, lesion_dt, lesion_world.config, device=device,
+        )
+        lesion_back = a44.paid_replication_completion_mutation_torch(
+            lesion_resident_binding, lesion_dt, lesion_world.config,
+            lesion_resident_tape,
+        ).to_numpy()
+        if (float(lesion_back.genome_lesion_mean_after[0]).hex()
+                != cpu_lesion_mean.hex()):
+            raise AssertionError(
+                'A4.6b2 combined lesion grouping differs on %s' % device
+            )
+
+    # Recovering the inherited component by subtracting the A4.6a error term
+    # loses low bits for large finite signals.  Recompute the frozen
+    # template/proofreading term directly and preserve its grouping.
+    cancel_world, cancel_cells, cancel_capacity, cancel_dt = (
+        _a46b1_completion_mutation_fixture(seed=18031)
+    )
+    cancel_world.config.mutation_rate = 1.0088277385404213e-07
+    cancel_cell = copy.deepcopy(cancel_cells[0])
+    cancel_cell.replication_template_lesion = 312534361.6960746
+    cancel_cell.genome_lesions = [1.0]
+    cancel_cell.pools[a4.a3.POOL_REACTIVE] = 2311896.74665122
+    cancel_rng_before = copy.deepcopy(
+        cancel_world.rng.bit_generator.state,
+    )
+    cancel_ragged, cancel_state, cancel_binding = _paid_replication_binding(
+        [cancel_cell], cancel_world.config, cancel_capacity,
+    )
+    cancel_tape = a44.prepare_completion_mutation_rng_tape(
+        cancel_binding, cancel_dt, cancel_world.config, cancel_rng_before,
+    )
+    cancel_plan = a44.paid_replication_completion_mutation_numpy(
+        cancel_binding, cancel_dt, cancel_world.config, cancel_tape,
+    )
+    cancel_cpu_world = copy.deepcopy(cancel_world)
+    cancel_cpu = copy.deepcopy(cancel_cell)
+    cancel_cpu._replicate_genome(
+        cancel_cpu_world, cancel_dt, cancel_cpu_world.config,
+    )
+    cpu_new_lesion = float(cancel_cpu.genome_lesions[-1])
+    if float(cancel_plan.new_genome_lesions[0]).hex() != cpu_new_lesion.hex():
+        raise AssertionError('A4.6b2 inherited lesion grouping differs')
+    for device in short_devices:
+        cancel_resident_ragged = cancel_ragged.to_torch(device=device)
+        cancel_resident_state = cancel_state.to_torch(device=device)
+        cancel_resident_binding = a4.bind_a4_translation(
+            cancel_resident_ragged, cancel_resident_state,
+        )
+        cancel_resident_tape = cancel_tape.to_torch(
+            cancel_binding, cancel_dt, cancel_world.config, device=device,
+        )
+        cancel_back = a44.paid_replication_completion_mutation_torch(
+            cancel_resident_binding, cancel_dt, cancel_world.config,
+            cancel_resident_tape,
+        ).to_numpy()
+        v3.assert_recursive_close(
+            float(cancel_back.new_genome_lesions[0]), cpu_new_lesion,
+            atol=2e-12, rtol=0.0,
+            path='a46b2.inherited_lesion.%s' % device,
+        )
+    return ('3 Formal066 completions plus material-starved short padding/trim '
+            'exact integer budget, seven-to-eight lesion grouping, and large '
+            'inherited-lesion cancellation: final polymer, paid/refunded '
+            'material, lesion, counters, reset, derived physiology and '
+            'topology exact')
+
+
+def test_a46b2_completion_mutation_numpy_torch_devices():
+    if torch is None:
+        raise AssertionError('PyTorch is required for A4.6b2')
+    world, cells, capacity, dt = _a46b1_completion_mutation_fixture(
+        seed=9912,
+    )
+    rng_before = copy.deepcopy(world.rng.bit_generator.state)
+    source_before = [v3.pickle_clone(cell.state_dict()) for cell in cells]
+    ragged, state, binding = _paid_replication_binding(
+        cells, world.config, capacity,
+    )
+    tape = a44.prepare_completion_mutation_rng_tape(
+        binding, dt, world.config, rng_before,
+    )
+    expected = a44.paid_replication_completion_mutation_numpy(
+        binding, dt, world.config, tape,
+    )
+    devices = ['cpu']
+    if torch.cuda.is_available():
+        devices.append('cuda')
+    elif _REQUIRE_CUDA:
+        raise AssertionError('CUDA required but unavailable')
+    for device in devices:
+        resident_ragged = ragged.to_torch(device=device)
+        resident_state = state.to_torch(device=device)
+        resident_binding = a4.bind_a4_translation(
+            resident_ragged, resident_state,
+        )
+        resident_tape = tape.to_torch(
+            binding, dt, world.config, device=device,
+        )
+        ragged_ptrs = resident_ragged.data_ptrs()
+        state_ptrs = resident_state.data_ptrs()
+        cache_ptrs = resident_binding.cache.data_ptrs()
+        tape_ptrs = resident_tape.data_ptrs()
+        plan = a44.paid_replication_completion_mutation_torch(
+            resident_binding, dt, world.config, resident_tape,
+        )
+        for name in a44._COMPLETION_PLAN_ARRAY_FIELDS:
+            value = getattr(plan, name)
+            if (not isinstance(value, torch.Tensor)
+                    or value.device.type != device):
+                raise AssertionError(
+                    '%s A4.6b2 %s escaped device' % (device, name)
+                )
+        readback = plan.to_numpy()
+        v3.assert_recursive_close(
+            expected.state_dict(), readback.state_dict(),
+            atol=2e-12, rtol=0.0,
+            path='a46b2.device.%s' % device,
+        )
+        if (resident_ragged.data_ptrs() != ragged_ptrs
+                or resident_state.data_ptrs() != state_ptrs
+                or resident_binding.cache.data_ptrs() != cache_ptrs
+                or resident_tape.data_ptrs() != tape_ptrs):
+            raise AssertionError('%s A4.6b2 input pointer changed' % device)
+    forbidden = ('.item(', '.cpu(', '.numpy(', '.tolist(',
+                 'nonzero(', 'masked_select(', 'unique(')
+    source = inspect.getsource(
+        a44.paid_replication_completion_mutation_torch,
+    )
+    hits = [token for token in forbidden if token in source]
+    if hits:
+        raise AssertionError('A4.6b2 Torch path contains host op: %s' % hits)
+    if world.rng.bit_generator.state != rng_before:
+        raise AssertionError('A4.6b2 device apply advanced live RNG')
+    for ci, (before, cell) in enumerate(zip(source_before, cells)):
+        v3.assert_recursive_close(
+            before, cell.state_dict(), atol=0.0, rtol=0.0,
+            path='a46b2.device_source[%d]' % ci,
+        )
+    return 'NumPy/Torch %s fixed-shape final polymer+ledger parity' % '/'.join(
+        devices,
+    )
+
+
+def test_a46b2_completion_mutation_fail_closed_and_authority():
+    world, cells, capacity, dt = _a46b1_completion_mutation_fixture(
+        seed=9913,
+    )
+    rng_before = copy.deepcopy(world.rng.bit_generator.state)
+    ragged, state, binding = _paid_replication_binding(
+        cells, world.config, capacity,
+    )
+    tape = a44.prepare_completion_mutation_rng_tape(
+        binding, dt, world.config, rng_before,
+    )
+    plan = a44.paid_replication_completion_mutation_numpy(
+        binding, dt, world.config, tape,
+    )
+    corruptions = []
+    bad = plan.clone()
+    bad.final_symbols[0, int(bad.final_lengths[0])] = 1
+    corruptions.append(('final_tail', bad))
+    bad = plan.clone()
+    bad.final_lengths[0] = 0
+    corruptions.append(('final_length', bad))
+    bad = plan.clone()
+    bad.material_delta_symbols[0] += 1
+    corruptions.append(('material_delta', bad))
+    bad = plan.clone()
+    bad.new_genome_lesions[0] = -1.0
+    corruptions.append(('lesion', bad))
+    bad = plan.clone()
+    bad.topology_symbol_deltas[0] += 1
+    corruptions.append(('topology', bad))
+    bad = plan.clone()
+    bad.replication_active_after[0] = True
+    corruptions.append(('active_reset', bad))
+    bad = plan.clone()
+    bad.genome_count_after[0] = 0
+    corruptions.append(('genome_count', bad))
+    bad = plan.clone()
+    bad.genome_material_symbols_after[0] = 0
+    corruptions.append(('genome_material', bad))
+    bad = plan.clone()
+    bad.genome_lesion_mean_after[0] = np.nan
+    corruptions.append(('lesion_mean', bad))
+    for label, corrupt in corruptions:
+        _assert_raises(
+            a4.A4SchemaError,
+            lambda corrupt=corrupt: a44.validate_a4_completion_mutation_plan(
+                corrupt,
+            ),
+        )
+
+    if torch is None:
+        raise AssertionError('PyTorch is required for A4.6b2 trust test')
+    devices = ['cpu']
+    if torch.cuda.is_available():
+        devices.append('cuda')
+    elif _REQUIRE_CUDA:
+        raise AssertionError('CUDA required but unavailable')
+    for device in devices:
+        resident_binding = a4.bind_a4_translation(
+            ragged.to_torch(device=device),
+            state.to_torch(device=device),
+        )
+        resident_tape = tape.to_torch(
+            binding, dt, world.config, device=device,
+        )
+        before_version = int(resident_tape.insertion_symbols._version)
+        resident_tape.insertion_symbols.data[0, 0] = (
+            resident_tape.insertion_symbols.data[0, 0] + 1
+        ) % int(a4.g2.ALPHABET_SIZE)
+        if int(resident_tape.insertion_symbols._version) != before_version:
+            raise AssertionError('%s .data unexpectedly changed version' % device)
+        failed = a44.paid_replication_completion_mutation_torch(
+            resident_binding, dt, world.config, resident_tape,
+        )
+        codes = failed.scope_error_code.detach().cpu().numpy()
+        valid = failed.scope_valid.detach().cpu().numpy()
+        final = failed.final_symbols.detach().cpu().numpy()
+        cycles = failed.replication_cycle_deltas.detach().cpu().numpy()
+        if (not np.all(codes[:len(cells)] == a44.SCOPE_RNG_TAPE_MISMATCH)
+                or np.any(valid[:len(cells)])
+                or np.any(final[:len(cells)])
+                or np.any(cycles[:len(cells)])):
+            raise AssertionError(
+                '%s A4.6b2 hidden tape mutation did not roll back batch' %
+                device
+            )
+        _assert_raises(a44.A4ReplicationScopeError, failed.to_numpy)
+    if (world.rng.bit_generator.state != rng_before
+            or a44.FULL_GPU_WORLD_STEP is not False
+            or v3._event_order().count('replication_cpu') != 1):
+        raise AssertionError('A4.6b2 CPU/RNG/scheduler authority changed')
+    return ('%d plan corruptions and CPU/CUDA hidden tape mutation rejected; '
+            'batch rollback, live RNG and A3 replication authority preserved' %
             len(corruptions))
 
 
@@ -5007,6 +5570,9 @@ TESTS = (
     test_a46b1_completion_mutation_rng_tape_formal066_oracle,
     test_a46b1_completion_mutation_rng_tape_torch_roundtrip,
     test_a46b1_completion_mutation_rng_tape_fail_closed_and_authority,
+    test_a46b2_completion_mutation_apply_formal066_oracle,
+    test_a46b2_completion_mutation_numpy_torch_devices,
+    test_a46b2_completion_mutation_fail_closed_and_authority,
 )
 
 
@@ -5044,9 +5610,12 @@ def run_all(write=False, output_dir=None):
             'completion_mutation_rng_tape': (
                 a44.COMPLETION_MUTATION_RNG_TAPE_SCHEMA_VERSION
             ),
+            'completion_mutation_plan': (
+                a44.COMPLETION_MUTATION_PLAN_SCHEMA_VERSION
+            ),
         },
         'development_slice': (
-            'A4.6b1-completion-structural-material-mutation-rng-tape'
+            'A4.6b2-resident-completion-structural-material-mutation-plan'
         ),
         'promoted_baseline_unchanged': 'SOMA-CELL 0.6.8-GPU A3',
         'full_gpu_world_step': False,

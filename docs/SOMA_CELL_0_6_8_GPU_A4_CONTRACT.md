@@ -1,6 +1,6 @@
 # SOMA-CELL 0.6.8-GPU A4 contract
 
-Status: A4 development contract through slice A4.6b1. This is not an A4
+Status: A4 development contract through slice A4.6b2. This is not an A4
 promotion.
 
 ## Authority
@@ -373,6 +373,58 @@ CPU cell, or replace the scheduler.  Its CPU/CUDA result is tape storage and
 attestation evidence only.  Hydrolysis remains A4.7, while post-division grammar
 mutation remains A5.
 
+## A4.6b2 scope
+
+A4.6b2 consumes only an internally prepared, binding-aware A4.6b1 tape and
+applies its recorded operations to the mutation-free A4.6a completion payload.
+It derives the final polymer on NumPy, Torch CPU, and CUDA; the tape never
+contains a CPU-produced final genome.  The supported event remains bounded to
+pre-existing active, non-empty templates where every used row completes in the
+same call with mutation enabled.
+
+Application follows the frozen order on fixed storage: paid-append
+substitutions, insertion, deletion, gene duplication, inversion,
+transposition, minimum-length padding, frozen maximum-length truncation, and
+physical nucleotide-budget tail trim.  Bounds and short-circuit conditions are
+recomputed on the device from the evolving polymer.  Event counts retain their
+pre-material-trim meaning; only the committed final length delta is paid or
+refunded in the nucleotide pool.  When the pre-structural polymer is shorter
+than `MIN_GENOME_LENGTH`, padding is still drawn before material trim, but a
+zero physical budget may validly trim the result back to that shorter original
+length.  Structural mutation consumes no ATP.
+
+`A4CompletionMutationPlan` records the final fixed-width polymer and length,
+post-payment pools, append/substitution/structural counts, inherited lesion,
+cycle and topology deltas, cleared replication intermediates, and derived
+post-completion genome count, material-symbol count, and lesion mean.  The new
+lesion recomputes the inherited component directly from the attested template
+lesion and ordered proofreading signal, rather than subtracting it back out of
+the rounded A4.6a total, and uses the final mutated length for the
+effective-error term.  Ordered lesion means reduce the combined old-plus-new
+lesion prefix once, using the same NumPy pairwise grouping on Torch CPU and
+CUDA.
+
+The binding-aware host tape owns the frozen Python float64 division and integer
+conversion for nucleotide budget.  Torch does not re-truncate that quotient,
+because CUDA may place an exact CPU integer one ulp below its boundary.  It
+uses the attested tape integer for transformation and independently requires
+the resident quotient to remain inside that integer bucket, allowing only the
+registered fp64 comparison band.
+
+Before consuming a resident tape, A4.6b2 compares every public tensor to a
+private expected tensor copied from the validated upload, in addition to the
+existing scalar, pointer, version, and host-digest attestation.  This closes
+`.data` and shared-alias changes which do not increment Torch `_version`.
+Any tape, operation, bound, count, material, capacity, or derived-state
+disagreement invalidates and rolls back every used row; no partial polymer is
+reported as successful.
+
+A4.6b2 is still a pure descriptor.  It does not apply the final arrays to the
+ragged arena, append live genome/lesion state, refresh the gene cache, advance
+the live PCG64 state, update a CPU cell, or replace A3 `replication_cpu`.
+Hydrolysis remains A4.7.  An atomic arena/cache/RNG/scheduler commit is a later
+bounded slice and must re-attest all source relations immediately before use.
+
 ## Fail-closed invariants
 
 Ragged foundation invariants remain unchanged:
@@ -467,12 +519,12 @@ Replication-elongation-plan invariants are:
   mutation-free, pre-existing-active, all-row completion above.  No path may
   fall through to a partial GPU result plus a second CPU replication call.
 
-## Explicit exclusions through A4.6b1
+## Explicit exclusions through A4.6b2
 
 - No scheduler/world integration or CPU-cell protein/material commit.
 - No mutation-free inactive-template start, actual template/copy/completed-
-  genome arena commit, live lesion/cycle/cache/novel-path update, resident
-  structural/material application, symbol hydrolysis, or device RNG kernel.
+  genome arena commit, live lesion/cycle/cache/novel-path update, symbol
+  hydrolysis, live RNG commit, or device RNG kernel.
 - No scheduler replacement and no change to A3 `gene_refresh`,
   `translation_cpu`, or `replication_cpu` authority.
 - No division, death, corpse/eDNA/HGT, neural, or causal-system port.
@@ -480,7 +532,7 @@ Replication-elongation-plan invariants are:
   CUDA, multi-stream, multi-GPU, or online-GPU abstraction.
 - No formal 13-spec/65-measurement benchmark and no speedup claim.
 
-## Acceptance through A4.6b1
+## Acceptance through A4.6b2
 
 - All A4.1 lossless/corruption/capacity/residency tests remain PASS.
 - Nested valid markers and invalid-outer/valid-inner recovery match frozen
@@ -589,6 +641,34 @@ Replication-elongation-plan invariants are:
 - All 37 A4 development tests and focused A3 regressions pass while A4.6b1
   remains a preparation/attestation slice and A3 `replication_cpu` remains the
   only scheduler authority.
+
+- The attested A4.6b1 operation tape is applied independently by NumPy, Torch
+  CPU, and explicit RTX CUDA to produce the same final polymer; no precomputed
+  final genome exists in the tape.
+- Direct Formal066 completion comparison covers append substitution, all five
+  structural operations, minimum-length padding, maximum/material tail trim,
+  positive nucleotide payment, negative-delta refund, inherited lesion,
+  cycle/reset, topology, and derived genome count/material/lesion mean.
+- A pre-structural length-8 completion with zero post-append nucleotide budget
+  proves padding draws followed by a valid trim back to length 8.  An exact
+  host budget of 19 symbols proves CUDA does not re-truncate the quotient to 18.
+- Multiple lesion-prefix lengths preserve the frozen NumPy grouping exactly on
+  Torch CPU and CUDA; an adversarial seven-old-plus-one-new prefix is bit-exact.
+  Final tails, event telemetry, material deltas, and derived post-state fields
+  are fixed-shape and fail closed when forged.
+- A large finite template-lesion/reactive case proves the inherited lesion term
+  is directly regrouped from template and proofreading inputs; cancellation by
+  reversing the already rounded A4.6a lesion total is not accepted.
+- NumPy, Torch CPU, and explicit RTX CUDA source/tape values and pointers remain
+  unchanged.  A hidden CPU or CUDA `.data` tape change which leaves `_version`
+  unchanged is detected before meaning is consumed, returns code 7, and rolls
+  back the complete used batch.
+- Nine independent completion-plan schema corruptions, capacity/schedule
+  disagreement, and resident trust violations are rejected without arena,
+  cache, live RNG, world, CPU-cell, or scheduler mutation.
+- All 40 A4 development tests and focused A3 regressions pass while A4.6b2
+  remains a pure resident descriptor and A3 `replication_cpu` remains the only
+  scheduler authority.
 
 Known A4.4b integration blockers are recorded rather than hidden.  On the
 measured six-cell development fixture the current fixed symbol-rank Torch plan

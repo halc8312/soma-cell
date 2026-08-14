@@ -1,6 +1,6 @@
-# SOMA-CELL 0.6.8-GPU A4.6b1 事前登録（A4.1〜A4.6a継承）
+# SOMA-CELL 0.6.8-GPU A4.6b2 事前登録（A4.1〜A4.6b1継承）
 
-状態: A4.6aまでを継承するA4.6b1開発slice。A4昇格判定ではない。
+状態: A4.6b1までを継承するA4.6b2開発slice。A4昇格判定ではない。
 
 ## 継承する基盤
 
@@ -523,3 +523,73 @@ frozen `MAX_GENOME_LENGTH`へeffective budgetだけをcapする。raw fp64 quoti
 次はA4.6b2としてattested operation tapeをNumPy/Torch CPU/CUDAの固定shape変形・材料・
 lesion・topology descriptorへ適用する。その後hydrolysisをA4.7として分離する。scheduler
 置換は、連続したresident chainをhost/device往復なしでatomic commitできる段階まで延期する。
+
+## A4.6b2追加仮説
+
+A4.6b1で高水準PCG64 callと全structural payloadをbinding-awareに固定できたなら、
+CPUで作ったfinal genomeをtapeへ追加せず、同じoperation列をNumPy/Torch CPU/CUDAの
+fixed-shape配列へ適用して、Formal066と同じfinal polymer、材料、lesion、cycle、topology、
+次state用derived値をpure descriptorとして再現できる。
+
+## A4.6b2で実装するもの
+
+- private-factory A4.6b1 tapeだけを受ける`A4CompletionMutationPlan`
+- paid append substitution後、insertion、deletion、gene duplication、inversion、
+  transposition、minimum-length padding、frozen maximum/material-budget tail trimを
+  evolving polymerへ順に適用するNumPy/Torch CPU/CUDA固定shape経路
+- final symbols/length、pools、requested/append/last/error/proof telemetry、
+  substitution/5 structural event counts、material delta
+- template lesionとordered proofreading signalからinherited lesion成分を直接再計算し、
+  effective-error length項へfinal mutated lengthを使うnew lesion。丸め済みA4.6a値からの
+  subtractive recoveryは禁止
+- cycle/topology delta、replication active/template lesion/fractional reset、
+  post genome count/material-symbol count/ordered lesion mean
+- b1 tapeのscalar/pointer/version/digestに加え、32 public resident arraysをvalidated upload時の
+  private expected tensorsとdevice上exact比較して`.data` version bypassを拒否するtrust境界
+- 一rowでもtape/operation/bounds/material/capacity/derived-state不一致ならcode 7で
+  used batch全体rollback
+- NumPy/Torch CPU/明示RTX CUDA parity、input/tape/world/live RNG不変
+
+event countはmaterial trim前、物質支払/返却はfinal length deltaだけを正本とする。
+host tapeのPython float64/int budgetをtrim authorityとし、resident quotientは同じinteger
+bucketを4096-epsilon帯込みで検証する。pre-structural長がMIN未満なら、padding draw後に
+zero budgetで元の短い長さへtrimされることを許す。structural mutationはATPを消費しない。
+lesion meanはold+newのcombined prefixを一度にreduceし、NumPy正本のpairwise groupingを
+Torch CPU/CUDAで再現する。arena容量不足を追加trimで隠さない。
+
+## A4.6b2で実装しないもの
+
+- actual ragged completed-genome/lesion append、template/copy消去、provenance再発行
+- live replication cycle/material/lesion state、gene cache、novel-path、CPU cellへのcommit
+- live PCG64 after-state commit、world-step interleave、A3 scheduler authority置換
+- inactive-template completion、mixed completion/noncompletion、mutation-free start
+- hydrolysis RNG（A4.7）
+- division後daughter grammar mutation（A5）
+- generic mutation/RNG framework、software fp64、custom CUDA/Triton、速度向上主張
+
+## A4.6b2固定テスト
+
+1. 3 Formal066 rowでappend substitution、5 structural operations、padding、material trim/refund、
+   final polymer、pools、lesion、cycle/reset、topology、post count/material/lesion meanをdirect
+   CPU oracleと照合する。
+2. NumPy、Torch CPU、明示RTX CUDAで全fixed plan arraysを照合し、全outputが同device、
+   source ragged/cache/physiology/tape pointer/valueが不変であることを確認する。
+3. pre長8/padding/zero-budget/final長8、exact host budget 19、old lesion 7→post 8の
+   pairwise境界、大きなfinite template-lesionでのsubtractive-cancellation反例、および
+   lesion count 1〜8/複数seed/configでfinal polymer、material、lesionを照合する。
+4. 9 plan field corruptionsとCPU/CUDA tape `.data` version bypassを拒否し、scope code 7、
+   zeroed success telemetry、全row rollback、live RNG/A3 authority不変を固定する。
+5. A4.1〜A4.6b1の37 testsを継続し、合計40/40をCUDA必須でPASSさせる。
+
+## A4.6b2判定
+
+- 40/40、direct Formal066 final state、NumPy/Torch CPU/CUDA、resident trust、capacity、
+  source/RNG非変更が全てPASSした場合だけ「A4.6b2 structural/material completion mutation
+  pure resident descriptor、未commit・未統合」と記録する。
+- CPUで作ったfinal genomeをtapeへ格納したり、arena overflowをmaterial trimへ混同しない。
+- plan単体を外部復元/commit authorityにせず、将来commit直前にbinding/source semanticを
+  再照合する。
+- A4.6b2だけでA4完了、scheduler authority、full GPU world-step、速度向上とは呼ばない。
+
+次はA4.7としてsymbol hydrolysis RNGを別event tape/planに分離する。その後にだけ、
+resident replication chainのatomic arena/cache/RNG commitとscheduler統合を検討する。
