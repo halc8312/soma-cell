@@ -1,6 +1,6 @@
 # SOMA-CELL 0.6.8-GPU A4 contract
 
-Status: A4 development contract through slice A4.3. This is not an A4
+Status: A4 development contract through slice A4.4a. This is not an A4
 promotion.
 
 ## Authority
@@ -94,6 +94,44 @@ the frozen per-gene fp64 payment recurrence instead of substituting a
 closed-form prefix budget at exhausted-resource boundaries. It performs no
 scalar readback or variable-length output.
 
+## A4.4a scope
+
+A4.4a adds only the smallest deterministic heredity-chemistry continuation:
+paid elongation of an already active replication template.  It is a pure plan,
+not a scheduler replacement or CPU-cell commit.  A supported row must have an
+existing non-empty template and a shorter partial copy, an active endogenous
+replicase above the frozen gate, and this invocation must remain incomplete
+after the literal resource gates are applied.
+
+The supported configuration is deliberately narrow:
+
+- genome replication is enabled;
+- mutation, proofreading, external replicase, inherited quiescence, and the
+  behavioural quiescence effector are disabled;
+- template selection has already occurred; and
+- the copied prefix does not complete the template in this invocation.
+
+Within that boundary the plan reproduces the Formal066 wrapper and frozen 0.4
+operation order: scale `dt` by `max(0.25, eco66_replication_rate_scale)`, derive
+endogenous replicase from active-protein dictionary order, add speed to the
+fractional carry, remove the full integer request before checking resources,
+then copy template symbols in order while paying one nucleotide monomer and
+`0.0012 ATP` per accepted symbol.  The nucleotide gate is exact
+`MONOMER_MASS`; the ATP gate retains the frozen `0.022` reserve.  Unpaid
+requests are not restored to the fractional carry.
+
+Although mutation is disabled, the observable effective error rate is still
+updated from configured mutation rate, template lesion, and reactive
+concentration.  RNG state, proofreading ATP, world dissipated energy, complete
+genomes, lesions, and the gene cache remain unchanged.  Inputs remain
+immutable and the fixed output carries only the append plan, paid pools,
+fractional progress, and replication telemetry needed for later atomic commit.
+
+NumPy rejects an out-of-scope row before returning a plan.  The CUDA path does
+not perform a hidden scalar readback; it carries a fixed scope-valid/error-code
+result which must be rejected at the explicit readback or future commit
+boundary.  An unsupported row is never a successful replication result.
+
 ## Fail-closed invariants
 
 Ragged foundation invariants remain unchanged:
@@ -162,10 +200,30 @@ Translation-state invariants are:
 - A4.3 output is a pure plan. It is not applied to the A3 world and cannot run
   beside the current `translation_cpu` event.
 
-## Explicit exclusions through A4.3
+Replication-elongation-plan invariants are:
+
+- Every used row is bound to the same attested ragged/cache/physiology source.
+- Template and partial-copy order are derived from the A4.1 sequence layout;
+  no genome, template, or copy is sorted or sliced.
+- Every supported append symbol equals the next template byte exactly.
+- Fractional progress consumes the entire integer request before material
+  gates, matching the frozen CPU even when no symbol can be paid.
+- Nucleotide and ATP are subtracted in symbol order with no free DNA, refund,
+  clipping, or contribution to world dissipated energy.
+- Exact fixed capacity passes; a required additional symbol beyond capacity
+  is rejected before any commit.
+- The plan is pure: input ragged/cache/physiology, CPU cells, world, RNG, and
+  scheduler receipts remain unchanged.
+- Template selection, completion, or any enabled postponed mechanism makes the
+  row explicitly unsupported; it cannot silently fall through to a partial
+  GPU result plus a second CPU replication call.
+
+## Explicit exclusions through A4.4a
 
 - No scheduler/world integration or CPU-cell protein/material commit.
-- No replication, proofreading, mutation, symbol hydrolysis, or RNG kernel.
+- No template selection, completion transaction, new complete genome, lesion
+  inheritance, gene-cache refresh, proofreading, mutation, symbol hydrolysis,
+  or RNG kernel.
 - No scheduler replacement and no change to A3 `gene_refresh`,
   `translation_cpu`, or `replication_cpu` authority.
 - No division, death, corpse/eDNA/HGT, neural, or causal-system port.
@@ -173,7 +231,7 @@ Translation-state invariants are:
   CUDA, multi-stream, multi-GPU, or online-GPU abstraction.
 - No formal 13-spec/65-measurement benchmark and no speedup claim.
 
-## A4.3 acceptance
+## Acceptance through A4.4a
 
 - All A4.1 lossless/corruption/capacity/residency tests remain PASS.
 - Nested valid markers and invalid-outer/valid-inner recovery match frozen
@@ -201,6 +259,34 @@ Translation-state invariants are:
 - A4.3 does not alter A3 `translation_cpu`, replication authority, or the
   promoted baseline.
 
-The next slice may add replication/proofreading/material mutation state and
-RNG planning. Scheduler replacement remains later, after a contiguous resident
-chain can commit without recreating A3's per-cell host/device round trips.
+- A pre-existing active-template, non-completing Formal066 CPU fixture matches
+  the NumPy plan for appended bytes/count, nucleotide and ATP pools,
+  fractional carry, `last_replication_symbols`, and
+  `last_effective_error_rate`.
+- Requested-zero, exact and immediately-below nucleotide/ATP gates, and
+  resource exhaustion preserve the frozen ordered behavior.
+- CPU oracle RNG state is byte-exact before/after because the supported slice
+  consumes zero random draws.
+- NumPy, Torch CPU, and explicit RTX CUDA fp64 plans agree after one explicit
+  readback; all source pointers and values remain unchanged.
+- Scope and capacity failure are atomic and fail closed.  Completion,
+  inactive-template start, proofreading, mutation, external replicase, or
+  either quiescence route is not reported as migrated.
+- A4.4a leaves A3 `replication_cpu` authoritative and makes no speed claim.
+
+Known A4.4a integration blockers are recorded rather than hidden.  On the
+measured six-cell development fixture the current fixed symbol-rank Torch plan
+was about 503 ms per call versus about 10.1 ms for NumPy, so it is not a
+performance candidate.  PyTorch 2.5 also does not provide a deterministic CUDA
+implementation for the `cumsum` used by the resident gene-cache path; focused
+validation temporarily disables deterministic-algorithm enforcement only
+around that operation and restores the prior setting.  Both the launch-heavy
+performance path and deterministic-enforcement compatibility must be resolved
+and remeasured before scheduler authority, promotion, or any speedup claim.
+
+The next slice may add deterministic proofreading and quiescence/external
+replicase inputs while retaining the same non-completion boundary. Template
+selection, substitution RNG, completion/structural mutation, and hydrolysis
+remain separate later slices. Scheduler replacement remains later, after a
+contiguous resident chain can commit without recreating A3's per-cell
+host/device round trips.

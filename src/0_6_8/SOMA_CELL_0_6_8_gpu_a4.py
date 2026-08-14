@@ -1566,6 +1566,27 @@ class A4TranslationStateBatch:
         ) for item in fields(self)}
 
 
+def _translation_state_provenance(state):
+    """Hash one fully validated host physiology snapshot for binding lifetime."""
+    if _is_tensor(state.pools):
+        raise A4SchemaError('host translation provenance cannot read a tensor')
+    validate_a4_translation_state(state)
+    digest = hashlib.sha256()
+    for item in fields(state):
+        name = item.name
+        value = getattr(state, name)
+        digest.update(name.encode('ascii'))
+        if name in _TRANSLATION_ARRAY_FIELDS:
+            array = np.ascontiguousarray(value)
+            digest.update(array.dtype.str.encode('ascii'))
+            digest.update(repr(tuple(array.shape)).encode('ascii'))
+            digest.update(array.tobytes(order='C'))
+        else:
+            digest.update(repr(value).encode('utf-8'))
+        digest.update(b'\0')
+    return digest.hexdigest()
+
+
 _TRANSLATION_BINDING_TOKEN = object()
 
 
@@ -1576,6 +1597,12 @@ class A4TranslationBinding:
     ragged: A4RaggedGenomeBatch
     cache: A4GeneCacheBatch
     state: A4TranslationStateBatch
+    _ragged_provenance: object
+    _state_provenance: object
+    _ragged_data_ptrs: object
+    _ragged_versions: object
+    _state_data_ptrs: object
+    _state_versions: object
     _cache_provenance: object
     _cache_data_ptrs: object
     _cache_versions: object
@@ -1591,7 +1618,33 @@ def _require_translation_binding(binding):
     if (not isinstance(binding, A4TranslationBinding)
             or getattr(binding, '_token', None) is not _TRANSLATION_BINDING_TOKEN):
         raise A4SchemaError('untrusted A4 translation binding')
+    ragged = binding.ragged
+    state = binding.state
     cache = binding.cache
+    if _is_tensor(ragged.symbols):
+        if (binding._ragged_data_ptrs != ragged.data_ptrs()
+                or binding._state_data_ptrs != state.data_ptrs()):
+            raise A4SchemaError('bound resident source storage changed')
+        ragged_versions = {
+            name: int(getattr(ragged, name)._version)
+            for name in _ARRAY_FIELDS
+        }
+        state_versions = {
+            name: int(getattr(state, name)._version)
+            for name in _TRANSLATION_ARRAY_FIELDS
+        }
+        if (binding._ragged_versions != ragged_versions
+                or binding._state_versions != state_versions):
+            raise A4SchemaError('bound resident source values changed')
+        if (getattr(ragged, '_a4_translation_provenance', None)
+                != state.source_provenance):
+            raise A4SchemaError('bound resident source provenance differs')
+    else:
+        if binding._ragged_provenance != _ragged_translation_provenance(ragged):
+            raise A4SchemaError('bound host ragged values changed')
+        if binding._state_provenance != _translation_state_provenance(state):
+            raise A4SchemaError('bound host translation values changed')
+        _validate_translation_ragged_relation(ragged, state)
     if _is_tensor(cache.entry_count):
         if binding._cache_data_ptrs != cache.data_ptrs():
             raise A4SchemaError(
@@ -2114,6 +2167,34 @@ def bind_a4_translation(ragged, state):
     object.__setattr__(binding, 'ragged', ragged)
     object.__setattr__(binding, 'cache', cache)
     object.__setattr__(binding, 'state', state)
+    if ragged_tensor:
+        object.__setattr__(binding, '_ragged_provenance', None)
+        object.__setattr__(binding, '_state_provenance', None)
+        object.__setattr__(binding, '_ragged_data_ptrs', ragged.data_ptrs())
+        object.__setattr__(binding, '_state_data_ptrs', state.data_ptrs())
+        object.__setattr__(
+            binding, '_ragged_versions',
+            {name: int(getattr(ragged, name)._version)
+             for name in _ARRAY_FIELDS},
+        )
+        object.__setattr__(
+            binding, '_state_versions',
+            {name: int(getattr(state, name)._version)
+             for name in _TRANSLATION_ARRAY_FIELDS},
+        )
+    else:
+        object.__setattr__(
+            binding, '_ragged_provenance',
+            _ragged_translation_provenance(ragged),
+        )
+        object.__setattr__(
+            binding, '_state_provenance',
+            _translation_state_provenance(state),
+        )
+        object.__setattr__(binding, '_ragged_data_ptrs', None)
+        object.__setattr__(binding, '_ragged_versions', None)
+        object.__setattr__(binding, '_state_data_ptrs', None)
+        object.__setattr__(binding, '_state_versions', None)
     if _is_tensor(cache.entry_count):
         object.__setattr__(binding, '_cache_provenance', None)
         object.__setattr__(binding, '_cache_data_ptrs', cache.data_ptrs())

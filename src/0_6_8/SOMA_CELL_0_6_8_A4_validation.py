@@ -1,5 +1,5 @@
 # coding: utf-8
-"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.3 slices."""
+"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.4a slices."""
 from __future__ import division
 
 import argparse
@@ -20,6 +20,7 @@ if HERE not in sys.path:
     sys.path.insert(0, HERE)
 
 import SOMA_CELL_0_6_8_gpu_a4 as a4
+import SOMA_CELL_0_6_8_gpu_a4_replication as a44
 import SOMA_CELL_0_6_8_A3_validation as v3
 
 try:
@@ -27,12 +28,13 @@ try:
 except Exception:  # pragma: no cover
     torch = None
 
-RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_3_VALIDATION_RESULTS.json'
-RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_3_validation.csv'
-RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_3_VALIDATION_RESULTS.txt'
+RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_4A_VALIDATION_RESULTS.json'
+RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_4a_validation.csv'
+RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_4A_VALIDATION_RESULTS.txt'
 
 SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4.py',
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication.py',
     'src/0_6_8/SOMA_CELL_0_6_8_A4_validation.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3_scheduler.py',
@@ -340,6 +342,143 @@ def _assert_translation_matches_cells(state, cells, label, atol=2e-12):
         )
 
 
+def _paid_replication_fixture(seed=7801):
+    """Six active Formal066 templates spanning the A4.4a paid gates."""
+    world = v3.make_world(seed=seed, cells=6)
+    cells = world.cells
+    for name, value in (
+        ('genome_replication', True),
+        ('mutation', False),
+        ('proofreading', False),
+        ('external_replicase', False),
+        ('quiescence', False),
+        ('quiescence_effector', False),
+    ):
+        setattr(world.config, name, value)
+
+    near_one = np.nextafter(np.float64(1.0), np.float64(0.0))
+    for ci, cell in enumerate(cells):
+        genome = np.asarray(cell.genomes[0], dtype=np.uint8).copy()
+        copy_length = 8 + ci
+        if len(genome) <= copy_length + 2:
+            raise AssertionError('replication fixture is too close to completion')
+        cell.genomes = [genome.copy()]
+        cell.genome_lesions = [0.025 * (ci + 1)]
+        cell.replication_template = genome.copy()
+        cell.replication_copy = [int(value) for value in genome[:copy_length]]
+        cell.replication_template_lesion = 0.05 * (ci + 1)
+        cell.replication_fractional = 0.125 if ci == 1 else near_one
+        cell.last_replication_symbols = 71 + ci
+        cell.last_effective_error_rate = 0.5 + 0.01 * ci
+        cell.pools[a4.a3.POOL_NUCLEOTIDE] = 0.75
+        cell.pools[a4.a3.POOL_ATP] = 0.75
+        cell._refresh_gene_cache()
+        cell._sync_protein_pool()
+        cell._sync_damage_pool()
+        if cell.role_activity(a4.g2.ROLE_REPLICASE) <= 1e-6:
+            raise AssertionError('replication fixture lacks endogenous replicase')
+
+    atp_gate = float(a4.g2.REPLICATION_ATP_PER_SYMBOL) + 0.022
+    monomer_gate = float(a4.g2.MONOMER_MASS)
+    cells[2].pools[a4.a3.POOL_ATP] = atp_gate
+    cells[3].pools[a4.a3.POOL_ATP] = np.nextafter(atp_gate, 0.0)
+    cells[4].pools[a4.a3.POOL_NUCLEOTIDE] = monomer_gate
+    cells[5].pools[a4.a3.POOL_NUCLEOTIDE] = np.nextafter(
+        monomer_gate, 0.0,
+    )
+    config = a4.GPU068A4Config(
+        max_cells=6, max_sequences=18, max_symbols=16384,
+        max_sequence_symbols=a4.MAX_FROZEN_GENOME_SYMBOLS,
+        max_proteins_per_cell=64,
+    )
+    return world, cells, config, 1e-9
+
+
+def _paid_replication_binding(cells, model_config, config):
+    ragged = a4.FullFidelityA4GenomeAdapter(config).pack_cells(cells)
+    state = a4.pack_a4_translation_state(
+        cells, ragged, model_config, config,
+    )
+    return ragged, state, a4.bind_a4_translation(ragged, state)
+
+
+def _torch_cuda_cumsum_call(device, fn):
+    """Call a CUDA-cumsum path while preserving global determinism policy."""
+    if torch is None or torch.device(device).type != 'cuda':
+        return fn()
+    deterministic = torch.are_deterministic_algorithms_enabled()
+    warn_only = torch.is_deterministic_algorithms_warn_only_enabled()
+    if deterministic:
+        # PyTorch 2.5 CUDA cumsum has no deterministic implementation.  The
+        # cache itself is independently compared with the frozen NumPy result.
+        torch.use_deterministic_algorithms(False)
+    try:
+        return fn()
+    finally:
+        if deterministic:
+            torch.use_deterministic_algorithms(True, warn_only=warn_only)
+
+
+def _bind_a4_translation_resident(ragged, state):
+    return _torch_cuda_cumsum_call(
+        ragged.symbols.device,
+        lambda: a4.bind_a4_translation(ragged, state),
+    )
+
+
+def _paid_replication_elongation_torch(binding, dt, config):
+    return _torch_cuda_cumsum_call(
+        binding.state.pools.device,
+        lambda: a44.paid_replication_elongation_torch(binding, dt, config),
+    )
+
+
+def _assert_paid_replication_cpu_parity(plan, before_cells, cpu_cells, label):
+    if int(plan.cell_count) != len(before_cells):
+        raise AssertionError('%s cell count differs' % label)
+    for ci, (before, actual) in enumerate(zip(before_cells, cpu_cells)):
+        expected = copy.deepcopy(before)
+        count = int(plan.append_count[ci])
+        appended = [int(value) for value in plan.append_symbols[ci, :count]]
+        expected.replication_copy.extend(appended)
+        expected.pools[:] = np.asarray(plan.pools_after[ci], dtype=np.float64)
+        expected.replication_fractional = float(
+            plan.replication_fractional_after[ci]
+        )
+        expected.last_replication_symbols = int(
+            plan.last_replication_symbols[ci]
+        )
+        expected.last_effective_error_rate = float(
+            plan.last_effective_error_rate[ci]
+        )
+        if actual.replication_copy[len(before.replication_copy):] != appended:
+            raise AssertionError('%s cell[%d] copied suffix differs' % (label, ci))
+        v3.assert_recursive_close(
+            expected.state_dict(), actual.state_dict(),
+            atol=2e-12, rtol=0.0,
+            path='%s.cell[%d]' % (label, ci),
+        )
+
+
+def _assert_replication_failure_atomic(kind, binding, fn, label):
+    ragged_before = binding.ragged.state_dict()
+    state_before = binding.state.state_dict()
+    cache_before = binding.cache.state_dict()
+    _assert_raises(kind, fn)
+    v3.assert_recursive_close(
+        ragged_before, binding.ragged.state_dict(), atol=0.0, rtol=0.0,
+        path='%s.ragged' % label,
+    )
+    v3.assert_recursive_close(
+        state_before, binding.state.state_dict(), atol=0.0, rtol=0.0,
+        path='%s.state' % label,
+    )
+    v3.assert_recursive_close(
+        cache_before, binding.cache.state_dict(), atol=0.0, rtol=0.0,
+        path='%s.cache' % label,
+    )
+
+
 def test_api_scope():
     required = (
         'GPU068A4Config', 'A4RaggedGenomeBatch',
@@ -355,6 +494,16 @@ def test_api_scope():
     missing = [name for name in required if not hasattr(a4, name)]
     if missing:
         raise AssertionError('missing A4 API: %s' % missing)
+    replication_required = (
+        'A4ReplicationError', 'A4ReplicationScopeError',
+        'A4PaidElongationPlan', 'validate_a4_paid_elongation_plan',
+        'paid_replication_elongation_numpy',
+        'paid_replication_elongation_torch',
+        'paid_replication_elongation_plan',
+    )
+    missing = [name for name in replication_required if not hasattr(a44, name)]
+    if missing:
+        raise AssertionError('missing A4.4a API: %s' % missing)
     if a4.FULL_GPU_WORLD_STEP is not False:
         raise AssertionError('A4.1 must not claim full GPU world-step')
     if hasattr(a4.A4GeneCacheBatch, 'from_state_dict'):
@@ -367,9 +516,16 @@ def test_api_scope():
         raise AssertionError('A4.3 translation plan status is missing')
     if a4.PORT_STATUS.get('genome_replication') != 'cpu-authoritative-next-a4-slice':
         raise AssertionError('replication authority changed in representation slice')
-    return '%s / %s + %s / full_gpu=false' % (
-        a4.BUILD, a4.SCHEMA_VERSION,
+    if a44.BUILD != 'SOMA-CELL 0.6.8-GPU A4.4a':
+        raise AssertionError('A4.4a build identity differs')
+    if a44.SCHEMA_VERSION != '0.6.8-GPU-A4.4a-paid-dna-elongation-plan':
+        raise AssertionError('A4.4a schema identity differs')
+    if a44.FULL_GPU_WORLD_STEP is not False:
+        raise AssertionError('A4.4a must not claim full GPU world-step')
+    return '%s / %s + %s + %s / full_gpu=false' % (
+        a44.BUILD, a4.SCHEMA_VERSION,
         a4.GENE_CACHE_SCHEMA_VERSION + ' + ' + a4.TRANSLATION_SCHEMA_VERSION,
+        a44.SCHEMA_VERSION,
     )
 
 
@@ -1280,6 +1436,374 @@ def test_a3_focused_regression():
     return '5 promoted-A3 focused regressions PASS'
 
 
+def test_a44_paid_replication_formal066_cpu_oracle_and_nonmutation():
+    world, cells, config, dt = _paid_replication_fixture()
+    if any(type(cell).__name__ != 'Formal066ProtoCell' for cell in cells):
+        raise AssertionError('A4.4a CPU oracle is not Formal066')
+    world_before = v3.pickle_clone(world.state_dict())
+    rng_before = v3.pickle_clone(world.rng.bit_generator.state)
+    ragged, state, binding = _paid_replication_binding(
+        cells, world.config, config,
+    )
+    ragged_before = ragged.state_dict()
+    state_before = state.state_dict()
+    cache_before = binding.cache.state_dict()
+    plan = a44.paid_replication_elongation_numpy(
+        binding, dt, world.config,
+    )
+    v3.assert_recursive_close(
+        world_before, world.state_dict(), atol=0.0, rtol=0.0,
+        path='a44.numpy_world',
+    )
+    v3.assert_recursive_close(
+        rng_before, world.rng.bit_generator.state, atol=0.0, rtol=0.0,
+        path='a44.numpy_rng',
+    )
+    v3.assert_recursive_close(
+        ragged_before, ragged.state_dict(), atol=0.0, rtol=0.0,
+        path='a44.numpy_ragged',
+    )
+    v3.assert_recursive_close(
+        state_before, state.state_dict(), atol=0.0, rtol=0.0,
+        path='a44.numpy_state',
+    )
+    v3.assert_recursive_close(
+        cache_before, binding.cache.state_dict(), atol=0.0, rtol=0.0,
+        path='a44.numpy_cache',
+    )
+
+    cpu_cells = copy.deepcopy(cells)
+    cpu_before = copy.deepcopy(cpu_cells)
+    for cell in cpu_cells:
+        cell._replicate_genome(world, dt, world.config)
+    _assert_paid_replication_cpu_parity(
+        plan, cpu_before, cpu_cells, 'a44.formal066',
+    )
+    v3.assert_recursive_close(
+        world_before, world.state_dict(), atol=0.0, rtol=0.0,
+        path='a44.cpu_oracle_world',
+    )
+    v3.assert_recursive_close(
+        rng_before, world.rng.bit_generator.state, atol=0.0, rtol=0.0,
+        path='a44.cpu_oracle_rng',
+    )
+    return '6 direct Formal066 rows exact; RNG/world/ragged/state/cache unchanged'
+
+
+def test_a44_requested_zero_and_exact_resource_boundaries():
+    world, cells, config, dt = _paid_replication_fixture(seed=7802)
+    _, _, binding = _paid_replication_binding(cells, world.config, config)
+    plan = a44.paid_replication_elongation_numpy(
+        binding, dt, world.config,
+    )
+    requested = [int(value) for value in plan.requested_symbols[:6]]
+    appended = [int(value) for value in plan.append_count[:6]]
+    if requested != [1, 0, 1, 1, 1, 1]:
+        raise AssertionError('requested-symbol boundary rows differ: %s' % requested)
+    if appended != [1, 0, 1, 0, 1, 0]:
+        raise AssertionError('paid resource gates differ: %s' % appended)
+
+    cpu_cells = copy.deepcopy(cells)
+    cpu_before = copy.deepcopy(cpu_cells)
+    for cell in cpu_cells:
+        cell._replicate_genome(world, dt, world.config)
+    _assert_paid_replication_cpu_parity(
+        plan, cpu_before, cpu_cells, 'a44.boundary_cpu',
+    )
+
+    if not np.array_equal(plan.pools_after[1], cells[1].pools):
+        raise AssertionError('requested=0 changed a paid pool')
+    if not (0.125 < float(plan.replication_fractional_after[1]) < 1.0):
+        raise AssertionError('requested=0 fractional continuation was lost')
+    atp_index = int(a4.a3.POOL_ATP)
+    nucleotide_index = int(a4.a3.POOL_NUCLEOTIDE)
+    v3.assert_recursive_close(
+        float(plan.pools_after[2, atp_index]), 0.022,
+        atol=4e-18, rtol=0.0, path='a44.atp_exact_after',
+    )
+    if float(plan.pools_after[3, atp_index]) != float(cells[3].pools[atp_index]):
+        raise AssertionError('ATP nextafter exhaustion was not atomic')
+    v3.assert_recursive_close(
+        float(plan.pools_after[4, nucleotide_index]), 0.0,
+        atol=0.0, rtol=0.0, path='a44.monomer_exact_after',
+    )
+    if (float(plan.pools_after[5, nucleotide_index])
+            != float(cells[5].pools[nucleotide_index])):
+        raise AssertionError('monomer nextafter exhaustion was not atomic')
+    return 'requested=0 + ATP/monomer exact pass and nextafter exhaustion exact'
+
+
+def test_a44_paid_replication_numpy_torch_devices_and_scope_readback():
+    if torch is None:
+        raise AssertionError('PyTorch is required for A4.4a')
+    if _REQUIRE_CUDA and not torch.cuda.is_available():
+        raise AssertionError('CUDA required but unavailable; CPU fallback forbidden')
+    world, cells, config, dt = _paid_replication_fixture(seed=7803)
+    ragged, state, binding = _paid_replication_binding(
+        cells, world.config, config,
+    )
+    expected = a44.paid_replication_elongation_numpy(
+        binding, dt, world.config,
+    )
+    source = '\n'.join(inspect.getsource(item) for item in (
+        a44.paid_replication_elongation_torch,
+        a44._torch_replicase,
+        a44._validate_plan_metadata,
+    ))
+    forbidden = ('.item(', '.cpu(', '.numpy(', '.tolist(',
+                 'nonzero(', 'masked_select(', 'unique(')
+    found = [token for token in forbidden if token in source]
+    if found:
+        raise AssertionError('resident replication contains host/dynamic op: %s' % found)
+
+    inactive = copy.deepcopy(cells[0])
+    inactive.replication_template = None
+    inactive.replication_copy = []
+    inactive.replication_template_lesion = 0.0
+    inactive.replication_fractional = 0.0
+    inactive_ragged, inactive_state, _ = _paid_replication_binding(
+        [inactive], world.config, config,
+    )
+
+    devices = ['cpu']
+    if torch.cuda.is_available():
+        devices.append('cuda')
+    for device in devices:
+        resident_ragged = ragged.to_torch(device=device)
+        resident_state = state.to_torch(device=device)
+        ragged_ptrs = resident_ragged.data_ptrs()
+        state_ptrs = resident_state.data_ptrs()
+        resident_binding = _bind_a4_translation_resident(
+            resident_ragged, resident_state,
+        )
+        cache_ptrs = resident_binding.cache.data_ptrs()
+        plan = _paid_replication_elongation_torch(
+            resident_binding, dt, world.config,
+        )
+        plan_ptrs = plan.data_ptrs()
+        if any(getattr(plan, name).device.type != device
+               for name in a44._PLAN_ARRAY_FIELDS):
+            raise AssertionError('%s replication output escaped device' % device)
+        if device == 'cuda':
+            torch.cuda.synchronize()
+        back = plan.to_numpy()
+        v3.assert_recursive_close(
+            expected.state_dict(), back.state_dict(),
+            atol=2e-12, rtol=0.0, path='a44.plan.%s' % device,
+        )
+        if ragged_ptrs != resident_ragged.data_ptrs():
+            raise AssertionError('%s replication reallocated ragged input' % device)
+        if state_ptrs != resident_state.data_ptrs():
+            raise AssertionError('%s replication reallocated state input' % device)
+        if cache_ptrs != resident_binding.cache.data_ptrs():
+            raise AssertionError('%s replication reallocated cache input' % device)
+        if plan_ptrs != plan.data_ptrs():
+            raise AssertionError('%s plan readback changed resident pointers' % device)
+        v3.assert_recursive_close(
+            ragged.state_dict(), resident_ragged.to_numpy().state_dict(),
+            atol=0.0, rtol=0.0, path='a44.ragged_source.%s' % device,
+        )
+        v3.assert_recursive_close(
+            state.state_dict(), resident_state.to_numpy().state_dict(),
+            atol=0.0, rtol=0.0, path='a44.state_source.%s' % device,
+        )
+
+        invalid_binding = _bind_a4_translation_resident(
+            inactive_ragged.to_torch(device=device),
+            inactive_state.to_torch(device=device),
+        )
+        invalid_plan = _paid_replication_elongation_torch(
+            invalid_binding, dt, world.config,
+        )
+        _assert_raises(a44.A4ReplicationScopeError, invalid_plan.to_numpy)
+    return 'NumPy/Torch %s fp64 exact; fixed resident ops/pointers and scope readback rejection' % '/'.join(devices)
+
+
+def test_a44_capacity_scope_fail_closed_and_a3_authority():
+    world, cells, roomy_config, dt = _paid_replication_fixture(seed=7804)
+    single = [cells[0]]
+    probe = a4.FullFidelityA4GenomeAdapter(roomy_config).pack_cells(single)
+    common = {
+        'max_cells': 1,
+        'max_sequences': int(probe.sequence_count),
+        'max_sequence_symbols': int(roomy_config.max_sequence_symbols),
+        'max_proteins_per_cell': int(roomy_config.max_proteins_per_cell),
+    }
+    exact_config = a4.GPU068A4Config(
+        max_symbols=int(probe.symbol_count) + 1, **common
+    )
+    exact_ragged, _, exact_binding = _paid_replication_binding(
+        single, world.config, exact_config,
+    )
+    exact_plan = a44.paid_replication_elongation_numpy(
+        exact_binding, dt, world.config,
+    )
+    if (int(exact_ragged.symbol_capacity) != int(exact_ragged.symbol_count) + 1
+            or int(exact_plan.append_count[0]) != 1):
+        raise AssertionError('one-future-symbol exact capacity did not pass')
+
+    forged_plan = exact_plan.clone()
+    forged_plan.pools_after[0, a4.a3.POOL_NUCLEOTIDE] = -1e-12
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a44.validate_a4_paid_elongation_plan(forged_plan),
+    )
+
+    host_ragged = exact_ragged.clone()
+    host_state = exact_binding.state.clone()
+    host_ragged_binding = a4.bind_a4_translation(host_ragged, host_state)
+    host_ragged.symbols[0] = (
+        int(host_ragged.symbols[0]) + 1
+    ) % a4.ALPHABET_SIZE
+    _assert_replication_failure_atomic(
+        a4.A4SchemaError, host_ragged_binding,
+        lambda: a44.paid_replication_elongation_numpy(
+            host_ragged_binding, dt, world.config,
+        ),
+        'a44.host_post_bind_ragged',
+    )
+    host_ragged = exact_ragged.clone()
+    host_state = exact_binding.state.clone()
+    host_state_binding = a4.bind_a4_translation(host_ragged, host_state)
+    host_state.pools[0, a4.a3.POOL_FUEL] += 1e-9
+    _assert_replication_failure_atomic(
+        a4.A4SchemaError, host_state_binding,
+        lambda: a44.paid_replication_elongation_numpy(
+            host_state_binding, dt, world.config,
+        ),
+        'a44.host_post_bind_state',
+    )
+
+    trust_device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    resident_ragged_binding = _bind_a4_translation_resident(
+        exact_ragged.to_torch(device=trust_device),
+        exact_binding.state.to_torch(device=trust_device),
+    )
+    resident_ragged_binding.ragged.symbols[0] = torch.remainder(
+        resident_ragged_binding.ragged.symbols[0].to(torch.int64) + 1,
+        a4.ALPHABET_SIZE,
+    ).to(torch.uint8)
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: _paid_replication_elongation_torch(
+            resident_ragged_binding, dt, world.config,
+        ),
+    )
+    resident_state_binding = _bind_a4_translation_resident(
+        exact_ragged.to_torch(device=trust_device),
+        exact_binding.state.to_torch(device=trust_device),
+    )
+    resident_state_binding.state.pools[0, a4.a3.POOL_FUEL] += 1e-9
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: _paid_replication_elongation_torch(
+            resident_state_binding, dt, world.config,
+        ),
+    )
+
+    full_config = a4.GPU068A4Config(
+        max_symbols=int(probe.symbol_count), **common
+    )
+    full_ragged, full_state, full_binding = _paid_replication_binding(
+        single, world.config, full_config,
+    )
+    world_before = v3.pickle_clone(world.state_dict())
+    rng_before = v3.pickle_clone(world.rng.bit_generator.state)
+    _assert_replication_failure_atomic(
+        a4.A4CapacityError, full_binding,
+        lambda: a44.paid_replication_elongation_numpy(
+            full_binding, dt, world.config,
+        ),
+        'a44.capacity_plus_one',
+    )
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    resident_full = _bind_a4_translation_resident(
+        full_ragged.to_torch(device=device),
+        full_state.to_torch(device=device),
+    )
+    resident_capacity_plan = _paid_replication_elongation_torch(
+        resident_full, dt, world.config,
+    )
+    _assert_raises(a4.A4CapacityError, resident_capacity_plan.to_numpy)
+
+    flag_cases = (
+        ('genome_replication', False),
+        ('mutation', True),
+        ('proofreading', True),
+        ('external_replicase', True),
+        ('quiescence', True),
+        ('quiescence_effector', True),
+    )
+    for name, value in flag_cases:
+        unsupported = copy.deepcopy(world.config)
+        setattr(unsupported, name, value)
+        _assert_replication_failure_atomic(
+            a44.A4ReplicationScopeError, exact_binding,
+            lambda unsupported=unsupported: a44.paid_replication_elongation_numpy(
+                exact_binding, dt, unsupported,
+            ),
+            'a44.unsupported.%s' % name,
+        )
+
+    inactive = copy.deepcopy(cells[0])
+    inactive.replication_template = None
+    inactive.replication_copy = []
+    inactive.replication_template_lesion = 0.0
+    inactive.replication_fractional = 0.0
+    _, _, inactive_binding = _paid_replication_binding(
+        [inactive], world.config, roomy_config,
+    )
+    _assert_replication_failure_atomic(
+        a44.A4ReplicationScopeError, inactive_binding,
+        lambda: a44.paid_replication_elongation_numpy(
+            inactive_binding, dt, world.config,
+        ),
+        'a44.inactive',
+    )
+
+    completing = copy.deepcopy(cells[0])
+    completing.replication_copy = [
+        int(value) for value in completing.replication_template[:-1]
+    ]
+    completing.replication_fractional = np.nextafter(1.0, 0.0)
+    _, _, completing_binding = _paid_replication_binding(
+        [completing], world.config, roomy_config,
+    )
+    _assert_replication_failure_atomic(
+        a44.A4ReplicationScopeError, completing_binding,
+        lambda: a44.paid_replication_elongation_numpy(
+            completing_binding, dt, world.config,
+        ),
+        'a44.completion',
+    )
+
+    expected_status = (
+        'a4.4a-active-template-mutation-free-proofreading-free-'
+        'noncompletion-paid-plan-not-integrated-cpu-authoritative'
+    )
+    if a44.PORT_STATUS.get('genome_replication') != expected_status:
+        raise AssertionError('A4.4a CPU authority status differs')
+    if (a44.FULL_GPU_WORLD_STEP is not False
+            or a44.PORT_STATUS.get('full_gpu_world_step') is not False):
+        raise AssertionError('A4.4a claimed full GPU authority')
+    if a4.PORT_STATUS.get('genome_replication') != 'cpu-authoritative-next-a4-slice':
+        raise AssertionError('A4 core authority was changed')
+    if getattr(v3.a3_module(), 'FULL_GPU_WORLD_STEP', None) is not False:
+        raise AssertionError('A3 full-world authority changed')
+    event_order = v3._event_order()
+    if event_order.count('replication_cpu') != 1:
+        raise AssertionError('A3 CPU replication scheduler authority changed')
+    v3.assert_recursive_close(
+        world_before, world.state_dict(), atol=0.0, rtol=0.0,
+        path='a44.fail_closed_world',
+    )
+    v3.assert_recursive_close(
+        rng_before, world.rng.bit_generator.state, atol=0.0, rtol=0.0,
+        path='a44.fail_closed_rng',
+    )
+    return 'future-symbol exact/+1 atomic; 4 post-bind + forged-plan rejects; 6 flags + inactive/completion; A3 CPU authority'
+
+
 TESTS = (
     test_api_scope,
     test_source_hash_inputs_present,
@@ -1298,6 +1822,10 @@ TESTS = (
     test_a4_paid_translation_full_mro_signals_and_behavioural_quiescence,
     test_a4_paid_translation_early_gate_capacity_and_schema,
     test_a3_focused_regression,
+    test_a44_paid_replication_formal066_cpu_oracle_and_nonmutation,
+    test_a44_requested_zero_and_exact_resource_boundaries,
+    test_a44_paid_replication_numpy_torch_devices_and_scope_readback,
+    test_a44_capacity_scope_fail_closed_and_a3_authority,
 )
 
 
@@ -1325,13 +1853,16 @@ def run_all(write=False, output_dir=None):
     failed = sum(row['status'] == 'FAIL' for row in rows)
     elapsed = time.time() - started
     payload = {
-        'build': a4.BUILD,
+        'build': a44.BUILD,
         'schema': {
             'ragged_genome': a4.SCHEMA_VERSION,
             'gene_cache': a4.GENE_CACHE_SCHEMA_VERSION,
             'translation_state': a4.TRANSLATION_SCHEMA_VERSION,
+            'paid_replication_elongation': a44.SCHEMA_VERSION,
         },
-        'development_slice': 'A4.3-resident-paid-translation-plan',
+        'development_slice': (
+            'A4.4a-pre-existing-template-paid-dna-elongation-plan'
+        ),
         'promoted_baseline_unchanged': 'SOMA-CELL 0.6.8-GPU A3',
         'full_gpu_world_step': False,
         'require_cuda': bool(_REQUIRE_CUDA),
@@ -1352,7 +1883,7 @@ def run_all(write=False, output_dir=None):
             writer.writeheader()
             writer.writerows(rows)
         lines = [
-            'SOMA-CELL 0.6.8-GPU A4.3 VALIDATION',
+            '%s VALIDATION' % a44.BUILD,
             '%d PASS / %d FAIL / %d TOTAL' % (passed, failed, len(rows)),
             'elapsed %.6fs' % elapsed,
             '',

@@ -1,6 +1,6 @@
-# SOMA-CELL 0.6.8-GPU A4.3 事前登録
+# SOMA-CELL 0.6.8-GPU A4.4a 事前登録（A4.3継承）
 
-状態: 開発用の最小slice。A4昇格判定ではない。
+状態: A4.3までを継承する開発用の最小slice。A4昇格判定ではない。
 
 ## 継承する基盤
 
@@ -99,7 +99,69 @@ negative biology許容やclipではなく、より大きい負値はfail closed�
   いずれかが違えばFAIL。
 - A3 `translation_cpu`とreplication authorityは維持し、速度向上を主張しない。
 
+## A4.4a追加仮説
+
+既にactiveなreplication templateとpartial copyがあり、mutation、proofreading、
+external replicase、quiescence、quiescence effectorを全て無効にし、このcallで
+template completionへ到達しない場合、DNA伸長の物質支払いをfixed-shape
+NumPy/Torch fp64 planとしてCPU正本どおり再現できる。
+
+これはreplication全体の移植ではない。template選択、completion、新genome追加、
+lesion継承、gene cache refresh、突然変異、hydrolysis、RNG、scheduler commitは
+今回の対象外とする。
+
+## A4.4aで実装するもの
+
+- Formal066の`eco66_replication_rate_scale`によるdt倍率
+- post-translation active protein挿入順からのendogenous replicase activity
+- nucleotide/ATP saturationとfractional carry
+- integer requestをresource gate前にfractionalから除く凍結順序
+- template byte順のコピー
+- 1 symbolあたり`MONOMER_MASS` nucleotideと`0.0012 ATP`の支払い
+- nucleotide exact gateとATP reserve `0.022`を含む逐次resource gate
+- `last_replication_symbols`と、mutation無効時にも更新される
+  `last_effective_error_rate`
+- fixed capacity事前検査、入力非変更、CPU/Torch CPU/CUDA独立照合
+
+## A4.4aで実装しないもの
+
+- inactive cellのtemplate選択
+- proofreading、external replicase、inherited/behavioural quiescence
+- substitution、insertion、deletion、duplication、inversion、transposition
+- copy completion、新complete genome、lesion/cycle/cache更新
+- genome hydrolysisとRNG tape
+- ragged/CPU cellへのworld commit、A3 scheduler差し替え
+- fp32、compile、custom CUDA、formal benchmark、速度向上主張
+
+CUDAの有効経路ではhidden D2Hを禁止する。device上でscope外を検出した場合は、
+fixed error codeを結果へ保持し、明示readbackまたは将来のcommit境界で必ずrejectする。
+scope外のrowを成功扱いせず、途中だけGPUで進めて同じreplication eventをCPUで
+再実行することも禁止する。
+
+## A4.4a固定テスト
+
+1. Active partial-copy Formal066 cellをCPU `_replicate_genome`へ直接通し、append
+   bytes/count、nucleotide/ATP、fractional carry、replication telemetryを照合する。
+2. requested=0、nucleotide/ATPのexact thresholdと`nextafter`直下、途中枯渇を固定する。
+3. CPU oracleのRNG bit-generator state、world dissipated energy、complete genomes、
+   lesions、gene cache、入力ragged/cache/physiologyが完全不変であることを確認する。
+4. NumPy、Torch CPU、明示RTX CUDA fp64を照合し、resident入力pointerとdeviceを確認する。
+5. exact symbol capacityはPASS、capacity+1、inactive template、completion、延期flagは
+   atomic fail closedとする。
+6. A4.1〜A4.3の17テストとfocused A3 regressionを継続PASSさせる。
+
+## A4.4a判定
+
+- 全テストが明示CUDAを含めPASSした場合だけ、A4.4aを「既存templateの
+  mutation-free/proofreading-free/non-completing paid elongation pure plan、未統合」
+  と記録する。
+- CPU支払順、fractional carry、RNG不変、material ledger、CUDA fp64のいずれかが
+  違えばA4.3を維持する。
+- `replication_cpu`、promoted A3、`full_gpu_world_step=false`は変更しない。
+
 ## 次の小さいslice
 
-replication/proofreading/material mutationのstateとRNG計画へ進む。scheduler置換は、
-連続したresident chainをhost/device往復なしでcommitできる段階まで延期する。
+A4.4bでは同じnon-completion境界にproofreadingとquiescence/external replicaseを
+追加する。その後にtemplate/RNG、completion/structural mutation、hydrolysisを
+別sliceで進める。scheduler置換は、連続したresident chainをhost/device往復なしで
+atomic commitできる段階まで延期する。
