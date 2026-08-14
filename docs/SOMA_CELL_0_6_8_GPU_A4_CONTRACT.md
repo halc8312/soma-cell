@@ -1,6 +1,6 @@
 # SOMA-CELL 0.6.8-GPU A4 contract
 
-Status: A4 development contract through slice A4.5b. This is not an A4
+Status: A4 development contract through slice A4.6a. This is not an A4
 promotion.
 
 ## Authority
@@ -257,6 +257,54 @@ batch-global capacity check retains its later precedence and may instead make
 the whole invalid batch code 4.  Neither result is exposed as a partial start
 plus a second CPU replication call.
 
+## A4.6a scope
+
+A4.6a adds one separate mutation-free completion descriptor for a
+pre-existing active, non-empty template.  The template must be incomplete on
+entry and every used row must reach completion in this call after the frozen
+ordered resource gates.  A non-completing or otherwise unsupported row makes
+the whole descriptor event invalid.  The legacy elongation and substitution
+APIs continue to report completion as scope code 3; completion is reachable
+only through the public `paid_replication_completion_plan` dispatch and no
+public mode flag is exposed.
+
+The completed polymer is the exact existing paid partial-copy prefix followed
+by this call's paid append.  It is never reconstructed by copying the template,
+so substitutions produced by earlier calls are preserved.  For each successful
+row the fixed plan records:
+
+- `completion_events`, `completed_symbols`, and `completed_lengths`;
+- the frozen mutation-free inherited lesion
+  `template_lesion * (0.28 + 0.22 * (1 - proof_fraction)) +
+  effective_error * completed_length * 0.06`;
+- `replication_cycle_deltas = 1`;
+- `topology_sequence_deltas = -1`, because template plus copy become one
+  complete genome sequence; and
+- `topology_symbol_deltas = append_count - completed_length`, the net arena
+  change from the original active representation, not an additional material
+  payment.
+
+Fractional progress resets to zero in the descriptor.  Nucleotide, ATP,
+proofreading ATP, last-copy count, and effective-error telemetry retain the
+same ordered A4.4b calculation.  With `mutation=false`, frozen
+`mutate_sequence` returns before RNG or structural/material changes, so the
+CPU RNG is byte-exact unchanged.
+
+This is a payload/ledger/topology descriptor, not a state commit.  It does not
+mutate or re-attest the ragged arena, append a live complete genome or lesion,
+refresh the gene cache, apply `novel_path_first_age`, advance the live RNG,
+update a CPU cell, or replace the scheduler.  Conceptual post-state packing
+and A4.2 re-decode are validation evidence only.  Actual atomic arena/cache/
+physiology reissue remains a later bounded slice.
+
+The generic plan validator proves fixed schema, canonical tails, paid suffix,
+range, and topology self-consistency.  It does not accept a plan as commit
+authority or rederive the historical completed prefix and lesion from a source
+binding.  A future atomic commit must consume only an internally generated
+plan and revalidate those two semantic relations against the attested source;
+caller-forged but self-consistent payload/lesion values are outside A4.6a's
+trust boundary.
+
 ## Fail-closed invariants
 
 Ragged foundation invariants remain unchanged:
@@ -347,17 +395,16 @@ Replication-elongation-plan invariants are:
   scheduler receipts remain unchanged.
 - A4.4b's mutation-free plan still rejects template selection.  A4.5b may plan
   only the attested index-zero, mutation-enabled start above; every other
-  selection, completion, or postponed mechanism remains explicitly
-  unsupported and cannot fall through to a partial GPU result plus a second
-  CPU replication call.
+  selection remains explicitly unsupported.  A4.6a may describe only the
+  mutation-free, pre-existing-active, all-row completion above.  No path may
+  fall through to a partial GPU result plus a second CPU replication call.
 
-## Explicit exclusions through A4.5b
+## Explicit exclusions through A4.6a
 
 - No scheduler/world integration or CPU-cell protein/material commit.
-- No mutation-free inactive-template start, actual template/copy arena commit,
-  completion transaction, new complete genome, lesion inheritance, gene-cache
-  refresh, structural/material mutation, symbol hydrolysis, or device RNG
-  kernel.
+- No mutation-free inactive-template start, actual template/copy/completed-
+  genome arena commit, live lesion/cycle/cache/novel-path update, structural/
+  material mutation, symbol hydrolysis, or device RNG kernel.
 - No scheduler replacement and no change to A3 `gene_refresh`,
   `translation_cpu`, or `replication_cpu` authority.
 - No division, death, corpse/eDNA/HGT, neural, or causal-system port.
@@ -365,7 +412,7 @@ Replication-elongation-plan invariants are:
   CUDA, multi-stream, multi-GPU, or online-GPU abstraction.
 - No formal 13-spec/65-measurement benchmark and no speedup claim.
 
-## Acceptance through A4.5b
+## Acceptance through A4.6a
 
 - All A4.1 lossless/corruption/capacity/residency tests remain PASS.
 - Nested valid markers and invalid-outer/valid-inner recovery match frozen
@@ -441,7 +488,21 @@ Replication-elongation-plan invariants are:
   substitution results.  Start-mask/index tampering is rejected, while
   zero/two-genome, replicase-gated, mutation-off, and completing starts remain
   explicit CPU scope.
-- All 31 A4 development tests and the focused A3 regressions pass while A3
+- The inherited 31 A4.5b development tests and focused A3 regressions remain
+  PASS while A3 `replication_cpu` remains the only scheduler authority.
+
+- Two pre-existing active Formal066 rows complete with the exact historical
+  partial-copy prefix, paid suffix, pools, proofreading telemetry, lesion,
+  cycle/reset semantics, and unchanged RNG.
+- Conceptual post-state sequence/symbol/lesion counts equal the declared
+  topology deltas, and A4.2 decode of that conceptual arena matches the CPU
+  post-completion gene cache without making it live authority.
+- NumPy, Torch CPU, and explicit RTX CUDA fp64 completion descriptors agree;
+  resident input pointers and values remain unchanged.
+- Legacy completion remains code 3.  Noncompletion, mixed batches, mutation,
+  inactive start, and ten structural/schema corruptions fail closed; exact
+  current symbol capacity passes without double-counting the paid append.
+- All 34 A4 development tests and focused A3 regressions pass while A3
   `replication_cpu` remains the only scheduler authority.
 
 Known A4.4b integration blockers are recorded rather than hidden.  On the
@@ -461,7 +522,7 @@ division was rejected as disproportionate complexity.  The launch-heavy path
 must be redesigned and remeasured before scheduler authority, promotion, or
 any speedup claim.
 
-Actual ragged/RNG commit, mutation-free inactive start, completion/structural
-mutation, and hydrolysis remain separate later slices. Scheduler replacement remains later,
+Actual ragged/RNG/cache commit, mutation-free inactive start, structural
+completion mutation, and hydrolysis remain separate later slices. Scheduler replacement remains later,
 after a contiguous resident chain can commit without recreating A3's per-cell
 host/device round trips.

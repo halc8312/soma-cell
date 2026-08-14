@@ -1,5 +1,5 @@
 {
-  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.5b-template-start-transactional-substitution-rng-tape-plan",
+  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.6a-mutation-free-replication-completion-descriptor",
   "status": "development_slice_not_promoted",
   "full_gpu_world_step": false,
   "authoritative_state": "A4RaggedGenomeBatch",
@@ -143,7 +143,7 @@
     ]
   },
   "derived_paid_dna_elongation_plan": {
-    "schema_version": "0.6.8-GPU-A4.5b-template-start-substitution-plan",
+    "schema_version": "0.6.8-GPU-A4.6a-replication-completion-plan",
     "ownership": "pure_nonserializable_plan_not_world_or_save_authority",
     "source_binding": "same_attested_A4TranslationBinding_as_the_validated_ragged_cache_and_physiology_snapshot",
     "supported_scope": [
@@ -161,17 +161,19 @@
       "replication_entry_ATP_is_nonnegative",
       "positive_progress_is_outside_the_4096_eps64_integer_ambiguity_band",
       "derived_replicase_and_proofreading_ATP_comparisons_are_outside_the_4096_eps64_relative_ambiguity_band",
-      "copy_remains_incomplete_after_ordered_resource_gates"
+      "legacy_elongation_and_substitution_paths_require_the_copy_to_remain_incomplete_after_ordered_resource_gates",
+      "completion_dispatch_requires_mutation_disabled_preexisting_active_incomplete_on_entry_and_every_used_row_to_complete_in_this_call"
     ],
     "scope_error_codes": {
       "0": "supported",
       "1": "unsupported_zero_or_multiple_genome_start_missing_or_already_complete_template",
       "2": "replicase_gate_not_reached",
       "3": "completion_transaction_required",
-      "4": "fixed_future_sequence_or_symbol_capacity_exceeded",
+      "4": "fixed_future_sequence_symbol_or_lesion_capacity_exceeded",
       "5": "negative_replication_entry_ATP_not_supported",
       "6": "fp64_derived_discrete_boundary_is_cpu_authoritative",
-      "7": "substitution_rng_tape_schedule_or_decision_mismatch"
+      "7": "substitution_rng_tape_schedule_or_decision_mismatch",
+      "8": "completion_descriptor_requires_every_used_row_to_complete"
     },
     "arrays": {
       "cell_ids": {"dtype": "int64", "shape": ["cell_capacity"], "unused": -1},
@@ -189,7 +191,14 @@
       "substitution_events": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
       "template_start_events": {"dtype": "bool", "shape": ["cell_capacity"], "unused": false},
       "selected_template_indices": {"dtype": "int64", "shape": ["cell_capacity"], "unused": -1},
-      "template_storage_symbols": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0}
+      "template_storage_symbols": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
+      "completion_events": {"dtype": "bool", "shape": ["cell_capacity"], "unused": false},
+      "completed_symbols": {"dtype": "uint8", "shape": ["cell_capacity", "append_capacity"], "unused": 0},
+      "completed_lengths": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
+      "new_genome_lesions": {"dtype": "float64", "shape": ["cell_capacity"], "unused": 0.0},
+      "replication_cycle_deltas": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
+      "topology_sequence_deltas": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0},
+      "topology_symbol_deltas": {"dtype": "int64", "shape": ["cell_capacity"], "unused": 0}
     },
     "frozen_order": [
       "scale_dt_by_max_0.25_eco66_replication_rate_scale",
@@ -204,7 +213,9 @@
       "remove_full_integer_request_before_resource_tests",
       "update_proofreading_reduced_effective_error_even_though_mutation_is_disabled",
       "for_each_requested_symbol_in_template_order_test_nucleotide_then_fail_closed_at_a_proofreading_ATP_comparison_band_else_test_ATP_reserve_copy_pay_and_accumulate_proofreading_ATP",
-      "when_the_A4_5b_overlay_is_used_apply_the_CPU_resolved_substitution_mask_in_paid_append_order"
+      "when_the_A4_5b_overlay_is_used_apply_the_CPU_resolved_substitution_mask_in_paid_append_order",
+      "for_the_separate_A4_6a_completion_dispatch_require_every_used_row_to_finish_then_join_the_existing_partial_prefix_with_the_current_paid_append",
+      "with_mutation_disabled_skip_structural_material_RNG_then_compute_the_frozen_inherited_lesion_and_reset_fractional_progress"
     ],
     "payment": {
       "nucleotide_per_symbol": 0.00082,
@@ -229,7 +240,11 @@
       "deterministic A4.4b base consumes zero RNG draws; A4.5b tape preparation advances only an explicit cloned PCG64 state",
       "a template start records index zero plus two future sequence slots and the complete template storage length without mutating the source arena",
       "exact future sequence and symbol capacities including template storage and paid append bytes pass and either capacity one short fails before commit",
-      "unsupported or completion rows are never reported as migrated",
+      "legacy unsupported or completion rows are never reported as migrated",
+      "A4_6a completion output preserves the existing partial prefix and uses the paid append only as its suffix",
+      "A4_6a completion records cycle_delta_one_sequence_delta_minus_one_and_symbol_delta_append_count_minus_completed_length",
+      "A4_6a is a noncommit descriptor and does not reissue ragged cache physiology RNG or CPU cell authority",
+      "the standalone plan validator checks schema tails paid suffix ranges and topology self_consistency but completed_prefix_and_lesion_source_relations_remain_a_future_binding_aware_commit_check",
       "CUDA scope errors remain device-resident until the explicit readback or future commit boundary",
       "scope code 6 or 7 invalidates and rolls back the complete used batch because its rows share one ordered PCG64 stream",
       "no scheduler authority changes and full_gpu_world_step remains false"
@@ -293,7 +308,7 @@
   },
   "cpu_authoritative_after_slice": [
     "paid_translation_world_commit_and_scheduler_event",
-    "replication_mutation_free_inactive_template_start_actual_template_copy_arena_commit_completion_structural_material_mutation_hydrolysis_live_RNG_commit_and_world_commit",
+    "replication_mutation_free_inactive_template_start_actual_template_copy_or_completed_genome_arena_commit_live_lesion_cycle_cache_novel_path_update_structural_material_mutation_hydrolysis_live_RNG_commit_and_world_commit",
     "division_death_corpse_edna_hgt",
     "neural_and_causal_systems"
   ]

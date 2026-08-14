@@ -1,15 +1,15 @@
 # coding: utf-8
-"""A4.5b pure resident template-start and substitution-RNG plan.
+"""A4.6a pure resident replication-completion descriptor.
 
-This deliberately narrow development slice handles a pre-existing active
-replication template or, only in its mutation-enabled tape path, the frozen
-index-zero start from exactly one complete genome.  The partial copy must
-remain incomplete in this call.  It retains deterministic proofreading,
-inherited/behavioural quiescence, an external-replicase contribution, and an
-event-local PCG64 substitution tape.  It does not commit the
-ragged topology, complete a genome, perform structural mutation, advance the
-live world RNG, or replace the A3 scheduler.  Frozen Formal066 CPU behavior
-remains authority.
+This deliberately narrow development slice retains the A4.5b template-start
+and substitution-RNG plan, and adds a separate mutation-free completion path
+for pre-existing active templates.  Every used row in that new path must
+complete in the same call.  Its fixed-shape result describes the completed
+polymer, inherited lesion, cycle delta, and future topology deltas without
+mutating or re-attesting the ragged arena.  It does not perform structural or
+material mutation, refresh the gene cache, advance a live RNG, commit a CPU
+cell, or replace the A3 scheduler.  Frozen Formal066 CPU behavior remains
+authority.
 """
 from __future__ import division
 
@@ -29,10 +29,10 @@ except Exception:  # pragma: no cover - NumPy reference remains importable
     torch = None
 
 
-BUILD = 'SOMA-CELL 0.6.8-GPU A4.5b'
+BUILD = 'SOMA-CELL 0.6.8-GPU A4.6a'
 BUILD_ID = BUILD
-BUILD_LONG = BUILD + ' | template-start and PCG64 substitution-tape plan'
-SCHEMA_VERSION = '0.6.8-GPU-A4.5b-template-start-substitution-plan'
+BUILD_LONG = BUILD + ' | mutation-free replication-completion descriptor'
+SCHEMA_VERSION = '0.6.8-GPU-A4.6a-replication-completion-plan'
 RNG_TAPE_SCHEMA_VERSION = '0.6.8-GPU-A4.5b-template-start-rng-tape'
 FULL_GPU_WORLD_STEP = False
 
@@ -44,6 +44,7 @@ SCOPE_CAPACITY = 4
 SCOPE_NEGATIVE_ATP = 5
 SCOPE_FP64_DISCRETE_BOUNDARY = 6
 SCOPE_RNG_TAPE_MISMATCH = 7
+SCOPE_NONCOMPLETION = 8
 
 # CPU and CUDA fp64 division may differ by a few ulps.  Do not turn that
 # continuous discrepancy into a different integer symbol request.  The
@@ -59,18 +60,27 @@ _PLAN_ARRAY_FIELDS = (
     'last_effective_error_rate', 'cumulative_proofreading_atp_after',
     'substitution_events', 'template_start_events',
     'selected_template_indices', 'template_storage_symbols',
+    'completion_events', 'completed_symbols', 'completed_lengths',
+    'new_genome_lesions', 'replication_cycle_deltas',
+    'topology_sequence_deltas', 'topology_symbol_deltas',
 )
-_PLAN_UINT8_FIELDS = ('append_symbols',)
+_PLAN_UINT8_FIELDS = ('append_symbols', 'completed_symbols')
 _PLAN_INT64_FIELDS = (
     'cell_ids', 'scope_error_code', 'requested_symbols', 'append_count',
     'last_replication_symbols',
     'substitution_events', 'selected_template_indices',
     'template_storage_symbols',
+    'completed_lengths', 'replication_cycle_deltas',
+    'topology_sequence_deltas', 'topology_symbol_deltas',
 )
-_PLAN_BOOL_FIELDS = ('cell_mask', 'scope_valid', 'template_start_events')
+_PLAN_BOOL_FIELDS = (
+    'cell_mask', 'scope_valid', 'template_start_events',
+    'completion_events',
+)
 _PLAN_FLOAT64_FIELDS = (
     'pools_after', 'replication_fractional_after',
     'last_effective_error_rate', 'cumulative_proofreading_atp_after',
+    'new_genome_lesions',
 )
 
 _RNG_TAPE_ARRAY_FIELDS = (
@@ -288,6 +298,13 @@ class A4PaidElongationPlan:
     template_start_events: object
     selected_template_indices: object
     template_storage_symbols: object
+    completion_events: object
+    completed_symbols: object
+    completed_lengths: object
+    new_genome_lesions: object
+    replication_cycle_deltas: object
+    topology_sequence_deltas: object
+    topology_symbol_deltas: object
 
     def clone(self):
         values = {}
@@ -809,6 +826,13 @@ def _validate_plan_metadata(plan):
         'template_start_events': (C,),
         'selected_template_indices': (C,),
         'template_storage_symbols': (C,),
+        'completion_events': (C,),
+        'completed_symbols': (C, W),
+        'completed_lengths': (C,),
+        'new_genome_lesions': (C,),
+        'replication_cycle_deltas': (C,),
+        'topology_sequence_deltas': (C,),
+        'topology_symbol_deltas': (C,),
     }
     for name, shape in shapes.items():
         if tuple(getattr(plan, name).shape) != shape:
@@ -835,7 +859,7 @@ def validate_a4_paid_elongation_plan(plan):
         raise a4.A4CapacityError('paid elongation exceeds symbol capacity')
     if np.any(error_codes != SCOPE_OK) or not np.all(raw['scope_valid'][:N]):
         raise A4ReplicationScopeError(
-            'paid elongation row is outside A4.5b scope: %s' %
+            'paid elongation row is outside A4.6a scope: %s' %
             [int(value) for value in error_codes]
         )
     if np.any(raw['scope_valid'][N:]) or np.any(
@@ -857,12 +881,42 @@ def validate_a4_paid_elongation_plan(plan):
             or np.any(raw['template_storage_symbols'][~start] != 0)
             or np.any(raw['template_storage_symbols'][:N] > W)):
         raise a4.A4SchemaError('template-start topology metadata is invalid')
+    completion = raw['completion_events']
+    if (np.any(completion & ~raw['scope_valid'])
+            or np.any(completion & start)
+            or np.any(raw['completed_lengths'][completion] <= 0)
+            or np.any(raw['completed_lengths'][completion] > W)
+            or np.any(raw['completed_lengths'][~completion] != 0)
+            or np.any(raw['new_genome_lesions'][completion] < 0.0)
+            or np.any(raw['new_genome_lesions'][~completion] != 0.0)
+            or not np.array_equal(
+                raw['replication_cycle_deltas'],
+                completion.astype(np.int64),
+            )
+            or not np.array_equal(
+                raw['topology_sequence_deltas'],
+                -completion.astype(np.int64),
+            )
+            or not np.array_equal(
+                raw['topology_symbol_deltas'],
+                np.where(
+                    completion,
+                    -raw['completed_lengths'] + raw['append_count'],
+                    0,
+                ),
+            )
+            or np.any(raw['replication_fractional_after'][completion] != 0.0)
+            or np.any(raw['append_count'][completion] <= 0)
+            or np.any(raw['append_count'][completion]
+                      > raw['completed_lengths'][completion])):
+        raise a4.A4SchemaError('completion topology metadata is invalid')
     if not np.array_equal(
             raw['last_replication_symbols'], raw['append_count']):
         raise a4.A4SchemaError('last replication count differs from append count')
     if (not np.isfinite(raw['pools_after']).all()
             or not np.isfinite(raw['replication_fractional_after']).all()
             or not np.isfinite(raw['last_effective_error_rate']).all()
+            or not np.isfinite(raw['new_genome_lesions']).all()
             or not np.isfinite(
                 raw['cumulative_proofreading_atp_after']).all()):
         raise a4.A4SchemaError('replication plan contains nonfinite values')
@@ -888,6 +942,22 @@ def validate_a4_paid_elongation_plan(plan):
             raise a4.A4SchemaError('append symbol outside frozen alphabet')
         if np.any(raw['append_symbols'][ci, count:] != 0):
             raise a4.A4SchemaError('append tail is not zero')
+        completed_length = int(raw['completed_lengths'][ci])
+        completed = raw['completed_symbols'][ci, :completed_length]
+        if np.any(completed >= a4.ALPHABET_SIZE):
+            raise a4.A4SchemaError(
+                'completed symbol outside frozen alphabet'
+            )
+        if np.any(raw['completed_symbols'][ci, completed_length:] != 0):
+            raise a4.A4SchemaError('completed-symbol tail is not zero')
+        if bool(completion[ci]):
+            appended = int(raw['append_count'][ci])
+            if not np.array_equal(
+                    completed[completed_length - appended:],
+                    raw['append_symbols'][ci, :appended]):
+                raise a4.A4SchemaError(
+                    'completed suffix differs from paid append'
+                )
     for name in _PLAN_ARRAY_FIELDS:
         if name in (
                 'cell_ids', 'cell_mask', 'scope_valid', 'scope_error_code',
@@ -1053,12 +1123,24 @@ def _empty_numpy_plan(binding):
         template_start_events=np.zeros((C,), dtype=bool),
         selected_template_indices=np.full((C,), -1, dtype=np.int64),
         template_storage_symbols=np.zeros((C,), dtype=np.int64),
+        completion_events=np.zeros((C,), dtype=bool),
+        completed_symbols=np.zeros((C, W), dtype=np.uint8),
+        completed_lengths=np.zeros((C,), dtype=np.int64),
+        new_genome_lesions=np.zeros((C,), dtype=np.float64),
+        replication_cycle_deltas=np.zeros((C,), dtype=np.int64),
+        topology_sequence_deltas=np.zeros((C,), dtype=np.int64),
+        topology_symbol_deltas=np.zeros((C,), dtype=np.int64),
     )
 
 
 def _paid_replication_elongation_numpy(
-        binding, dt, config, allow_template_start=False):
+        binding, dt, config, allow_template_start=False,
+        completion_only=False):
     """Literal NumPy reference for the bounded Formal066 continuation."""
+    if completion_only and allow_template_start:
+        raise A4ReplicationScopeError(
+            'A4.6a completion requires a pre-existing active template'
+        )
     a4._require_translation_binding(binding)
     if _is_tensor(binding.state.pools):
         raise a4.A4SchemaError('NumPy elongation requires a NumPy binding')
@@ -1076,6 +1158,7 @@ def _paid_replication_elongation_numpy(
     total_appended = 0
     total_template_storage = 0
     total_start_events = 0
+    total_completion_events = 0
     for ci in range(N):
         (
             template, partial, start_event, selected_index, template_lesion,
@@ -1205,24 +1288,74 @@ def _paid_replication_elongation_numpy(
         result.last_replication_symbols[ci] = copied
         total_appended += copied
         if len(partial) + copied >= len(template):
-            result.scope_error_code[ci] = SCOPE_COMPLETION
+            if completion_only:
+                completed_length = int(len(partial) + copied)
+                result.completed_symbols[ci, :len(partial)] = partial
+                result.completed_symbols[
+                    ci, len(partial):completed_length
+                ] = result.append_symbols[ci, :copied]
+                result.completed_lengths[ci] = completed_length
+                result.completion_events[ci] = True
+                result.replication_cycle_deltas[ci] = 1
+                result.topology_sequence_deltas[ci] = -1
+                result.topology_symbol_deltas[ci] = (
+                    -completed_length + copied
+                )
+                # Preserve the exact grouping of the frozen 0.4 completion.
+                inherited_lesion = float(template_lesion) * (
+                    0.28 + 0.22 * (1.0 - proof_fraction)
+                )
+                new_lesion = (
+                    inherited_lesion
+                    + float(result.last_effective_error_rate[ci])
+                    * completed_length * 0.06
+                )
+                result.new_genome_lesions[ci] = float(new_lesion)
+                result.replication_fractional_after[ci] = 0.0
+                result.scope_valid[ci] = True
+                total_completion_events += 1
+            else:
+                result.scope_error_code[ci] = SCOPE_COMPLETION
         else:
-            result.scope_valid[ci] = True
-            if start_event:
-                result.template_start_events[ci] = True
-                result.selected_template_indices[ci] = selected_index
-                result.template_storage_symbols[ci] = len(template)
-                total_template_storage += len(template)
-                total_start_events += 1
-    if (int(ragged.sequence_count) + 2 * total_start_events
+            if completion_only:
+                result.scope_error_code[ci] = SCOPE_NONCOMPLETION
+            else:
+                result.scope_valid[ci] = True
+                if start_event:
+                    result.template_start_events[ci] = True
+                    result.selected_template_indices[ci] = selected_index
+                    result.template_storage_symbols[ci] = len(template)
+                    total_template_storage += len(template)
+                    total_start_events += 1
+    future_sequence_count = (
+        int(ragged.sequence_count) + 2 * total_start_events
+        + int(np.sum(result.topology_sequence_deltas[:N], dtype=np.int64))
+    )
+    if completion_only:
+        future_symbol_count = (
+            int(ragged.symbol_count)
+            + int(np.sum(
+                result.topology_symbol_deltas[:N], dtype=np.int64,
+            ))
+        )
+    else:
+        future_symbol_count = (
+            int(ragged.symbol_count) + total_template_storage
+            + total_appended
+        )
+    future_lesion_count = int(ragged.lesion_count) + total_completion_events
+    if (future_sequence_count
             > int(ragged.sequence_capacity)):
         raise a4.A4CapacityError(
-            'template start exceeds sequence capacity'
+            'replication transaction exceeds sequence capacity'
         )
-    if (int(ragged.symbol_count) + total_template_storage + total_appended
-            > int(ragged.symbol_capacity)):
+    if future_symbol_count > int(ragged.symbol_capacity):
         raise a4.A4CapacityError(
-            'template start/elongation exceeds symbol capacity'
+            'replication transaction exceeds symbol capacity'
+        )
+    if future_lesion_count > int(ragged.sequence_capacity):
+        raise a4.A4CapacityError(
+            'replication completion exceeds lesion capacity'
         )
     return validate_a4_paid_elongation_plan(result)
 
@@ -1231,6 +1364,14 @@ def paid_replication_elongation_numpy(binding, dt, config):
     """Public deterministic A4.4b path; inactive start stays CPU authority."""
     return _paid_replication_elongation_numpy(
         binding, dt, config, allow_template_start=False,
+    )
+
+
+def _paid_replication_completion_numpy(binding, dt, config):
+    """Mutation-free all-row completion descriptor; never a commit."""
+    return _paid_replication_elongation_numpy(
+        binding, dt, config, allow_template_start=False,
+        completion_only=True,
     )
 
 
@@ -1326,10 +1467,15 @@ def _torch_replicase(
 
 
 def _paid_replication_elongation_torch(
-        binding, dt, config, allow_template_start=False):
+        binding, dt, config, allow_template_start=False,
+        completion_only=False):
     """Fixed-shape resident plan with no scalar readback or dynamic output."""
     if torch is None:
         raise RuntimeError('PyTorch is unavailable')
+    if completion_only and allow_template_start:
+        raise A4ReplicationScopeError(
+            'A4.6a completion requires a pre-existing active template'
+        )
     a4._require_translation_binding(binding)
     if not _is_tensor(binding.state.pools):
         raise a4.A4SchemaError('Torch elongation requires a Torch binding')
@@ -1600,29 +1746,156 @@ def _paid_replication_elongation_torch(
     completion = completed_kinetics & (
         copy_length + append_count >= template_length
     )
-    error = torch.where(
-        completion, torch.full_like(error, SCOPE_COMPLETION), error,
+    if completion_only:
+        error = torch.where(
+            state.cell_mask & (error == SCOPE_OK) & (~completion),
+            torch.full_like(error, SCOPE_NONCOMPLETION), error,
+        )
+    else:
+        error = torch.where(
+            completion, torch.full_like(error, SCOPE_COMPLETION), error,
+        )
+    completion_before_capacity = (
+        completion & (error == SCOPE_OK) & bool(completion_only)
+    )
+    topology_sequence_deltas = torch.where(
+        completion_before_capacity,
+        torch.full_like(append_count, -1),
+        torch.zeros_like(append_count),
+    )
+    topology_symbol_deltas = torch.where(
+        completion_before_capacity,
+        -template_length + append_count,
+        torch.zeros_like(append_count),
     )
     start_before_capacity = start_candidate & (error == SCOPE_OK)
     sequence_capacity_overflow = (
         int(ragged.sequence_count)
         + 2 * torch.sum(start_before_capacity.to(torch.int64))
+        + torch.sum(topology_sequence_deltas)
         > int(ragged.sequence_capacity)
     )
-    symbol_capacity_overflow = (
-        int(ragged.symbol_count) + torch.sum(append_count)
-        + torch.sum(torch.where(
-            start_before_capacity, template_length,
-            torch.zeros_like(template_length),
-        )) > int(ragged.symbol_capacity)
+    if completion_only:
+        symbol_capacity_overflow = (
+            int(ragged.symbol_count) + torch.sum(topology_symbol_deltas)
+            > int(ragged.symbol_capacity)
+        )
+    else:
+        symbol_capacity_overflow = (
+            int(ragged.symbol_count) + torch.sum(append_count)
+            + torch.sum(torch.where(
+                start_before_capacity, template_length,
+                torch.zeros_like(template_length),
+            )) > int(ragged.symbol_capacity)
+        )
+    lesion_capacity_overflow = (
+        int(ragged.lesion_count)
+        + torch.sum(completion_before_capacity.to(torch.int64))
+        > int(ragged.sequence_capacity)
     )
-    capacity_overflow = sequence_capacity_overflow | symbol_capacity_overflow
+    capacity_overflow = (
+        sequence_capacity_overflow | symbol_capacity_overflow
+        | lesion_capacity_overflow
+    )
     error = torch.where(
         state.cell_mask & capacity_overflow,
         torch.full_like(error, SCOPE_CAPACITY), error,
     )
-    scope_valid = state.cell_mask & (error == SCOPE_OK)
+    completion_events = completion_before_capacity & (error == SCOPE_OK)
+    completion_batch_failure = (
+        torch.any(state.cell_mask & (~completion_events))
+        if completion_only else
+        torch.zeros((), dtype=torch.bool, device=device)
+    )
+    rollback = state.cell_mask & completion_batch_failure
+    error = torch.where(
+        rollback & (error == SCOPE_OK),
+        torch.full_like(error, SCOPE_NONCOMPLETION), error,
+    )
+    scope_valid = (
+        state.cell_mask & (error == SCOPE_OK) & (~completion_batch_failure)
+    )
+    completion_events = completion_events & scope_valid
     template_start_events = start_candidate & scope_valid
+
+    completed_rank = symbol_rank[None, :]
+    partial_indices = copy_start[:, None] + completed_rank
+    safe_partial_indices = torch.clamp(
+        partial_indices, min=0, max=int(ragged.symbol_capacity) - 1,
+    )
+    partial_symbols = ragged.symbols[safe_partial_indices]
+    append_rank = torch.clamp(
+        completed_rank - copy_length[:, None], min=0, max=W - 1,
+    )
+    appended_symbols = torch.gather(append_symbols, 1, append_rank)
+    completed_symbols = torch.where(
+        completed_rank < copy_length[:, None],
+        partial_symbols, appended_symbols,
+    )
+    completed_symbols = torch.where(
+        completion_events[:, None]
+        & (completed_rank < template_length[:, None]),
+        completed_symbols, torch.zeros_like(completed_symbols),
+    )
+    completed_lengths = torch.where(
+        completion_events, template_length, torch.zeros_like(template_length),
+    )
+    inherited_lesion = template_lesion * (
+        0.28 + 0.22 * (1.0 - proof_fraction)
+    )
+    new_genome_lesions = (
+        inherited_lesion
+        + effective_error * template_length.to(dtype) * 0.06
+    )
+    new_genome_lesions = torch.where(
+        completion_events, new_genome_lesions,
+        torch.zeros_like(new_genome_lesions),
+    )
+    requested_out = torch.where(
+        rollback, torch.zeros_like(requested),
+        torch.where(
+            completed_kinetics, requested, torch.zeros_like(requested),
+        ),
+    )
+    append_symbols_out = torch.where(
+        rollback[:, None], torch.zeros_like(append_symbols), append_symbols,
+    )
+    append_count_out = torch.where(
+        rollback, torch.zeros_like(append_count), append_count,
+    )
+    pools_after_out = torch.where(
+        rollback[:, None], state.pools, pools_after,
+    )
+    fractional_after_out = torch.where(
+        completion_events, torch.zeros_like(fractional_after),
+        torch.where(
+            completed_kinetics, fractional_after,
+            torch.zeros_like(fractional_after),
+        ),
+    )
+    fractional_after_out = torch.where(
+        rollback, torch.zeros_like(fractional_after_out),
+        fractional_after_out,
+    )
+    effective_error_out = torch.where(
+        rollback, torch.zeros_like(effective_error),
+        torch.where(
+            completed_kinetics, effective_error,
+            torch.zeros_like(effective_error),
+        ),
+    )
+    cumulative_out = torch.where(
+        rollback, state.cumulative_proofreading_atp,
+        cumulative_proofreading_atp_after,
+    )
+    topology_sequence_deltas = torch.where(
+        completion_events, topology_sequence_deltas,
+        torch.zeros_like(topology_sequence_deltas),
+    )
+    topology_symbol_deltas = torch.where(
+        completion_events, topology_symbol_deltas,
+        torch.zeros_like(topology_symbol_deltas),
+    )
 
     plan = A4PaidElongationPlan(
         schema_version=SCHEMA_VERSION,
@@ -1634,35 +1907,34 @@ def _paid_replication_elongation_torch(
         cell_mask=state.cell_mask.clone(),
         scope_valid=scope_valid,
         scope_error_code=error,
-        requested_symbols=torch.where(
-            completed_kinetics, requested, torch.zeros_like(requested),
-        ),
-        append_symbols=append_symbols,
-        append_count=append_count,
+        requested_symbols=requested_out,
+        append_symbols=append_symbols_out,
+        append_count=append_count_out,
         pools_after=torch.where(
-            state.cell_mask[:, None], pools_after, torch.zeros_like(pools_after),
+            state.cell_mask[:, None], pools_after_out,
+            torch.zeros_like(pools_after_out),
         ),
-        replication_fractional_after=torch.where(
-            completed_kinetics, fractional_after,
-            torch.zeros_like(fractional_after),
-        ),
-        last_replication_symbols=append_count.clone(),
-        last_effective_error_rate=torch.where(
-            completed_kinetics,
-            effective_error,
-            torch.zeros_like(effective_error),
-        ),
-        cumulative_proofreading_atp_after=cumulative_proofreading_atp_after,
-        substitution_events=torch.zeros_like(append_count),
+        replication_fractional_after=fractional_after_out,
+        last_replication_symbols=append_count_out.clone(),
+        last_effective_error_rate=effective_error_out,
+        cumulative_proofreading_atp_after=cumulative_out,
+        substitution_events=torch.zeros_like(append_count_out),
         template_start_events=template_start_events,
         selected_template_indices=torch.where(
-            template_start_events, torch.zeros_like(append_count),
-            torch.full_like(append_count, -1),
+            template_start_events, torch.zeros_like(append_count_out),
+            torch.full_like(append_count_out, -1),
         ),
         template_storage_symbols=torch.where(
             template_start_events, template_length,
             torch.zeros_like(template_length),
         ),
+        completion_events=completion_events,
+        completed_symbols=completed_symbols,
+        completed_lengths=completed_lengths,
+        new_genome_lesions=new_genome_lesions,
+        replication_cycle_deltas=completion_events.to(torch.int64),
+        topology_sequence_deltas=topology_sequence_deltas,
+        topology_symbol_deltas=topology_symbol_deltas,
     )
     _validate_plan_metadata(plan)
     return plan
@@ -1672,6 +1944,14 @@ def paid_replication_elongation_torch(binding, dt, config):
     """Public deterministic A4.4b path; inactive start stays CPU authority."""
     return _paid_replication_elongation_torch(
         binding, dt, config, allow_template_start=False,
+    )
+
+
+def _paid_replication_completion_torch(binding, dt, config):
+    """Resident all-row completion descriptor with no scalar readback."""
+    return _paid_replication_elongation_torch(
+        binding, dt, config, allow_template_start=False,
+        completion_only=True,
     )
 
 
@@ -1965,11 +2245,19 @@ def paid_replication_elongation_plan(binding, dt, config):
     return paid_replication_elongation_numpy(binding, dt, config)
 
 
+def paid_replication_completion_plan(binding, dt, config):
+    """Dispatch the A4.6a pure descriptor without exposing mode flags."""
+    a4._require_translation_binding(binding)
+    if _is_tensor(binding.state.pools):
+        return _paid_replication_completion_torch(binding, dt, config)
+    return _paid_replication_completion_numpy(binding, dt, config)
+
+
 PORT_STATUS = dict(a4.PORT_STATUS)
 PORT_STATUS.update({
     'genome_replication': (
-        'a4.5b-template-start-active-substitution-rng-tape-deterministic-'
-        'proofreading-quiescence-noncompletion-plan-not-integrated-'
+        'a4.6a-mutation-free-active-template-all-row-completion-payload-'
+        'ledger-topology-descriptor-not-arena-committed-not-integrated-'
         'cpu-authoritative'
     ),
     'material_mutation': 'cpu-authoritative-later-a4-slice',

@@ -1,6 +1,6 @@
-# SOMA-CELL 0.6.8-GPU A4.5b 事前登録（A4.1〜A4.5a継承）
+# SOMA-CELL 0.6.8-GPU A4.6a 事前登録（A4.1〜A4.5b継承）
 
-状態: A4.5aまでを継承する開発用の最小slice。A4昇格判定ではない。
+状態: A4.5bまでを継承する開発用の最小slice。A4昇格判定ではない。
 
 ## 継承する基盤
 
@@ -386,6 +386,73 @@ prior `last_effective_error_rate`をinput stateに持たない現pure planでは
 - actual arena/RNG commit、通常no-op混載、completionをこのsliceへ追加しない。
 - A4.5b単独の速度測定・scheduler統合・A4昇格は行わない。
 
-次はA4.6としてcompletionとstructural/material mutationを小さく分離する。その後
-hydrolysisを別sliceで進める。scheduler置換は、連続したresident chainをhost/device往復
+## A4.6a追加仮説
+
+既にactiveで非emptyなtemplateと、templateより短い既存partial copyがあり、
+`mutation=false`のまま今回のordered paymentで全used rowがcompletionへ到達する場合、
+Formal066の完了payload・台帳・lesion・cycle・topology差分をresident pure descriptorとして
+再現できる。実ragged arena、gene cache、CPU cell、live RNG、schedulerはまだcommitしない。
+
+過去callでsubstitutionされたpartial prefixをtemplateから作り直してはならない。完成polymerは
+`existing partial + current paid append`とする。`mutation=false`では
+`mutate_sequence`がRNG/structural/material処理前にreturnするため、RNG stateとmutation
+counterは不変である。
+
+## A4.6aで実装するもの
+
+- 新public dispatch `paid_replication_completion_plan`。legacy elongation/substitution APIの
+  completion code 3は変更しない。public mode flagは公開しない。
+- pre-existing active、entry時incomplete、mutation off、全used row same-call completionだけ。
+- `completion_events`、fixed `completed_symbols/completed_lengths`。
+- `new_genome_lesions = template_lesion * (0.28 + 0.22 *
+  (1 - proof_fraction)) + effective_error * completed_length * 0.06`。
+- `replication_cycle_deltas=1`、`topology_sequence_deltas=-1`、
+  `topology_symbol_deltas=append_count-completed_length`。
+- completion時`replication_fractional_after=0`。既存A4.4bのpools、last count、
+  effective error、cumulative proofreading ATPのordered結果を維持する。
+- 一rowでもnoncompletion/scope failureならbatch全体を成功descriptorにしない。
+- NumPy/Torch CPU/CUDA fp64 parity、input pointer/value、world、RNG不変。
+
+storage topology deltaはmaterial paymentではない。active時の`template + partial copy`を
+`completed genome`へ置換するarena差分であり、future symbol capacityへpaid appendを二重加算
+しない。exact current capacityが通るcaseを固定する。
+
+## A4.6aで実装しないもの
+
+- inactive template start、mutation-enabled completion、structural/material mutation。
+- actual ragged complete-genome/lesion append、template/copy消去、provenance再発行。
+- live replication cycle、gene cache、`novel_path_first_age`、CPU cellへのcommit。
+- world RNG commit、hydrolysis、A3 scheduler authority置換。
+- grammar daughter material mutation（actual division後のA5対象）。
+- fp32、compile、custom CUDA、速度向上主張。
+
+## A4.6a固定テスト
+
+1. 2つのFormal066 cellで過去置換済みpartial prefix、今回paid suffix、pools、fractional reset、
+   last count/error、逐次proof ATP、new lesion、cycleをdirect CPU oracleと照合する。
+2. Conceptual CPU post-stateをpackし、sequence/symbol/lesion countがplan deltaと一致し、
+   A4.2再decode cacheがCPU `_refresh_gene_cache` と一致することを確認する。ただしlive authority
+   にはしない。
+3. NumPy、Torch CPU、明示RTX CUDAで全descriptorを照合し、input tensor pointer/value、
+   source cell、world、RNG不変を確認する。
+4. legacy code 3、noncompletion、mixed batch、mutation on、inactive start、および10件の
+   structural/schema/tail/suffix/range改ざんをfail closedとする。exact current symbol capacityで
+   append二重計上がないことを固定する。
+5. A4.1〜A4.5bの31テストを継続し、合計34/34をCUDA必須でPASSさせる。
+
+## A4.6a判定
+
+- 34/34、direct Formal066 completion、NumPy/Torch CPU/CUDA、topology/cache概念照合、
+  trust/scopeが全てPASSした場合だけ「mutation-free completion payload/ledger/topology pure
+  descriptor、未commit・未統合」と記録する。
+- completed payload、lesion丸め順、material ledger、topology差分、CUDA fp64のどれかが
+  違えばA4.5bを維持する。
+- actual arena/cache/RNG/CPU commit、structural mutationをA4.6aへ追加しない。
+- standalone plan validatorはcompleted prefixとlesionをsource bindingから再導出しない。
+  future atomic commitではinternally generated planだけを受け、両semantic relationをattested
+  sourceへ再照合する。A4.6a planを外部復元/commit authorityにしない。
+- A4.6a単独の速度測定・scheduler統合・A4昇格は行わない。
+
+次はA4.6bとしてcompletion後のstructural/material mutation RNGを別sliceで扱う。その後
+hydrolysisをA4.7として分離する。scheduler置換は、連続したresident chainをhost/device往復
 なしでatomic commitできる段階まで延期する。
