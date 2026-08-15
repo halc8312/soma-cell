@@ -1,6 +1,6 @@
-# SOMA-CELL 0.6.8-GPU A4.6b2 事前登録（A4.1〜A4.6b1継承）
+# SOMA-CELL 0.6.8-GPU A4.7a 事前登録（A4.1〜A4.6b2継承）
 
-状態: A4.6b1までを継承するA4.6b2開発slice。A4昇格判定ではない。
+状態: A4.6b2までを継承するA4.7a開発slice。A4昇格判定ではない。
 
 ## 継承する基盤
 
@@ -593,3 +593,71 @@ Torch CPU/CUDAで再現する。arena容量不足を追加trimで隠さない。
 
 次はA4.7としてsymbol hydrolysis RNGを別event tape/planに分離する。その後にだけ、
 resident replication chainのatomic arena/cache/RNG commitとscheduler統合を検討する。
+
+## A4.7a追加仮説
+
+Formal066実MROで凍結0.3の`_decay_information_and_proteins`へ到達するlive-genome
+hydrolysisは、lesion gain後のcomplete genome polymer/lesionを同時に拘束する一cell
+`A4TranslationBinding`があれば、arenaを変更せず高水準PCG64 callだけを独立tapeとして
+固定できる。world RNG interleaveを飛ばさないため、multi-cell連続tapeにはしない。
+
+## A4.7aで実装するもの
+
+- 新規core `SOMA_CELL_0_6_8_gpu_a4_hydrolysis.py`
+- private-factory `A4HydrolysisRngTape`
+- post-lesion-gain / pre-hydrolysis、exactly one cell、complete genomeごとにlesionが
+  exactly oneのNumPy `A4TranslationBinding`限定scope
+- `sequence_capacity`に整列した`genome_slot_mask`、`draw_mask`、`uniform_draws`、
+  `hit_mask`、`deletion_positions`
+- cell ID、sequence/genome count、source provenance、exact `dt_hex`、draw/hit count、
+  schedule SHA-256、完全なPCG64 before/after state
+- cloned NumPy PCG64によるscalar `random()`と、hit直後だけの
+  scalar `integers(0,length)` high-level replay
+- host array digest、resident scalar/pointer/version、private expected tensor、明示D2Hでの
+  actual/expected content digest照合
+- clone、Torch CPU/CUDA upload、明示NumPy readback、state dict。ただしrestore constructorや
+  live authorityは作らない
+
+凍結literal gateは`lesion > 0.75 and length > MIN_GENOME_LENGTH`である。このgateを
+通ったcomplete genomeは、`dt==0`で確率が0でも`random()`を1回消費する。hit判定は
+strict `draw < dt * 0.00065 * lesion`であり、hitした場合だけ直ちにlengthを上限とする
+bounded integerを1回呼ぶ。template/copyは走査しない。
+
+通常のresident require/clone/state-dictはmetadata、pointer、versionだけを検証し、
+`.cpu()`、`.numpy()`、`.tolist()`、`.item()`、`torch.equal`によるhidden D2H/syncを行わない。
+contentの実値検査は明示`to_numpy()`だけで行い、Torch `.data` version bypassはそこで
+original host digest不一致としてrejectする。
+
+現A3 `genome_hydrolysis_plan`は`probability<=0`をskipするため、eligibleかつ`dt==0`で
+凍結CPUと異なりdrawを消費しない。この差は隠さず既知bridge差として固定する。A4.7aでは
+A3 schedulerを変更せず、後続integration前にbridgeとlockstep testを別sliceで修正する。
+
+## A4.7aで実装しないもの
+
+- deletionをpolymerへ適用するNumPy/Torch plan（A4.7b）
+- ragged arena再compact、lesion `*=0.80`、wasteへの`MONOMER_MASS`返却、
+  `genome_damage_events`更新、gene-cache refresh
+- completion planとの連結、actual arena/cache/CPU-cell/world commit
+- live PCG64 after-state commit、A3 hydrolysis bridge/scheduler authority置換
+- device RNG kernel、generic RNG framework、software fp64、custom CUDA/Triton
+- division後daughter grammar mutation（A5）、速度向上主張、A4昇格
+
+## A4.7a固定テスト
+
+1. lesion `==0.75`、length `==MIN_GENOME_LENGTH`はdrawなし、eligible lesion/lengthかつ
+   `dt==0`はdraw exactly one / hit zeroとして凍結literal orderを固定する。
+2. miss/hitを含むcomplete-genome順のscalar random/conditional integer、完全PCG64
+   before/after、source/live RNG不変をdirect frozen CPU oracleと照合する。
+3. Torch CPUと明示RTX CUDA upload/readback、pointer/version/content trust、scalar/tail/source/
+   dt/RNG改ざん、`.data` version bypass、single-cell/post-gain scopeを検証する。
+4. A4.1〜A4.6b2の40 testsを変更せず継続し、合計43/43をCUDA必須でPASSさせる。
+
+## A4.7a判定
+
+- 43/43、凍結gate/call order、完全PCG64 state、NumPy/Torch CPU/CUDA tape storage、
+  trust/scope、source/live RNG非変更が全てPASSした場合だけ「A4.7a single-cell
+  post-gain hydrolysis RNG tape、未適用・未統合」と記録する。
+- tapeだけでsymbol hydrolysis移植済み、live RNG authority、scheduler authority、
+  full GPU world-step、速度向上とは呼ばない。
+- 次はA4.7bでattested tapeをfixed-shape deletion/material/lesion/event/cache-dirty
+  descriptorへ適用する。その後もatomic arena/cache/RNG commitとscheduler統合は別に行う。

@@ -1,6 +1,6 @@
 # SOMA-CELL 0.6.8-GPU A4 contract
 
-Status: A4 development contract through slice A4.6b2. This is not an A4
+Status: A4 development contract through slice A4.7a. This is not an A4
 promotion.
 
 ## Authority
@@ -422,8 +422,49 @@ reported as successful.
 A4.6b2 is still a pure descriptor.  It does not apply the final arrays to the
 ragged arena, append live genome/lesion state, refresh the gene cache, advance
 the live PCG64 state, update a CPU cell, or replace A3 `replication_cpu`.
-Hydrolysis remains A4.7.  An atomic arena/cache/RNG/scheduler commit is a later
-bounded slice and must re-attest all source relations immediately before use.
+Hydrolysis remains a separate event.  An atomic arena/cache/RNG/scheduler
+commit is a later bounded slice and must re-attest all source relations
+immediately before use.
+
+## A4.7a scope
+
+A4.7a records only the frozen live-genome symbol-hydrolysis RNG event for one
+cell.  Its input is an internally created NumPy `A4TranslationBinding` at the
+post-lesion-gain, pre-hydrolysis boundary.  Exactly one cell is allowed, and
+its lesion vector must contain one value for every complete genome.  Active
+replication template/copy sequences are not hydrolysis candidates.
+
+Complete genomes are visited in their existing list/storage order.  For each
+genome, the literal frozen gate is evaluated as
+`lesion > 0.75 and length > MIN_GENOME_LENGTH`.  Every genome which passes
+that gate consumes one scalar `Generator.random()` call.  This remains true
+when `dt == 0` and the comparison probability is zero.  Only a strict
+`draw < dt * 0.00065 * lesion` hit immediately consumes the scalar
+`Generator.integers(0, length)` deletion-position call.  The implementation
+uses a cloned canonical NumPy PCG64 state and records its full before/after
+`state`, `inc`, `has_uint32`, and `uinteger`; it never advances a live RNG.
+
+`A4HydrolysisRngTape` is private-factory and event-local.  Its scalar identity
+binds sequence capacity/count, genome count, stable cell ID, source
+provenance, exact `dt` hex, draw/hit counts, schedule digest, and the two PCG64
+states.  Fixed arrays aligned to `sequence_capacity` are
+`genome_slot_mask`, `draw_mask`, `uniform_draws`, `hit_mask`, and
+`deletion_positions`.  Non-draw uniforms are zero and non-hit positions are
+`-1`.  Host replay re-derives every gate and high-level call from the same
+binding.
+
+Resident tape operations verify scalar metadata and tensor pointers/versions
+without hidden D2H or synchronization.  Only explicit `to_numpy()` reads the
+arrays back and compares both the resident values and private expected values
+with the original host-content digest; this is where `.data` changes which
+bypass Torch `_version` fail closed.  A4.7a has no device-side biological
+application.
+
+The current A3 bridge drops hazard records whose derived probability is
+`<= 0`, so it consumes no draw for the eligible `dt == 0` case.  That is a
+known bridge difference, not a reason to change the frozen oracle.  A4.7a
+preserves the frozen draw and must not replace scheduler authority until the
+A3 bridge and its lockstep tests are corrected in a later integration slice.
 
 ## Fail-closed invariants
 
@@ -519,12 +560,27 @@ Replication-elongation-plan invariants are:
   mutation-free, pre-existing-active, all-row completion above.  No path may
   fall through to a partial GPU result plus a second CPU replication call.
 
-## Explicit exclusions through A4.6b2
+Hydrolysis-tape invariants are:
+
+- The source is one bound cell with a complete post-gain lesion prefix; no
+  caller-supplied hazard array is accepted as a second authority.
+- Complete-genome order is unchanged and active template/copy slots are never
+  marked as genome candidates.
+- Eligibility, threshold calls, and conditional bounded-integer calls follow
+  the frozen literal order, including one eligible draw at `dt == 0`.
+- The supplied PCG64 state is cloned; source binding, CPU cell, world, and live
+  RNG remain unchanged.
+- Host arrays have canonical tails and a content digest.  Resident ordinary
+  checks perform no D2H; explicit readback rechecks the original digest.
+- The tape is RNG evidence only.  It contains no deleted polymer, waste or
+  lesion update, damage-event delta, cache refresh, or commit authority.
+
+## Explicit exclusions through A4.7a
 
 - No scheduler/world integration or CPU-cell protein/material commit.
 - No mutation-free inactive-template start, actual template/copy/completed-
-  genome arena commit, live lesion/cycle/cache/novel-path update, symbol
-  hydrolysis, live RNG commit, or device RNG kernel.
+  genome arena commit, live lesion/cycle/cache/novel-path update, hydrolysis
+  deletion plan/application, live RNG commit, or device RNG kernel.
 - No scheduler replacement and no change to A3 `gene_refresh`,
   `translation_cpu`, or `replication_cpu` authority.
 - No division, death, corpse/eDNA/HGT, neural, or causal-system port.
@@ -532,7 +588,7 @@ Replication-elongation-plan invariants are:
   CUDA, multi-stream, multi-GPU, or online-GPU abstraction.
 - No formal 13-spec/65-measurement benchmark and no speedup claim.
 
-## Acceptance through A4.6b2
+## Acceptance through A4.7a
 
 - All A4.1 lossless/corruption/capacity/residency tests remain PASS.
 - Nested valid markers and invalid-outer/valid-inner recovery match frozen
@@ -670,6 +726,21 @@ Replication-elongation-plan invariants are:
   remains a pure resident descriptor and A3 `replication_cpu` remains the only
   scheduler authority.
 
+- Direct frozen hydrolysis fixtures distinguish the strict lesion and minimum-
+  length gates, preserve a random draw for an eligible `dt == 0` genome, and
+  reproduce a one-cell hit/miss/hit sequence in exact complete-genome order.
+  Full PCG64 cache state and the position-implied polymer, waste, lesion,
+  damage-event, and refreshed-cache outcome match the Formal066 oracle.
+- Full PCG64 before/after state, fixed tape arrays, host schedule/content
+  digests, Torch CPU/explicit RTX CUDA storage/readback, and source/live-RNG
+  non-mutation agree; factory, scalar, dictionary, array, stale-source,
+  multi-cell, `dt`, RNG, and `.data` tampering fail closed at their declared
+  boundary without hidden resident D2H.
+- All 43 A4 development tests and focused A3 regressions pass while A4.7a
+  remains a single-cell RNG tape only.  A3 hydrolysis bridge and scheduler
+  authority remain unchanged, including the explicitly recorded zero-
+  probability draw difference.
+
 Known A4.4b integration blockers are recorded rather than hidden.  On the
 measured six-cell development fixture the current fixed symbol-rank Torch plan
 was about 503 ms per call versus about 10.1 ms for NumPy, so it is not a
@@ -687,7 +758,7 @@ division was rejected as disproportionate complexity.  The launch-heavy path
 must be redesigned and remeasured before scheduler authority, promotion, or
 any speedup claim.
 
-Actual ragged/RNG/cache commit, mutation-free inactive start, resident
-structural/material tape application, and hydrolysis remain separate later slices. Scheduler replacement remains later,
-after a contiguous resident chain can commit without recreating A3's per-cell
-host/device round trips.
+Actual ragged/RNG/cache commit, mutation-free inactive start, hydrolysis
+deletion application, and live RNG advancement remain separate later slices.
+Scheduler replacement remains later, after a contiguous resident chain can
+commit without recreating A3's per-cell host/device round trips.

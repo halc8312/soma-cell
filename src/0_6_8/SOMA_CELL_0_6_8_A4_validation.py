@@ -1,5 +1,5 @@
 # coding: utf-8
-"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.6b2 slices."""
+"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.7a slices."""
 from __future__ import division
 
 import argparse
@@ -21,6 +21,7 @@ if HERE not in sys.path:
 
 import SOMA_CELL_0_6_8_gpu_a4 as a4
 import SOMA_CELL_0_6_8_gpu_a4_replication as a44
+import SOMA_CELL_0_6_8_gpu_a4_hydrolysis as a47
 import SOMA_CELL_0_6_8_A3_validation as v3
 
 try:
@@ -28,13 +29,14 @@ try:
 except Exception:  # pragma: no cover
     torch = None
 
-RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_6B2_VALIDATION_RESULTS.json'
-RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_6b2_validation.csv'
-RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_6B2_VALIDATION_RESULTS.txt'
+RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_7A_VALIDATION_RESULTS.json'
+RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_7a_validation.csv'
+RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_7A_VALIDATION_RESULTS.txt'
 
 SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication.py',
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_hydrolysis.py',
     'src/0_6_8/SOMA_CELL_0_6_8_A4_validation.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3_scheduler.py',
@@ -646,6 +648,95 @@ def _a46b1_replay_tape_row(tape, before, ci):
     return candidate.astype(np.uint8, copy=False)
 
 
+def _a47_gene_sequence(role, start, length=48):
+    """One isolated frozen gene whose selected deletion breaks decoding."""
+    sequence = np.ones((int(length),), dtype=np.uint8)
+    gene = a4.g2.make_gene(
+        int(role), parameter=int(role), promoter=5, efficiency=4,
+    )
+    start = int(start)
+    if start < 0 or start + len(gene) > len(sequence):
+        raise AssertionError('A4.7a fixture gene does not fit its polymer')
+    sequence[start:start + len(gene)] = gene
+    return sequence
+
+
+def _a47_hydrolysis_fixture(boundaries=False):
+    """One Formal066 post-gain event with a primed PCG64 uint32 cache."""
+    world = v3.make_world(seed=9971 if boundaries else 9972, cells=1)
+    cell = world.cells[0]
+    world.config.endogenous_damage = False
+    minimum = int(a4.g2.MIN_GENOME_LENGTH)
+    if boundaries:
+        cell.genomes = [
+            _a47_gene_sequence(a4.g2.ROLE_ENERGY, 0),
+            _a47_gene_sequence(
+                a4.g2.ROLE_MEMBRANE, 0, length=minimum,
+            ),
+            _a47_gene_sequence(a4.g2.ROLE_TRANSPORTER, 16),
+        ]
+        cell.genome_lesions = [0.75, 1.0, 1.0]
+        dt = 0.0
+    else:
+        cell.genomes = [
+            _a47_gene_sequence(a4.g2.ROLE_ENERGY, 0),
+            _a47_gene_sequence(a4.g2.ROLE_MEMBRANE, 0),
+            _a47_gene_sequence(a4.g2.ROLE_TRANSPORTER, 16),
+        ]
+        lesion = 0.5 / 0.00065
+        if (0.00065 * lesion != 0.5
+                or len(cell.genomes[0]) != 48):
+            raise AssertionError('A4.7a probability fixture drifted')
+        cell.genome_lesions = [lesion, lesion, lesion]
+        dt = 1.0
+    cell.replication_template = None
+    cell.replication_copy = []
+    cell.replication_template_lesion = 0.0
+    cell.replication_fractional = 0.0
+    cell.membrane_oxidation[:] = 0.0
+    cell.pools[a4.a3.POOL_WASTE] = 0.004
+    cell._refresh_gene_cache()
+    cell._sync_protein_pool()
+
+    # This one uint8 call leaves a cached uint32.  The hit/miss/hit fixture
+    # then consumes that cache in the literal random()/integers() interleave.
+    world.rng = np.random.default_rng(2)
+    priming_value = int(world.rng.integers(
+        0, 8, size=1, dtype=np.uint8,
+    )[0])
+    state = world.rng.bit_generator.state
+    if (priming_value != 6 or int(state['has_uint32']) != 1
+            or int(state['uinteger']) != 1123615560):
+        raise AssertionError('A4.7a primed PCG64 fixture drifted')
+
+    symbol_count = sum(len(genome) for genome in cell.genomes)
+    capacity = a4.GPU068A4Config(
+        max_cells=1, max_sequences=5, max_symbols=symbol_count,
+        max_sequence_symbols=48, max_proteins_per_cell=64,
+    )
+    return world, cell, capacity, dt
+
+
+def _a47_manual_apply_tape(cell, tape):
+    """Apply only recorded deletion effects on a disposable CPU oracle copy."""
+    out = copy.deepcopy(cell)
+    for genome_index in range(len(out.genomes)):
+        if not bool(tape.hit_mask[genome_index]):
+            continue
+        sequence = np.asarray(out.genomes[genome_index], dtype=np.uint8)
+        position = int(tape.deletion_positions[genome_index])
+        if position < 0 or position >= len(sequence):
+            raise AssertionError('A4.7a tape deletion position is invalid')
+        out.genomes[genome_index] = np.concatenate((
+            sequence[:position], sequence[position + 1:],
+        ))
+        out.pools[a4.a3.POOL_WASTE] += float(a4.g2.MONOMER_MASS)
+        out.genome_lesions[genome_index] *= 0.80
+        out.genome_damage_events += 1
+        out._refresh_gene_cache()
+    return out
+
+
 def _assert_completion_cpu_parity(plan, before_cells, cpu_cells, label,
                                   atol=2e-12):
     if int(plan.cell_count) != len(before_cells):
@@ -854,6 +945,14 @@ def test_api_scope():
     missing = [name for name in replication_required if not hasattr(a44, name)]
     if missing:
         raise AssertionError('missing A4.6b2 API: %s' % missing)
+    hydrolysis_required = (
+        'A4HydrolysisError', 'A4HydrolysisScopeError',
+        'A4HydrolysisRngTape', 'prepare_genome_hydrolysis_rng_tape',
+        'validate_a4_hydrolysis_rng_tape',
+    )
+    missing = [name for name in hydrolysis_required if not hasattr(a47, name)]
+    if missing:
+        raise AssertionError('missing A4.7a API: %s' % missing)
     if a4.FULL_GPU_WORLD_STEP is not False:
         raise AssertionError('A4.1 must not claim full GPU world-step')
     if hasattr(a4.A4GeneCacheBatch, 'from_state_dict'):
@@ -902,6 +1001,21 @@ def test_api_scope():
         raise AssertionError('A4.6b2 completion plan field set differs')
     if a44.FULL_GPU_WORLD_STEP is not False:
         raise AssertionError('A4.6b2 must not claim full GPU world-step')
+    if (a47.BUILD != 'SOMA-CELL 0.6.8-GPU A4.7a'
+            or a47.SCHEMA_VERSION
+            != '0.6.8-GPU-A4.7a-genome-hydrolysis-rng-tape'
+            or a47.FULL_GPU_WORLD_STEP is not False):
+        raise AssertionError('A4.7a identity/authority differs')
+    hydrolysis_fields = set(
+        a47.A4HydrolysisRngTape.__dataclass_fields__
+    )
+    if (set(a47._TAPE_ARRAY_FIELDS) != {
+            'genome_slot_mask', 'draw_mask', 'uniform_draws',
+            'hit_mask', 'deletion_positions'}
+            or hydrolysis_fields & {
+                'final_symbols', 'completed_symbols', 'pools_after',
+                'genome_lesions_after'}):
+        raise AssertionError('A4.7a tape exposed application state')
     if (a44.SCOPE_FP64_DISCRETE_BOUNDARY != 6
             or a44.FP64_DISCRETE_GUARD_EPS != 4096.0):
         raise AssertionError('A4.5b fp64 discrete guard contract differs')
@@ -922,10 +1036,10 @@ def test_api_scope():
             or a44.PORT_STATUS.get('material_mutation')
             != expected_material):
         raise AssertionError('A4.6b2 authority status differs')
-    return '%s / %s + %s + %s / full_gpu=false' % (
-        a44.BUILD, a4.SCHEMA_VERSION,
+    return '%s / %s + %s + %s + %s / full_gpu=false' % (
+        a47.BUILD, a4.SCHEMA_VERSION,
         a4.GENE_CACHE_SCHEMA_VERSION + ' + ' + a4.TRANSLATION_SCHEMA_VERSION,
-        a44.SCHEMA_VERSION,
+        a44.SCHEMA_VERSION, a47.SCHEMA_VERSION,
     )
 
 
@@ -5532,6 +5646,359 @@ def test_a46b2_completion_mutation_fail_closed_and_authority():
             len(corruptions))
 
 
+def test_a47a_hydrolysis_literal_boundaries_and_zero_probability_draw():
+    world, cell, capacity, dt = _a47_hydrolysis_fixture(boundaries=True)
+    world_before = v3.pickle_clone(world.state_dict())
+    cell_before = v3.pickle_clone(cell.state_dict())
+    rng_before = copy.deepcopy(world.rng.bit_generator.state)
+    ragged, state, binding = _paid_replication_binding(
+        [cell], world.config, capacity,
+    )
+    ragged_before = ragged.state_dict()
+    state_before = state.state_dict()
+    cache_before = binding.cache.state_dict()
+
+    tape = a47.prepare_genome_hydrolysis_rng_tape(
+        binding, dt, rng_before,
+    )
+    if a47.validate_a4_hydrolysis_rng_tape(
+            tape, binding, dt) is not tape:
+        raise AssertionError('A4.7a validator did not return its tape')
+    expected_slots = np.asarray(
+        [True, True, True, False, False], dtype=bool,
+    )
+    expected_draws = np.asarray(
+        [False, False, True, False, False], dtype=bool,
+    )
+    if (not np.array_equal(tape.genome_slot_mask, expected_slots)
+            or not np.array_equal(tape.draw_mask, expected_draws)
+            or np.any(tape.hit_mask)
+            or np.any(tape.deletion_positions != -1)
+            or int(tape.draw_count) != 1
+            or int(tape.hit_count) != 0):
+        raise AssertionError('A4.7a literal boundary schedule differs')
+
+    replay_bitgen = np.random.PCG64()
+    replay_bitgen.state = copy.deepcopy(rng_before)
+    replay_rng = np.random.Generator(replay_bitgen)
+    expected_uniform = float(replay_rng.random())
+    if (float(tape.uniform_draws[2]).hex() != expected_uniform.hex()
+            or np.any(tape.uniform_draws[[0, 1, 3, 4]] != 0.0)
+            or tape.rng_after_state != replay_rng.bit_generator.state):
+        raise AssertionError('A4.7a zero-probability RNG call differs')
+    if (tape.rng_after_state != {
+            'bit_generator': 'PCG64',
+            'state': {
+                'state': 126889499338173139678050600050083445318,
+                'inc': 121863417007658695389390353187995180015,
+            },
+            'has_uint32': 1,
+            'uinteger': 1123615560,
+            }):
+        raise AssertionError('A4.7a zero-dt PCG64 cache fixture drifted')
+
+    if world.rng.bit_generator.state != rng_before:
+        raise AssertionError('A4.7a boundary preparation advanced live RNG')
+    for label, before, after in (
+            ('world', world_before, world.state_dict()),
+            ('cell', cell_before, cell.state_dict()),
+            ('ragged', ragged_before, ragged.state_dict()),
+            ('state', state_before, state.state_dict()),
+            ('cache', cache_before, binding.cache.state_dict())):
+        v3.assert_recursive_close(
+            before, after, atol=0.0, rtol=0.0,
+            path='a47a.boundary.%s' % label,
+        )
+    return ('lesion==0.75 and length==MIN skip draws; eligible dt=0 '
+            'consumes exactly one random() with no integer/hit')
+
+
+def test_a47a_hydrolysis_formal066_hit_miss_hit_oracle_and_purity():
+    world, cell, capacity, dt = _a47_hydrolysis_fixture()
+    world_before = v3.pickle_clone(world.state_dict())
+    cell_before = v3.pickle_clone(cell.state_dict())
+    rng_before = copy.deepcopy(world.rng.bit_generator.state)
+    ragged, state, binding = _paid_replication_binding(
+        [cell], world.config, capacity,
+    )
+    ragged_before = ragged.state_dict()
+    state_before = state.state_dict()
+    cache_before = binding.cache.state_dict()
+    tape = a47.prepare_genome_hydrolysis_rng_tape(
+        binding, dt, rng_before,
+    )
+
+    expected_uniforms = np.asarray([
+        0.2984911434141233,
+        0.8142257405942803,
+        0.0919159421350969,
+    ], dtype=np.float64)
+    expected_hits = np.asarray(
+        [True, False, True, False, False], dtype=bool,
+    )
+    expected_positions = np.asarray(
+        [12, -1, 16, -1, -1], dtype=np.int64,
+    )
+    if (int(tape.draw_count) != 3 or int(tape.hit_count) != 2
+            or not np.all(tape.draw_mask[:3])
+            or np.any(tape.draw_mask[3:])
+            or not np.array_equal(tape.hit_mask, expected_hits)
+            or not np.array_equal(
+                tape.deletion_positions, expected_positions,
+            )
+            or not np.array_equal(
+                tape.uniform_draws[:3], expected_uniforms,
+            )
+            or np.any(tape.uniform_draws[3:] != 0.0)):
+        raise AssertionError('A4.7a hit/miss/hit call schedule differs')
+    expected_after = {
+        'bit_generator': 'PCG64',
+        'state': {
+            'state': 94939001618465750405315260005713465823,
+            'inc': 121863417007658695389390353187995180015,
+        },
+        'has_uint32': 1,
+        'uinteger': 2577412133,
+    }
+    if tape.rng_after_state != expected_after:
+        raise AssertionError('A4.7a conditional integer/cache order differs')
+
+    manual = _a47_manual_apply_tape(cell, tape)
+    cpu_world = copy.deepcopy(world)
+    cpu_cell = copy.deepcopy(cell)
+    cpu_world.cells = [cpu_cell]
+    cpu_cell._decay_information_and_proteins(cpu_world, dt)
+    if cpu_world.rng.bit_generator.state != tape.rng_after_state:
+        raise AssertionError('A4.7a after-state differs from Formal066')
+    if ([len(genome) for genome in cpu_cell.genomes] != [47, 48, 47]
+            or int(cpu_cell.genome_damage_events)
+            - int(cell.genome_damage_events) != 2):
+        raise AssertionError('A4.7a Formal066 deletion topology differs')
+    for genome_index, (expected, actual) in enumerate(zip(
+            manual.genomes, cpu_cell.genomes)):
+        if not np.array_equal(expected, actual):
+            raise AssertionError(
+                'A4.7a genome[%d] differs from Formal066' % genome_index
+            )
+    if ([float(value).hex() for value in cpu_cell.genome_lesions] != [
+            '0x1.33b13b13b13b2p+9',
+            '0x1.809d89d89d89ep+9',
+            '0x1.33b13b13b13b2p+9',
+            ]
+            or [float(value).hex() for value in manual.genome_lesions]
+            != [float(value).hex() for value in cpu_cell.genome_lesions]):
+        raise AssertionError('A4.7a lesion attenuation differs')
+
+    waste_index = int(a4.a3.POOL_WASTE)
+    cpu_waste = float(cpu_cell.pools[waste_index])
+    manual_waste = float(manual.pools[waste_index])
+    naive_waste = 0.004 + 2.0 * float(a4.g2.MONOMER_MASS)
+    if (cpu_waste.hex() != '0x1.719f7f8ca8198p-8'
+            or manual_waste.hex() != cpu_waste.hex()
+            or naive_waste.hex() == cpu_waste.hex()):
+        raise AssertionError('A4.7a ordered waste ledger differs')
+    _assert_gene_specs_equal(
+        cpu_cell.gene_specs, manual.gene_specs, 'a47a.gene_cache',
+    )
+    remaining_roles = [
+        int(spec['role']) for spec in cpu_cell.gene_specs.values()
+    ]
+    if remaining_roles != [int(a4.g2.ROLE_MEMBRANE)]:
+        raise AssertionError('A4.7a final gene cache refresh differs')
+
+    if world.rng.bit_generator.state != rng_before:
+        raise AssertionError('A4.7a preparation advanced the live RNG')
+    for label, before, after in (
+            ('world', world_before, world.state_dict()),
+            ('cell', cell_before, cell.state_dict()),
+            ('ragged', ragged_before, ragged.state_dict()),
+            ('state', state_before, state.state_dict()),
+            ('cache', cache_before, binding.cache.state_dict())):
+        v3.assert_recursive_close(
+            before, after, atol=0.0, rtol=0.0,
+            path='a47a.oracle_nonmutation.%s' % label,
+        )
+    return ('one-cell hit/miss/hit random->conditional-integer order, full '
+            'PCG64 cache, polymer/waste/lesion/event/cache exact')
+
+
+def test_a47a_hydrolysis_torch_trust_scope_and_a3_authority():
+    if torch is None:
+        raise AssertionError('PyTorch is required for A4.7a')
+    world, cell, capacity, dt = _a47_hydrolysis_fixture()
+    world_before = v3.pickle_clone(world.state_dict())
+    cell_before = v3.pickle_clone(cell.state_dict())
+    rng_before = copy.deepcopy(world.rng.bit_generator.state)
+    ragged, state, binding = _paid_replication_binding(
+        [cell], world.config, capacity,
+    )
+    tape = a47.prepare_genome_hydrolysis_rng_tape(
+        binding, dt, rng_before,
+    )
+
+    forged = a47.A4HydrolysisRngTape(
+        _factory_token=None, **tape.state_dict()
+    )
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a47.validate_a4_hydrolysis_rng_tape(
+            forged, binding, dt,
+        ),
+    )
+    scalar_bad = tape.clone()
+    scalar_bad.cell_id += 1
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a47.validate_a4_hydrolysis_rng_tape(
+            scalar_bad, binding, dt,
+        ),
+    )
+    dict_bad = tape.clone()
+    dict_bad.rng_after_state['state']['state'] ^= 1
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a47.validate_a4_hydrolysis_rng_tape(
+            dict_bad, binding, dt,
+        ),
+    )
+    array_bad = tape.clone()
+    array_bad.uniform_draws[0] = np.nextafter(
+        array_bad.uniform_draws[0], np.float64(1.0),
+    )
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a47.validate_a4_hydrolysis_rng_tape(
+            array_bad, binding, dt,
+        ),
+    )
+    tail_bad = tape.clone()
+    tail_index = int(tape.sequence_count)
+    if tail_index >= int(tape.sequence_capacity):
+        raise AssertionError('A4.7a trust fixture lacks an unused tail')
+    tail_bad.deletion_positions[tail_index] = 0
+    _assert_raises(
+        a4.A4SchemaError,
+        lambda: a47.validate_a4_hydrolysis_rng_tape(
+            tail_bad, binding, dt,
+        ),
+    )
+    wrong_dt = float(np.nextafter(
+        np.float64(dt), np.float64(np.inf),
+    ))
+    _assert_raises(
+        a47.A4HydrolysisScopeError,
+        lambda: a47.validate_a4_hydrolysis_rng_tape(
+            tape, binding, wrong_dt,
+        ),
+    )
+
+    stale_cell = copy.deepcopy(cell)
+    stale_cell.genome_lesions[0] = np.nextafter(
+        stale_cell.genome_lesions[0], np.float64(np.inf),
+    )
+    _, _, stale_binding = _paid_replication_binding(
+        [stale_cell], world.config, capacity,
+    )
+    _assert_raises(
+        a47.A4HydrolysisScopeError,
+        lambda: a47.validate_a4_hydrolysis_rng_tape(
+            tape, stale_binding, dt,
+        ),
+    )
+
+    second = copy.deepcopy(cell)
+    second.cell_id = int(cell.cell_id) + 1000000
+    multi_capacity = a4.GPU068A4Config(
+        max_cells=2, max_sequences=10,
+        max_symbols=2 * sum(len(genome) for genome in cell.genomes),
+        max_sequence_symbols=48, max_proteins_per_cell=64,
+    )
+    _, _, multi_binding = _paid_replication_binding(
+        [cell, second], world.config, multi_capacity,
+    )
+    _assert_raises(
+        a47.A4HydrolysisScopeError,
+        lambda: a47.prepare_genome_hydrolysis_rng_tape(
+            multi_binding, dt, rng_before,
+        ),
+    )
+
+    devices = ['cpu']
+    if torch.cuda.is_available():
+        devices.append('cuda')
+    elif _REQUIRE_CUDA:
+        raise AssertionError('CUDA required but unavailable')
+    for device in devices:
+        resident = tape.to_torch(binding, dt, device=device)
+        pointers = resident.data_ptrs()
+        for name in a47._TAPE_ARRAY_FIELDS:
+            value = getattr(resident, name)
+            if (not isinstance(value, torch.Tensor)
+                    or value.device.type != device):
+                raise AssertionError(
+                    '%s A4.7a %s escaped device' % (device, name)
+                )
+        readback = resident.to_numpy()
+        if a47.validate_a4_hydrolysis_rng_tape(
+                readback, binding, dt) is not readback:
+            raise AssertionError('%s A4.7a readback was not validated' % device)
+        for name, expected in tape.state_dict().items():
+            actual = getattr(readback, name)
+            if isinstance(expected, np.ndarray):
+                equal = np.array_equal(expected, actual)
+            else:
+                equal = expected == actual
+            if not equal:
+                raise AssertionError(
+                    '%s A4.7a %s roundtrip differs' % (device, name)
+                )
+        if resident.data_ptrs() != pointers:
+            raise AssertionError('%s A4.7a tape pointer changed' % device)
+
+        hidden = tape.to_torch(binding, dt, device=device)
+        version = int(hidden.uniform_draws._version)
+        hidden.uniform_draws.data[0] = 0.0
+        if int(hidden.uniform_draws._version) != version:
+            raise AssertionError('%s .data unexpectedly changed version' % device)
+        _assert_raises(a4.A4SchemaError, hidden.to_numpy)
+
+        hidden_expected = tape.to_torch(binding, dt, device=device)
+        expected_tensor = hidden_expected._resident_expected_arrays[
+            'uniform_draws'
+        ]
+        expected_version = int(expected_tensor._version)
+        expected_tensor.data[0] = 0.0
+        if int(expected_tensor._version) != expected_version:
+            raise AssertionError(
+                '%s expected .data unexpectedly changed version' % device
+            )
+        _assert_raises(a4.A4SchemaError, hidden_expected.to_numpy)
+
+    expected_status = (
+        'a4.7a-single-cell-post-gain-literal-pcg64-event-tape-'
+        'not-applied-not-live-rng-committed-not-integrated-cpu-authoritative'
+    )
+    if (world.rng.bit_generator.state != rng_before
+            or a47.FULL_GPU_WORLD_STEP is not False
+            or a47.PORT_STATUS.get('full_gpu_world_step') is not False
+            or a47.PORT_STATUS.get('genome_symbol_hydrolysis_rng')
+            != expected_status
+            or a4.a3.PORT_STATUS.get('genome_symbol_hydrolysis_rng')
+            != 'cpu-authoritative-explicit-hazard-plan'
+            or v3._event_order().count('genome_hydrolysis_cpu_rng') != 1):
+        raise AssertionError('A4.7a changed A3 hydrolysis authority')
+    for label, before, after in (
+            ('world', world_before, world.state_dict()),
+            ('cell', cell_before, cell.state_dict())):
+        v3.assert_recursive_close(
+            before, after, atol=0.0, rtol=0.0,
+            path='a47a.trust_nonmutation.%s' % label,
+        )
+    return ('NumPy/Torch %s explicit readback; factory/scalar/dict/array/'
+            'tail/dt/stale/multicell/.data trust rejection; A3 authority retained' %
+            '/'.join(devices))
+
+
 TESTS = (
     test_api_scope,
     test_source_hash_inputs_present,
@@ -5573,6 +6040,9 @@ TESTS = (
     test_a46b2_completion_mutation_apply_formal066_oracle,
     test_a46b2_completion_mutation_numpy_torch_devices,
     test_a46b2_completion_mutation_fail_closed_and_authority,
+    test_a47a_hydrolysis_literal_boundaries_and_zero_probability_draw,
+    test_a47a_hydrolysis_formal066_hit_miss_hit_oracle_and_purity,
+    test_a47a_hydrolysis_torch_trust_scope_and_a3_authority,
 )
 
 
@@ -5600,7 +6070,7 @@ def run_all(write=False, output_dir=None):
     failed = sum(row['status'] == 'FAIL' for row in rows)
     elapsed = time.time() - started
     payload = {
-        'build': a44.BUILD,
+        'build': a47.BUILD,
         'schema': {
             'ragged_genome': a4.SCHEMA_VERSION,
             'gene_cache': a4.GENE_CACHE_SCHEMA_VERSION,
@@ -5613,9 +6083,10 @@ def run_all(write=False, output_dir=None):
             'completion_mutation_plan': (
                 a44.COMPLETION_MUTATION_PLAN_SCHEMA_VERSION
             ),
+            'genome_hydrolysis_rng_tape': a47.SCHEMA_VERSION,
         },
         'development_slice': (
-            'A4.6b2-resident-completion-structural-material-mutation-plan'
+            'A4.7a-single-cell-event-local-genome-hydrolysis-rng-tape'
         ),
         'promoted_baseline_unchanged': 'SOMA-CELL 0.6.8-GPU A3',
         'full_gpu_world_step': False,
@@ -5637,7 +6108,7 @@ def run_all(write=False, output_dir=None):
             writer.writeheader()
             writer.writerows(rows)
         lines = [
-            '%s VALIDATION' % a44.BUILD,
+            '%s VALIDATION' % a47.BUILD,
             '%d PASS / %d FAIL / %d TOTAL' % (passed, failed, len(rows)),
             'elapsed %.6fs' % elapsed,
             '',
