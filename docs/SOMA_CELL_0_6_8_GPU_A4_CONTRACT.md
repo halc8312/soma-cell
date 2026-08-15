@@ -1,6 +1,6 @@
 # SOMA-CELL 0.6.8-GPU A4 contract
 
-Status: A4 development contract through slice A4.9a. This is not an A4
+Status: A4 development contract through slice A4.9b. This is not an A4
 promotion.
 
 ## Authority
@@ -1093,7 +1093,7 @@ or speedup result, A4 completion or promotion, or a full GPU world-step.
 A4.9a adds one runtime-persistent but non-durable, immutable, world-wide
 resident shadow in the new
 `SOMA_CELL_0_6_8_gpu_a4_resident_arena.py` module. It does not edit or replace
-the A3 world/scheduler, A4 pure cores, or A4.8a/c1-c8 event authorities. The
+the A3 world/scheduler, A4 pure cores, or A4.8a/A4.8b/c1-c8 event authorities. The
 committed CPU world and its full PCG64 state remain the only durable biology
 and RNG authority, and `full_gpu_world_step` remains `false`.
 
@@ -1163,6 +1163,119 @@ errors, `A4ResidentArenaEpochs`, and `A4ResidentArenaOwner` with
 read-only `arena_id`, `lifecycle`, and `epochs`. It exposes no successful
 device-write, device-dirty, `RESIDENT_NEWER`, D2H-publish, CPU-overwrite,
 serialization, scheduler, RNG, or live-commit operation.
+
+## A4.9b scope
+
+A4.9b adds one bounded live use of the A4.9a owner in the new
+`SOMA_CELL_0_6_8_gpu_a4_resident_translation_integration.py` module: an
+RNG-free, selected-row paid-translation transaction at active A3 metabolism
+rank 5. The promoted A3 implementation, A4 pure cores, A4.8a/A4.8b/c1-c8 bridges,
+and A4.9a core remain frozen. Replication, hydrolysis, every other scheduler
+event, and durable save authority remain on their prior CPU/A4 authorities.
+
+The pure surface consists of `A4SelectedTranslationPlan`,
+`paid_translation_selected_numpy`, `paid_translation_selected_torch`, and
+`paid_translation_selected`. A selected plan binds
+`schema_version`, target index and cell ID, exact `dt.hex()`, a one-hot target
+mask, source provenance, and one full-capacity `state_after`. It first
+evaluates the existing A4.3 full paid-translation plan, then merges only the
+selected row of the nine translation write-set arrays into a clone of the
+source state: pools, the two translation/quiescence scalars, and the
+fingerprint/mass/count arrays for active and damaged proteins. All rows of the
+other 21 state arrays and all non-target rows and unused tails of the nine
+write-set arrays remain bit-exact. A Torch selected plan is 31 fresh,
+version-zero, source-nonaliasing tensors: the target mask plus all 30 state
+arrays. Its only public operations are validation, diagnostic `to_numpy`, and
+Torch pointer reporting; it is not serializable or commit authority by itself.
+
+The integration derives the exact target index and cell ID from the active
+scheduler cell and resident membership. It accepts no caller binding,
+selector, plan, candidate, or CPU-publish value. At the exact rank-5 boundary,
+after maintenance and before either translation or replication is claimed, it
+audits the owner. `COHERENT` is consumed as-is; `CPU_NEWER` triggers one
+explicit, separate, world-wide A4.9a prepare/swap full-build episode;
+`INVALID` fails closed and is never auto-rebuilt. That preceding rebuild has
+its own epoch and storage-generation transition. The later selected
+transaction's S and generation increments, and any rollback, are relative to
+the resulting coherent transaction-input generation, never to a stale
+pre-rebuild generation.
+
+Within a private owner-bound one-shot lease, the integration creates and
+validates the selected plan, independent NumPy oracle, and a fresh resident
+candidate. The lease is consumed and normally closed before any CPU claim or
+publish. Candidate construction clones the 11 ragged tensors, clones the 30
+selected-state tensors, and decodes nine cache tensors from the fresh ragged
+clone. All 50 are version zero and non-aliasing with the old arena, the
+31-tensor selected plan, and successive candidates. A full-capacity diagnostic
+D2H/readback seals and rechecks all 50 candidate tensors. CPU publish then uses
+only the selected target-row values extracted from that explicitly read-back,
+sealed candidate. This semantic selected-row publish is not a claim that only
+the target row was physically transferred D2H; the integrity readback is full
+capacity. NumPy remains a validation oracle and is never substituted for the
+resident result.
+
+The exact commit sequence is: final preclaim revalidation; one
+`translation_cpu` claim; selected CPU write-set publish; CPU-publish
+verification; fallible finalization with a fresh CPU attestation, new arena
+and seals/guards; the final protected fault-injection hook; fallible full arm
+validation; receipt annotation with `amount`, `work_performed`,
+`sync_performed`, and `rng_draw_count=0`; then an allocation-, callback-,
+readback-, and validation-free pointer/guard CAS under the owner lock followed
+by old-arena retirement. No fallible hook follows annotation. This is bounded
+runtime-exception atomicity, not process-crash, power-loss, OS-loss, or
+device-loss atomicity.
+
+The selected CPU publish preserves the existing pools array identity and the
+frozen Formal066 ordering and semantics: FUEL/MINERAL/ATP costs
+`0.64/0.36/0.52`, ATP reserve `0.042`, active and damaged ledgers and dictionary
+order, sync thresholds `>1e-10` and `>1e-11`, `last_translation`, and conditional
+`last_quiescence`. A pre-weight-gate early return retains both protein mapping
+objects; a valid post-gate zero-work case replaces both with the prepared
+mappings. Genomes, lesions, template/copy, `gene_specs`, replication state,
+world energy, and the PCG64 object and full state remain unchanged, with zero
+RNG draws. Every valid invocation, including a no-op, advances exactly S+1
+and storage generation +1 from its coherent transaction input, creates a
+fresh arena ID, leaves M/R/C and cache-source relation unchanged, and retires
+the old arena only after the final CAS.
+
+Preclaim failure does not claim or mutate the selected transaction. From
+claim through the final CAS, failure restores the declared translation
+write-set and its named protein/gene-cache, RNG, energy, scalar, and object-
+identity guards. For ordinary injected failure the same coherent input owner,
+arena ID, storage generation, and epochs remain authoritative. An old-source
+or resident trust breach, incomplete finalization, or rollback mismatch
+instead isolates the owner as `INVALID`. This is bounded declared-write-set
+rollback, not a generic whole-cell/world transaction, malicious-publisher
+rollback, or crash-consistency guarantee.
+
+After a successful inherited full step and completion of every event and
+receipt, the A4.9b wrapper slice-copies the final ordered members back into the
+original concrete `world.cells` list and restores that container identity. A
+container-only Formal066 rebind therefore creates no false M drift. Actual
+member, order, cell-ID, generation, or alive changes remain present in the
+list contents and audit as M/`INVALID`; a failed step is not normalized. HGT
+with unchanged membership is instead ragged drift, audits as `CPU_NEWER`, and
+can be followed only by the explicit separate rank-5 full rebuild.
+
+CPU world/cell state and full PCG64 remain the only durable save authority.
+Owner, arena, lease, selected plan, prepared/finalized state, epochs, pointers,
+seals, and guards are never serialized, and active or pending state rejects
+save/clone. Load and clone begin without an owner; first rank-5 use constructs
+a fresh token, arena ID, and non-aliasing storage. The inherited
+`Formal066.from_state` canonicalization is pinned without weakening the raw
+durable payload: only pool index 4 differs, by exactly `2^-53` at this fixture's
+one-ULP boundary, while RNG state is exact; clone/load equality uses the exact
+canonical output after that inherited transform.
+
+Exact C/Q/S/W/P capacity succeeds and every corresponding one-short case
+fails before lease, allocation, claim, or CPU mutation. P is the conservative
+union of existing and derived-gene fingerprints for both active and damaged
+ledgers. There is no clipping, growth, partial candidate, reuse, or fallback.
+Direct CPU split, death, washout, reorder, and alive drift leave the old 50
+tensors unchanged but audit M/`INVALID` without automatic rebuild. HGT leaves
+membership intact, audits R/S/C as `CPU_NEWER`, and requires a fresh full
+rank-5 rebuild. A5 continues to consume committed CPU state; there is no A5
+D2H flush and no A5 port in this slice.
 
 ## Fail-closed invariants
 
@@ -1309,8 +1422,10 @@ Resident-shadow invariants are:
   A coherent generation requires
   `cache_source_ragged_epoch == ragged_epoch`.
 - Pointer/version/metadata checks and explicit diagnostic content readback
-  both pass before private resident meaning is consumed. Diagnostic D2H never
-  becomes CPU publish authority.
+  both pass before private resident meaning is consumed. An A4.9a owner-only
+  audit/rebuild diagnostic D2H never by itself becomes CPU publish authority;
+  A4.9b's separately sealed transaction candidate is governed by its stricter
+  full-readback/selected-publish rule below.
 - Exact C/Q/S/W/P capacity passes and any required one-short capacity fails
   before resident upload. No cell, sequence, symbol, protein, cache entry, or
   source field is clipped, dropped, silently grown, or delegated to fallback.
@@ -1321,7 +1436,39 @@ Resident-shadow invariants are:
 - A4.9a performs no device biology write, D2H publish, CPU overwrite,
   scheduler claim, event receipt, RNG call, or live c1-c8 commit.
 
-## Explicit exclusions through A4.9a
+Resident selected-translation transaction invariants are:
+
+- The transaction exists only at active A3 metabolism rank 5 after
+  maintenance and before translation/replication claim. Target index and ID,
+  binding, plan, candidate, and publish authority are all derived internally.
+- A rank-5 `CPU_NEWER` full rebuild is a sealed A4.9a prepare/swap generation
+  before the selected transaction. `INVALID` is never rebuilt automatically.
+- The selected plan has 31 fresh version-zero tensors. Its nine-array target
+  row is selected from the unchanged A4.3 full plan; the other 21 arrays,
+  non-target rows, and unused tails remain exact.
+- Each candidate has 50 fresh version-zero tensors split 11 ragged, 30 state,
+  and nine cache. It aliases neither the old generation, the plan, nor another
+  candidate. A diagnostic readback covers all 50; only the selected semantic
+  row is published to CPU.
+- The private lease closes before claim. Claim, publish, verify, finalize,
+  protected hook, arm, annotate, lock-held pointer CAS, and old retirement
+  occur in that exact order, with no fallible work after annotation.
+- Every valid call, including no-op, performs zero RNG draws and moves exactly
+  S+1 and storage generation +1 relative to the coherent transaction input.
+  M/R/C and the cache-source relation do not change in that transaction.
+- Claim-to-CAS rollback is limited to the declared translation write-set and
+  named trust/identity guards. Ordinary failure retains the same coherent
+  input generation; trust or rollback failure makes the owner `INVALID`.
+- Successful-step list normalization preserves only the original concrete
+  container identity. Actual member/order/ID/generation/alive differences
+  remain M/`INVALID`; same-membership HGT is R/S/C `CPU_NEWER`.
+- Only committed CPU biology and full PCG64 are durable. Load/clone build a
+  fresh nonalias owner at first rank 5; the inherited sole pool[4]
+  canonicalization is exactly `2^-53` and RNG remains exact.
+- Exact C/Q/S/W/P passes and each one-short case fails preclaim. CPU A5 events
+  consume committed CPU without a resident flush; no A5 authority is added.
+
+## Explicit exclusions through A4.9b
 
 - No scheduler/world integration other than the single-cell translation,
   pre-existing-active noncompletion, mutation-free completion, mutation-
@@ -1330,11 +1477,11 @@ Resident-shadow invariants are:
   mutation-free and mutation-enabled same-call-completion replication, the
   four bounded pre-active ordinary early no-ops, and hydrolysis event
   replacements in `Hybrid066WorldA4ReplicationEarlyNoop`.
-- No caller-supplied tape/plan/candidate authority, persistent writable
+- No caller-supplied tape/plan/candidate/publish authority, persistent writable
   resident biology authority, or multi-cell translation/replication/RNG
-  batch. A4.9a's runtime-persistent object is only an immutable external
-  shadow; the A4.8 wrapper still rebuilds one disposable binding per event and
-  preserves inherited per-cell event/RNG interleaving.
+  batch. A4.9b permits only its internally selected rank-5 transaction over a
+  fresh immutable generation and preserves inherited per-cell event/RNG
+  interleaving.
 - No A4.8c8 authority for a zero-length complete genome, negative entry ATP,
   a dead direct call, or a guarded replicase comparison-boundary row. Zero
   genome count remains the distinct supported `no-genome` branch. Inherited
@@ -1345,16 +1492,19 @@ Resident-shadow invariants are:
   only inside the new wrapper.
 - No device RNG kernel or performance claim; the correctness bridges
   intentionally perform explicit per-cell host/device validation round trips.
-- No resident in-place update, automatic or incremental H2D refresh,
-  per-cell dirty upload, allocator/compaction, slot reuse, device-dirty or
-  `RESIDENT_NEWER` state, D2H biology publish, CPU overwrite, scheduler/world
-  hook, live c1-c8 arena binding, or multi-cell GPU-primary biological kernel.
+- Outside the bounded A4.9b rank-5 selected-translation transaction, no
+  resident device biology write, D2H publish, CPU overwrite, scheduler/world
+  hook, or live c1-c8 arena binding exists. Even within it there is no resident
+  in-place update, automatic/incremental/per-cell H2D refresh, allocator or
+  compaction, slot reuse, device-dirty/`RESIDENT_NEWER` state, or multi-cell
+  GPU-primary biological kernel. Full candidate diagnostic D2H/readback is
+  integrity validation; only its selected row has CPU publish semantics.
 - No division, death, corpse/eDNA/HGT, neural, or causal-system port.
 - No fp32 claim, mixed precision, `torch.compile`, CUDA Graph, Triton, custom
   CUDA, multi-stream, multi-GPU, or online-GPU abstraction.
 - No formal 13-spec/65-measurement benchmark and no speedup claim.
 
-## Acceptance through A4.9a
+## Acceptance through A4.9b
 
 - All A4.1 lossless/corruption/capacity/residency tests remain PASS.
 - Nested valid markers and invalid-outer/valid-inner recovery match frozen
@@ -1787,9 +1937,46 @@ Resident-shadow invariants are:
   remain unchanged, and owner/arena/candidate/lease serialization is rejected.
 - The four A4.9a tests pass on Torch CPU and explicit RTX 4060 Ti CUDA. All 90
   A4 development tests pass; the previous 86 names/function AST and promoted
-  A3, A4 pure, and A4.8a/c1-c8 source hashes remain frozen.
+  A3, A4 pure, and A4.8a/A4.8b/c1-c8 source hashes remain frozen.
   `full_gpu_world_step=false`; no resident biology authority, device write,
   D2H publish, performance, speedup, A4-completion, or promotion claim is made.
+
+- Eight Formal066 branches across first/middle/last target rows cover rich
+  translation, ATP reserve, mineral exhaustion, no translator, disabled gene
+  expression, no genome, eligible `dt==0`, and a signed residual. Selected
+  NumPy and Torch CPU/CUDA fp64 target values agree within `2e-12`, with exact
+  discrete values and dictionary order. All 30 state arrays are exact outside
+  the target row; each Torch plan is 31 fresh version-zero tensors; source,
+  CPU world, PCG64, and object identities remain unchanged.
+- Real A3 unpack produces R/S/C `CPU_NEWER`; a separate full rank-5 rebuild
+  precedes selected success, early no-op, and eligible post-gate `dt==0`
+  transactions. Each selected transaction advances S and generation exactly
+  once, retires the old arena only after CAS, preserves non-target CPU
+  identities and resident rows, and proves plan31/candidate50/successive50
+  nonaliasing. Exact C/Q/S/W/P passes and each one-short case fails preclaim.
+- Plan version, candidate pointer/data/`.data`, host oracle, seals, RNG, CPU
+  source, and old-resident trust tampering fail closed; pre-existing `INVALID`
+  never auto-rebuilds. Stale/cross-owner/consumed/rearmed leases, selectors,
+  wrong world/cell/config/`dt`/device, scheduler/backend seals, duplicate calls,
+  and wrong order are rejected. Injected post-publish and final-arm RNG/energy
+  failures restore exact bounded CPU identities, RNG, and the old coherent
+  transaction input; a rollback mismatch isolates it as `INVALID`.
+- One/ten-step, two-step translation stress, and two-cell interleave match the
+  CPU/c8 event order, receipts, PCG64, and material ledger without the legacy
+  translation bridge. Successful-step list identity normalization preserves
+  container-only continuity, while split/death/washout/reorder/alive drift is
+  M/`INVALID`; HGT is R/S/C `CPU_NEWER` followed by an explicit fresh rebuild.
+  Save/load/clone create fresh nonalias owners and preserve the raw durable
+  payload; inherited `from_state` differs only at pool[4] by exact `2^-53`,
+  with exact RNG and exact post-canonical comparisons. Prior 90 test names/AST
+  and A3, A4 pure, A4.8a/A4.8b/c1-c8, and A4.9a hashes remain frozen.
+- The validation suite contains the frozen prior 90 tests plus four A4.9b
+  tests, for 94 total. The final new-four run passes 4/4 on Torch CPU in
+  518.401 seconds and 4/4 in one unique same-process CUDA run in
+  487.719798 seconds on RTX 4060 Ti with Torch 2.13+cu130. These diagnostic
+  full-readback measurements are correctness evidence only, not performance
+  or speedup evidence. `full_gpu_world_step=false`; A3 remains the promoted
+  baseline and A4 remains incomplete and unpromoted.
 
 Known A4.4b integration blockers are recorded rather than hidden.  On the
 measured six-cell development fixture the current fixed symbol-rank Torch plan
@@ -1809,18 +1996,18 @@ must be redesigned and remeasured before scheduler authority, promotion, or
 any speedup claim.
 
 A4.8a, A4.8b, A4.8c1, A4.8c2, A4.8c3, A4.8c4, A4.8c5, A4.8c6,
-A4.8c7, and A4.8c8 are bounded
-exceptions to the earlier pure-descriptor boundary: the opt-in wrapper commits
-paid translation, pre-existing-active noncompletion replication, mutation-free
-active completion, mutation-enabled active completion, mutation-enabled and
-mutation-free inactive template-start noncompletion, mutation-free and
-mutation-enabled inactive template-start same-call completion, and one
-of four ordered pre-active ordinary early no-ops, plus one hydrolysis event,
-only after complete resident readback/replay. The promoted A3 standalone
-bridges remain byte-identical. A4.9a separately adds a runtime-persistent
-immutable shadow and coherence owner, but does not connect that shadow to any
-wrapper event, publish resident results to CPU, or make it durable biology.
-No writable resident chain, batched live authority, or performance claim is
-implied, and zero-length complete genomes, negative entry ATP, dead direct
-calls, guarded fp64 replicase-boundary cases, division, and the A5/A6
-subsystems remain separate later slices.
+A4.8c7, and A4.8c8 are bounded exceptions to the earlier pure-descriptor
+boundary: the opt-in wrapper commits paid translation, the registered
+replication branches and early no-ops, and one hydrolysis event only after
+complete resident readback/replay. The promoted A3 standalone bridges remain
+byte-identical. A4.9a adds the runtime-persistent immutable world-wide shadow;
+A4.9b connects it only to the bounded rank-5, zero-RNG selected paid-
+translation transaction described above. The full candidate integrity path
+performs diagnostic D2H, while only the selected target row is semantically
+published into durable CPU authority. There is still no writable resident
+chain across pretranslation phases, replication, hydrolysis, or A5; no batched
+live or device-RNG authority; and no performance or speedup claim. Zero-length
+complete genomes, negative entry ATP, dead direct calls, guarded fp64
+replicase-boundary cases, division, and the A5/A6 subsystems remain later
+slices. A3 remains the promoted baseline, A4 remains incomplete and
+unpromoted, and `full_gpu_world_step=false`.

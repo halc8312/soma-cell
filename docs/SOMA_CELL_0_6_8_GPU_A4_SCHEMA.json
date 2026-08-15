@@ -1,9 +1,9 @@
 {
-  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.9a-immutable-world-wide-resident-shadow",
+  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.9b-resident-selected-translation-transaction",
   "status": "development_slice_not_promoted",
   "promoted_baseline": "SOMA-CELL 0.6.8-GPU A3",
   "full_gpu_world_step": false,
-  "authoritative_state": "committed_CPU_world_and_full_PCG64_remain_the_only_durable_biology_and_RNG_authority_after_A4_9a;_the_runtime_persistent_world_wide_resident_arena_is_an_immutable_CPU_derived_shadow_only",
+  "authoritative_state": "committed_CPU_world_and_full_PCG64_remain_the_only_durable_biology_and_RNG_authority_after_A4_9b;_the_selected_rank5_transaction_publishes_one_target_row_to_CPU_before_swapping_a_fresh_runtime_persistent_immutable_coherent_resident_generation_which_is_never_independent_durable_authority",
   "resident_world_shadow": {
     "schema_version": "0.6.8-GPU-A4.9a-resident-arena-shadow",
     "status": "runtime_persistent_immutable_shadow_not_durable_biology_not_scheduler_authority",
@@ -119,6 +119,185 @@
     "resident_biology_authority": false,
     "resident_device_writes": false,
     "resident_d2h_publish": false,
+    "full_gpu_world_step": false
+  },
+  "resident_selected_translation_transaction": {
+    "schema_version": "0.6.8-GPU-A4.9b-resident-selected-translation",
+    "status": "bounded_live_rank5_selected_paid_translation_correctness_slice_not_A4_completion_or_promotion",
+    "module": "src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_resident_translation_integration.py",
+    "authority": {
+      "durable": "committed_CPU_world_cells_and_full_PCG64_only",
+      "runtime_resident": "fresh_immutable_generation_is_a_coherent_CPU_attested_shadow_after_selected_CPU_publish_not_independent_biology",
+      "baseline": "SOMA-CELL_0_6_8_GPU_A3",
+      "frozen_predecessors": "promoted_A3_A4_pure_A4_8a_A4_8b_c1_through_c8_and_A4_9a_core"
+    },
+    "public_api": {
+      "constants": [
+        "BUILD",
+        "BUILD_ID",
+        "BUILD_LONG",
+        "SCHEMA_VERSION",
+        "SELECTED_PLAN_SCHEMA_VERSION",
+        "SAVE_VERSION",
+        "FULL_GPU_WORLD_STEP",
+        "TRANSLATION_ORACLE_ATOL",
+        "COHERENT",
+        "CPU_NEWER",
+        "INVALID",
+        "PORT_STATUS"
+      ],
+      "types": [
+        "A4ResidentTranslationCommitError",
+        "A4SelectedTranslationPlan",
+        "A4ResidentTranslationEventScheduler",
+        "Hybrid066WorldA4ResidentTranslation"
+      ],
+      "pure_functions": [
+        "paid_translation_selected_numpy",
+        "paid_translation_selected_torch",
+        "paid_translation_selected"
+      ],
+      "not_public_authority": "owner_subclass_prepared_and_finalized_storage_leases_bindings_selectors_candidates_publish_values_transaction_guards_and_CAS_artifacts_remain_private"
+    },
+    "selected_plan": {
+      "schema_version": "0.6.8-GPU-A4.9b-resident-selected-translation-plan",
+      "fields": [
+        "schema_version",
+        "target_index",
+        "target_cell_id",
+        "dt_hex",
+        "target_mask",
+        "source_provenance",
+        "state_after"
+      ],
+      "selection": "exactly_one_used_row_whose_index_and_cell_ID_match;_integration_derives_both_from_the_active_scheduler_cell_and_resident_membership",
+      "construction": "evaluate_the_existing_A4_3_full_paid_translation_plan_then_merge_only_the_selected_row_of_the_nine_array_write_set_into_a_clone_of_the_full_source_state",
+      "selected_write_arrays": [
+        "pools",
+        "last_translation",
+        "last_quiescence",
+        "active_fingerprints",
+        "active_mass",
+        "active_count",
+        "damaged_fingerprints",
+        "damaged_mass",
+        "damaged_count"
+      ],
+      "exact_isolation": "all_rows_of_the_other_21_arrays_and_all_non_target_rows_and_unused_tails_of_the_nine_write_arrays_equal_the_source_bit_exactly",
+      "torch_freshness": {"tensor_count": 31, "groups": {"target_mask": 1, "translation_state": 30}, "version": 0, "source_alias": false},
+      "public_operations": ["validate", "to_numpy", "data_ptrs"],
+      "operation_limits": "to_numpy_is_explicit_diagnostic_readback_and_data_ptrs_is_Torch_only",
+      "serialization_or_commit_authority": false,
+      "numpy_role": "independent_validation_oracle_only_never_substituted_for_resident_publish_values"
+    },
+    "rank5_entry": {
+      "only_context": "active_A3_metabolism_rank_5_after_maintenance_and_before_translation_cpu_or_replication_cpu_claim",
+      "target_authority": "scheduler_internal_cell_object_plus_exact_resident_membership_index_and_ID",
+      "caller_inputs_forbidden": "binding_selector_plan_candidate_or_CPU_publish_value",
+      "COHERENT": "use_the_current_immutable_generation",
+      "CPU_NEWER": "perform_an_explicit_separate_world_wide_A4_9a_prepare_rebuild_and_swap_full_H2D_build_episode_before_the_selected_transaction",
+      "INVALID": "fail_closed_without_auto_rebuild",
+      "generation_accounting": "the_pre_rank5_rebuild_has_its_own_epoch_and_storage_generation_transition;_selected_success_and_rollback_are_relative_to_the_resulting_coherent_transaction_input_not_the_stale_pre_rebuild_generation"
+    },
+    "private_lease_and_candidate": {
+      "lease": "private_owner_arena_epoch_bound_one_shot_consumed_and_normally_closed_before_CPU_claim_or_publish",
+      "candidate_tensor_count": 50,
+      "candidate_groups": {
+        "ragged_cloned_from_old_resident": 11,
+        "selected_state_cloned_from_plan": 30,
+        "cache_decoded_from_fresh_ragged": 9
+      },
+      "freshness": "all_candidate_tensors_are_version_zero_and_object_storage_nonaliasing_with_the_old_arena_selected_plan31_and_each_successive_candidate",
+      "prepared_status": "sealed_event_local_candidate_not_an_arena_generation_or_biology_authority_before_commit",
+      "serialization": false
+    },
+    "diagnostic_readback_and_publish": {
+      "physical_readback": "explicit_full_capacity_D2H_diagnostic_readback_seals_and_rechecks_all_50_candidate_tensors_including_pointer_version_content_and_data_bypass_detection",
+      "CPU_publish": "only_the_selected_target_row_values_extracted_from_the_explicitly_read_back_and_sealed_full_candidate_are_semantically_published_to_CPU",
+      "nonclaim": "selected_semantic_publish_does_not_mean_only_the_target_row_was_physically_D2H_transferred",
+      "numpy": "validation_only_and_never_publish_authority"
+    },
+    "atomic_commit_order": [
+      "revalidate_every_preclaim_world_cell_config_dt_owner_CPU_RNG_energy_plan_candidate_and_seal_guard",
+      "claim_translation_cpu_exactly_once",
+      "publish_the_selected_CPU_write_set",
+      "verify_the_CPU_publish",
+      "finalize_with_fresh_CPU_attestation_new_arena_creation_seal_and_base_outer_guards",
+      "run_the_final_protected_fault_injection_hook",
+      "arm_with_full_final_validation",
+      "annotate_amount_work_performed_sync_performed_and_rng_draw_count_zero",
+      "under_owner_lock_perform_allocation_callback_readback_validation_free_pointer_and_guard_CAS_then_retire_the_old_arena"
+    ],
+    "atomicity_limit": "no_fallible_hook_after_annotation;_bounded_runtime_exception_atomicity_only_not_process_crash_power_OS_or_device_loss_atomicity",
+    "CPU_publish_semantics": {
+      "preserved_identity": "existing_pools_array",
+      "payments": {"FUEL": 0.64, "MINERAL": 0.36, "ATP": 0.52, "ATP_reserve": 0.042},
+      "ordered_outputs": "active_and_damaged_protein_ledgers_and_mapping_order_sync_thresholds_greater_than_1e-10_and_greater_than_1e-11_last_translation_and_conditional_last_quiescence_follow_frozen_Formal066",
+      "early_return": "before_the_weight_gate_retain_both_protein_mapping_objects",
+      "gate_after_zero_work": "replace_both_protein_mappings_with_the_prepared_new_objects_even_when_translated_mass_is_zero",
+      "unchanged": "genomes_lesions_template_copy_gene_specs_replication_state_world_energy_and_PCG64_object_and_full_state",
+      "RNG_draw_count": 0
+    },
+    "success_transition": {
+      "relative_base": "coherent_transaction_input_generation_after_any_separate_pre_rank5_rebuild",
+      "epochs": "membership_ragged_cache_and_cache_source_relation_unchanged;_state_epoch_exactly_plus_1",
+      "storage_generation": "exactly_plus_1",
+      "arena": "fresh_arena_ID_and_COHERENT_then_old_arena_retired_only_after_final_CAS",
+      "no_op": "every_valid_invocation_including_resource_stop_early_return_and_eligible_dt_zero_still_publishes_frozen_last_translation_semantics_and_advances_state_epoch_and_generation_once",
+      "non_target": "CPU_object_identity_and_values_unchanged_and_resident_rows_bit_exact"
+    },
+    "failure_semantics": {
+      "preclaim": "no_translation_claim_receipt_CPU_biology_RNG_or_selected_transaction_owner_mutation",
+      "claimed_before_CAS": "restore_the_declared_translation_write_set_and_named_protein_gene_cache_scalar_RNG_energy_and_object_identity_guards_then_re_attest_the_old_source",
+      "normal_failure": "same_coherent_transaction_input_owner_arena_ID_storage_generation_and_epochs_remain_authoritative",
+      "trust_or_rollback_failure": "old_source_or_resident_trust_breach_incomplete_finalization_or_rollback_mismatch_isolates_the_owner_as_INVALID_without_fallback_or_auto_rebuild",
+      "limit": "bounded_declared_write_set_rollback_not_a_generic_whole_cell_world_or_malicious_publisher_transaction_and_not_crash_consistency"
+    },
+    "successful_step_list_normalization": {
+      "when": "only_after_the_inherited_full_step_and_all_events_and_receipts_succeed",
+      "operation": "slice_copy_final_ordered_members_into_the_original_concrete_world_cells_list_and_restore_that_container_identity",
+      "container_only_rebind": "does_not_create_false_membership_epoch_drift",
+      "actual_change": "member_order_cell_ID_generation_or_alive_difference_remains_in_list_content_and_next_rank5_audit_is_membership_INVALID_without_auto_rebuild",
+      "HGT": "same_membership_genome_drift_is_ragged_state_cache_CPU_NEWER_and_only_an_explicit_rank5_full_rebuild_can_replace_it",
+      "failed_step": "not_normalized"
+    },
+    "persistence": {
+      "durable": "CPU_world_cells_and_full_PCG64_only",
+      "not_serialized": "owner_arena_lease_selected_plan_prepared_finalized_epoch_pointer_seal_guard_and_transaction_state",
+      "active_or_pending": "reject_state_dict_save_or_clone_while_active_or_pending",
+      "load_clone": "begin_without_an_owner_and_first_rank5_use_constructs_a_fresh_owner_token_arena_ID_and_nonaliasing_storage",
+      "inherited_from_state_canonicalization": "raw_durable_payload_remains_exact;_only_pool_index_4_differs_in_the_canonical_Formal066_from_state_output_by_exactly_2^-53_at_the_pinned_one_ULP_boundary_and_RNG_is_exact;_clone_load_comparisons_use_that_exact_canonical_output"
+    },
+    "capacity": {
+      "exact_success": "exact_C_Q_S_W_P_and_derived_cache_capacity",
+      "one_short_failure": "each_C_Q_S_W_P_one_short_fails_before_lease_candidate_claim_or_CPU_mutation",
+      "protein_capacity": "conservative_existing_active_union_derived_gene_and_existing_damaged_union_derived_gene_fingerprint_bound",
+      "forbidden": "clip_drop_truncate_silent_growth_partial_candidate_old_storage_reuse_or_CPU_A4_8b_fallback"
+    },
+    "A5_boundary": {
+      "input": "committed_CPU_state_without_A5_D2H_flush",
+      "membership_cases": "split_death_washout_reorder_and_alive_drift_leave_the_old_50_tensors_unchanged_then_audit_M_INVALID_without_auto_rebuild",
+      "HGT_case": "same_membership_genome_drift_leaves_the_old_50_tensors_unchanged_then_audits_CPU_NEWER_and_explicit_rank5_full_rebuild_publishes_a_fresh_nonalias_arena",
+      "ported": false
+    },
+    "validation": {
+      "selected_plan": "8_Formal066_first_middle_last_branches_rich_ATP_reserve_mineral_exhaustion_no_translator_disabled_no_genome_dt0_signed_residual;_NumPy_and_Torch_CPU_CUDA_fp64_target_at_most_2e-12_exact_discrete_order_non_target_all_30_arrays_exact_plan31_fresh_version_zero_source_world_RNG_identity_unchanged",
+      "rank5_generation": "real_A3_unpack_R_S_C_CPU_NEWER_separate_full_rebuild_then_success_early_no_op_and_eligible_gate_after_dt0;_S_plus_1_generation_plus_1_old_retire_plan31_candidate50_successive50_nonalias_target_non_target_identity_exact_and_exact_C_Q_S_W_P_each_one_short_preclaim",
+      "trust_and_rollback": "preclaim_plan_version_candidate_pointer_data_oracle_seal_RNG_old_trust_INVALID_lease_and_association_probes_plus_postpublish_and_final_arm_RNG_energy_injected_failure_bounded_exact_rollback_rollback_mismatch_INVALID_duplicate_and_order_exact_once",
+      "lockstep_persistence_A5": "1_and_10_step_2_step_translation_stress_2_cell_interleave_CPU_c8_event_receipt_PCG64_material_exact_no_legacy_translation_list_normalization_save_load_clone_fresh_nonalias_inherited_pool4_exact_2^-53_split_death_washout_reorder_alive_M_INVALID_HGT_CPU_NEWER_explicit_rebuild",
+      "suite": "frozen_prior_90_plus_4_A4_9b_tests_equals_94_total_with_prior_names_function_AST_and_A3_A4_pure_A4_8a_A4_8b_c1_through_c8_A4_9a_hashes_frozen",
+      "final_targeted_CPU": {"tests": "4_of_4_PASS", "total_seconds": 518.401},
+      "final_targeted_CUDA": {"tests": "4_of_4_PASS", "mode": "same_process_unique_run", "total_seconds": 487.719798, "GPU": "RTX_4060_Ti", "Torch": "2.13+cu130"},
+      "performance": "not_measured_as_a_benchmark_and_no_speedup_claim_because_pre_rank5_full_build_and_full_candidate_diagnostic_readback_remain"
+    },
+    "explicit_exclusions": [
+      "resident_pretranslation_generic_precursor_or_maintenance_commit",
+      "replication_c1_through_c8_or_hydrolysis_connection_to_the_A4_9a_arena",
+      "multi_cell_simultaneous_translation_cross_event_fusion_or_generic_transaction_manager",
+      "partial_per_cell_or_automatic_H2D_refresh_in_place_arena_update_slot_reuse_allocator_compaction_or_RESIDENT_NEWER",
+      "resident_only_durable_biology_device_RNG_A5_flush_or_A5_A6_port",
+      "fp32_mixed_precision_compile_graph_Triton_custom_CUDA_multi_stream_multi_GPU_online_GPU_performance_speedup_A4_completion_or_promotion"
+    ],
     "full_gpu_world_step": false
   },
   "ragged_genome": {
@@ -1442,8 +1621,8 @@
     ]
   },
   "cpu_authoritative_after_slice": [
-    "all_durable_world_cell_biology_and_full_PCG64_state_while_the_A4_9a_resident_generation_is_an_immutable_runtime_shadow_only",
-    "all_resident_device_biology_write_D2H_publish_CPU_overwrite_scheduler_connection_live_c1_through_c8_arena_binding_and_multi_cell_GPU_primary_kernel_paths_remain_unimplemented_and_CPU_authoritative",
+    "all_durable_world_cell_biology_and_full_PCG64_state_while_the_A4_9b_selected_transaction_swaps_only_a_fresh_immutable_runtime_shadow_after_CPU_publish",
+    "outside_the_bounded_A4_9b_rank5_selected_translation_transaction_all_resident_device_biology_write_D2H_publish_CPU_overwrite_scheduler_connection_live_c1_through_c8_arena_binding_and_multi_cell_GPU_primary_kernel_paths_remain_unimplemented_and_CPU_authoritative;_inside_it_full_candidate_D2H_is_diagnostic_and_only_the_selected_row_has_CPU_publish_semantics",
     "zero_length_complete_genome_negative_entry_ATP_dead_direct_and_guarded_replicase_boundary_cases_excluded_from_the_A4_8c8_wrapper",
     "all_scheduler_events_except_the_A4_wrapper_single_cell_paid_translation_supported_pre_existing_active_and_inactive_template_start_replication_four_ordered_pre_active_ordinary_early_noops_and_genome_hydrolysis_events",
     "promoted_A3_standalone_paid_translation_behavior_outside_the_A4_wrapper",

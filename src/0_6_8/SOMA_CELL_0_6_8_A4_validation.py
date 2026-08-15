@@ -1,5 +1,5 @@
 # coding: utf-8
-"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.9a slices."""
+"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.9b slices."""
 from __future__ import division
 
 import argparse
@@ -14,6 +14,7 @@ import pickle
 import sys
 import tempfile
 import time
+from collections.abc import Mapping
 
 import numpy as np
 
@@ -36,6 +37,7 @@ import SOMA_CELL_0_6_8_gpu_a4_replication_start_completion_integration as a48c6
 import SOMA_CELL_0_6_8_gpu_a4_replication_start_completion_mutation_integration as a48c7
 import SOMA_CELL_0_6_8_gpu_a4_replication_early_noop_integration as a48c8
 import SOMA_CELL_0_6_8_gpu_a4_resident_arena as a49a
+import SOMA_CELL_0_6_8_gpu_a4_resident_translation_integration as a49b
 import SOMA_CELL_0_6_8_gpu_a3_scheduler as a3s
 import SOMA_CELL_0_6_8_A3_validation as v3
 
@@ -44,9 +46,9 @@ try:
 except Exception:  # pragma: no cover
     torch = None
 
-RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_9A_VALIDATION_RESULTS.json'
-RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_9a_validation.csv'
-RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_9A_VALIDATION_RESULTS.txt'
+RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_9B_VALIDATION_RESULTS.json'
+RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_9b_validation.csv'
+RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_9B_VALIDATION_RESULTS.txt'
 
 SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4.py',
@@ -63,6 +65,7 @@ SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_start_completion_mutation_integration.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_early_noop_integration.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_resident_arena.py',
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_resident_translation_integration.py',
     'src/0_6_8/SOMA_CELL_0_6_8_A4_validation.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3_scheduler.py',
@@ -21815,6 +21818,2132 @@ def test_a49a_fresh_reconstruction_c8_successor_frozen86_and_authority():
             'A3/pure/c1-c8/core hashes + total90/full_gpu=false')
 
 
+_A49B_CORE_SHA256 = (
+    'be8cd45b0dc3edd32987688bcb2641121c4fdf6498a9624a8ae8b208b3b3eb31'
+)
+
+_A49B_PREREG_SHA256 = (
+    'd1dd7f0ee7ba56508cbc1eccd7ffcb3487d5242d0d3f16839e0031e9dc231334'
+)
+
+_A49B_PRIOR_90_NAMES_SHA256 = (
+    '8e795a1e9872c66d57845bd27fdabeb00d97f3c11d0e359d76fc2b048ffc6123'
+)
+
+_A49B_PRIOR_90_AST_SHA256 = (
+    'a0de8a1e916ceeb3e7d07050334319ac968d3d44f52f70b0651bcf4faa90c4ca'
+)
+
+_A49B_PUBLIC_API = (
+    'BUILD', 'BUILD_ID', 'BUILD_LONG', 'SCHEMA_VERSION',
+    'SELECTED_PLAN_SCHEMA_VERSION', 'SAVE_VERSION',
+    'FULL_GPU_WORLD_STEP', 'TRANSLATION_ORACLE_ATOL',
+    'COHERENT', 'CPU_NEWER', 'INVALID', 'PORT_STATUS',
+    'A4ResidentTranslationCommitError', 'A4SelectedTranslationPlan',
+    'paid_translation_selected_numpy', 'paid_translation_selected_torch',
+    'paid_translation_selected', 'A4ResidentTranslationEventScheduler',
+    'Hybrid066WorldA4ResidentTranslation',
+)
+
+
+def _a49b_devices():
+    if torch is None:
+        raise AssertionError('PyTorch is required for A4.9b')
+    if _REQUIRE_CUDA:
+        if not torch.cuda.is_available():
+            raise AssertionError(
+                'CUDA required for A4.9b but unavailable; fallback forbidden'
+            )
+        return ('cuda',)
+    return ('cpu',)
+
+
+def _a49b_hybrid_from_state(state, capacity, device='cpu'):
+    world = a4.a3.s66.Formal066World.from_state(v3.pickle_clone(state))
+    backend = a4.a3.TorchKernelBackendA3(
+        v3._a3_config(device=device, precision='float64'),
+    )
+    return a49b.Hybrid066WorldA4ResidentTranslation(
+        world, backend=backend, a4_config=capacity, a4_device=device,
+    )
+
+
+def _a49b_begin_translation_direct(scheduler, world, cell, dt):
+    scheduler._bind_resident_world(world)
+    return _a48b_begin_translation_direct(
+        scheduler, world, cell, dt,
+    )
+
+
+def _a49b_plan_pointer_set(plan):
+    pointers = plan.data_ptrs()
+    if len(pointers) != 31 or len(set(pointers.values())) != 31:
+        raise AssertionError('A4.9b selected plan is not 31 fresh tensors')
+    if (int(plan.target_mask._version) != 0
+            or any(int(getattr(plan.state_after, name)._version) != 0
+                   for name in a4._TRANSLATION_ARRAY_FIELDS)):
+        raise AssertionError('A4.9b selected plan tensors are not version zero')
+    return {
+        (str(getattr(plan.state_after, 'pools').device), int(pointer))
+        for pointer in pointers.values() if int(pointer) != 0
+    }
+
+
+def _a49b_world_cell_identities(world):
+    return tuple(
+        (id(cell), id(cell.pools), id(cell.proteins),
+         id(cell.damaged_proteins), id(cell.gene_specs),
+         tuple((int(key), id(value))
+               for key, value in cell.gene_specs.items()))
+        for cell in world.cells
+    )
+
+
+def test_a49b_selected_plan_formal066_cpu_cuda_isolation():
+    source, _, capacity, source_dt = _paid_translation_fixture(seed=18500)
+    source_state = v3.pickle_clone(source.state_dict())
+    cases = []
+    for label, index in (
+            ('rich_first', 0), ('atp_reserve_middle', 1),
+            ('mineral_exhaustion_middle', 2), ('no_translator_last', 3)):
+        world = a4.a3.s66.Formal066World.from_state(
+            v3.pickle_clone(source_state),
+        )
+        cases.append((label, world, index, source_dt))
+
+    disabled = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(source_state),
+    )
+    disabled.config.gene_expression = False
+    cases.append(('disabled', disabled, 0, source_dt))
+
+    no_genome = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(source_state),
+    )
+    empty = no_genome.cells[2]
+    empty.genomes = []
+    empty.genome_lesions = []
+    empty.replication_template = None
+    empty.replication_copy = []
+    empty.replication_template_lesion = 0.0
+    empty.replication_fractional = 0.0
+    empty._refresh_gene_cache()
+    cases.append(('no_genome', no_genome, 2, source_dt))
+
+    zero_dt = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(source_state),
+    )
+    cases.append(('eligible_dt0', zero_dt, 0, 0.0))
+
+    residual = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(source_state),
+    )
+    residual.cells[0].pools[a4.a3.POOL_FUEL] = 9.936293309191388e-08
+    cases.append(('signed_residual', residual, 0, 0.001))
+
+    details = []
+    for case_index, (label, world, index, dt) in enumerate(cases):
+        cells = world.cells
+        target = cells[index]
+        roles = {int(spec['role']) for spec in target.gene_specs.values()}
+        if target.genomes and (int(a4.g2.ROLE_GENERIC) not in roles
+                               or len(roles) < 2):
+            raise AssertionError(label + ' lost generic/non-generic genes')
+        if label == 'eligible_dt0':
+            translator = float(target.role_activity(a4.g2.ROLE_TRANSLATOR))
+            if world.config.external_translator:
+                translator += 0.75
+            if (translator <= 1e-5 or not target.genomes
+                    or not target.gene_specs):
+                raise AssertionError('dt0 fixture does not reach weight gate')
+        expected = [copy.deepcopy(cell) for cell in cells]
+        expected_sync = a48b._translation_sync_performed(
+            _a48_binding(world, target, capacity),
+        )
+        damaged_before = sum(float(value) for value in
+                             expected[index].damaged_proteins.values())
+        expected[index].translate(dt, world.config)
+        if (label == 'rich_first'
+                and sum(float(value) for value in
+                        expected[index].damaged_proteins.values())
+                <= damaged_before):
+            raise AssertionError('rich fixture did not produce misfolded mass')
+
+        before = v3.pickle_clone(world.state_dict())
+        identities = _a49b_world_cell_identities(world)
+        rng_object = world.rng
+        rng_state = v3.pickle_clone(world.rng.bit_generator.state)
+        binding = _a49a_host_binding(world, capacity)
+        binding_before = (
+            v3.pickle_clone(binding.ragged.state_dict()),
+            v3.pickle_clone(binding.state.state_dict()),
+            v3.pickle_clone(binding.cache.state_dict()),
+        )
+        numpy_plan = a49b.paid_translation_selected_numpy(
+            binding, dt, index, int(target.cell_id),
+        )
+        if (numpy_plan.validate() is not numpy_plan
+                or int(np.count_nonzero(numpy_plan.target_mask)) != 1
+                or not bool(numpy_plan.target_mask[index])
+                or numpy_plan.target_index != index
+                or numpy_plan.target_cell_id != int(target.cell_id)):
+            raise AssertionError(label + ' NumPy selector differs')
+        _assert_translation_matches_cells(
+            numpy_plan.state_after, expected,
+            'a49b.numpy.' + label, atol=a49b.TRANSLATION_ORACLE_ATOL,
+        )
+        a49b._selected_output_scope(
+            binding.state, numpy_plan.state_after, index,
+        )
+
+        for device in _a49b_devices():
+            resident = a4.bind_a4_translation(
+                binding.ragged.to_torch(device=device),
+                binding.state.to_torch(device=device),
+            )
+            source_records = a49a._resident_signature(resident).tensor_records
+            source_storage = {
+                (str(record[5]), int(record[3])) for record in source_records
+                if int(record[3]) != 0
+            }
+            torch_plan = a49b.paid_translation_selected(
+                resident, dt, index, int(target.cell_id),
+            )
+            if torch_plan.validate() is not torch_plan:
+                raise AssertionError(label + '/' + device + ' plan invalid')
+            plan_storage = _a49b_plan_pointer_set(torch_plan)
+            if plan_storage.intersection(source_storage):
+                raise AssertionError(label + '/' + device + ' plan aliases source')
+            host_plan = torch_plan.to_numpy()
+            a49b._selected_states_match(
+                host_plan.state_after, numpy_plan.state_after, index,
+            )
+            a49b._selected_output_scope(
+                binding.state, host_plan.state_after, index,
+            )
+            _assert_translation_matches_cells(
+                host_plan.state_after, expected,
+                'a49b.%s.%s' % (device, label),
+                atol=a49b.TRANSLATION_ORACLE_ATOL,
+            )
+            details.append('%s:%s:%s' % (
+                device, label, 'sync' if expected_sync else 'early',
+            ))
+
+        v3.assert_recursive_close(
+            binding_before[0], binding.ragged.state_dict(), 0.0, 0.0,
+            'a49b.%s.source.ragged' % label,
+        )
+        v3.assert_recursive_close(
+            binding_before[1], binding.state.state_dict(), 0.0, 0.0,
+            'a49b.%s.source.state' % label,
+        )
+        v3.assert_recursive_close(
+            binding_before[2], binding.cache.state_dict(), 0.0, 0.0,
+            'a49b.%s.source.cache' % label,
+        )
+        _a49a_assert_world_unchanged(
+            before, rng_object, rng_state, world,
+            'a49b.selected.' + label,
+        )
+        if identities != _a49b_world_cell_identities(world):
+            raise AssertionError(label + ' selected plan changed CPU identities')
+
+    residual_value = cases[-1][1].cells[0].pools[a4.a3.POOL_FUEL]
+    if residual_value != 9.936293309191388e-08:
+        raise AssertionError('pure signed-residual source was mutated')
+    return ('8 Formal066 branches across first/middle/last target; selected '
+            'NumPy/%s fp64 target <=2e-12, discrete/order exact, 30-array '
+            'non-target isolation, fresh version-0 31 tensors, source/RNG/'
+            'identity unchanged: %s' % (
+                '/'.join(_a49b_devices()), '/'.join(details),
+            ))
+
+
+def test_a49b_rank5_fresh_generation_epochs_nonalias_and_capacity():
+    class CaptureScheduler(a49b.A4ResidentTranslationEventScheduler):
+        def __init__(self, *args, **kwargs):
+            super(CaptureScheduler, self).__init__(*args, **kwargs)
+            self.prepared_seen = None
+            self.finalized_seen = None
+
+        def _resident_translation_candidate_ready(
+                self, world, cell, dt, config, prepared):
+            self.prepared_seen = prepared
+            return prepared
+
+        def _resident_translation_finalized_ready(
+                self, world, cell, prepared, finalized):
+            self.finalized_seen = finalized
+            return finalized
+
+    generation_details = []
+    for device in _a49b_devices():
+        world, cells, capacity, dt = _paid_translation_fixture(seed=18600)
+        scheduler = CaptureScheduler(capacity, device)
+        scheduler._bind_resident_world(world)
+        owner = scheduler._resident_owner_for_rank5(world)
+        initial_arena = owner._arena
+        initial_epochs = owner.epochs
+        initial_generation = int(owner._storage_generation)
+
+        # Exercise the real pre-rank-5 A3 unpack identity churn.  This is an
+        # R/S/C CPU_NEWER source, so the transaction must first publish a
+        # separate full rebuild and only then its selected translation arena.
+        packed = a4.a3.pack_a3_cell(cells[1], model_config=world.config)
+        a4.a3.unpack_a3_cell(packed, cells[1])
+        before = v3.pickle_clone(world.state_dict())
+        before_ids = _a49b_world_cell_identities(world)
+        rng_object = world.rng
+        rng_state = v3.pickle_clone(world.rng.bit_generator.state)
+        energy_object = world.dissipated_energy
+        list_object = world.cells
+        target = cells[2]
+        expected = copy.deepcopy(target)
+        expected.translate(dt, world.config)
+        target_pool = target.pools
+        target_active = target.proteins
+        target_damaged = target.damaged_proteins
+        target_gene_specs = target.gene_specs
+        target_nested = {
+            int(key): id(value) for key, value in target.gene_specs.items()
+        }
+
+        _a48b_begin_translation_direct(scheduler, world, target, dt)
+        try:
+            scheduler.cpu_translation(world, target, dt, world.config)
+            prepared = scheduler.prepared_seen
+            finalized = scheduler.finalized_seen
+            if prepared is None or finalized is None:
+                raise AssertionError(device + ' capture seams were not reached')
+            old_arena = prepared.old_arena_ref
+            old_objects, old_storage = _a49a_signature_sets(
+                old_arena.resident_signature,
+            )
+            candidate_objects, candidate_storage = _a49a_signature_sets(
+                prepared.candidate_signature,
+            )
+            plan_storage = _a49b_plan_pointer_set(prepared.selected_plan)
+            if (old_objects.intersection(candidate_objects)
+                    or old_storage.intersection(candidate_storage)
+                    or plan_storage.intersection(candidate_storage)):
+                raise AssertionError(device + ' old/plan/candidate storage aliases')
+            records = tuple(prepared.candidate_signature.tensor_records)
+            if any(int(record[4]) != 0 for record in records):
+                raise AssertionError(device + ' candidate tensor version differs')
+            expected_epochs = a49a._advance_epochs(
+                prepared.old_epochs, frozenset(('S',)), cache_built=False,
+            )
+            if (initial_arena.retired is not True
+                    or old_arena.retired is not True
+                    or old_arena.lifecycle != a49a.INVALID
+                    or owner.arena_id != prepared.expected_arena_id
+                    or int(owner._storage_generation)
+                    != int(prepared.old_storage_generation) + 1
+                    or int(prepared.old_storage_generation)
+                    != initial_generation + 1
+                    or owner.epochs != expected_epochs
+                    or owner.lifecycle != a49b.COHERENT
+                    or owner._arena.binding is not prepared.candidate_binding
+                    or owner._arena.resident_signature
+                    != prepared.candidate_signature
+                    or not prepared.consumed
+                    or not finalized.consumed):
+                raise AssertionError(device + ' fresh generation/CAS differs')
+            if (prepared.old_epochs.membership_epoch
+                    != initial_epochs.membership_epoch
+                    or prepared.old_epochs.ragged_epoch
+                    != initial_epochs.ragged_epoch + 1
+                    or prepared.old_epochs.state_epoch
+                    != initial_epochs.state_epoch + 1
+                    or prepared.old_epochs.cache_epoch
+                    != initial_epochs.cache_epoch + 1
+                    or prepared.old_epochs.cache_source_ragged_epoch
+                    != prepared.old_epochs.ragged_epoch):
+                raise AssertionError(device + ' pre-rank5 rebuild epochs differ')
+            _a48b_assert_cell_matches(
+                expected, target, 'a49b.%s.rank5.commit' % device,
+                atol=a49b.TRANSLATION_ORACLE_ATOL,
+            )
+            _a49a_assert_snapshot_matches(
+                world, capacity, owner._validation_snapshot(world),
+                'a49b.%s.rank5.full_candidate' % device,
+            )
+            if (target.pools is not target_pool
+                    or not prepared.sync_performed
+                    or target.proteins is target_active
+                    or target.damaged_proteins is target_damaged
+                    or target.gene_specs is not target_gene_specs
+                    or {int(key): id(value)
+                        for key, value in target.gene_specs.items()}
+                    != target_nested
+                    or world.cells is not list_object
+                    or world.rng is not rng_object
+                    or world.rng.bit_generator.state != rng_state
+                    or world.dissipated_energy is not energy_object):
+                raise AssertionError(device + ' target identity/RNG/energy differs')
+            after_ids = _a49b_world_cell_identities(world)
+            for index in range(len(cells)):
+                if index != 2 and after_ids[index] != before_ids[index]:
+                    raise AssertionError(device + ' changed non-target identity')
+                if index != 2:
+                    v3.assert_recursive_close(
+                        before['cells'][index], world.state_dict()['cells'][index],
+                        0.0, 0.0,
+                        'a49b.%s.non_target[%d]' % (device, index),
+                    )
+            first_signature = owner._arena.resident_signature
+            first_storage_generation = int(owner._storage_generation)
+            first_epochs = owner.epochs
+        finally:
+            _a48_abort_direct(scheduler, target)
+
+        # A valid no-op is still one logical translation invocation: it must
+        # publish a fresh nonalias generation and advance S exactly once.
+        noop_target = cells[3]
+        noop_before = copy.deepcopy(noop_target)
+        noop_before.translate(0.0, world.config)
+        noop_active = noop_target.proteins
+        noop_damaged = noop_target.damaged_proteins
+        scheduler.prepared_seen = None
+        scheduler.finalized_seen = None
+        _a48b_begin_translation_direct(scheduler, world, noop_target, 0.0)
+        try:
+            scheduler.cpu_translation(
+                world, noop_target, 0.0, world.config,
+            )
+            second = scheduler.prepared_seen
+            if second is None:
+                raise AssertionError(device + ' no-op candidate missing')
+            first_objects, first_storage = _a49a_signature_sets(
+                first_signature,
+            )
+            second_objects, second_storage = _a49a_signature_sets(
+                second.candidate_signature,
+            )
+            second_plan_storage = _a49b_plan_pointer_set(
+                second.selected_plan,
+            )
+            if (first_objects.intersection(second_objects)
+                    or first_storage.intersection(second_storage)
+                    or second_plan_storage.intersection(second_storage)
+                    or any(int(record[4]) != 0 for record in
+                           second.candidate_signature.tensor_records)
+                    or int(owner._storage_generation)
+                    != first_storage_generation + 1
+                    or owner.epochs != a49a._advance_epochs(
+                        first_epochs, frozenset(('S',)), cache_built=False,
+                    )
+                    or owner.lifecycle != a49b.COHERENT
+                    or second.sync_performed
+                    or noop_target.proteins is not noop_active
+                    or noop_target.damaged_proteins is not noop_damaged
+                    or second.old_arena_ref.retired is not True):
+                raise AssertionError(device + ' successive no-op generation differs')
+            _a48b_assert_cell_matches(
+                noop_before, noop_target, 'a49b.%s.noop' % device,
+                atol=a49b.TRANSLATION_ORACLE_ATOL,
+            )
+            _a49a_assert_snapshot_matches(
+                world, capacity, owner._validation_snapshot(world),
+                'a49b.%s.noop.full_candidate' % device,
+            )
+            second_signature = owner._arena.resident_signature
+            second_storage_generation = int(owner._storage_generation)
+            second_epochs = owner.epochs
+        finally:
+            _a48_abort_direct(scheduler, noop_target)
+
+        # Distinguish an eligible gate-after zero-work call from the early
+        # no-translator branch above.  Both advance S/generation, but only the
+        # gate-after branch replaces both protein dictionary outer objects.
+        eligible = cells[0]
+        translator = float(eligible.role_activity(a4.g2.ROLE_TRANSLATOR))
+        if world.config.external_translator:
+            translator += 0.75
+        if translator <= 1e-5 or not eligible.genomes or not eligible.gene_specs:
+            raise AssertionError(device + ' eligible dt0 fixture missed gate')
+        eligible_expected = copy.deepcopy(eligible)
+        eligible_expected.translate(0.0, world.config)
+        eligible_active = eligible.proteins
+        eligible_damaged = eligible.damaged_proteins
+        scheduler.prepared_seen = None
+        scheduler.finalized_seen = None
+        _a48b_begin_translation_direct(scheduler, world, eligible, 0.0)
+        try:
+            scheduler.cpu_translation(world, eligible, 0.0, world.config)
+            third = scheduler.prepared_seen
+            second_objects, second_storage = _a49a_signature_sets(
+                second_signature,
+            )
+            third_objects, third_storage = _a49a_signature_sets(
+                third.candidate_signature,
+            )
+            third_plan_storage = _a49b_plan_pointer_set(third.selected_plan)
+            if (not third.sync_performed
+                    or eligible.proteins is eligible_active
+                    or eligible.damaged_proteins is eligible_damaged
+                    or second_objects.intersection(third_objects)
+                    or second_storage.intersection(third_storage)
+                    or first_objects.intersection(third_objects)
+                    or first_storage.intersection(third_storage)
+                    or third_plan_storage.intersection(third_storage)
+                    or any(int(record[4]) != 0 for record in
+                           third.candidate_signature.tensor_records)
+                    or int(owner._storage_generation)
+                    != second_storage_generation + 1
+                    or owner.epochs != a49a._advance_epochs(
+                        second_epochs, frozenset(('S',)), cache_built=False,
+                    )
+                    or third.old_arena_ref.retired is not True
+                    or owner.lifecycle != a49b.COHERENT):
+                raise AssertionError(
+                    device + ' eligible dt0 generation/identity differs'
+                )
+            _a48b_assert_cell_matches(
+                eligible_expected, eligible, 'a49b.%s.eligible_dt0' % device,
+                atol=a49b.TRANSLATION_ORACLE_ATOL,
+            )
+            _a49a_assert_snapshot_matches(
+                world, capacity, owner._validation_snapshot(world),
+                'a49b.%s.eligible_dt0.full_candidate' % device,
+            )
+            generation_details.append(
+                '%s:g%d>%d>%d>%d:S%d' % (
+                    device, initial_generation,
+                    first_storage_generation, second_storage_generation,
+                    int(owner._storage_generation),
+                    int(owner.epochs.state_epoch),
+                )
+            )
+        finally:
+            _a48_abort_direct(scheduler, eligible)
+
+    capacity_details = []
+    for device in _a49b_devices():
+        exact_world, exact_cells, exact = _a49a_fixture(seed=18650)
+        exact_scheduler = a49b.A4ResidentTranslationEventScheduler(
+            exact, device,
+        )
+        exact_cell = exact_cells[1]
+        _a49b_begin_translation_direct(
+            exact_scheduler, exact_world, exact_cell, 0.1,
+        )
+        try:
+            exact_scheduler.cpu_translation(
+                exact_world, exact_cell, 0.1, exact_world.config,
+            )
+        finally:
+            _a48_abort_direct(exact_scheduler, exact_cell)
+
+        values = {
+            'max_cells': int(exact.max_cells),
+            'max_sequences': int(exact.max_sequences),
+            'max_symbols': int(exact.max_symbols),
+            'max_sequence_symbols': int(exact.max_sequence_symbols),
+            'max_proteins_per_cell': int(exact.max_proteins_per_cell),
+        }
+        for axis, field in (
+                ('C', 'max_cells'), ('Q', 'max_sequences'),
+                ('S', 'max_symbols'), ('W', 'max_sequence_symbols'),
+                ('P', 'max_proteins_per_cell')):
+            short_values = dict(values)
+            short_values[field] -= 1
+            short = a4.GPU068A4Config(**short_values)
+            world, cells, _ = _a49a_fixture(seed=18660)
+            cell = cells[1]
+            scheduler = a49b.A4ResidentTranslationEventScheduler(
+                short, device,
+            )
+            before = v3.pickle_clone(world.state_dict())
+            rng = world.rng
+            rng_state = v3.pickle_clone(rng.bit_generator.state)
+            _a49b_begin_translation_direct(scheduler, world, cell, 0.1)
+            try:
+                _assert_raises(
+                    (a4.A4CapacityError,
+                     a49a.A4ResidentArenaError,
+                     a49b.A4ResidentTranslationCommitError),
+                    lambda: scheduler.cpu_translation(
+                        world, cell, 0.1, world.config,
+                    ),
+                )
+                _, record = scheduler._record(cell)
+                if any(entry['event'] == 'translation_cpu'
+                       for entry in record['events']):
+                    raise AssertionError(axis + ' one-short crossed claim')
+                _a49a_assert_world_unchanged(
+                    before, rng, rng_state, world,
+                    'a49b.capacity.%s.%s' % (device, axis),
+                )
+            finally:
+                _a48_abort_direct(scheduler, cell)
+            capacity_details.append(device + ':' + axis)
+
+    return ('pre-rank5 real R/S/C CPU_NEWER full rebuild, success/no-op fresh '
+            'COHERENT S+1 generation CAS, old retired, plan31/candidate50/'
+            'successive50 nonalias, target/non-target identity exact %s; '
+            'exact C/Q/S/W/P and one-short preclaim %s' % (
+                '/'.join(generation_details), '/'.join(capacity_details),
+            ))
+
+
+def test_a49b_fail_closed_rollback_cas_leases_duplicate_and_order():
+    class TamperPrepared(a49b.A4ResidentTranslationEventScheduler):
+        def __init__(self, *args, **kwargs):
+            self.mode = kwargs.pop('mode')
+            self.prepared_seen = None
+            super(TamperPrepared, self).__init__(*args, **kwargs)
+
+        def _resident_translation_candidate_ready(
+                self, world, cell, dt, config, prepared):
+            self.prepared_seen = prepared
+            if self.mode == 'plan_version':
+                prepared.selected_plan.state_after.pools[0, 0] += 1.0
+            elif self.mode == 'candidate_data':
+                prepared.candidate_binding.state.pools.data[0, 0] += 1.0
+            elif self.mode == 'candidate_pointer':
+                object.__setattr__(
+                    prepared.candidate_binding, 'state',
+                    prepared.candidate_binding.state.clone(),
+                )
+            elif self.mode == 'host_oracle':
+                prepared.numpy_oracle.state_after.pools[0, 0] += 1.0
+            elif self.mode == 'diagnostic_host':
+                prepared.diagnostic_state.pools[0, 0] += 1.0
+            elif self.mode == 'prepared_seal':
+                prepared.expected_storage_generation += 1
+            elif self.mode == 'rng_snapshot':
+                changed = copy.deepcopy(prepared.rng_state)
+                changed['state']['state'] = (
+                    int(changed['state']['state']) + 1
+                ) % (1 << 128)
+                prepared.rng_state = changed
+            elif self.mode == 'old_data_trust':
+                tensor = self._a49b_owner._arena.binding.ragged.symbols
+                tensor.data[0] = (int(tensor.data[0]) + 1) % 8
+            else:
+                raise AssertionError('unknown A4.9b tamper mode')
+            return prepared
+
+    class FailAfterPublish(a49b.A4ResidentTranslationEventScheduler):
+        prepared_seen = None
+
+        def _resident_translation_candidate_ready(
+                self, world, cell, dt, config, prepared):
+            self.prepared_seen = prepared
+            return prepared
+
+        def _publish_resident_translation_candidate(
+                self, world, cell, prepared):
+            super(FailAfterPublish, self)._publish_resident_translation_candidate(
+                world, cell, prepared,
+            )
+            cell.pools[a4.a3.POOL_FUEL] += 1.0
+            cell.proteins[999991] = 1.0
+            cell.damaged_proteins[999992] = 2.0
+            cell.last_translation += 1.0
+            cell.last_quiescence += 1.0
+            fingerprint = next(iter(cell.gene_specs))
+            cell.gene_specs[fingerprint]['promoter'] += 0.125
+            cell.gene_specs = copy.deepcopy(cell.gene_specs)
+            world.dissipated_energy += 1.0
+            world.rng.random()
+            raise RuntimeError('injected A4.9b post-publish failure')
+
+    class FailFinalArmRngEnergy(a49b.A4ResidentTranslationEventScheduler):
+        prepared_seen = None
+
+        def _resident_translation_candidate_ready(
+                self, world, cell, dt, config, prepared):
+            self.prepared_seen = prepared
+            return prepared
+
+        def _resident_translation_finalized_ready(
+                self, world, cell, prepared, finalized):
+            world.rng.random()
+            world.dissipated_energy += 1.0
+            return finalized
+
+    class FailRollbackAttestation(FailAfterPublish):
+        def _rollback_resident_translation_publish(
+                self, world, cell, snapshot):
+            super(FailRollbackAttestation, self)._rollback_resident_translation_publish(
+                world, cell, snapshot,
+            )
+            cell.pools[a4.a3.POOL_FUEL] = np.nextafter(
+                float(cell.pools[a4.a3.POOL_FUEL]), np.inf,
+            )
+
+    class TamperLiveSource(a49b.A4ResidentTranslationEventScheduler):
+        def __init__(self, *args, **kwargs):
+            self.mode = kwargs.pop('mode')
+            self.injected_state = None
+            self.injected_identities = None
+            self.injected_rng = None
+            self.injected_rng_state = None
+            super(TamperLiveSource, self).__init__(*args, **kwargs)
+
+        def _resident_translation_candidate_ready(
+                self, world, cell, dt, config, prepared):
+            if self.mode == 'cpu_value':
+                cell.pools[a4.a3.POOL_FUEL] = np.nextafter(
+                    float(cell.pools[a4.a3.POOL_FUEL]), np.inf,
+                )
+            elif self.mode == 'cpu_identity':
+                cell.pools = np.asarray(
+                    cell.pools, dtype=np.float64,
+                ).copy()
+            elif self.mode == 'live_rng':
+                world.rng.random()
+            else:
+                raise AssertionError('unknown live-source tamper')
+            self.injected_state = v3.pickle_clone(world.state_dict())
+            self.injected_identities = _a49b_world_cell_identities(world)
+            self.injected_rng = world.rng
+            self.injected_rng_state = v3.pickle_clone(
+                world.rng.bit_generator.state,
+            )
+            return prepared
+
+    preclaim_details = []
+    for device in _a49b_devices():
+        for mode in (
+                'plan_version', 'candidate_data', 'candidate_pointer',
+                'host_oracle', 'diagnostic_host', 'prepared_seal',
+                'rng_snapshot',
+                'old_data_trust'):
+            world, cells, capacity, dt = _paid_translation_fixture(seed=18700)
+            cell = cells[0]
+            scheduler = TamperPrepared(capacity, device, mode=mode)
+            scheduler._bind_resident_world(world)
+            owner = scheduler._resident_owner_for_rank5(world)
+            old_arena = owner._arena
+            old_epochs = owner.epochs
+            old_signature = old_arena.resident_signature
+            before = v3.pickle_clone(world.state_dict())
+            identities = _a49b_world_cell_identities(world)
+            rng = world.rng
+            rng_state = v3.pickle_clone(rng.bit_generator.state)
+            _a48b_begin_translation_direct(scheduler, world, cell, dt)
+            try:
+                _assert_raises(
+                    (a49a.A4ResidentArenaError,
+                     a49b.A4ResidentTranslationCommitError),
+                    lambda: scheduler.cpu_translation(
+                        world, cell, dt, world.config,
+                    ),
+                )
+                _, record = scheduler._record(cell)
+                if any(entry['event'] == 'translation_cpu'
+                       for entry in record['events']):
+                    raise AssertionError(mode + ' preclaim tamper was claimed')
+                _a49a_assert_world_unchanged(
+                    before, rng, rng_state, world,
+                    'a49b.preclaim.' + mode,
+                )
+                if identities != _a49b_world_cell_identities(world):
+                    raise AssertionError(mode + ' changed CPU identities')
+                if mode == 'old_data_trust':
+                    if owner.lifecycle != a49b.INVALID:
+                        raise AssertionError('old resident trust stayed usable')
+                    _assert_raises(
+                        a49b.A4ResidentTranslationCommitError,
+                        lambda: owner._cohere_rank5(world),
+                    )
+                elif (owner.lifecycle != a49b.COHERENT
+                      or owner._arena is not old_arena
+                      or owner.epochs != old_epochs
+                      or owner._arena.resident_signature != old_signature
+                      or owner._tx_active
+                      or scheduler.prepared_seen is None
+                      or not scheduler.prepared_seen.consumed):
+                    raise AssertionError(mode + ' changed trustworthy old owner')
+                preclaim_details.append(device + ':' + mode)
+            finally:
+                _a48_abort_direct(scheduler, cell)
+
+        def change_owner_epoch(owner):
+            value = owner._epochs
+            owner._epochs = a49a.A4ResidentArenaEpochs(
+                value.membership_epoch, value.ragged_epoch,
+                value.state_epoch + 1, value.cache_epoch,
+                value.cache_source_ragged_epoch,
+            )
+
+        def change_cache_source_epoch(owner):
+            value = owner._epochs
+            owner._epochs = a49a.A4ResidentArenaEpochs(
+                value.membership_epoch, value.ragged_epoch + 1,
+                value.state_epoch, value.cache_epoch,
+                value.cache_source_ragged_epoch,
+            )
+
+        def change_storage_generation(owner):
+            owner._storage_generation += 1
+
+        for label, mutate in (
+                ('owner_epoch', change_owner_epoch),
+                ('cache_source_epoch', change_cache_source_epoch),
+                ('storage_generation', change_storage_generation)):
+            world, cells, capacity, dt = _paid_translation_fixture(seed=18710)
+            cell = cells[0]
+            scheduler = a49b.A4ResidentTranslationEventScheduler(
+                capacity, device,
+            )
+            scheduler._bind_resident_world(world)
+            owner = scheduler._resident_owner_for_rank5(world)
+            before = v3.pickle_clone(world.state_dict())
+            identities = _a49b_world_cell_identities(world)
+            rng = world.rng
+            rng_state = v3.pickle_clone(rng.bit_generator.state)
+            mutate(owner)
+            _a48b_begin_translation_direct(scheduler, world, cell, dt)
+            try:
+                _assert_raises(
+                    (a49a.A4ResidentArenaError,
+                     a49b.A4ResidentTranslationCommitError),
+                    lambda: scheduler.cpu_translation(
+                        world, cell, dt, world.config,
+                    ),
+                )
+                _, record = scheduler._record(cell)
+                if (any(entry['event'] == 'translation_cpu'
+                        for entry in record['events'])
+                        or owner.lifecycle != a49b.INVALID
+                        or identities != _a49b_world_cell_identities(world)):
+                    raise AssertionError(label + ' trust tamper was not isolated')
+                _a49a_assert_world_unchanged(
+                    before, rng, rng_state, world,
+                    'a49b.owner_trust.' + label,
+                )
+                _assert_raises(
+                    a49b.A4ResidentTranslationCommitError,
+                    lambda: owner._cohere_rank5(world),
+                )
+                preclaim_details.append(device + ':' + label + ':INVALID')
+            finally:
+                _a48_abort_direct(scheduler, cell)
+
+        for mode in ('cpu_value', 'cpu_identity', 'live_rng'):
+            world, cells, capacity, dt = _paid_translation_fixture(seed=18715)
+            cell = cells[0]
+            scheduler = TamperLiveSource(capacity, device, mode=mode)
+            scheduler._bind_resident_world(world)
+            owner = scheduler._resident_owner_for_rank5(world)
+            old_arena = owner._arena
+            old_epochs = owner.epochs
+            _a48b_begin_translation_direct(scheduler, world, cell, dt)
+            try:
+                _assert_raises(
+                    a49b.A4ResidentTranslationCommitError,
+                    lambda: scheduler.cpu_translation(
+                        world, cell, dt, world.config,
+                    ),
+                )
+                _, record = scheduler._record(cell)
+                if (any(entry['event'] == 'translation_cpu'
+                        for entry in record['events'])
+                        or scheduler.injected_state is None):
+                    raise AssertionError(mode + ' crossed the claim boundary')
+                v3.assert_recursive_close(
+                    scheduler.injected_state, world.state_dict(), 0.0, 0.0,
+                    'a49b.live_source.' + mode,
+                )
+                if (scheduler.injected_identities
+                        != _a49b_world_cell_identities(world)
+                        or world.rng is not scheduler.injected_rng
+                        or world.rng.bit_generator.state
+                        != scheduler.injected_rng_state):
+                    raise AssertionError(mode + ' had post-detection mutation')
+                if mode == 'live_rng':
+                    if (owner.lifecycle != a49b.COHERENT
+                            or owner._arena is not old_arena
+                            or owner.epochs != old_epochs):
+                        raise AssertionError('RNG-only rejection dirtied owner')
+                elif owner.lifecycle != a49b.INVALID:
+                    raise AssertionError(mode + ' CPU trust stayed usable')
+                preclaim_details.append(device + ':' + mode)
+            finally:
+                _a48_abort_direct(scheduler, cell)
+
+        # Caller gene_specs must be an exact materialization of the derived
+        # cache.  A missing single cache entry and one-short cell capacity are
+        # both rejected before a lease, candidate, claim, or fallback exists.
+        cache_world, cache_cells, cache_capacity, dt = (
+            _paid_translation_fixture(seed=18718)
+        )
+        exact_cache_owner = a49b._A4ResidentTranslationOwner.from_cpu(
+            cache_world, cache_capacity, device,
+        )
+        exact_cache_owner._validation_snapshot(cache_world)
+        missing_world = a4.a3.s66.Formal066World.from_state(
+            v3.pickle_clone(cache_world.state_dict()),
+        )
+        missing_cell = missing_world.cells[0]
+        missing_cell.gene_specs.pop(next(reversed(missing_cell.gene_specs)))
+        missing_before = v3.pickle_clone(missing_world.state_dict())
+        missing_ids = _a49b_world_cell_identities(missing_world)
+        missing_rng = missing_world.rng
+        missing_rng_state = v3.pickle_clone(
+            missing_rng.bit_generator.state,
+        )
+        missing = a49b.A4ResidentTranslationEventScheduler(
+            cache_capacity, device,
+        )
+        _a49b_begin_translation_direct(
+            missing, missing_world, missing_cell, dt,
+        )
+        try:
+            _assert_raises(
+                (a49a.A4ResidentArenaError,
+                 a49b.A4ResidentTranslationCommitError),
+                lambda: missing.cpu_translation(
+                    missing_world, missing_cell, dt, missing_world.config,
+                ),
+            )
+            _, record = missing._record(missing_cell)
+            if (missing._a49b_owner is not None
+                    or any(entry['event'] == 'translation_cpu'
+                           for entry in record['events'])
+                    or missing_ids != _a49b_world_cell_identities(
+                        missing_world)):
+                raise AssertionError('cache missing-one crossed preflight')
+            _a49a_assert_world_unchanged(
+                missing_before, missing_rng, missing_rng_state,
+                missing_world, 'a49b.cache_missing_one',
+            )
+        finally:
+            _a48_abort_direct(missing, missing_cell)
+
+        short_values = {
+            'max_cells': int(cache_capacity.max_cells) - 1,
+            'max_sequences': int(cache_capacity.max_sequences),
+            'max_symbols': int(cache_capacity.max_symbols),
+            'max_sequence_symbols': int(
+                cache_capacity.max_sequence_symbols
+            ),
+            'max_proteins_per_cell': int(
+                cache_capacity.max_proteins_per_cell
+            ),
+        }
+        short_cells = a4.GPU068A4Config(**short_values)
+        count_world = a4.a3.s66.Formal066World.from_state(
+            v3.pickle_clone(cache_world.state_dict()),
+        )
+        count_cell = count_world.cells[0]
+        count_before = v3.pickle_clone(count_world.state_dict())
+        count_rng = count_world.rng
+        count_rng_state = v3.pickle_clone(count_rng.bit_generator.state)
+        fallback_calls = []
+
+        class NoCapacityFallback(
+                a49b.A4ResidentTranslationEventScheduler):
+            def _publish_resident_translation_candidate(
+                    self, world, cell, prepared):
+                fallback_calls.append('resident_publish')
+                raise AssertionError(
+                    'one-short capacity reached resident publisher'
+                )
+
+            def _publish_translation_candidate(
+                    self, world, cell, prepared):
+                fallback_calls.append('legacy_publish')
+                raise AssertionError(
+                    'one-short capacity reached translation publisher'
+                )
+
+        count_scheduler = NoCapacityFallback(short_cells, device)
+        original_builder = (
+            a49b._A4ResidentTranslationOwner._build_prepared_storage
+        )
+        original_legacy_translation = (
+            a48b.A4TranslationEventScheduler.cpu_translation
+        )
+
+        def capacity_fallback_bomb(*args, **kwargs):
+            fallback_calls.append('builder/fallback')
+            raise AssertionError(
+                'one-short capacity clipped, grew, or fell back'
+            )
+
+        a49b._A4ResidentTranslationOwner._build_prepared_storage = (
+            capacity_fallback_bomb
+        )
+        a48b.A4TranslationEventScheduler.cpu_translation = (
+            capacity_fallback_bomb
+        )
+        _a49b_begin_translation_direct(
+            count_scheduler, count_world, count_cell, dt,
+        )
+        try:
+            _assert_raises(
+                (a49a.A4ResidentArenaError,
+                 a49b.A4ResidentTranslationCommitError),
+                lambda: count_scheduler.cpu_translation(
+                    count_world, count_cell, dt, count_world.config,
+                ),
+            )
+            _, record = count_scheduler._record(count_cell)
+            if (count_scheduler._a49b_owner is not None
+                    or fallback_calls
+                    or any(entry['event'] == 'translation_cpu'
+                           for entry in record['events'])):
+                raise AssertionError(
+                    'cell-count one-short was claimed/clipped/fell back'
+                )
+            _a49a_assert_world_unchanged(
+                count_before, count_rng, count_rng_state, count_world,
+                'a49b.cell_count_one_short',
+            )
+        finally:
+            a49b._A4ResidentTranslationOwner._build_prepared_storage = (
+                original_builder
+            )
+            a48b.A4TranslationEventScheduler.cpu_translation = (
+                original_legacy_translation
+            )
+            _a48_abort_direct(count_scheduler, count_cell)
+        preclaim_details.extend((
+            device + ':cache_exact/missing_one',
+            device + ':cell_count_exact/one_short',
+        ))
+
+        invalid_world, invalid_cells, invalid_capacity, dt = (
+            _paid_translation_fixture(seed=18719)
+        )
+        invalid_cell = invalid_cells[0]
+        invalid_scheduler = a49b.A4ResidentTranslationEventScheduler(
+            invalid_capacity, device,
+        )
+        invalid_scheduler._bind_resident_world(invalid_world)
+        invalid_owner = invalid_scheduler._resident_owner_for_rank5(
+            invalid_world,
+        )
+        invalid_owner.invalidate('validation preexisting INVALID')
+        invalid_arena = invalid_owner._arena
+        invalid_epochs = invalid_owner.epochs
+        invalid_before = v3.pickle_clone(invalid_world.state_dict())
+        invalid_rng = invalid_world.rng
+        invalid_rng_state = v3.pickle_clone(
+            invalid_rng.bit_generator.state,
+        )
+        _a48b_begin_translation_direct(
+            invalid_scheduler, invalid_world, invalid_cell, dt,
+        )
+        try:
+            _assert_raises(
+                a49b.A4ResidentTranslationCommitError,
+                lambda: invalid_scheduler.cpu_translation(
+                    invalid_world, invalid_cell, dt, invalid_world.config,
+                ),
+            )
+            _, record = invalid_scheduler._record(invalid_cell)
+            if (any(entry['event'] == 'translation_cpu'
+                    for entry in record['events'])
+                    or invalid_owner.lifecycle != a49b.INVALID
+                    or invalid_owner._arena is not invalid_arena
+                    or invalid_owner.epochs != invalid_epochs):
+                raise AssertionError('preexisting INVALID was auto-rebuilt')
+            _a49a_assert_world_unchanged(
+                invalid_before, invalid_rng, invalid_rng_state,
+                invalid_world, 'a49b.preexisting_invalid',
+            )
+        finally:
+            _a48_abort_direct(invalid_scheduler, invalid_cell)
+        preclaim_details.append(device + ':preexisting_INVALID')
+
+        # Issued/open/consumed translation leases are private, one-shot, and
+        # cannot be replayed on another owner.
+        lease_world, _, lease_capacity, _ = _paid_translation_fixture(
+            seed=18720,
+        )
+        other_world, _, other_capacity, _ = _paid_translation_fixture(
+            seed=18721,
+        )
+        owner = a49b._A4ResidentTranslationOwner.from_cpu(
+            lease_world, lease_capacity, device,
+        )
+        other = a49b._A4ResidentTranslationOwner.from_cpu(
+            other_world, other_capacity, device,
+        )
+        stale = owner._open_translation_lease(lease_world)
+        _assert_raises(
+            a49b.A4ResidentTranslationCommitError,
+            lambda: other._activate_translation_lease(stale),
+        )
+        owner._abort_preclaim(lease_world)
+        _assert_raises(a49b.A4ResidentTranslationCommitError, stale.__enter__)
+        consumed = owner._open_translation_lease(lease_world)
+        try:
+            with consumed as active:
+                active._binding_once()
+                _assert_raises(
+                    a49b.A4ResidentTranslationCommitError,
+                    active._binding_once,
+                )
+                active._consumed = False
+                _assert_raises(
+                    a49b.A4ResidentTranslationCommitError,
+                    active._binding_once,
+                )
+                raise RuntimeError('intentional preprepared lease abort')
+        except RuntimeError:
+            pass
+        _assert_raises(
+            a49b.A4ResidentTranslationCommitError, consumed.__enter__,
+        )
+        if owner.lifecycle != a49b.COHERENT or owner._tx_active:
+            raise AssertionError(device + ' lease abort changed old authority')
+
+    rollback_details = []
+    for device in _a49b_devices():
+        for failure_type, label in (
+                (FailAfterPublish, 'post_publish'),
+                (FailFinalArmRngEnergy, 'final_arm_rng_energy')):
+            world, cells, capacity, dt = _paid_translation_fixture(seed=18740)
+            cell = cells[0]
+            scheduler = failure_type(capacity, device)
+            scheduler._bind_resident_world(world)
+            owner = scheduler._resident_owner_for_rank5(world)
+            old_arena = owner._arena
+            old_id = owner.arena_id
+            old_epochs = owner.epochs
+            old_signature = old_arena.resident_signature
+            before = v3.pickle_clone(world.state_dict())
+            identities = _a49b_world_cell_identities(world)
+            rng = world.rng
+            rng_state = v3.pickle_clone(rng.bit_generator.state)
+            energy = world.dissipated_energy
+            _a48b_begin_translation_direct(scheduler, world, cell, dt)
+            caught = None
+            try:
+                scheduler.cpu_translation(world, cell, dt, world.config)
+            except (RuntimeError,
+                    a49b.A4ResidentTranslationCommitError) as exc:
+                caught = exc
+            if caught is None:
+                raise AssertionError(label + ' injected failure escaped')
+            _a49a_assert_world_unchanged(
+                before, rng, rng_state, world,
+                'a49b.rollback.' + label,
+            )
+            if (identities != _a49b_world_cell_identities(world)
+                    or world.dissipated_energy is not energy
+                    or owner._arena is not old_arena
+                    or owner.arena_id != old_id
+                    or owner.epochs != old_epochs
+                    or owner._arena.resident_signature != old_signature
+                    or owner.lifecycle != a49b.COHERENT
+                    or old_arena.retired
+                    or owner._tx_active
+                    or scheduler.prepared_seen is None
+                    or not scheduler.prepared_seen.consumed):
+                raise AssertionError(label + ' rollback identity/CAS differs')
+            entry = _a48b_translation_entry(scheduler, cell)
+            if ('amount' in entry['metadata']
+                    or entry['metadata'].get('rng_draw_count') is not None):
+                raise AssertionError(label + ' annotated before final arm')
+            receipt = _a48_abort_direct(scheduler, cell, caught)
+            if receipt['status'] != 'aborted':
+                raise AssertionError(label + ' did not abort claimed step')
+            rollback_details.append(device + ':' + label)
+
+        mismatch_world, mismatch_cells, capacity, dt = (
+            _paid_translation_fixture(seed=18760)
+        )
+        mismatch_cell = mismatch_cells[0]
+        mismatch = FailRollbackAttestation(capacity, device)
+        mismatch._bind_resident_world(mismatch_world)
+        mismatch_owner = mismatch._resident_owner_for_rank5(mismatch_world)
+        mismatch_rng = mismatch_world.rng
+        mismatch_rng_state = v3.pickle_clone(
+            mismatch_rng.bit_generator.state,
+        )
+        mismatch_energy = mismatch_world.dissipated_energy
+        _a48b_begin_translation_direct(
+            mismatch, mismatch_world, mismatch_cell, dt,
+        )
+        caught = None
+        try:
+            mismatch.cpu_translation(
+                mismatch_world, mismatch_cell, dt, mismatch_world.config,
+            )
+        except a49b.A4ResidentTranslationCommitError as exc:
+            caught = exc
+        if (caught is None
+                or mismatch_owner.lifecycle != a49b.INVALID
+                or mismatch_owner._tx_active
+                or mismatch_world.rng is not mismatch_rng
+                or mismatch_world.rng.bit_generator.state
+                != mismatch_rng_state
+                or mismatch_world.dissipated_energy is not mismatch_energy):
+            raise AssertionError(
+                device + ' rollback-attestation mismatch was not isolated'
+            )
+        _a48b_translation_entry(mismatch, mismatch_cell)
+        mismatch_receipt = _a48_abort_direct(
+            mismatch, mismatch_cell, caught,
+        )
+        if mismatch_receipt['status'] != 'aborted':
+            raise AssertionError('rollback mismatch did not abort step')
+        rollback_details.append(device + ':rollback_mismatch_INVALID')
+
+    # Public selector/type identity checks fail without any resident claim.
+    public_world, public_cells, public_capacity, dt = (
+        _paid_translation_fixture(seed=18770)
+    )
+    host = _a49a_host_binding(public_world, public_capacity)
+    _assert_raises(
+        a49b.A4ResidentTranslationCommitError,
+        lambda: a49b.paid_translation_selected_numpy(
+            host, dt, -1, int(public_cells[0].cell_id),
+        ),
+    )
+    _assert_raises(
+        a49b.A4ResidentTranslationCommitError,
+        lambda: a49b.paid_translation_selected_numpy(
+            host, dt, 0, int(public_cells[0].cell_id) + 1,
+        ),
+    )
+    _assert_raises(
+        a49b.A4ResidentTranslationCommitError,
+        lambda: a49b.paid_translation_selected_numpy(
+            host, dt, True, int(public_cells[0].cell_id),
+        ),
+    )
+    resident = a4.bind_a4_translation(
+        host.ragged.to_torch(device='cpu'),
+        host.state.to_torch(device='cpu'),
+    )
+    _assert_raises(
+        a49b.A4ResidentTranslationCommitError,
+        lambda: a49b.paid_translation_selected_numpy(
+            resident, dt, 0, int(public_cells[0].cell_id),
+        ),
+    )
+    _assert_raises(
+        a49b.A4ResidentTranslationCommitError,
+        lambda: a49b.paid_translation_selected_torch(
+            host, dt, 0, int(public_cells[0].cell_id),
+        ),
+    )
+
+    wrong_input_details = []
+    for label in ('world', 'cell', 'config', 'dt'):
+        world, cells, capacity, dt = _paid_translation_fixture(seed=18775)
+        cell = cells[0]
+        scheduler = a49b.A4ResidentTranslationEventScheduler(
+            capacity, 'cpu',
+        )
+        _a49b_begin_translation_direct(scheduler, world, cell, dt)
+        before = v3.pickle_clone(world.state_dict())
+        rng = world.rng
+        rng_state = v3.pickle_clone(rng.bit_generator.state)
+        if label == 'world':
+            foreign_world = a4.a3.s66.Formal066World.from_state(
+                v3.pickle_clone(world.state_dict()),
+            )
+            operation = lambda: scheduler.cpu_translation(
+                foreign_world, cell, dt, foreign_world.config,
+            )
+        elif label == 'cell':
+            foreign_cell = copy.deepcopy(cell)
+            operation = lambda: scheduler.cpu_translation(
+                world, foreign_cell, dt, world.config,
+            )
+        elif label == 'config':
+            foreign_config = copy.deepcopy(world.config)
+            operation = lambda: scheduler.cpu_translation(
+                world, cell, dt, foreign_config,
+            )
+        else:
+            wrong_dt = np.nextafter(dt, np.inf)
+            operation = lambda: scheduler.cpu_translation(
+                world, cell, wrong_dt, world.config,
+            )
+        try:
+            _assert_raises(
+                (a3s.A3SchedulerProtocolError,
+                 a49b.A4ResidentTranslationCommitError),
+                operation,
+            )
+            _, record = scheduler._record(cell)
+            if (scheduler._a49b_owner is not None
+                    or any(entry['event'] == 'translation_cpu'
+                           for entry in record['events'])):
+                raise AssertionError(label + ' input crossed claim/owner')
+            _a49a_assert_world_unchanged(
+                before, rng, rng_state, world,
+                'a49b.wrong_input.' + label,
+            )
+            wrong_input_details.append(label)
+        finally:
+            _a48_abort_direct(scheduler, cell)
+
+    runtime_seal_details = []
+    for device in _a49b_devices():
+        for label in ('device', 'config_rebind', 'config_value'):
+            world, cells, capacity, dt = _paid_translation_fixture(seed=18776)
+            cell = cells[0]
+            scheduler = a49b.A4ResidentTranslationEventScheduler(
+                capacity, device,
+            )
+            scheduler._bind_resident_world(world)
+            owner = scheduler._resident_owner_for_rank5(world)
+            old_arena = owner._arena
+            old_epochs = owner.epochs
+            old_signature = old_arena.resident_signature
+            before = v3.pickle_clone(world.state_dict())
+            rng = world.rng
+            rng_state = v3.pickle_clone(rng.bit_generator.state)
+            if label == 'device':
+                scheduler.a4_device = (
+                    'cuda' if device == 'cpu' else 'cpu'
+                )
+            elif label == 'config_rebind':
+                scheduler.a4_config = copy.deepcopy(capacity)
+            else:
+                object.__setattr__(
+                    scheduler.a4_config, 'max_symbols',
+                    int(scheduler.a4_config.max_symbols) + 1,
+                )
+            _a48b_begin_translation_direct(scheduler, world, cell, dt)
+            try:
+                _assert_raises(
+                    a49b.A4ResidentTranslationCommitError,
+                    lambda: scheduler.cpu_translation(
+                        world, cell, dt, world.config,
+                    ),
+                )
+                _, record = scheduler._record(cell)
+                if (any(entry['event'] == 'translation_cpu'
+                        for entry in record['events'])
+                        or owner._lifecycle != a49b.COHERENT
+                        or owner._arena is not old_arena
+                        or a49a._epoch_values(owner._epochs)
+                        != a49a._epoch_values(old_epochs)
+                        or owner._arena.resident_signature != old_signature):
+                    raise AssertionError(label + ' runtime seal crossed claim')
+                _a49a_assert_world_unchanged(
+                    before, rng, rng_state, world,
+                    'a49b.scheduler_seal.' + label,
+                )
+                runtime_seal_details.append(device + ':scheduler_' + label)
+            finally:
+                _a48_abort_direct(scheduler, cell)
+
+        def backend_config_rebind(hybrid):
+            hybrid.backend.config = copy.deepcopy(hybrid.backend.config)
+
+        def backend_config_value(hybrid):
+            object.__setattr__(
+                hybrid.backend.config, 'max_particles',
+                int(hybrid.backend.config.max_particles) + 1,
+            )
+
+        def backend_device(hybrid):
+            hybrid.backend.device = torch.device(
+                'cuda' if device == 'cpu' else 'cpu'
+            )
+
+        def backend_dtype(hybrid):
+            hybrid.backend.dtype = torch.float32
+
+        def backend_name(hybrid):
+            hybrid.scheduler._backend_name = 'tampered-backend-name'
+
+        def backend_world(hybrid):
+            hybrid.world._soma068a3_backend = object()
+
+        for label, mutate in (
+                ('config_rebind', backend_config_rebind),
+                ('config_value', backend_config_value),
+                ('device', backend_device), ('dtype', backend_dtype),
+                ('name', backend_name), ('world', backend_world)):
+            source = v3.make_world(seed=18777, cells=1)
+            hybrid = _a49b_hybrid_from_state(
+                source.state_dict(), capacity, device,
+            )
+            owner = hybrid.scheduler._resident_owner_for_rank5(hybrid.world)
+            old_arena = owner._arena
+            old_epochs = owner.epochs
+            old_signature = old_arena.resident_signature
+            before = v3.pickle_clone(hybrid.world.state_dict())
+            rng = hybrid.world.rng
+            rng_state = v3.pickle_clone(rng.bit_generator.state)
+            mutate(hybrid)
+            _assert_raises(
+                a49b.A4ResidentTranslationCommitError, hybrid.summary,
+            )
+            _assert_raises(
+                a49b.A4ResidentTranslationCommitError,
+                lambda: hybrid.step(0.1),
+            )
+            if (owner._lifecycle != a49b.COHERENT
+                    or owner._arena is not old_arena
+                    or a49a._epoch_values(owner._epochs)
+                    != a49a._epoch_values(old_epochs)
+                    or owner._arena.resident_signature != old_signature
+                    or hybrid.scheduler.active):
+                raise AssertionError(label + ' backend seal dirtied authority')
+            _a49a_assert_world_unchanged(
+                before, rng, rng_state, hybrid.world,
+                'a49b.backend_seal.' + label,
+            )
+            runtime_seal_details.append(device + ':backend_' + label)
+
+    # Exactly-once and exact-rank guards are inherited scheduler authority,
+    # and neither a duplicate nor an early call can allocate a new arena.
+    duplicate_world, duplicate_cells, capacity, dt = (
+        _paid_translation_fixture(seed=18780)
+    )
+    duplicate_cell = duplicate_cells[0]
+    duplicate = a49b.A4ResidentTranslationEventScheduler(capacity, 'cpu')
+    _a49b_begin_translation_direct(
+        duplicate, duplicate_world, duplicate_cell, dt,
+    )
+    duplicate.cpu_translation(
+        duplicate_world, duplicate_cell, dt, duplicate_world.config,
+    )
+    duplicate_before = v3.pickle_clone(duplicate_world.state_dict())
+    duplicate_owner = duplicate._a49b_owner
+    duplicate_arena = duplicate_owner._arena
+    duplicate_epochs = duplicate_owner.epochs
+    _assert_raises(
+        a3s.A3DuplicateEventError,
+        lambda: duplicate.cpu_translation(
+            duplicate_world, duplicate_cell, dt, duplicate_world.config,
+        ),
+    )
+    v3.assert_recursive_close(
+        duplicate_before, duplicate_world.state_dict(), 0.0, 0.0,
+        'a49b.duplicate',
+    )
+    if (duplicate_owner._arena is not duplicate_arena
+            or duplicate_owner.epochs != duplicate_epochs):
+        raise AssertionError('duplicate translation changed fresh owner')
+    _a48_abort_direct(duplicate, duplicate_cell)
+
+    order_world, order_cells, capacity, dt = _paid_translation_fixture(
+        seed=18781,
+    )
+    order_cell = order_cells[0]
+    order = a49b.A4ResidentTranslationEventScheduler(capacity, 'cpu')
+    order._bind_resident_world(order_world)
+    order.begin_step(order_world, [order_cell])
+    metabolism_rank = a3s.WORLD_EVENT_ORDER.index('cell_metabolism_loop')
+    for event in a3s.WORLD_EVENT_ORDER[:metabolism_rank]:
+        order.claim_world(event, status='skipped')
+    order.claim(order_cell, 'surface_exchange', status='skipped')
+    order.reserve_metabolism_dispatch(order_world, order_cell, dt)
+    order.begin_a3_metabolism(order_world, order_cell, dt)
+    order.claim(order_cell, 'gene_refresh', status='skipped')
+    order_before = v3.pickle_clone(order_world.state_dict())
+    _assert_raises(
+        a3s.A3EventOrderError,
+        lambda: order.cpu_translation(
+            order_world, order_cell, dt, order_world.config,
+        ),
+    )
+    v3.assert_recursive_close(
+        order_before, order_world.state_dict(), 0.0, 0.0,
+        'a49b.out_of_order',
+    )
+    if order._a49b_owner is not None:
+        raise AssertionError('out-of-order translation constructed an owner')
+    _a48_abort_direct(order, order_cell)
+
+    return ('preclaim plan/version/candidate pointer/.data seals and old-trust '
+            'INVALID isolation %s; stale/cross-owner/consumed lease rejection; '
+            'postpublish and final-arm RNG/energy failure exact CPU identity/'
+            'RNG/old-COHERENT rollback %s; selector/device and wrong %s fail closed; '
+            'scheduler/backend creation seals prebiology %s; '
+            'duplicate/out-of-order exactly-once' % (
+                '/'.join(preclaim_details), '/'.join(rollback_details),
+                '/'.join(wrong_input_details), '/'.join(runtime_seal_details),
+            ))
+
+
+def test_a49b_world_lockstep_persistence_a5_boundary_frozen90_authority():
+    capacity = a4.GPU068A4Config()
+    legacy_calls = []
+    original_a48b = a48b.A4TranslationEventScheduler.cpu_translation
+    original_a48a = a48.A4HydrolysisEventScheduler.cpu_translation
+
+    def legacy_bomb(*args, **kwargs):
+        legacy_calls.append(True)
+        raise AssertionError('legacy A4.8b/CPU translation bridge was called')
+
+    def run_lockstep(label, state, steps, device):
+        cpu = a4.a3.s66.Formal066World.from_state(
+            v3.pickle_clone(state),
+        )
+        hybrid = _a49b_hybrid_from_state(state, capacity, device)
+        original_container = hybrid.world.cells
+        original_members = tuple(hybrid.world.cells)
+        receipts = []
+        for step_index in range(int(steps)):
+            cpu.step(0.1)
+            receipt = hybrid.step(0.1)
+            receipts.append(receipt)
+            if (hybrid.world.cells is not original_container
+                    or tuple(hybrid.world.cells) != original_members):
+                raise AssertionError(
+                    '%s step %d did not normalize same-membership list' % (
+                        label, step_index,
+                    )
+                )
+            if (hybrid.scheduler._a49b_owner is None
+                    or hybrid.scheduler._a49b_owner.lifecycle
+                    != a49b.COHERENT):
+                raise AssertionError(label + ' lost coherent resident owner')
+            previous_motion = None
+            for record in receipt['cells']:
+                names = [entry['event'] for entry in record['events']]
+                by_name = {
+                    entry['event']: entry for entry in record['events']
+                }
+                if (tuple(names) != tuple(a3s.CELL_EVENT_ORDER)
+                        or names.count('translation_cpu') != 1
+                        or names.count('replication_cpu') != 1
+                        or not names.index('maintenance')
+                        < names.index('translation_cpu')
+                        < names.index('replication_cpu')
+                        < names.index('genome_hydrolysis_cpu_rng')
+                        < names.index('motion')
+                        < names.index('actual_split_cpu')
+                        < names.index('death_release_cpu')
+                        or by_name['translation_cpu']['metadata'].get(
+                            'authority')
+                        != ('A4.9b-world-resident-selected-paid-'
+                            'translation-atomic-CAS')
+                        or by_name['translation_cpu']['metadata'].get(
+                            'rng_draw_count') != 0):
+                    raise AssertionError(label + ' c8/A5 event order differs')
+                if ('two_cell_interleave' in label
+                        and by_name['genome_hydrolysis_cpu_rng'][
+                            'metadata'].get('eligible_genome_count', 0) < 1):
+                    raise AssertionError(
+                        label + ' did not execute eligible hydrolysis RNG work'
+                    )
+                translation = by_name['translation_cpu']['ordinal']
+                motion = by_name['motion']['ordinal']
+                if previous_motion is not None and previous_motion >= translation:
+                    raise AssertionError(label + ' inter-cell order was batched')
+                previous_motion = motion
+            world_names = [
+                entry['event'] for entry in receipt['world_events']
+            ]
+            if tuple(world_names) != tuple(a3s.WORLD_EVENT_ORDER):
+                raise AssertionError(label + ' world HGT/washout order differs')
+        v3._assert_world_pair(
+            cpu, hybrid, state_atol=v3.WORLD_FP64_ATOL,
+            ledger_atol=v3.LEDGER_ATOL, label=label,
+        )
+        return hybrid, receipts
+
+    lockstep_details = []
+    a48b.A4TranslationEventScheduler.cpu_translation = legacy_bomb
+    a48.A4HydrolysisEventScheduler.cpu_translation = legacy_bomb
+    try:
+        for device in _a49b_devices():
+            for steps, seed in ((1, 18800), (10, 18801)):
+                source = v3.make_world(seed=seed, cells=1)
+                hybrid, _ = run_lockstep(
+                    'a49b.%s.lockstep_%d' % (device, steps),
+                    source.state_dict(), steps, device,
+                )
+                lockstep_details.append(
+                    '%s:%d:g%d' % (
+                        device, steps,
+                        int(hybrid.scheduler._a49b_owner._storage_generation),
+                    )
+                )
+
+            stressed = v3.make_world(seed=18802, cells=1)
+            stressed.config.external_translator = True
+            stressed.config.protein_repair = True
+            stressed.config.quiescence = True
+            stressed.config.quiescence_effector = True
+            cell = stressed.cells[0]
+            cell.current_stress = 1.5
+            cell.damage_trace[:] = 0.9
+            cell.membrane_oxidation[:] = np.linspace(
+                0.3, 1.8, len(cell.membrane_oxidation),
+            )
+            cell.pools[a4.a3.POOL_REACTIVE] += 0.16
+            cell.pools[a4.a3.POOL_AGGREGATE] += 0.07
+            cell.pools[a4.a3.POOL_ATP] += 0.5
+            cell.behavioural_quiescence = 0.6
+            cell._sync_damage_pool()
+            run_lockstep(
+                'a49b.%s.translation_stress' % device,
+                stressed.state_dict(), 2, device,
+            )
+
+            interleave = v3.make_world(seed=18803, cells=2)
+            interleave.config.endogenous_damage = False
+            for cell in interleave.cells:
+                cell.genome_lesions = [
+                    0.5 / 0.00065 for _ in cell.genomes
+                ]
+                cell._refresh_gene_cache()
+            run_lockstep(
+                'a49b.%s.two_cell_interleave' % device,
+                interleave.state_dict(), 1, device,
+            )
+    finally:
+        a48b.A4TranslationEventScheduler.cpu_translation = original_a48b
+        a48.A4HydrolysisEventScheduler.cpu_translation = original_a48a
+    if legacy_calls:
+        raise AssertionError('A4.9b used a frozen translation bridge')
+
+    # Dynamically cover the successful Hybrid.step normalization branch with
+    # a real member change.  One living cell commits rank-5 translation while
+    # its already-dead peer is released later in the same integrated step.
+    # The wrapper must restore only the original list object, never its stale
+    # membership.  The next rank-5 audit must then STOP as INVALID.
+    member_source = v3.make_world(seed=18804, cells=2)
+    member_source.cells[1].alive = False
+    member_source.cells[1].death_reason = 'a49b_integrated_death'
+    member_state = member_source.state_dict()
+    member_cpu = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(member_state),
+    )
+    member_hybrid = _a49b_hybrid_from_state(
+        member_state, capacity, 'cpu',
+    )
+    member_container = member_hybrid.world.cells
+    member_objects = tuple(member_hybrid.world.cells)
+    dead_id = int(member_objects[1].cell_id)
+    member_cpu.step(0.1)
+    member_receipt = member_hybrid.step(0.1)
+    member_owner = member_hybrid.scheduler._a49b_owner
+    if member_owner is None:
+        raise AssertionError('integrated death did not commit rank-5 owner')
+    member_arena = member_owner._arena
+    member_signature = member_arena.resident_signature
+    member_generation = int(member_owner._storage_generation)
+    member_readback = v3.pickle_clone(
+        a49a._attest_resident(
+            member_arena, member_owner._arena_seal, readback=True,
+        )
+    )
+    dead_records = [
+        record for record in member_receipt['cells']
+        if int(record['cell_id']) == dead_id
+    ]
+    dead_events = [] if len(dead_records) != 1 else [
+        event for event in dead_records[0]['events']
+        if event['event'] == 'death_release_cpu'
+        and event['status'] == 'executed'
+    ]
+    if (member_receipt['status'] != 'complete'
+            or member_hybrid.world.cells is not member_container
+            or tuple(member_hybrid.world.cells) == member_objects
+            or len(member_hybrid.world.cells) != 1
+            or len(dead_events) != 1
+            or member_owner.lifecycle != a49b.COHERENT):
+        raise AssertionError(
+            'successful Hybrid.step hid or misreceipted actual membership drift'
+        )
+    v3._assert_world_pair(
+        member_cpu, member_hybrid,
+        state_atol=v3.WORLD_FP64_ATOL,
+        ledger_atol=v3.LEDGER_ATOL,
+        label='a49b.integrated_member_normalization',
+    )
+    _assert_raises(
+        a49b.A4ResidentTranslationCommitError,
+        lambda: member_hybrid.step(0.1),
+    )
+    aborted_member_receipt = member_hybrid.scheduler.last_receipt
+    member_after_abort = a49a._attest_resident(
+        member_arena, member_owner._arena_seal, readback=True,
+    )
+    v3.assert_recursive_close(
+        member_readback, member_after_abort, 0.0, 0.0,
+        'a49b.integrated_member_invalid_resident50',
+    )
+    if (aborted_member_receipt is None
+            or aborted_member_receipt['status'] != 'aborted'
+            or member_owner.lifecycle != a49b.INVALID
+            or member_owner._arena is not member_arena
+            or member_owner._arena.resident_signature != member_signature
+            or int(member_owner._storage_generation) != member_generation):
+        raise AssertionError(
+            'next rank-5 audit auto-rebuilt actual membership drift'
+        )
+
+    class SerializationCapture(a49b.A4ResidentTranslationEventScheduler):
+        prepared_seen = None
+        finalized_seen = None
+
+        def _resident_translation_candidate_ready(
+                self, world, cell, dt, config, prepared):
+            self.prepared_seen = prepared
+            return prepared
+
+        def _resident_translation_finalized_ready(
+                self, world, cell, prepared, finalized):
+            self.finalized_seen = finalized
+            return finalized
+
+    serial_world, serial_cells, serial_capacity, serial_dt = (
+        _paid_translation_fixture(seed=18810)
+    )
+    serial_cell = serial_cells[0]
+    serial_scheduler = SerializationCapture(serial_capacity, 'cpu')
+    _a49b_begin_translation_direct(
+        serial_scheduler, serial_world, serial_cell, serial_dt,
+    )
+    try:
+        serial_scheduler.cpu_translation(
+            serial_world, serial_cell, serial_dt, serial_world.config,
+        )
+        for artifact in (
+                serial_scheduler.prepared_seen,
+                serial_scheduler.finalized_seen,
+                serial_scheduler.prepared_seen.selected_plan,
+                serial_scheduler._a49b_owner):
+            _assert_raises(
+                (a49a.A4ResidentArenaScopeError,
+                 a49b.A4ResidentTranslationCommitError),
+                lambda artifact=artifact: pickle.dumps(artifact),
+            )
+    finally:
+        _a48_abort_direct(serial_scheduler, serial_cell)
+
+    persistence_details = []
+    for device in _a49b_devices():
+        persisted_source = v3.make_world(seed=18820, cells=1)
+        persisted = _a49b_hybrid_from_state(
+            persisted_source.state_dict(), capacity, device,
+        )
+        persisted.step(0.1)
+        durable = v3.pickle_clone(persisted.world.state_dict())
+        durable_payload = persisted.state_dict()
+        v3.assert_recursive_close(
+            durable, durable_payload['cpu_world'], 0.0, 0.0,
+            'a49b.%s.durable_cpu_payload' % device,
+        )
+        canonical_durable = a4.a3.s66.Formal066World.from_state(
+            v3.pickle_clone(durable),
+        ).state_dict()
+        # Frozen Formal066.from_state canonicalizes this fixture's pool[4] by
+        # exactly one half-epsilon.  Characterize that inherited behavior;
+        # never weaken the raw durable payload or clone/load comparisons.
+        raw_pools = np.asarray(
+            durable['cells'][0]['pools'], dtype=np.float64,
+        )
+        canonical_pools = np.asarray(
+            canonical_durable['cells'][0]['pools'], dtype=np.float64,
+        )
+        differing_pool_indices = tuple(
+            int(index) for index in np.flatnonzero(
+                raw_pools != canonical_pools
+            )
+        )
+        expected_ulp = float(2.0 ** -53)
+        inherited_ulp = float(abs(raw_pools[4] - canonical_pools[4]))
+        if (raw_pools.shape != canonical_pools.shape
+                or differing_pool_indices != (4,)
+                or inherited_ulp != expected_ulp
+                or durable['rng_state'] != canonical_durable['rng_state']):
+            raise AssertionError(
+                'frozen Formal066 from_state canonicalization changed'
+            )
+        canonical_proof = v3.pickle_clone(durable)
+        canonical_proof['cells'][0]['pools'][4] = canonical_pools[4]
+        v3.assert_recursive_close(
+            canonical_proof, canonical_durable, 0.0, 0.0,
+            'a49b.%s.inherited_from_state_1ulp' % device,
+        )
+        inherited_c8 = _a48c8_hybrid_from_state(
+            durable, capacity, device,
+        )
+        v3.assert_recursive_close(
+            canonical_durable, inherited_c8.world.state_dict(), 0.0, 0.0,
+            'a49b.%s.inherited_c8_canonical' % device,
+        )
+
+        integration_payloads = (
+            durable_payload.get('a4_resident_translation'),
+            durable_payload.get('scheduler', {}).get(
+                'a4_resident_translation'
+            ),
+        )
+        if any(not isinstance(value, Mapping)
+               or set(value) != {'schema', 'config', 'device'}
+               for value in integration_payloads):
+            raise AssertionError(
+                'durable resident-translation payload exposed runtime state'
+            )
+
+        forbidden_runtime_keys = frozenset((
+            'owner', 'owner_token', 'arena', 'arena_id', 'arena_ref',
+            'epoch', 'epochs', 'pointer', 'pointers', 'seal', 'guard',
+            'lease', 'selected_plan', 'prepared', 'prepared_storage',
+            'finalized', 'resident_signature', 'storage_generation',
+            'candidate_binding', 'candidate_signature', 'old_arena_ref',
+        ))
+
+        def runtime_keys(value, path='state'):
+            found = []
+            if isinstance(value, Mapping):
+                for key, item in value.items():
+                    key_text = str(key).lower()
+                    child = path + '.' + str(key)
+                    if (key_text in forbidden_runtime_keys
+                            or key_text.startswith('_a49b_')):
+                        found.append(child)
+                    found.extend(runtime_keys(item, child))
+            elif isinstance(value, (list, tuple)):
+                for index, item in enumerate(value):
+                    found.extend(runtime_keys(
+                        item, '%s[%d]' % (path, index),
+                    ))
+            return found
+
+        non_cpu_payload = {
+            key: value for key, value in durable_payload.items()
+            if key != 'cpu_world'
+        }
+        leaked = runtime_keys(non_cpu_payload)
+        if leaked:
+            raise AssertionError(
+                'durable payload serialized resident runtime: %r' % leaked
+            )
+        twin = persisted.clone()
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, 'a49b.pkl')
+            persisted.save(path)
+            restored = a49b.Hybrid066WorldA4ResidentTranslation.load(path)
+        for value in (twin, restored):
+            if (type(value) is not a49b.Hybrid066WorldA4ResidentTranslation
+                    or type(value.scheduler)
+                    is not a49b.A4ResidentTranslationEventScheduler
+                    or value.scheduler._a49b_owner is not None
+                    or value.scheduler._a49b_world is not value.world
+                    or value.scheduler._a49b_cells is not value.world.cells
+                    or value.scheduler.a4_device != device
+                    or value.scheduler.a4_config != capacity):
+                raise AssertionError(device + ' save/clone authority differs')
+            v3.assert_recursive_close(
+                canonical_durable, value.world.state_dict(), 0.0, 0.0,
+                'a49b.%s.persisted_cpu' % device,
+            )
+
+        continuations = (persisted, twin, restored)
+        for value in continuations:
+            value.step(0.1)
+        for value in continuations[1:]:
+            v3.assert_recursive_close(
+                continuations[0].world.state_dict(),
+                value.world.state_dict(), 0.0, 0.0,
+                'a49b.%s.persisted_continuation' % device,
+            )
+        owners = [value.scheduler._a49b_owner for value in continuations]
+        if len({id(owner._owner_token) for owner in owners}) != 3:
+            raise AssertionError(device + ' save/clone reused owner token')
+        arena_ids = {owner.arena_id for owner in owners}
+        if len(arena_ids) != 3:
+            raise AssertionError(device + ' save/clone reused arena ID')
+        storage_sets = [
+            _a49a_signature_sets(owner._arena.resident_signature)[1]
+            for owner in owners
+        ]
+        if any(storage_sets[left].intersection(storage_sets[right])
+               for left in range(3) for right in range(left + 1, 3)):
+            raise AssertionError(device + ' save/clone arenas alias storage')
+        persistence_details.append(
+            device + ':fresh3/inherited-from_state-1ULP'
+        )
+
+        pending = _a49b_hybrid_from_state(
+            v3.make_world(seed=18821, cells=1).state_dict(),
+            capacity, device,
+        )
+        pending.scheduler.begin_step(pending.world, pending.world.cells)
+        _assert_raises(a3s.A3SchedulerProtocolError, pending.state_dict)
+        _assert_raises(a3s.A3SchedulerProtocolError, pending.clone)
+        pending.scheduler.abort_step(
+            RuntimeError('expected A4.9b active-save rejection'),
+        )
+        pending.scheduler._resident_owner_for_rank5(pending.world)
+        lease = pending.scheduler._a49b_owner._open_translation_lease(
+            pending.world,
+        )
+        _assert_raises(a3s.A3SchedulerProtocolError, pending.state_dict)
+        _assert_raises(a3s.A3SchedulerProtocolError, pending.clone)
+        _assert_raises(
+            a49b.A4ResidentTranslationCommitError,
+            lambda: pickle.dumps(lease),
+        )
+        pending.scheduler._a49b_owner._abort_preclaim(pending.world)
+
+    # A5 stays CPU-authoritative.  Exercise each topology/genome boundary
+    # directly after a paid translation and prove that it never flushes or
+    # edits the immutable resident tensors.  The next audit must instead make
+    # the old owner unusable, and rank-5 must not silently rebuild it.
+    def assert_a5_boundary(
+            label, source, mutate, changed,
+            expected_lifecycle=a49b.INVALID):
+        hybrid = _a49b_hybrid_from_state(
+            source.state_dict(), capacity, 'cpu',
+        )
+        hybrid.step(0.1)
+        owner = hybrid.scheduler._a49b_owner
+        old_arena = owner._arena
+        old_signature = old_arena.resident_signature
+        old_readback = v3.pickle_clone(
+            a49a._attest_resident(
+                old_arena, owner._arena_seal, readback=True,
+            )
+        )
+        # This is the explicit, public A3 hand-off to the frozen CPU world,
+        # not an error fallback.  It restores the raw split/death/washout APIs
+        # while deliberately retaining the old resident owner for the audit.
+        detached = a3s.detach_backend_from_world_a3(hybrid.world)
+        if detached is not hybrid.world:
+            raise AssertionError(label + ' raw CPU detach changed the world')
+        cpu = a4.a3.s66.Formal066World.from_state(
+            v3.pickle_clone(hybrid.world.state_dict()),
+        )
+        before = v3.pickle_clone(hybrid.world.state_dict())
+        cpu_result = mutate(cpu)
+        hybrid_result = mutate(hybrid.world)
+        if cpu_result != hybrid_result or not changed(before, hybrid.world):
+            raise AssertionError(label + ' did not reach its A5 boundary')
+        # The raw attached world and its frozen Formal066.from_state twin can
+        # differ by the inherited one-ULP canonicalization pinned above.  Use
+        # the frozen world lockstep bound while keeping resident tensors exact.
+        v3._assert_world_pair(
+            cpu, hybrid, state_atol=v3.WORLD_FP64_ATOL,
+            ledger_atol=v3.LEDGER_ATOL, label='a49b.a5.' + label,
+        )
+        after_readback = a49a._attest_resident(
+            old_arena, owner._arena_seal, readback=True,
+        )
+        v3.assert_recursive_close(
+            old_readback, after_readback, 0.0, 0.0,
+            'a49b.a5.%s.old_resident50' % label,
+        )
+        old_generation = int(owner._storage_generation)
+        if (owner._arena is not old_arena
+                or old_arena.resident_signature != old_signature
+                or owner.audit_cpu(hybrid.world) != expected_lifecycle
+                or owner._arena is not old_arena
+                or old_arena.resident_signature != old_signature):
+            raise AssertionError(
+                label + ' did not invalidate the unchanged old arena'
+            )
+        after_audit = a49a._attest_resident(
+            old_arena, owner._arena_seal, readback=True,
+        )
+        v3.assert_recursive_close(
+            old_readback, after_audit, 0.0, 0.0,
+            'a49b.a5.%s.invalid_resident50' % label,
+        )
+        if expected_lifecycle == a49b.INVALID:
+            _assert_raises(
+                a49b.A4ResidentTranslationCommitError,
+                lambda: owner._cohere_rank5(hybrid.world),
+            )
+            return label + ':INVALID/no-flush'
+        old_objects, old_storage = _a49a_signature_sets(old_signature)
+        rebuilt_owner = owner._cohere_rank5(hybrid.world)
+        rebuilt = owner._arena
+        new_objects, new_storage = _a49a_signature_sets(
+            rebuilt.resident_signature,
+        )
+        if (expected_lifecycle != a49b.CPU_NEWER
+                or rebuilt_owner is not owner
+                or rebuilt is old_arena
+                or owner._arena is not rebuilt
+                or owner.lifecycle != a49b.COHERENT
+                or int(owner._storage_generation) != old_generation + 1
+                or old_arena.retired is not True
+                or old_objects.intersection(new_objects)
+                or old_storage.intersection(new_storage)):
+            raise AssertionError(
+                label + ' explicit rank-5 rebuild did not publish fresh arena'
+            )
+        old_after_rebuild = a49a._resident_readback(old_arena.binding)[:3]
+        v3.assert_recursive_close(
+            old_readback, old_after_rebuild, 0.0, 0.0,
+            'a49b.a5.%s.retired_resident50' % label,
+        )
+        return label + ':CPU_NEWER/explicit-fresh-rebuild'
+
+    def force_split(world):
+        parent = world.cells[0]
+        if len(parent.genomes) < 2:
+            parent.genomes.append(parent.genomes[0].copy())
+            parent.genome_lesions.append(0.0)
+            parent._refresh_gene_cache()
+        parent.division_progress = 1.0
+        before_count = len(world.cells)
+        world._handle_divisions_and_deaths()
+        return len(world.cells) - before_count
+
+    def force_death(world):
+        victim = world.cells[0]
+        victim.alive = False
+        victim.death_reason = 'a49b_validation_death'
+        before_count = len(world.cells)
+        world._handle_divisions_and_deaths()
+        return before_count - len(world.cells)
+
+    def force_washout(world):
+        world.age = float(world.eco66_next_washout)
+        before_count = len(world.cells)
+        world._washout()
+        return before_count - len(world.cells)
+
+    def force_hgt(world):
+        recipient = world.cells[0]
+        sequence = recipient.genomes[0][:a4.g2.GENE_SPAN].copy()
+        fragment = world.edna.add_fragment(
+            sequence, recipient.pos, origin_lineage=987,
+            origin_cell=654, origin_hash='a49b-hgt', mobile=True,
+        )
+        world.edna.fragments.remove(fragment)
+        world.edna.uptaken_fragments += 1
+        world.hgt_attempts += 1
+        recipient.hgt_attempts += 1
+        integrated = recipient.integrate_fragment(
+            fragment, world, force=True,
+        )
+        if integrated:
+            world.edna.integrated_fragments += 1
+            world.hgt_integrations += 1
+        return bool(integrated)
+
+    def force_reorder(world):
+        before = tuple(int(cell.cell_id) for cell in world.cells)
+        world.cells = list(reversed(world.cells))
+        return before != tuple(int(cell.cell_id) for cell in world.cells)
+
+    def force_alive_drift(world):
+        world.cells[0].alive = False
+        world.cells[0].death_reason = 'a49b_validation_alive_drift'
+        return not world.cells[0].alive
+
+    membership_changed = lambda before, world: (
+        len(before['cells']) != len(world.cells)
+    )
+    genome_changed = lambda before, world: (
+        len(before['cells'][0]['genomes'][0])
+        != len(world.cells[0].genomes[0])
+    )
+    order_changed = lambda before, world: (
+        tuple(int(item['cell_id']) for item in before['cells'])
+        != tuple(int(cell.cell_id) for cell in world.cells)
+    )
+    alive_changed = lambda before, world: (
+        bool(before['cells'][0]['alive']) != bool(world.cells[0].alive)
+    )
+
+    washout_source = v3.make_world(seed=18842, cells=4)
+    washout_source.config.eco66_washout = True
+    a5_details = (
+        assert_a5_boundary(
+            'split', v3.make_world(seed=18840, cells=2),
+            force_split, membership_changed,
+        ),
+        assert_a5_boundary(
+            'death', v3.make_world(seed=18841, cells=2),
+            force_death, membership_changed,
+        ),
+        assert_a5_boundary(
+            'washout', washout_source,
+            force_washout, membership_changed,
+        ),
+        assert_a5_boundary(
+            'hgt', v3.make_world(seed=18843, cells=2),
+            force_hgt, genome_changed, a49b.CPU_NEWER,
+        ),
+        assert_a5_boundary(
+            'reorder', v3.make_world(seed=18844, cells=2),
+            force_reorder, order_changed,
+        ),
+        assert_a5_boundary(
+            'alive_drift', v3.make_world(seed=18845, cells=2),
+            force_alive_drift, alive_changed,
+        ),
+    )
+
+    prior_names = '\n'.join(
+        fn.__name__ for fn in A49A_VALIDATION_TESTS
+    )
+    new_names = tuple(fn.__name__ for fn in A49B_TESTS)
+    expected_hashes = dict(_A49A_FROZEN_CORE_SHA256)
+    expected_hashes[
+        'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_resident_arena.py'
+    ] = _A49A_CORE_SHA256
+    for relative, expected_hash in expected_hashes.items():
+        if _sha256(os.path.join(ROOT, *relative.split('/'))) != expected_hash:
+            raise AssertionError(relative + ' changed from frozen authority')
+    core_path = os.path.join(
+        ROOT, 'src', '0_6_8',
+        'SOMA_CELL_0_6_8_gpu_a4_resident_translation_integration.py',
+    )
+    prereg_path = os.path.join(
+        ROOT, 'planning', 'SOMA_CELL_0_6_8_GPU_A4_PREREGISTRATION_JA.md',
+    )
+    scheduler_signature = inspect.signature(
+        a49b.A4ResidentTranslationEventScheduler.cpu_translation,
+    )
+    if (tuple(a49b.__all__) != _A49B_PUBLIC_API
+            or tuple(scheduler_signature.parameters)
+            != ('self', 'world', 'cell', 'dt', 'config')
+            or not issubclass(
+                a49b.A4ResidentTranslationEventScheduler,
+                a48c8.A4ReplicationEarlyNoopEventScheduler,
+            )
+            or not issubclass(
+                a49b.Hybrid066WorldA4ResidentTranslation,
+                a48c8.Hybrid066WorldA4ReplicationEarlyNoop,
+            )
+            or a49b.FULL_GPU_WORLD_STEP is not False
+            or a49b.PORT_STATUS.get('full_gpu_world_step') is not False
+            or 'RESIDENT_NEWER' in tuple(a49b.__all__)
+            or len(SOURCE_PATHS) != 29
+            or len(A49A_VALIDATION_TESTS) != 90
+            or len(A49B_TESTS) != 4
+            or len(A49B_VALIDATION_TESTS) != 94
+            or new_names != (
+                'test_a49b_selected_plan_formal066_cpu_cuda_isolation',
+                'test_a49b_rank5_fresh_generation_epochs_nonalias_and_capacity',
+                'test_a49b_fail_closed_rollback_cas_leases_duplicate_and_order',
+                'test_a49b_world_lockstep_persistence_a5_boundary_frozen90_authority',
+            )
+            or hashlib.sha256(prior_names.encode('utf-8')).hexdigest()
+            != _A49B_PRIOR_90_NAMES_SHA256
+            or _a48c7_prior_test_ast_sha256(A49A_VALIDATION_TESTS)
+            != _A49B_PRIOR_90_AST_SHA256
+            or _sha256(prereg_path) != _A49B_PREREG_SHA256
+            or _sha256(core_path) != _A49B_CORE_SHA256):
+        raise AssertionError(
+            'A4.9b API/prereg/core/frozen90/total94 authority differs'
+        )
+    return ('1/10-step + 2-step translation stress + 2-cell interleave '
+            'CPU/c8 event/receipt/PCG64/material lockstep with no legacy '
+            'translation %s; save/load/clone fresh nonalias owners %s; '
+            'active/pending/nonserialization reject; committed-CPU A5 '
+            'split/death/washout/reorder/alive M-domain drift makes unchanged '
+            'old 50-tensor arenas INVALID without auto-rebuild, while HGT '
+            'makes CPU_NEWER then explicitly rebuilds a fresh arena %s; '
+            'frozen90 names/AST + A3/pure/c1-c8/A4.9a hashes + total94/'
+            'full_gpu=false' % (
+                '/'.join(lockstep_details),
+                '/'.join(persistence_details),
+                '/'.join(a5_details),
+            ))
+
+
 TESTS = (
     test_api_scope,
     test_source_hash_inputs_present,
@@ -21918,11 +24047,20 @@ A49A_TESTS = (
 
 A49A_VALIDATION_TESTS = VALIDATION_TESTS + A49A_TESTS
 
+A49B_TESTS = (
+    test_a49b_selected_plan_formal066_cpu_cuda_isolation,
+    test_a49b_rank5_fresh_generation_epochs_nonalias_and_capacity,
+    test_a49b_fail_closed_rollback_cas_leases_duplicate_and_order,
+    test_a49b_world_lockstep_persistence_a5_boundary_frozen90_authority,
+)
+
+A49B_VALIDATION_TESTS = A49A_VALIDATION_TESTS + A49B_TESTS
+
 
 def run_all(write=False, output_dir=None):
     rows = []
     started = time.time()
-    for fn in A49A_VALIDATION_TESTS:
+    for fn in A49B_VALIDATION_TESTS:
         then = time.perf_counter()
         try:
             detail = fn()
@@ -21943,7 +24081,7 @@ def run_all(write=False, output_dir=None):
     failed = sum(row['status'] == 'FAIL' for row in rows)
     elapsed = time.time() - started
     payload = {
-        'build': a49a.BUILD,
+        'build': a49b.BUILD,
         'schema': {
             'ragged_genome': a4.SCHEMA_VERSION,
             'gene_cache': a4.GENE_CACHE_SCHEMA_VERSION,
@@ -21997,20 +24135,28 @@ def run_all(write=False, output_dir=None):
                 a48c8.INTEGRATION_SCHEMA_VERSION
             ),
             'resident_world_arena_shadow': a49a.SCHEMA_VERSION,
+            'selected_translation_plan': (
+                a49b.SELECTED_PLAN_SCHEMA_VERSION
+            ),
+            'resident_selected_translation': a49b.SCHEMA_VERSION,
         },
         'development_slice': (
-            'A4.9a-immutable-world-wide-H2D-shadow-cache-'
-            'coherence-foundation'
+            'A4.9b-persistent-arena-RNG-free-selected-paid-translation-'
+            'transaction'
         ),
         'promoted_baseline_unchanged': 'SOMA-CELL 0.6.8-GPU A3',
         'full_gpu_world_step': False,
         'resident_biology_authority': False,
-        'resident_device_writes': False,
-        'resident_d2h_publish': False,
-        'frozen_prior_test_count': 86,
-        'frozen_prior_test_names_sha256': _A49A_PRIOR_86_NAMES_SHA256,
-        'frozen_prior_test_ast_sha256': _A49A_PRIOR_86_AST_SHA256,
+        'resident_device_writes': True,
+        'resident_device_writes_scope': 'RNG-free paid translation only',
+        'resident_d2h_publish': True,
+        'resident_d2h_publish_scope': 'selected translation row only',
+        'frozen_prior_test_count': 90,
+        'frozen_prior_test_names_sha256': _A49B_PRIOR_90_NAMES_SHA256,
+        'frozen_prior_test_ast_sha256': _A49B_PRIOR_90_AST_SHA256,
         'resident_arena_core_sha256': _A49A_CORE_SHA256,
+        'resident_translation_core_sha256': _A49B_CORE_SHA256,
+        'a49b_preregistration_sha256': _A49B_PREREG_SHA256,
         'fixed_fixture_capacity': {
             'C': 4, 'Q': 10, 'S': 340, 'W': 48, 'P': 32, 'K': 21,
         },
@@ -22032,7 +24178,7 @@ def run_all(write=False, output_dir=None):
             writer.writeheader()
             writer.writerows(rows)
         lines = [
-            '%s VALIDATION' % a49a.BUILD,
+            '%s VALIDATION' % a49b.BUILD,
             '%d PASS / %d FAIL / %d TOTAL' % (passed, failed, len(rows)),
             'elapsed %.6fs' % elapsed,
             '',

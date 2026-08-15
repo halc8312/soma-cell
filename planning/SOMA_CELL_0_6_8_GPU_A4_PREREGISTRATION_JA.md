@@ -1647,3 +1647,199 @@ CPU durable authority、event order、RNG、rollbackを一切変えずに、後�
   変更、c1〜c8またはA4 pure編集が必要ならA4.8c8を正式authorityとして維持してSTOPする。
 - A4.9aでもresident biology authority、multi-cell GPU-primary path、性能向上は未達であり、A4完成または昇格と呼ばない。
   `full_gpu_world_step=false`、baseline A3、CPU durable authorityを維持する。
+
+## A4.9b追加仮説
+
+Rule Lock receipt `20260815T201211Z`（`work_sessions/20260815T201211Z_SOMA_CELL_0_6_8_GPU_A4_PREFLIGHT.json`、
+clean-start HEAD `97c2045cd63ca9aa826a81503eaed178ddd7b1f6`）の範囲は、A4.9aのworld-wide immutable
+arenaを入力にするRNG-free paid translationの一cell transactionだけに限定する。A3の
+`gene_refresh`、`generic_reactions`、`precursor_synthesis`、`maintenance`はrank 5のtranslationより前に
+CPUを変更し、共通unpackは等値contentでもragged provenanceを再束縛する。そのためstep外で
+buildしたarenaをそのままrank 5へ渡す案は`CPU_NEWER`となりSTOPである。また、現行
+`paid_translation_plan_numpy/torch`は全`cell_mask` rowを更新し、そのTorch出力はA4.9aのnew
+generationとしてseal済みではない。A4.9a lease中のCPU publishもclose-time coherenceに反する。
+
+したがって、rank 5のclaim前だけに明示full rebuildを許可し、schedulerが内部選択した
+target row以外をbit-exactに据え置く新しいpure planと、旧arenaと全50 tensorがnon-aliasな
+fresh D2D storageを作る。CPU publish後の実CPU sourceを再attestした後だけそのstorageをarenaとして
+sealし、最後のallocation-free CASでownerを差し替えれば、Formal066の支払い、辞書順、
+event order、CPU durable authorityを変えずにpersistent resident transactionの最小単位を閉じられる
+はずである。
+
+## A4.9bで実装するもの
+
+- 新規module `SOMA_CELL_0_6_8_gpu_a4_resident_translation_integration.py`だけに、A4.9a ownerの
+  transaction限定subclassとA4.8c8 scheduler/worldの後継を追加する。promoted A3、A4.1〜A4.7
+  pure core、A4.8a/b/c1〜c8、A4.9a coreはbyte不変とする。A4.9bは`translation_cpu`のみを
+  新経路で置換し、replicationはc1〜c8、hydrolysisはA4.8a、その他はA3/CPUの現行authorityへ
+  明示delegateする。
+- 新pure surfaceは`A4SelectedTranslationPlan`、
+  `paid_translation_selected_numpy(binding, dt, target_index, target_cell_id)`、
+  `paid_translation_selected_torch(...)`、`paid_translation_selected(...)`に限定する。選択対象は
+  exactに一つのused rowで、indexとcell IDは一致しなければならない。integrationはactive
+  schedulerのcell objectとarena membershipから両方を内部導出し、caller-supplied selector、binding、
+  plan、candidate、CPU publish値を受理しない。
+- `A4SelectedTranslationPlan`のschemaは`schema_version`、`target_index`、`target_cell_id`、
+  `dt_hex`、one-hot `target_mask`、`source_provenance`、full-capacity `state_after`に固定する。
+  public operationは`validate()`、explicit diagnostic `to_numpy()`、Torchの`data_ptrs()`だけとし、
+  `state_dict`/restore、public in-place apply、CPU publish、owner swapを持たない。moduleのその他のpublic
+  surfaceはbuild/schema/status constants、`A4ResidentTranslationCommitError`、
+  `A4ResidentTranslationEventScheduler`、`Hybrid066WorldA4ResidentTranslation`に限定し、owner subclass、
+  prepared storage、transaction prepare/revalidate/publish/finalizeはprivateとする。
+- selected planは既存A4.3 paid planを変更しないbindingで評価した後、内部導出したexact
+  one-hot target maskでtranslation write-set 9 array（`pools`、`last_translation`、`last_quiescence`、activeの
+  fingerprint/mass/count、
+  damagedのfingerprint/mass/count）のtarget rowだけをoriginal full stateへmergeする。original
+  `cell_mask`を含むその他21 arrayの全rowと、9 write-set arrayのnon-target row/unused tailはsourceと
+  bit-exactに復元する。Torch出力の最終30 arrayはすべてfresh object/storage、old arenaとnon-alias、
+  Torch version 0で最終値を作り、書き込み後のversionを信頼したupload metadataで隠さない。NumPy/Torchの
+  target discrete値と辞書順はexact、fp64は既存`2e-12`の上限内であり、上限を拡張しない。
+- 候補generationはselected state 30 arrayに加え、old resident ragged 11 arrayをD2D cloneし、その
+  fresh raggedからcache 9 arrayを内部decodeする。old arena、event-local artifact、別candidateと
+  全50 tensor object/storageのaliasを禁止する。ragged/cache contentとnon-target resident rowは
+  bit-exact、target stateだけがpaid translation後となる。candidate全体のdiagnostic D2H/readback sealで
+  pointer、version、content、`.data`経由の変更を検査する。selected-row D2HはCPU publish dataであり、
+  この全体integrity attestationの代わりにはしない。
+- prepublishのcandidateはsealed `_PreparedTranslationStorage`であり、`_A4ResidentArena`、biology
+  authority、epochの現行値ではない。target CPUのpost-publish protein dictionary、scalar object、
+  pools内容を事前生成し、candidate storage、target/index/ID、old arena ID/generation/epoch、
+  config/device、exact `dt.hex()`、source/final digest、予定write-setへ一回だけ束縛する。
+  candidate/storage/planはserializableではなく、duplicate、cross-owner、reordered、rearmed useを拒否する。
+
+## A4.9b event orderとarena transaction境界
+
+- transactionはactive A3 metabolism contextのrank 5、`maintenance`済み、`translation_cpu`未claim、
+  `replication_cpu`未claimの一cellでだけ開始できる。最初にCPU sourceとownerを明示`audit_cpu`し、
+  fresh/`COHERENT`ならそのまま使う。前段のR/S/C driftで`CPU_NEWER`なら、このrank 5
+  preclaim境界でのみA4.9aの`prepare_rebuild`/`swap_rebuild`によるseparate world-wide full H2Dを
+  明示実行する。このbuild/audit/swapはreceiptとRNGを持たず、auditによる自動refreshではない。
+  `INVALID`のauto-rebuild、rank-5 preclaim guard外のactive-step owner差替え、別rankでのrebuildはしない。`INVALID`は
+  fail closedとし、fresh load/clone/initial constructionと同義に扱わない。
+- Formal066はworld stepの終了時に、生物学的membershipと順序が同一でも`world.cells`のlist containerを
+  fresh objectへ再束縛する。これはA4.9aのmembership anchorでは実membership変更と区別できず、次stepを
+  誤って`INVALID`にするため、新A4.9b world wrapperだけが**成功したfull stepの終了後**にfinal ordered
+  cell object列をpre-stepの元list objectへslice代入し、その元containerを`world.cells`へ戻す。これは
+  event、biology、cell order、RNG、receiptの完了後に行うruntime container identity正規化であり、resident
+  upload、owner refresh、epoch進行、CPU publishではない。同じordered cell object、cell ID、generation、alive
+  membershipの場合だけ次rank 5で通常のR/S/C `CPU_NEWER` audit/rebuildを許す。split、death、washout、HGT等で
+  member object/order/ID/generation/aliveが変わった場合は、元containerへ戻してもmembership values/anchor差を
+  必ず`M`として検出し、ownerを`INVALID`にしてauto-rebuildしない。例外終了stepではcontainerを正規化しない。
+- input arenaが再び`COHERENT`であることを確認した後、private one-shot lease内でbindingを
+  一回だけ消費し、selected plan、independent NumPy oracle、fresh D2D storage、full diagnostic readback、
+  CPU candidateを作る。lease中はCPU biology、RNG、receiptを不変に保ち、leaseをnormal closeしてから
+  claim phaseへ進む。leaseを保持したままCPU publishすること、close-time auditを省略することを禁止する。
+- owner subclassはouter transaction guardを持ち、transaction active中の追加audit/rebuild/swap/invalidate/
+  read lease/validation snapshot/save/cloneを拒否する。transaction開始時に未open lease token/serialを失効させ、
+  対象owner/world/arenaへの並行トランザクションを許さない。
+- claim直前にworld/cell/container/config identity、cell ID/index/generation/alive、exact `dt.hex()`、
+  owner/arena ID/generation/epoch/lifecycle、CPU source object/value、gene cache、old/candidate全50 tensorの
+  object/storage/pointer/version/content、selected plan/oracle/candidate、world dissipated energy、live PCG64 object/full stateを
+  再照合する。一つでも異なればclaimせず、A4.8b、旧CPU translation、新しいarenaへfallbackしない。
+- `translation_cpu`のreceipt順は既存A4.8bと同じにする。まずauthority、target、device、
+  source/final provenance、enabled/genome count/syncのinitial metadataでclaimする。CPU publish/verify、fresh
+  CPU source、candidate seal、全CAS precheck、base/outer guardの事前構築が終了した後だけ、
+  `amount`、`work_performed`、`sync_performed`、`rng_draw_count=0`を`annotate_claim`する。annotation
+  failureはCPU/owner rollbackの対象とし、annotation後はcallback、allocation、readback、validation、外部
+  publisherを呼ばず、確定済みfield/guardのfinal pointer swapだけを行う。これはruntime exceptionに
+  対するatomicityであり、process crash、power loss、OS/device lossまで原子化したと主張しない。
+
+## A4.9b paid CPU publish、epoch、rollback
+
+- CPU publishはresident candidateの明示D2H target rowだけをauthorityとする。既存pools array objectを
+  維持してFUEL、MINERAL、ATPを遺伝子挿入順にそれぞれ`0.64/0.36/0.52`支払い、
+  ATP reserve `0.042`を保つ。active/damaged proteinの独立した辞書順、misfold比率、
+  `>1e-10`/`>1e-11` sync threshold、`last_translation`、条件付き`last_quiescence`をFormal066のまま
+  publishする。weight gate前のearly returnでは両protein dictionary objectを保持し、gate後は
+  translated massが0でも両辞書を事前生成したnew objectへ置換する。genomes/lesions/
+  template/copy/`gene_specs`、replication state、world energy、PCG64はidentity/valueとも不変にする。
+- successはtransaction入力のcoherent generationからM/R/C epochと`cache_source_ragged_epoch`/キャッシュ
+  contentを不変、S epochだけをexact `+1`、storage generationをexact `+1`とし、fresh arena IDで
+  `COHERENT`になる。前段driftのbase rebuildが同じrank 5に先行した場合、そのrebuildとtranslation
+  transactionの各generation/epoch進行を混同しない。旧arenaは
+  final swap後だけretireし、`COHERENT`へ戻さない。`dt==0`、resource stop、その他の有効no-opでも
+  frozen translation invocationの`last_translation=0` assignmentを事前生成したscalar objectでpublishし、
+  S provenance/epochを1回だけ進める。non-target CPU biologyはobject identity/valueとも不変、
+  non-target resident rowはbit-exactである。
+- CPU publish後、まだownerを変更せずに`_stable_cpu_snapshot`を作り、candidateの予定membership/
+  ragged/state/cache/config attestationとexact照合する。その実CPU attestationをcandidate storageへ付与してから
+  arena creation seal、base owner guard、A4.9b outer guardを事前構築する。最後のowner lock内は
+  callback、allocation、readback、validationのないfield/guard CASとold retirementだけとし、その後に
+  fallible hookを実行しない。
+- preclaim failureはreceipt、CPU biology、RNG、owner/old arenaを不変にする。claim後かつfinal
+  CAS前の例外は、pools、protein/damaged/gene-spec辞書のouter/nested object、scalar、world energy、
+  same PCG64 object/full stateをsnapshotへexact rollbackし、fresh CPU attestationがold arena sourceとexact一致することを
+  確認する。通常の失敗でold ownerは同じID/generation/epochの`COHERENT`に留まる。old source/
+  resident trust違反、rollback不一致、または不完全なfinalizationだけはownerを`INVALID`に隔離し、
+  CPU fallbackや自動rebuildを行わない。
+
+## A4.9b capacity、save/load/clone、A5境界
+
+- pre-rank-5 full rebuildとselected candidateの両方でfixed C/Q/S/W/P、cell count、gene-cache derived
+  capacityをclaim前にexact検査する。Pは各cellの「existing active key ∪ derived gene fingerprint」と
+  「existing damaged key ∪ derived gene fingerprint」の両方が収まるconservative upper boundをhostでlease前に
+  preflightし、実際のmisfoldやsync thresholdで追加されないkeyも事前に数える。exact capacityだけを通し、
+  C/Q/S/W/P/cache/cell-countの各one-shortをcandidate allocation、lease、claim、CPU mutation前に拒否する。clip、drop、
+  truncate、silent grow、partial candidate、old storage reuse、CPU/A4.8b fallbackを行わない。
+- CPU world/cellとfull PCG64だけをdurable save authorityとする。owner、arena、lease、selected plan、prepared
+  storage、epoch/pointer/seal/guardをsaveしない。active transactionまたはA3/A4 pending commit中の
+  `state_dict`/save/cloneを拒否する。step boundaryのCPU save/load/cloneはresident flushを待たず、load/clone先は
+  ownerを共有せず、最初の明示rank-5 construction時にnew owner token/arena ID/fresh non-alias storageを作る。
+  pointer、arena ID、epoch数値の一致をclone correctnessにしない。
+- translation後のreplication、surface/damage/repair、A5のsegregation/split/death/corpse/eDNA/HGT/washoutは従来どおり
+  committed CPUを読む。A5前のD2H flushは追加せず、A4.9b arenaをA5入力にしない。later CPU
+  eventによるR/S/C driftは次のrank-5 auditで`CPU_NEWER`、membership/order/alive/identity driftは`INVALID`と
+  なる。A5による`INVALID`をactive stepまたは次のtranslation内でauto-rebuildせず、A5のCPU結果、
+  event order、RNGを変えない。
+
+## A4.9bで実装しないもの
+
+- rank 5以外のresident biological commit、generic/precursor/maintenanceのdevice-resident接続、replication c1〜c8/
+  hydrolysisのA4.9a arena接続、multi-cell simultaneous translation commit、cross-event fusion、generic transaction manager、
+  partial/per-cell H2D refresh、in-place arena update、slot reuse、allocator/compaction、`RESIDENT_NEWER`、resident-only durable
+  biology、device RNG、A5 flush、A5/A6の移植。
+- fp32、mixed precision、`torch.compile`、CUDA Graph、Triton、custom CUDA、multi-stream/multi-GPU、online GPU、
+  performance/speedup claim、A4完成/昇格。pre-rank-5 full rebuildと全candidate diagnostic readbackを含むため、
+  A4.9b自体をGPU-primary性能完成と呼ばない。`full_gpu_world_step=false`、baseline A3、CPU durable
+  authorityを維持する。
+
+## A4.9b固定テスト
+
+1. heterogeneous multi-cell bindingのfirst/middle/last targetでselected NumPy/Torch CPU/明示CUDA fp64を
+   direct `Formal066ProtoCell.translate`と照合する。paid FUEL/MINERAL/ATP、ATP reserve、resource exhaustion、
+   early-return/gate後zero-work/`dt==0`、misfold、active/damaged辞書順とidentity、targetのexact discrete/
+   `2e-12` fp64、non-target全30 array bit-exact、fresh/version-0/source不変、zero RNGを固定する。
+2. rank-5 preclaimの`CPU_NEWER`→separate full rebuild、one-shot lease、selected plan、fresh ragged/state/cache
+   11/30/9 tensor D2D generation、full diagnostic readback、D2H target publish、final owner CASを通す。success後の
+   new arena ID、transaction入力coherent generationからgeneration+1、M/R/C/cache-source不変、S+1、
+   `COHERENT`、old retire、old/candidate/
+   successive candidate間の50 object/storage non-alias、non-target CPU identity/valueとresident row bit-exactを固定する。
+3. C/Q/S/W/P/cache/cell-countのexact/one-short、wrong target/index/ID/world/cell/config/dt/device、stale/duplicate/
+   cross-owner lease、`INVALID`、epoch/cache-source/generation、host/oracle/selected plan/prepared storage/candidate tensor/
+   pointer/version/`.data`/CPU source/RNG改ざをclaim前にfail closedとする。claim後のpublish/fresh-attestation/
+   pre-CAS注入失敗はCPU object/value/RNGとold ownerの`COHERENT`をexact rollbackし、trust/rollback不一致だけ
+   `INVALID`とする。clip/grow/fallback、double claim、out-of-orderを許さない。
+4. 1-step/10-step/translation-heavy stress/2-cell interleaveで旧CPU/A4.8b translation未呼出し、rank 5と
+   c1〜c8/hydrolysis/successor event order、receipt、PCG64、material ledgerをdirect CPUと照合する。step-boundary
+   の同membership list-rebindを元containerへ正規化してR/S/C `CPU_NEWER`に保つ一方、member/order/alive差は
+   `M/INVALID`にすること、save/load/cloneのfresh owner/nonserialization、active/pending拒否、A5 CPU split/death/washout/HGTのno-flush境界と
+   `INVALID` no-auto-rebuild、promoted A3/A4 pure/A4.8a〜c8/A4.9a source byte不変、既存90 test name/function AST
+   不変を固定する。既存最大90 + 新規最大4 = 合計最大94 testsとし、performanceを測定しない。
+
+## A4.9b GO/STOP判定
+
+- 上記fresh Rule Lockに結び付く新module実装開始はGOとする。最大94/94、direct Formal066
+  semantics、selected NumPy/Torch CPU/CUDA fp64、paid material/dictionary order、rank-5 exactly-once、zero RNG、
+  fresh 50-tensor D2D non-alias generation、diagnostic-vs-publish D2H分離、S-only epoch/CAS、atomic rollback、
+  save/load/clone、A5 CPU boundary、promoted A3および既存A4 pure/integration/A4.9a source bytes不変が
+  全てPASSした場合だけ
+  「A4.9b persistent-arena RNG-free selected paid-translation transaction」と記録する。
+- pre-rank-5 driftを見逃す、full-batchの他cell結果をpublishする、old arenaをin-place更新する、
+  candidateがold storageをaliasする、prepublish storageをarena/biology authorityにする、CPU publish前にownerをswapする、
+  final CAS後にfallible hookを呼ぶ、no-opのS epochを進めない、`INVALID`をauto-rebuildする、
+  CPU/RNG/old ownerをexact rollbackできない、capacity clip、tolerance拡張、CPU/A4.8b fallback、
+  successful-step後のcontainer-only rebindをactual membership変更として誤分類する、またはactual member/order/ID/
+  generation/alive差をcontainer正規化で隠す、A4.9aまたは既存pure/c1〜c8編集が必要ならA4.9aを正式authorityとして
+  維持してSTOPする。
+- A4.9bでもpretranslation phasesのresident連続化、replication/hydrolysisとの同一arena chain、multi-cell
+  simultaneous kernel、device RNG、A5/A6、formal performanceは未達である。A4完成・昇格・speedupと呼ばず、
+  `full_gpu_world_step=false`を維持する。
