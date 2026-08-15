@@ -1181,3 +1181,82 @@ resident readbackとfresh tapeが一致すれば、CPU replication fallbackな�
   A4.8c3を維持してSTOPする。tolerance拡大や独自RNGで通さない。
 - A4.8c4でもA4は未完である。mutation-free inactive start、same-call completion、pre-active
   ordinary early-return authorityを後続sliceで閉じ、`full_gpu_world_step=false`、速度向上なしを維持する。
+
+## A4.8c5追加仮説
+
+Rule Lock receipt `20260815T102600Z` の範囲は、aliveな一cell、`mutation=false`、entry時は
+replication inactive、exactly oneかつnonemptyのcomplete genomeを持ち、既存A4.5b内部の
+deterministic NumPy/Torch fp64 kernelが`template_start_events=true`かつ
+`completion_events=false`と判定するtemplate-start/noncompletionの原子的commitだけとする。
+凍結Formal066がreplicase gate後に実行する高水準`integers(0, 1)`を省略せず、selection-onlyの
+private PCG64 evidenceとして完全before/after stateを再生すれば、mutation用threshold/integer drawを
+誤って消費せず、CPU replication fallbackなしで開始とそのcallの有料伸長を一括publishできるはずである。
+
+## A4.8c5で実装するもの
+
+- A4.8c4 scheduler/worldを継承する新規integration module
+  `SOMA_CELL_0_6_8_gpu_a4_replication_start_mutation_free_integration.py`を追加する。
+  既存event ID/rankの`replication_cpu`をこの分岐に追加置換し、A4 pure core、A4.8c1/c2/c3/c4、
+  promoted A3、既存resultsは変更しない。canonical validator/contract/schema/manifestsは、c5の
+  evidence、API、source hash、最大74 testsの登録・検証に必要な範囲だけを更新する。
+- integration-local private dispatcherだけが既存
+  `_paid_replication_elongation_numpy/torch(..., allow_template_start=True)`を呼ぶ。resident planの明示
+  readbackをcommit authorityとし、独立NumPy planはdiscrete exact、float64最大`2e-12`のoracleとする。
+  public mode flagや新しいpure tape/APIを追加しない。
+- source binding identity、cell ID、exact `dt_hex`、mutation-free replication config digest、call bounds
+  `0/1`、selected index `0`、call count `1`、schedule digest、完全なPCG64 before/afterを持つprivate-factory
+  selection evidenceをevent-localに生成する。clone Generatorで実際に`integers(0, 1)`を一回呼び、
+  `state/inc/has_uint32/uinteger`をexact replayする。現NumPyでbefore==afterでも直接代入で省略しない。
+- entry template `None`、empty copy、exactly one nonempty complete genome、planのscope-valid/start/index-0/
+  template-storage/noncompletion、append lengthがtemplate未満であることを必須とする。`dt==0`、
+  requested-zero、nucleotide/ATP resource-stopでappendが0でもselectionとtemplate startを成功workとする。
+- capacityは`Q + 2`、`S + template length + paid append`をclaim前に検査し、source/final row幅`W`と
+  gene/protein capacity `P`を同じbinding trustに含める。exact Q/S/W/Pだけを通し、one-shortをclipしない。
+  genome/lesion countとgene cacheは不変、`genome_material_symbols`はpaid appendだけ増やす。
+- 元pools arrayのNUCLEOTIDE/ATP、new non-alias template ndarray、new replication-copy list、template lesion
+  またはmissing-lesion fallback `0.0`、fractional/last-symbol/effective-error/proofreading telemetry、および同じ
+  live Generator objectのevidence after-stateだけをselective publishする。mutation ledgerのobject、挿入順、
+  keys、valuesは完全不変とし、world dissipated energyも変更しない。
+- claim直前にlive binding/RNGからNumPy planとselection evidenceを再生成し、retained host/resident plan、
+  source/fresh binding、schedule、after-stateを再照合する。preclaim failureはreceipt/biology/RNGを完全不変にし、
+  claim後publish例外はpools、entryの`None` template、元empty copy-list object/value、telemetry、mutation ledger、
+  RNG object/state、world energyを元identity・順序・値へrollbackしてaborted receiptを残す。
+- active sourceはA4.8c4からA4.8c3/c2/c1へ、inactive `mutation=true`はA4.8c4へ明示delegateする。
+  scheduler/worldのA4.8c5 type/schema/config/deviceをsave/load/cloneで保持し、c1〜c5のactive commitと
+  pending stepのserializationを拒否する。candidate/binding/evidence/planは保存しない。
+
+## A4.8c5で実装しないもの
+
+- mutation off/onのinactive startと同一callのcompletion、disabled/no-genome/replicase-gate/negative ATP/
+  dead/inactive two-or-more genomes等のpre-active ordinary early no-op authority。claimせずCPU fallbackなしで
+  scope外とする。
+- caller-supplied evidence/plan/candidate、multi-cell batch、device RNG、persistent arena/cache、generic
+  transaction/RNG framework、pure coreまたはA4.8c1/c2/c3/c4の変更。
+- fp32、compile/graph/Triton/custom CUDA、performance/speedup、A4完成/昇格、A5/A6。
+  `full_gpu_world_step=false`を維持する。
+
+## A4.8c5固定テスト
+
+1. mutation false inactive one-genomeのdirect Formal066 oracleをnormal/missing-lesion/`dt=0`/
+   requested-zero/resource-stop、primed/unprimed PCG64で照合し、実selection call、new template/copy nonalias、
+   pools/telemetry、mutation-ledger不変、完全PCG64、`Q+2`/`S+T+A`、zero append work=trueを固定する。
+2. NumPy/Torch CPU/明示CUDA candidate/commit、resident readback authority、fresh selection evidence/after-state、
+   resident device/pointer/version/content、fresh binding/cache、same Generator object、one-shotを照合する。
+3. exact Q/S/W/Pと各one-short、wrong cell/dt/source/config/device/RNG、host evidence/oracle、resident plan/
+   binding、candidate/fresh binding tamper、excluded scopes、duplicate/out-of-order、preclaim不変、注入publish失敗の
+   `None` templateと元copy-list identityを含むrollbackをfail closedで固定する。
+4. inactive mutation trueのc4、active c3/c2/c1 delegate、旧CPU fallback不使用、開始後successor event order、
+   save/load/clone、active/pending拒否、API/private非公開、pure/c1〜c4 hash、既存70 tests無変更を固定する。
+   既存70 + 新規最大4 = 合計最大74 testsをCUDA必須でPASSさせる。
+
+## A4.8c5 GO/STOP判定
+
+- fresh Rule Lockに結び付く実装開始はGOとする。最大74/74、A3 regression、direct CPU semantics、resident/
+  NumPy association、実高水準selection call、完全PCG64、Q/S/W/P、material/topology/lesion/cache、atomic rollback、
+  delegate、save/clone、promoted A3/A4 pure/A4.8c1〜c4 byte不変が全てPASSした場合だけ「A4.8c5
+  mutation-free inactive-template-start noncompletion atomic commit bridge」と記録する。
+- private deterministic start kernel、fresh evidence、resident-vs-NumPy discrete、direct CPU stateのいずれかが
+  一致しない、selection call省略、余分なmutation RNG draw、host plan commit、capacity clip、scope外拡大、
+  pure/c1〜c4編集、CPU fallbackが必要ならA4.8c4を正式authorityとして維持してSTOPする。
+- A4.8c5でもA4は未完である。startと同一callのcompletionおよびpre-active ordinary early-return authorityを
+  後続sliceで閉じ、`full_gpu_world_step=false`、速度向上なしを維持する。
