@@ -1431,3 +1431,91 @@ append substitution、structural threshold/edit、padding、MAX長trim、nucleot
   pure/c1〜c6編集、CPU fallbackが必要ならA4.8c6を正式authorityとして維持してSTOPする。
 - A4.8c7でもA4は未完である。pre-active ordinary early-return authorityを後続sliceで閉じ、
   `full_gpu_world_step=false`、速度向上なしを維持する。
+
+## A4.8c8追加仮説
+
+Rule Lock receipt `20260815T152726Z` の範囲は、凍結Formal066が0.4親実装へ委譲する
+`_replicate_genome`のうち、実際に`last_replication_symbols = 0`以外のbiology、material、telemetry、
+RNGを変更しない順序付きearly returnだけとする。CPU正本の順序は、(1) `genome_replication=false`、
+(2) complete genomeが0本、(3) replicase `<= 1e-6`、(4) template inactiveかつcomplete genomeが2本以上、
+である。これらを新しいresident NumPy/Torch planで明示分類し、A4.8c7の上でexactly-once commitすれば、
+旧CPU replicationへfallbackせず通常no-op authorityを閉じられるはずである。
+
+空のcomplete genomeは独立no-opではない。replicase gate通過時、mutation falseでは空genomeをもう1本追加して
+cycleを進め、mutation trueではminimum paddingとmaterial移動を伴う。負ATPのone-genome sourceはtemplate選択後に
+負のfractional progressとeffective-error telemetryを作り、dead cellへのdirect callもreplication workを行い得る。
+したがってempty genome、entry ATP `< 0`、deadはA4.8c8成功scopeへ混ぜない。
+
+## A4.8c8で実装するもの
+
+- 既存A4 pure coreとA4.8c1〜c7をbyte不変に保ち、新規module
+  `SOMA_CELL_0_6_8_gpu_a4_replication_early_noop_integration.py`へpure descriptorとintegrationを同居させる。
+  public surfaceは`A4ReplicationEarlyNoopPlan`、`paid_replication_early_noop_numpy`、
+  `paid_replication_early_noop_torch`、`A4ReplicationEarlyNoopCommitError`、
+  `A4ReplicationEarlyNoopEventScheduler`、`Hybrid066WorldA4ReplicationEarlyNoop`、build/schema/status constantsとする。
+- pure planはfixed-capacity binding、exact `dt`、strict boolean configに結び付き、`cell_ids/cell_mask`、
+  `scope_valid/scope_error_code`、順序付き`branch_code`、resident fp64 `replicase_activity`、
+  `last_replication_symbols_after=0`、`rng_call_count=0`を返す。NumPyは凍結dict挿入順、Torchはresident
+  cache/stateから同じordered replicase和、proteostasis、genome-lesion factor、external replicaseを計算する。
+  CPU/CUDA fp64比較guard上のreplicaseは成功へ丸めずscope外とする。
+- 成功branchは優先順に`disabled`、`no-genome`、`replicase-gate`、`inactive-multi-genome`の4種だけとする。
+  後ろの条件が前の条件と同時に成立しても、CPU正本と同じ先行branch codeだけを記録する。
+  empty complete genome、negative ATP、非finite/malformed topology/cache/config、capacity不足はplan成功前に
+  fail closedとする。mutation flag、active/inactive topologyはCPUが当該early returnより後で初めて使用する範囲では
+  no-opの意味論を変えないが、normal replication workへ到達するrowは`not-early-noop`としてc7以下へdelegateする。
+- integrationはA4.8c7 scheduler/worldを継承し、`prepare/ready/revalidate/commit/publish`のprivate one-shot seamを持つ。
+  live cell、world/config identity、generation、exact `dt.hex()`、canonical host binding/gene cache、A4 capacity/device、
+  resident pointer/version/content、NumPy oracle、live PCG64 object/state、world energy、source object identity/stateを
+  claim直前に再attestする。caller supplied plan/candidateをauthorityにしない。
+- 検証後だけ既存`replication_cpu`を1回claimし、元cellの`last_replication_symbols`を整数`0`へ更新する。
+  genomes/lesions/template/copy/fractional/pools/proteins/damaged proteins/gene cache/mutation ledger/cycle/
+  effective-error/proofreading/novel-path/world energyとlive RNG object/stateは完全不変とする。receiptは
+  `amount=0`、`work_performed=false`、`rng_call_count=0`、branch、device、source provenanceを記録する。
+  preclaimではcanonical cell state全体を再attestする一方、claim後rollbackはgeneric whole-cell transactionを
+  主張しない。実publisherのwrite-setである元last-symbol値と、明示snapshotしたpools、genome/lesion、
+  template/copy、mutation ledger、proteins/damaged proteins、gene cache、replication telemetry、age/alive、
+  world energy、RNGのidentity・順序・値だけを復元し、outer receiptをabortedにする。未列挙fieldを変更する
+  悪性publisher overrideの汎用rollbackはscope外とする。
+- `cpu_replication`はduplicate/order/nested guardを先に行い、c8 planが4成功branchのどれかならc8 commit、
+  `not-early-noop`ならA4.8c7へ明示delegateする。scope error、empty/negative/dead、resident/NumPy不一致を
+  c7や凍結CPUへfallbackして成功扱いにしない。save/load/cloneはc8 scheduler/world type/schema/config/deviceを保持し、
+  c1〜c8 active commitとpending stepのserializationを拒否する。
+- CPU正本はdisabled/no-genomeをgene-cache validationより前にreturnするが、A3正式world pathはreplication直前に
+  `gene_refresh`を完了する。A4.8c8はcanonical bindingを要求し、stale/corrupt cacheをCPU短絡に合わせて受理せず
+  preclaimでfail closedとする。この狭まりは有効world semanticsの変更ではなくintegration trust boundaryである。
+
+## A4.8c8で実装しないもの
+
+- empty-genome completion/padding、negative-ATP start、dead direct replication、replicase fp64 comparison boundary、
+  normal start/noncompletion/completion/mutation workの新規置換。normal workは既存c1〜c7 authorityだけへdelegateする。
+- 既存`SOMA_CELL_0_6_8_gpu_a4_replication.py`、A4.8c1〜c7、promoted A3、validator、contract/schema、results、
+  manifestsの同時変更。事前登録と新moduleの実装後、検証器・文書・manifest更新は別の監査段階で行う。
+- caller-supplied plan/candidate、CPU fallback、persistent arena/cache、multi-cell live commit、device RNG、generic transaction
+  framework、fp32、compile/graph/Triton/custom CUDA、性能・speedup・A4完成/昇格、A5/A6。
+  `full_gpu_world_step=false`を維持する。
+
+## A4.8c8固定テスト
+
+1. 4成功branchをsentinel `last_replication_symbols`付きdirect Formal066へ照合し、変更fieldがlast-symbolだけ、
+   high-level RNG call 0、PCG64 state/biology/material/telemetry/object identity不変であることを固定する。
+   条件重複fixtureでdisabled→no-genome→replicase-gate→inactive-multiの優先順も固定する。
+2. mixed-row pure planをNumPy/Torch CPU/明示CUDA fp64で照合し、branch/error/discrete exact、replicase fp64許容差、
+   resident device/pointer/version/content、clone/to_numpy/to_torch/state schema、入力非変更を固定する。
+3. empty mutation off/on、negative ATP、dead、replicase exact/nextafter boundary、normal c1〜c7 row、stale cache、
+   malformed plan/config/source、capacity one-short、wrong cell/dt/device/RNG、resident/host/candidate tamper、
+   duplicate/out-of-order、preclaim不変、注入publish失敗rollbackをfail closedで固定する。
+4. c1〜c7 CPU/CUDA delegate、旧CPU fallback不使用、full-step successor event order、save/load/clone、active/pending拒否、
+   既存82 testsのname/function-ASTとpromoted A3/A4 pure/c1〜c7 byte hashを固定する。既存82 + 新規最大4 =
+   合計最大86 testsをCUDA必須でPASSさせる。
+
+## A4.8c8 GO/STOP判定
+
+- fresh Rule Lockに結び付く実装開始はGOとする。最大86/86、A3 regression、4 branch direct CPU semantics、
+  NumPy/Torch CPU/CUDA resident plan、zero RNG、last-symbol-only atomic publish/rollback、delegate、save/clone、
+  promoted A3/A4 pure/A4.8c1〜c7 byte不変が全てPASSした場合だけ
+  「A4.8c8 pre-active ordinary early-noop atomic commit bridge」と記録する。
+- empty/negative/deadをno-opへ畳む、replicase境界を丸める、host値をcommitする、CPU fallback、capacity clip、
+  tolerance拡大、既存pure/c1〜c7編集、RNG callまたはlast-symbol以外のstate変化が必要ならA4.8c7を正式authorityとして
+  維持してSTOPする。
+- A4.8c8でもA4は未完である。次はpersistent resident ragged arena/cacheとmulti-cell GPU-primary pathを別sliceで進め、
+  `full_gpu_world_step=false`、速度向上なしを維持する。

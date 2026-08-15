@@ -1,5 +1,5 @@
 # coding: utf-8
-"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.8c7 slices."""
+"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.8c8 slices."""
 from __future__ import division
 
 import argparse
@@ -33,6 +33,7 @@ import SOMA_CELL_0_6_8_gpu_a4_replication_start_integration as a48c4
 import SOMA_CELL_0_6_8_gpu_a4_replication_start_mutation_free_integration as a48c5
 import SOMA_CELL_0_6_8_gpu_a4_replication_start_completion_integration as a48c6
 import SOMA_CELL_0_6_8_gpu_a4_replication_start_completion_mutation_integration as a48c7
+import SOMA_CELL_0_6_8_gpu_a4_replication_early_noop_integration as a48c8
 import SOMA_CELL_0_6_8_gpu_a3_scheduler as a3s
 import SOMA_CELL_0_6_8_A3_validation as v3
 
@@ -41,9 +42,9 @@ try:
 except Exception:  # pragma: no cover
     torch = None
 
-RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_8C7_VALIDATION_RESULTS.json'
-RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_8c7_validation.csv'
-RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_8C7_VALIDATION_RESULTS.txt'
+RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_8C8_VALIDATION_RESULTS.json'
+RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_8c8_validation.csv'
+RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_8C8_VALIDATION_RESULTS.txt'
 
 SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4.py',
@@ -58,6 +59,7 @@ SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_start_mutation_free_integration.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_start_completion_integration.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_start_completion_mutation_integration.py',
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_early_noop_integration.py',
     'src/0_6_8/SOMA_CELL_0_6_8_A4_validation.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3_scheduler.py',
@@ -19059,6 +19061,1724 @@ def test_a48c7_inherited_c6_c5_c4_c3_c2_c1_save_clone_successor_and_authority():
             ))
 
 
+_A48C8_PRIOR_TEST_NAMES_SHA256 = (
+    '964ff04eb573a433526cd03d2d4e5ff9a1a0668f68bee605c67f1d1775fe6550'
+)
+
+_A48C8_PRIOR_TEST_AST_SHA256 = (
+    'bbd38a881e60433c0f748a2074ac418c9759517116a79c1cb3e71477efb85386'
+)
+
+_A48C8_CORE_SHA256 = (
+    '4bfe5ef02c20bb435319c4e6d59520fe863a61d7995d836e7fd159576f6ab36f'
+)
+
+_A48C8_AUTHORITY = (
+    'A4.8c8-resident-pre-active-ordinary-early-noop-atomic-commit'
+)
+
+_A48C8_BRANCH_CODES = {
+    'disabled': a48c8.BRANCH_DISABLED,
+    'no-genome': a48c8.BRANCH_NO_GENOME,
+    'replicase-gate': a48c8.BRANCH_REPLICASE_GATE,
+    'inactive-multi-genome': a48c8.BRANCH_INACTIVE_MULTI_GENOME,
+}
+
+
+def _a48c8_devices():
+    if torch is None:
+        raise AssertionError('PyTorch is required for A4.8c8')
+    devices = ['cpu']
+    if torch.cuda.is_available():
+        devices.append('cuda')
+    elif _REQUIRE_CUDA:
+        raise AssertionError('CUDA required but unavailable; fallback forbidden')
+    return devices
+
+
+def _a48c8_capacity_values(cell):
+    sequences = list(cell.genomes)
+    if cell.replication_template is not None:
+        sequences.extend((cell.replication_template, cell.replication_copy))
+    gene_keys = set(int(value) for value in cell.gene_specs)
+    protein_capacity = max(
+        len(gene_keys.union(int(value) for value in cell.proteins)),
+        len(gene_keys.union(
+            int(value) for value in cell.damaged_proteins
+        )),
+        1,
+    )
+    return {
+        'max_cells': 1,
+        'max_sequences': max(len(sequences), 1),
+        'max_symbols': max(sum(len(value) for value in sequences), 1),
+        'max_sequence_symbols': max(
+            [1] + [len(value) for value in sequences]
+        ),
+        'max_proteins_per_cell': protein_capacity,
+    }
+
+
+def _a48c8_make_world(branch, seed=17201, mutation=False,
+                       prime_uint32=False):
+    if branch not in _A48C8_BRANCH_CODES:
+        raise AssertionError('unknown A4.8c8 fixture branch')
+    world, cells, _, _ = _a45b_template_start_fixture(
+        seed=seed, prime_uint32=False,
+    )
+    cell = copy.deepcopy(cells[0])
+    _a48c_reduce_world(world, [cell])
+    world.config.genome_replication = True
+    world.config.external_replicase = False
+    world.config.mutation = bool(mutation)
+    cell.replication_template = None
+    cell.replication_template_lesion = 0.0
+    cell.replication_copy = []
+    cell.replication_fractional = 0.0
+    cell.replication_cycles = 31
+    cell.last_replication_symbols = 701
+    cell.last_effective_error_rate = 0.375
+    cell.cumulative_proofreading_atp = 0.625
+    cell.mutation_events['a48c8_sentinel'] = 811
+    cell.novel_path_first_age = None
+
+    if branch in ('disabled', 'no-genome'):
+        cell.genomes = []
+        cell.genome_lesions = []
+        cell._refresh_gene_cache()
+    if branch == 'disabled':
+        # The overlap with no-genome fixes the first frozen branch.
+        world.config.genome_replication = False
+    elif branch == 'no-genome':
+        # Empty complete-genome count precedes the replicase gate.
+        world.config.external_replicase = False
+    elif branch in ('replicase-gate', 'inactive-multi-genome'):
+        if not cell.genomes or len(cell.genomes[0]) == 0:
+            raise AssertionError('A4.8c8 multi fixture lost its source genome')
+        cell.genomes.append(np.asarray(cell.genomes[0], np.uint8).copy())
+        cell.genome_lesions.append(0.25)
+        cell._refresh_gene_cache()
+        if branch == 'replicase-gate':
+            # The overlap with two genomes fixes gate-before-multi order.
+            for fingerprint, spec in list(cell.gene_specs.items()):
+                if int(spec['role']) == int(a4.g2.ROLE_REPLICASE):
+                    cell.proteins.pop(fingerprint, None)
+            cell._sync_protein_pool()
+            if cell.role_activity(a4.g2.ROLE_REPLICASE) > 1e-6:
+                raise AssertionError('A4.8c8 gate fixture retains replicase')
+        else:
+            world.config.external_replicase = True
+
+    if prime_uint32:
+        world.rng.integers(0, 7)
+    if int(world.rng.bit_generator.state['has_uint32']) != int(prime_uint32):
+        raise AssertionError('A4.8c8 PCG64 cache fixture differs')
+    world.initial_total_material = world.total_material()
+    world.last_step_material_residual = 0.0
+    capacity_values = _a48c8_capacity_values(cell)
+    return world, cell, a4.GPU068A4Config(**capacity_values), 0.1
+
+
+def _a48c8_case(branch, seed=17201, mutation=False,
+                 prime_uint32=False):
+    world, cell, capacity, dt = _a48c8_make_world(
+        branch, seed=seed, mutation=mutation,
+        prime_uint32=prime_uint32,
+    )
+    return {
+        'label': branch,
+        'branch_code': int(_A48C8_BRANCH_CODES[branch]),
+        'state': v3.pickle_clone(world.state_dict()),
+        'cell_id': int(cell.cell_id),
+        'dt': float(dt),
+        'capacity': capacity,
+        'capacity_values': _a48c8_capacity_values(cell),
+        'mutation': bool(mutation),
+        'prime_uint32': bool(prime_uint32),
+    }
+
+
+def _a48c8_world_for_case(case):
+    return a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(case['state']),
+    )
+
+
+def _a48c8_hybrid_from_state(state, capacity, device='cpu'):
+    world = a4.a3.s66.Formal066World.from_state(v3.pickle_clone(state))
+    backend = a4.a3.TorchKernelBackendA3(
+        v3._a3_config(device=device, precision='float64'),
+    )
+    return a48c8.Hybrid066WorldA4ReplicationEarlyNoop(
+        world, backend=backend, a4_config=capacity, a4_device=device,
+    )
+
+
+def _a48c8_assert_only_last_zero(before, identities, rng_state,
+                                 energy, world, cell, label):
+    expected = v3.pickle_clone(before)
+    expected['last_replication_symbols'] = 0
+    v3.assert_recursive_close(
+        expected, cell.state_dict(), 0.0, 0.0, label + '.state',
+    )
+    if (_a48c_identity_snapshot(world, cell) != identities
+            or world.rng.bit_generator.state != rng_state
+            or not a48c._float64_bits_equal(
+                np.asarray([world.dissipated_energy], np.float64),
+                np.asarray([energy], np.float64),
+            )):
+        raise AssertionError(label + ' mutable identity/RNG/energy differs')
+
+
+def test_a48c8_pre_active_noop_branch_order_formal066_oracle():
+    details = []
+    for branch_index, branch in enumerate(_A48C8_BRANCH_CODES):
+        for mutation in (False, True):
+            for primed in (False, True):
+                world, cell, capacity, dt = _a48c8_make_world(
+                    branch, seed=17210 + 20 * branch_index
+                    + 4 * int(mutation) + int(primed),
+                    mutation=mutation, prime_uint32=primed,
+                )
+                before = v3.pickle_clone(cell.state_dict())
+                identities = _a48c_identity_snapshot(world, cell)
+                rng_state = copy.deepcopy(world.rng.bit_generator.state)
+                energy = float(world.dissipated_energy)
+                cell._replicate_genome(world, dt, world.config)
+                label = 'a48c8.formal.%s.%d.%d' % (
+                    branch, int(mutation), int(primed),
+                )
+                _a48c8_assert_only_last_zero(
+                    before, identities, rng_state, energy,
+                    world, cell, label,
+                )
+
+                source = a4.a3.s66.Formal066World.from_state(
+                    v3.pickle_clone(_a48c8_make_world(
+                        branch, seed=17210 + 20 * branch_index
+                        + 4 * int(mutation) + int(primed),
+                        mutation=mutation, prime_uint32=primed,
+                    )[0].state_dict()),
+                )
+                source_cell = source.cells[0]
+                source_before = v3.pickle_clone(source.state_dict())
+                ragged, state, binding = _paid_replication_binding(
+                    [source_cell], source.config, capacity,
+                )
+                plan = a48c8.paid_replication_early_noop_numpy(
+                    binding, dt, source.config,
+                )
+                code = int(_A48C8_BRANCH_CODES[branch])
+                if (int(plan.cell_count) != 1
+                        or not bool(plan.scope_valid[0])
+                        or int(plan.scope_error_code[0]) != a48c8.SCOPE_OK
+                        or int(plan.branch_code[0]) != code
+                        or int(plan.genome_count[0])
+                        != len(source_cell.genomes)
+                        or bool(plan.replication_active[0])
+                        or bool(plan.has_empty_complete_genome[0])
+                        or bool(plan.negative_atp[0])
+                        or int(plan.last_replication_symbols_after[0]) != 0
+                        or int(plan.rng_call_count[0]) != 0
+                        or bool(plan.mutation_enabled) != bool(mutation)):
+                    raise AssertionError(label + ' NumPy descriptor differs')
+                if (branch == 'replicase-gate'
+                        and float(plan.replicase_activity[0]) > 1e-6):
+                    raise AssertionError(label + ' gate activity differs')
+                if (branch == 'inactive-multi-genome'
+                        and float(plan.replicase_activity[0]) <= 1e-6):
+                    raise AssertionError(label + ' multi activity differs')
+                v3.assert_recursive_close(
+                    source_before, source.state_dict(), 0.0, 0.0,
+                    label + '.plan_purity',
+                )
+                details.append('%s:m%d:p%d' % (
+                    branch, int(mutation), int(primed),
+                ))
+    return ('16 direct Formal066 rows fix disabled->no-genome->replicase-'
+            'gate->inactive-multi order; only last-symbol zero, PCG64/'
+            'identity exact; NumPy plan pure: ' + '/'.join(details))
+
+
+def _a48c8_assert_plan_row(plan, case, label):
+    code = int(case['branch_code'])
+    if (int(plan.cell_count) != 1
+            or not bool(plan.cell_mask[0])
+            or not bool(plan.scope_valid[0])
+            or int(plan.scope_error_code[0]) != a48c8.SCOPE_OK
+            or int(plan.branch_code[0]) != code
+            or int(plan.last_replication_symbols_after[0]) != 0
+            or int(plan.rng_call_count[0]) != 0
+            or a48c8.BRANCH_NAMES.get(code) != case['label']):
+        raise AssertionError(label + ' early-noop plan row differs')
+
+
+_A48C8_PLAN_STATE_KEYS = (
+    'schema_version', 'cell_capacity', 'cell_count',
+    'source_provenance', 'dt_hex', 'config_sha256',
+    'genome_replication_enabled', 'external_replicase_enabled',
+    'mutation_enabled', 'cell_ids', 'cell_mask', 'scope_valid',
+    'scope_error_code', 'branch_code', 'replicase_activity',
+    'genome_count', 'replication_active',
+    'has_empty_complete_genome', 'negative_atp',
+    'last_replication_symbols_after', 'rng_call_count',
+)
+
+
+def _a48c8_capacity_for_cells(cells, spare_cells=0):
+    sequences = []
+    protein_capacity = 1
+    for cell in cells:
+        cell_sequences = list(cell.genomes)
+        if cell.replication_template is not None:
+            cell_sequences.extend((
+                cell.replication_template, cell.replication_copy,
+            ))
+        sequences.extend(cell_sequences)
+        gene_keys = set(int(value) for value in cell.gene_specs)
+        protein_capacity = max(
+            protein_capacity,
+            len(gene_keys.union(int(value) for value in cell.proteins)),
+            len(gene_keys.union(
+                int(value) for value in cell.damaged_proteins
+            )),
+        )
+    return a4.GPU068A4Config(
+        max_cells=max(len(cells) + int(spare_cells), 1),
+        max_sequences=max(len(sequences), 1),
+        max_symbols=max(sum(len(value) for value in sequences), 1),
+        max_sequence_symbols=max(
+            [1] + [len(value) for value in sequences]
+        ),
+        max_proteins_per_cell=protein_capacity,
+    )
+
+
+def _a48c8_mixed_plan_fixture(seed=17340):
+    no_world, no_genome, _, dt = _a48c8_make_world(
+        'no-genome', seed=seed,
+    )
+    _, gate, _, _ = _a48c8_make_world(
+        'replicase-gate', seed=seed + 1,
+    )
+    source_world, inactive_multi, _, _ = _a48c8_make_world(
+        'inactive-multi-genome', seed=seed + 2,
+    )
+    normal = copy.deepcopy(inactive_multi)
+    normal.genomes.pop()
+    normal.genome_lesions.pop()
+    normal._refresh_gene_cache()
+    empty = copy.deepcopy(normal)
+    empty.genomes = [np.zeros((0,), dtype=np.uint8)]
+    empty.genome_lesions = [0.0]
+    empty._refresh_gene_cache()
+    negative = copy.deepcopy(normal)
+    negative.pools[a4.a3.POOL_ATP] = -1e-12
+    cells = [no_genome, gate, inactive_multi, normal, empty, negative]
+    for index, cell in enumerate(cells):
+        cell.cell_id = 48380 + index
+    config = copy.deepcopy(source_world.config)
+    config.genome_replication = True
+    config.external_replicase = False
+    config.mutation = False
+    capacity = _a48c8_capacity_for_cells(cells, spare_cells=2)
+    ragged, state, binding = _paid_replication_binding(
+        cells, config, capacity,
+    )
+    # Keep this local world only as a config authority; no planner may mutate
+    # either it or the six independently constructed source cells.
+    no_world.config = config
+    return no_world, cells, capacity, float(dt), ragged, state, binding
+
+
+def _a48c8_assert_plan_schema_roundtrip(plan, devices, label):
+    if tuple(plan.state_dict()) != _A48C8_PLAN_STATE_KEYS:
+        raise AssertionError(label + ' state_dict schema differs')
+    plan.validate()
+    original = plan.state_dict()
+    host_clone = plan.clone()
+    a48c8._plan_semantic_match(host_clone, plan)
+    for name in a48c8._PLAN_ARRAY_FIELDS:
+        left = np.asarray(getattr(plan, name))
+        right = np.asarray(getattr(host_clone, name))
+        if (left is right or np.shares_memory(left, right)):
+            raise AssertionError(label + ' host clone aliases ' + name)
+    detached_state = plan.state_dict()
+    detached_state['branch_code'][0] = a48c8.BRANCH_NONE
+    if int(plan.branch_code[0]) == a48c8.BRANCH_NONE:
+        raise AssertionError(label + ' state_dict aliases plan storage')
+    for device in devices:
+        resident = plan.to_torch(device)
+        resident.validate()
+        readback = resident.to_numpy()
+        a48c8._plan_semantic_match(readback, plan)
+        resident_clone = resident.clone()
+        resident_clone.validate()
+        if any(
+                resident.data_ptrs()[name]
+                == resident_clone.data_ptrs()[name]
+                for name in a48c8._PLAN_ARRAY_FIELDS):
+            raise AssertionError(
+                label + '/' + device + ' resident clone aliases storage'
+            )
+        a48c8._plan_semantic_match(resident_clone.to_numpy(), plan)
+        roundtrip = readback.to_torch(device).to_numpy()
+        a48c8._plan_semantic_match(roundtrip, plan)
+        resident_state = resident.state_dict()
+        if tuple(resident_state) != _A48C8_PLAN_STATE_KEYS:
+            raise AssertionError(
+                label + '/' + device + ' resident state schema differs'
+            )
+        resident_state['branch_code'][0].fill_(a48c8.BRANCH_NONE)
+        a48c8._plan_semantic_match(resident.to_numpy(), plan)
+    a48c8._plan_semantic_match(
+        a48c8.A4ReplicationEarlyNoopPlan(**original), plan,
+    )
+
+
+def _a48c8_replicase_boundary_fixture(target, seed):
+    world, source_cells, capacity, dt = _paid_replication_b_fixture(
+        seed=seed,
+    )
+    cell = copy.deepcopy(source_cells[0])
+    _a48c_reduce_world(world, [cell])
+    world.config.external_replicase = False
+    ragged, state, initial = _paid_replication_binding(
+        [cell], world.config, capacity,
+    )
+    specs = initial.cache.materialize_gene_specs_host()[0]
+    replicase_positions = []
+    donor_positions = []
+    for position in range(int(state.active_count[0])):
+        fingerprint = int(state.active_fingerprints[0, position])
+        spec = specs.get(fingerprint)
+        if (spec is not None
+                and int(spec['role']) == int(a4.a3.ROLE_REPLICASE)):
+            replicase_positions.append(position)
+        else:
+            donor_positions.append(position)
+    if len(replicase_positions) != 1 or not donor_positions:
+        raise AssertionError('A4.8c8 boundary protein shape drifted')
+    rep_position = replicase_positions[0]
+    donor_position = donor_positions[0]
+    rep_fingerprint = int(state.active_fingerprints[0, rep_position])
+    donor_fingerprint = int(state.active_fingerprints[0, donor_position])
+    efficiency = float(specs[rep_fingerprint]['efficiency'])
+    pools = state.pools[0]
+    volume = max(
+        0.20,
+        (float(state.radius[0]) / float(a4.s5.BASE_RADIUS)) ** 2,
+    )
+    concentration = float(pools[a4.a3.POOL_AGGREGATE] / volume)
+    active = max(0.0, float(pools[a4.a3.POOL_CATALYST]))
+    damaged = float(pools[a4.a3.POOL_DAMAGED_PROTEIN])
+    aggregate = float(pools[a4.a3.POOL_AGGREGATE])
+    functional = active / max(1e-9, active + damaged + aggregate)
+    toxicity = 1.0 / (1.0 + 3.6 * concentration)
+    proteostasis = float(np.clip(functional * toxicity, 0.02, 1.0))
+    genome_factor = 1.0 / (
+        1.0 + 0.85 * float(state.genome_lesion_mean[0])
+    )
+    target_mass = (
+        (float(target) * 0.040 / (proteostasis * genome_factor))
+        / efficiency
+    )
+    if np.float64(target) < np.float64(1e-6):
+        # Preserve the requested derived nextafter control despite the final
+        # grouped mass*efficiency/proteostasis rounding in Formal066.
+        target_mass = float(np.nextafter(
+            np.float64(target_mass), np.float64(np.inf),
+        ))
+    old_mass = float(cell.proteins[rep_fingerprint])
+    transfer = old_mass - target_mass
+    cell.proteins[rep_fingerprint] = target_mass
+    cell.proteins[donor_fingerprint] = (
+        float(cell.proteins[donor_fingerprint]) + transfer
+    )
+    cell._sync_protein_pool()
+    ragged, state, binding = _paid_replication_binding(
+        [cell], world.config, capacity,
+    )
+    observed = a44._numpy_replicase(
+        binding, 0, binding.cache.materialize_gene_specs_host()[0],
+    )
+    if not a44._numpy_fp64_comparison_boundary(observed, 1e-6):
+        raise AssertionError('A4.8c8 live replicase missed fp64 guard')
+    world.initial_total_material = world.total_material()
+    world.last_step_material_residual = 0.0
+    return world, cell, capacity, float(dt), binding, float(observed)
+
+
+def _a48c8_tamper_candidate(candidate, kind):
+    if kind == 'host_ragged_content':
+        candidate.source_binding.ragged.symbols[0] ^= np.uint8(1)
+    elif kind == 'host_state_content':
+        candidate.source_binding.state.pools[0, a4.a3.POOL_ATP] += 1e-6
+    elif kind == 'host_cache_content':
+        candidate.source_binding.cache.payloads[0, 0] ^= np.uint8(1)
+    elif kind == 'host_plan_content':
+        candidate.host_plan.branch_code[0] = a48c8.BRANCH_DISABLED
+    elif kind == 'resident_ragged_data':
+        candidate.resident_binding.ragged.symbols.data.view(-1)[0].bitwise_xor_(1)
+    elif kind == 'resident_state_data':
+        candidate.resident_binding.state.pools.data[
+            0, a4.a3.POOL_ATP
+        ].add_(1e-6)
+    elif kind == 'resident_cache_data':
+        candidate.resident_binding.cache.payloads.data.view(-1)[0].bitwise_xor_(1)
+    elif kind == 'resident_plan_data':
+        candidate.resident_plan.branch_code.data[0].fill_(
+            a48c8.BRANCH_DISABLED
+        )
+    elif kind == 'readback_plan_content':
+        candidate.plan.branch_code[0] = a48c8.BRANCH_DISABLED
+    elif kind == 'candidate_branch_scalar':
+        candidate.branch_code = a48c8.BRANCH_DISABLED
+    elif kind == 'candidate_scope_scalar':
+        candidate.scope_error_code = a48c8.SCOPE_NOT_EARLY_NOOP
+    else:
+        raise AssertionError('unknown A4.8c8 candidate tamper')
+
+
+def _a48c8_assert_candidate_tamper(case, device, kind):
+    world = _a48c8_world_for_case(case)
+    cell = world.cells[0]
+    scheduler = a48c8.A4ReplicationEarlyNoopEventScheduler(
+        case['capacity'], device,
+    )
+    _a48c_begin_replication_direct(
+        scheduler, world, cell, case['dt'],
+    )
+    before = v3.pickle_clone(cell.state_dict())
+    identities = _a48c_identity_snapshot(world, cell)
+    rng_state = copy.deepcopy(world.rng.bit_generator.state)
+    energy = float(world.dissipated_energy)
+    try:
+        candidate = scheduler._prepare_replication_early_noop_candidate(
+            world, cell, case['dt'], world.config,
+        )
+        _a48c8_tamper_candidate(candidate, kind)
+        _assert_raises(
+            a48c8.A4ReplicationEarlyNoopCommitError,
+            lambda: scheduler._commit_replication_early_noop_candidate(
+                world, cell, case['dt'], world.config, candidate,
+            ),
+        )
+        if candidate.consumed:
+            raise AssertionError(kind + ' consumed rejected candidate')
+        v3.assert_recursive_close(
+            before, cell.state_dict(), 0.0, 0.0,
+            'a48c8.tamper.%s.%s' % (device, kind),
+        )
+        _, record = scheduler._record(cell)
+        if (world.rng.bit_generator.state != rng_state
+                or _a48c_identity_snapshot(world, cell) != identities
+                or float(world.dissipated_energy) != energy
+                or any(entry['event'] == 'replication_cpu'
+                       for entry in record['events'])):
+            raise AssertionError(
+                '%s/%s crossed the A4.8c8 claim boundary' % (
+                    device, kind,
+                )
+            )
+    finally:
+        _a48_abort_direct(scheduler, cell)
+
+
+def test_a48c8_candidate_cpu_cuda_resident_classifier_purity_and_fresh_binding():
+    devices = _a48c8_devices()
+    mixed_world, mixed_cells, mixed_capacity, mixed_dt, mixed_ragged, \
+        mixed_state, mixed_binding = _a48c8_mixed_plan_fixture()
+    mixed_world_before = v3.pickle_clone(mixed_world.state_dict())
+    mixed_cells_before = [
+        v3.pickle_clone(cell.state_dict()) for cell in mixed_cells
+    ]
+    mixed_ragged_before = mixed_ragged.state_dict()
+    mixed_state_before = mixed_state.state_dict()
+    mixed_cache_before = mixed_binding.cache.state_dict()
+    mixed_plan = a48c8.paid_replication_early_noop_numpy(
+        mixed_binding, mixed_dt, mixed_world.config,
+    )
+    expected_branch = np.asarray((2, 3, 4, 0, 0, 0), np.int64)
+    expected_error = np.asarray((0, 0, 0, 1, 2, 3), np.int64)
+    if (int(mixed_plan.cell_count) != 6
+            or int(mixed_plan.cell_capacity) != 8
+            or not np.array_equal(
+                mixed_plan.branch_code[:6], expected_branch,
+            )
+            or not np.array_equal(
+                mixed_plan.scope_error_code[:6], expected_error,
+            )
+            or not np.array_equal(
+                mixed_plan.scope_valid[:6],
+                np.asarray((True, True, True, False, False, False)),
+            )
+            or np.any(mixed_plan.cell_mask[6:])
+            or np.any(mixed_plan.branch_code[6:])
+            or np.any(mixed_plan.scope_error_code[6:])):
+        raise AssertionError('A4.8c8 enabled six-row matrix differs')
+    _a48c8_assert_plan_schema_roundtrip(
+        mixed_plan, devices, 'a48c8.mixed',
+    )
+    for device in devices:
+        mixed_resident_binding = a4.bind_a4_translation(
+            mixed_ragged.to_torch(device=device),
+            mixed_state.to_torch(device=device),
+        )
+        resident_inputs = (
+            ('ragged', mixed_resident_binding.ragged, a4._ARRAY_FIELDS),
+            ('state', mixed_resident_binding.state,
+             a4._TRANSLATION_ARRAY_FIELDS),
+            ('cache', mixed_resident_binding.cache,
+             a4._GENE_ARRAY_FIELDS),
+        )
+        resident_input_snapshots = {}
+        for input_label, batch, names in resident_inputs:
+            resident_input_snapshots[input_label] = {
+                'pointers': {
+                    name: int(getattr(batch, name).data_ptr())
+                    for name in names
+                },
+                'versions': {
+                    name: int(getattr(batch, name)._version)
+                    for name in names
+                },
+                'content': batch.to_numpy().state_dict(),
+            }
+        mixed_resident = a48c8.paid_replication_early_noop_torch(
+            mixed_resident_binding, mixed_dt, mixed_world.config,
+        )
+        a48c8._plan_semantic_match(
+            mixed_resident.to_numpy(), mixed_plan,
+        )
+        for input_label, batch, names in resident_inputs:
+            expected_input = resident_input_snapshots[input_label]
+            if ({
+                    name: int(getattr(batch, name).data_ptr())
+                    for name in names
+                    } != expected_input['pointers']
+                    or {
+                        name: int(getattr(batch, name)._version)
+                        for name in names
+                    } != expected_input['versions']):
+                raise AssertionError(
+                    'a48c8.mixed.%s.%s pointer/version changed' % (
+                        device, input_label,
+                    )
+                )
+            v3.assert_recursive_close(
+                expected_input['content'], batch.to_numpy().state_dict(),
+                0.0, 0.0,
+                'a48c8.mixed.%s.%s.content' % (
+                    device, input_label,
+                ),
+            )
+
+    disabled_cells = [
+        copy.deepcopy(mixed_cells[0]), copy.deepcopy(mixed_cells[2]),
+    ]
+    for index, cell in enumerate(disabled_cells):
+        cell.cell_id = 48420 + index
+    disabled_config = copy.deepcopy(mixed_world.config)
+    disabled_config.genome_replication = False
+    disabled_capacity = _a48c8_capacity_for_cells(
+        disabled_cells, spare_cells=1,
+    )
+    disabled_ragged, disabled_state, disabled_binding = (
+        _paid_replication_binding(
+            disabled_cells, disabled_config, disabled_capacity,
+        )
+    )
+    disabled_plan = a48c8.paid_replication_early_noop_numpy(
+        disabled_binding, mixed_dt, disabled_config,
+    )
+    if (not np.array_equal(
+            disabled_plan.branch_code[:2],
+            np.asarray((1, 1), np.int64),
+            )
+            or not np.array_equal(
+                disabled_plan.scope_valid[:2],
+                np.asarray((True, True)),
+            )
+            or np.any(disabled_plan.scope_error_code[:2])):
+        raise AssertionError('A4.8c8 disabled priority batch differs')
+    for device in devices:
+        disabled_resident_binding = a4.bind_a4_translation(
+            disabled_ragged.to_torch(device=device),
+            disabled_state.to_torch(device=device),
+        )
+        disabled_resident = a48c8.paid_replication_early_noop_torch(
+            disabled_resident_binding, mixed_dt, disabled_config,
+        )
+        a48c8._plan_semantic_match(
+            disabled_resident.to_numpy(), disabled_plan,
+        )
+
+    malformed_dtype = mixed_plan.clone()
+    malformed_dtype.branch_code = np.asarray(
+        malformed_dtype.branch_code, dtype=np.int32,
+    )
+    _assert_raises(
+        a48c8.A4ReplicationEarlyNoopCommitError,
+        malformed_dtype.clone,
+    )
+    malformed_relation = mixed_plan.clone()
+    malformed_relation.scope_valid[0] = False
+    _assert_raises(
+        a48c8.A4ReplicationEarlyNoopCommitError,
+        malformed_relation.clone,
+    )
+    malformed_schema = mixed_plan.clone()
+    malformed_schema.schema_version += '-tampered'
+    _assert_raises(
+        a48c8.A4ReplicationEarlyNoopCommitError,
+        malformed_schema.validate,
+    )
+
+    v3.assert_recursive_close(
+        mixed_world_before, mixed_world.state_dict(), 0.0, 0.0,
+        'a48c8.mixed.world_purity',
+    )
+    for index, (before, cell) in enumerate(zip(
+            mixed_cells_before, mixed_cells)):
+        v3.assert_recursive_close(
+            before, cell.state_dict(), 0.0, 0.0,
+            'a48c8.mixed.cell[%d]' % index,
+        )
+    for label, before, after in (
+            ('ragged', mixed_ragged_before, mixed_ragged.state_dict()),
+            ('state', mixed_state_before, mixed_state.state_dict()),
+            ('cache', mixed_cache_before, mixed_binding.cache.state_dict())):
+        v3.assert_recursive_close(
+            before, after, 0.0, 0.0,
+            'a48c8.mixed.' + label,
+        )
+
+    boundary_details = []
+    threshold = np.float64(1e-6)
+    boundary_targets = (
+        ('below', np.nextafter(threshold, np.float64(0.0))),
+        ('exact', threshold),
+        ('above', np.nextafter(threshold, np.float64(np.inf))),
+    )
+    for index, (boundary_label, target) in enumerate(boundary_targets):
+        boundary_world, boundary_cell, boundary_capacity, boundary_dt, \
+            boundary_binding, observed = _a48c8_replicase_boundary_fixture(
+                target, 17360 + index,
+            )
+        if np.float64(observed) != np.float64(target):
+            raise AssertionError(
+                'A4.8c8 %s replicase nextafter control differs: %s != %s' % (
+                    boundary_label, observed, target,
+                )
+            )
+        boundary_plan = a48c8.paid_replication_early_noop_numpy(
+            boundary_binding, boundary_dt, boundary_world.config,
+        )
+        if (bool(boundary_plan.scope_valid[0])
+                or int(boundary_plan.scope_error_code[0])
+                != a48c8.SCOPE_FP64_COMPARISON_BOUNDARY
+                or int(boundary_plan.branch_code[0])
+                != a48c8.BRANCH_NONE):
+            raise AssertionError(
+                'A4.8c8 %s NumPy boundary row differs' % boundary_label
+            )
+        for device in devices:
+            resident_binding = a4.bind_a4_translation(
+                boundary_binding.ragged.to_torch(device=device),
+                boundary_binding.state.to_torch(device=device),
+            )
+            resident_plan = a48c8.paid_replication_early_noop_torch(
+                resident_binding, boundary_dt, boundary_world.config,
+            )
+            readback = resident_plan.to_numpy()
+            a48c8._plan_semantic_match(readback, boundary_plan)
+            if (bool(readback.scope_valid[0])
+                    or int(readback.scope_error_code[0])
+                    != a48c8.SCOPE_FP64_COMPARISON_BOUNDARY
+                    or int(readback.branch_code[0])
+                    != a48c8.BRANCH_NONE):
+                raise AssertionError(
+                    'A4.8c8 %s/%s boundary row differs' % (
+                        device, boundary_label,
+                    )
+                )
+            boundary_case = {
+                'state': v3.pickle_clone(boundary_world.state_dict()),
+                'cell_id': int(boundary_cell.cell_id),
+                'dt': boundary_dt, 'capacity': boundary_capacity,
+            }
+            _a48c8_assert_preclaim_failure(
+                boundary_case, boundary_capacity, device,
+                'replicase_boundary_' + boundary_label,
+            )
+        boundary_details.append(
+            '%s:%s' % (boundary_label, float(observed).hex())
+        )
+
+    cases = [
+        _a48c8_case(
+            branch, seed=17300 + index,
+            mutation=bool(index % 2), prime_uint32=bool((index + 1) % 2),
+        )
+        for index, branch in enumerate(_A48C8_BRANCH_CODES)
+    ]
+    details = []
+    for case in cases:
+        for device in devices:
+            direct = _a48c8_world_for_case(case)
+            direct.cells[0]._replicate_genome(
+                direct, case['dt'], direct.config,
+            )
+            world = _a48c8_world_for_case(case)
+            cell = world.cells[0]
+            scheduler = a48c8.A4ReplicationEarlyNoopEventScheduler(
+                case['capacity'], device,
+            )
+            _a48c_begin_replication_direct(
+                scheduler, world, cell, case['dt'],
+            )
+            before = v3.pickle_clone(cell.state_dict())
+            identities = _a48c_identity_snapshot(world, cell)
+            rng_state = copy.deepcopy(world.rng.bit_generator.state)
+            energy = float(world.dissipated_energy)
+            try:
+                candidate = (
+                    scheduler._prepare_replication_early_noop_candidate(
+                        world, cell, case['dt'], world.config,
+                    )
+                )
+                v3.assert_recursive_close(
+                    before, cell.state_dict(), 0.0, 0.0,
+                    'a48c8.prepare.%s.%s' % (device, case['label']),
+                )
+                if (world.rng.bit_generator.state != rng_state
+                        or _a48c_identity_snapshot(world, cell) != identities
+                        or float(world.dissipated_energy) != energy):
+                    raise AssertionError(
+                        device + '/' + case['label']
+                        + ' prepare changed live authority'
+                    )
+                _a48c8_assert_plan_row(
+                    candidate.host_plan, case,
+                    'a48c8.host.%s.%s' % (device, case['label']),
+                )
+                _a48c8_assert_plan_row(
+                    candidate.plan, case,
+                    'a48c8.readback.%s.%s' % (device, case['label']),
+                )
+                resident = candidate.resident_plan
+                for name in a48c8._PLAN_ARRAY_FIELDS:
+                    value = getattr(resident, name)
+                    if (not isinstance(value, torch.Tensor)
+                            or value.device.type != torch.device(device).type):
+                        raise AssertionError(
+                            device + ' resident plan escaped device: ' + name
+                        )
+                a48c8._plan_semantic_match(
+                    resident.to_numpy(), candidate.host_plan,
+                )
+                if (candidate.branch_code != case['branch_code']
+                        or candidate.scope_error_code != a48c8.SCOPE_OK
+                        or candidate.live_rng is not world.rng
+                        or candidate.rng_state != rng_state):
+                    raise AssertionError(
+                        device + '/' + case['label']
+                        + ' candidate association differs'
+                    )
+                scheduler._commit_replication_early_noop_candidate(
+                    world, cell, case['dt'], world.config, candidate,
+                )
+                _a48c8_assert_only_last_zero(
+                    before, identities, rng_state, energy,
+                    world, cell,
+                    'a48c8.commit.%s.%s' % (device, case['label']),
+                )
+                v3.assert_recursive_close(
+                    direct.cells[0].state_dict(), cell.state_dict(),
+                    0.0, 0.0,
+                    'a48c8.direct.%s.%s' % (device, case['label']),
+                )
+                entry = _a48c_replication_entry(scheduler, cell)
+                metadata = entry['metadata']
+                if (entry['status'] != 'executed'
+                        or metadata.get('authority') != _A48C8_AUTHORITY
+                        or metadata.get('branch') != case['label']
+                        or metadata.get('device') != device
+                        or metadata.get('amount') != 0
+                        or metadata.get('work_performed') is not False
+                        or metadata.get('rng_call_count') != 0
+                        or metadata.get('last_replication_symbols') != 0
+                        or not isinstance(
+                            metadata.get('classifier_sha256'), str,
+                        )
+                        or len(metadata['classifier_sha256']) != 64):
+                    raise AssertionError(
+                        device + '/' + case['label']
+                        + ' receipt metadata differs'
+                    )
+                committed = v3.pickle_clone(cell.state_dict())
+                _assert_raises(
+                    a48c8.A4ReplicationEarlyNoopCommitError,
+                    lambda: scheduler.
+                    _commit_replication_early_noop_candidate(
+                        world, cell, case['dt'], world.config, candidate,
+                    ),
+                )
+                v3.assert_recursive_close(
+                    committed, cell.state_dict(), 0.0, 0.0,
+                    'a48c8.one_shot.%s.%s' % (device, case['label']),
+                )
+                details.append(device + ':' + case['label'])
+            finally:
+                _a48_abort_direct(scheduler, cell)
+
+    trust_case = _a48c8_case(
+        'inactive-multi-genome', seed=17390,
+        mutation=True, prime_uint32=True,
+    )
+    host_kinds = (
+        'host_ragged_content', 'host_state_content',
+        'host_cache_content', 'host_plan_content',
+        'readback_plan_content', 'candidate_branch_scalar',
+        'candidate_scope_scalar',
+    )
+    resident_kinds = (
+        'resident_ragged_data', 'resident_state_data',
+        'resident_cache_data', 'resident_plan_data',
+    )
+    for kind in host_kinds:
+        _a48c8_assert_candidate_tamper(trust_case, 'cpu', kind)
+    for device in devices:
+        for kind in resident_kinds:
+            _a48c8_assert_candidate_tamper(trust_case, device, kind)
+    return ('enabled six-row branches 2/3/4/0/0/0 errors 0/0/0/1/2/3; '
+            'disabled two-row branch1; plan clone/to_numpy/to_torch/state '
+            'schema exact and dtype/relation/schema malformed fail closed; '
+            'replicase nextafter/exact guard %s; NumPy/Torch candidate and '
+            'resident readback commit exact %s; host ragged/state/cache/plan '
+            '+readback/scalars and resident ragged/state/cache/plan .data '
+            'tamper fail closed (%d checks)' % (
+                '/'.join(boundary_details), '/'.join(details),
+                len(host_kinds) + len(devices) * len(resident_kinds),
+            ))
+
+
+def _a48c8_assert_preclaim_failure(case, capacity, device, label,
+                                   scheduler_type=None, mutator=None):
+    world = _a48c8_world_for_case(case)
+    cell = world.cells[0]
+    if mutator is not None:
+        mutator(world, cell)
+    scheduler_type = (
+        scheduler_type or a48c8.A4ReplicationEarlyNoopEventScheduler
+    )
+    scheduler = scheduler_type(capacity, device)
+    _a48c_begin_replication_direct(
+        scheduler, world, cell, case['dt'],
+    )
+    before = v3.pickle_clone(cell.state_dict())
+    identities = _a48c_identity_snapshot(world, cell)
+    rng_state = copy.deepcopy(world.rng.bit_generator.state)
+    energy = float(world.dissipated_energy)
+    try:
+        _assert_raises(
+            (a4.A4Error, a3s.A3SchedulerError),
+            lambda: scheduler.cpu_replication(
+                world, cell, case['dt'], world.config,
+            ),
+        )
+        v3.assert_recursive_close(
+            before, cell.state_dict(), 0.0, 0.0,
+            'a48c8.preclaim.%s.%s' % (device, label),
+        )
+        _, record = scheduler._record(cell)
+        if (world.rng.bit_generator.state != rng_state
+                or _a48c_identity_snapshot(world, cell) != identities
+                or float(world.dissipated_energy) != energy
+                or any(entry['event'] == 'replication_cpu'
+                       for entry in record['events'])):
+            raise AssertionError(
+                device + '/' + label + ' changed state before claim'
+            )
+    finally:
+        _a48_abort_direct(scheduler, cell)
+
+
+def _a48c8_assert_candidate_association_reject(case, kind):
+    world = _a48c8_world_for_case(case)
+    cell = world.cells[0]
+    scheduler = a48c8.A4ReplicationEarlyNoopEventScheduler(
+        case['capacity'], 'cpu',
+    )
+    _a48c_begin_replication_direct(
+        scheduler, world, cell, case['dt'],
+    )
+    original_device = scheduler.a4_device
+    candidate = None
+    other_world = None
+    try:
+        candidate = scheduler._prepare_replication_early_noop_candidate(
+            world, cell, case['dt'], world.config,
+        )
+        commit_world = world
+        commit_cell = cell
+        commit_dt = case['dt']
+        commit_config = world.config
+        if kind == 'wrong_cell':
+            commit_cell = copy.deepcopy(cell)
+            commit_cell.cell_id = int(cell.cell_id) + 100000
+        elif kind == 'wrong_world_cell':
+            other_world = _a48c8_world_for_case(case)
+            commit_world = other_world
+            commit_cell = other_world.cells[0]
+            commit_config = other_world.config
+        elif kind == 'wrong_dt':
+            commit_dt = float(np.nextafter(
+                np.float64(case['dt']), np.float64(np.inf),
+            ))
+        elif kind == 'wrong_rng':
+            world.rng.random()
+        elif kind == 'wrong_device':
+            scheduler.a4_device = 'cuda'
+        else:
+            raise AssertionError('unknown A4.8c8 association fixture')
+        before = v3.pickle_clone(world.state_dict())
+        identities = _a48c_identity_snapshot(world, cell)
+        rng_state = copy.deepcopy(world.rng.bit_generator.state)
+        other_before = (
+            None if other_world is None
+            else v3.pickle_clone(other_world.state_dict())
+        )
+        _assert_raises(
+            a48c8.A4ReplicationEarlyNoopCommitError,
+            lambda: scheduler._commit_replication_early_noop_candidate(
+                commit_world, commit_cell, commit_dt,
+                commit_config, candidate,
+            ),
+        )
+        if candidate.consumed:
+            raise AssertionError(kind + ' consumed rejected candidate')
+        v3.assert_recursive_close(
+            before, world.state_dict(), 0.0, 0.0,
+            'a48c8.association.' + kind,
+        )
+        if other_world is not None:
+            v3.assert_recursive_close(
+                other_before, other_world.state_dict(), 0.0, 0.0,
+                'a48c8.association.other.' + kind,
+            )
+        _, record = scheduler._record(cell)
+        if (_a48c_identity_snapshot(world, cell) != identities
+                or world.rng.bit_generator.state != rng_state
+                or any(entry['event'] == 'replication_cpu'
+                       for entry in record['events'])):
+            raise AssertionError(kind + ' crossed the A4.8c8 claim boundary')
+    finally:
+        scheduler.a4_device = original_device
+        _a48_abort_direct(scheduler, cell)
+
+
+def _a48c8_exclusion_case(kind, seed, mutation=False):
+    world, cells, _, _ = _a45b_template_start_fixture(
+        seed=seed, prime_uint32=False,
+    )
+    cell = copy.deepcopy(cells[0])
+    _a48c_reduce_world(world, [cell])
+    world.config.genome_replication = True
+    world.config.external_replicase = True
+    world.config.mutation = bool(mutation)
+    cell.replication_template = None
+    cell.replication_template_lesion = 0.0
+    cell.replication_copy = []
+    cell.replication_fractional = 0.0
+    cell.last_replication_symbols = 733
+    if kind == 'empty-genome':
+        cell.genomes = [np.zeros((0,), dtype=np.uint8)]
+        cell.genome_lesions = [0.0]
+        cell._refresh_gene_cache()
+    elif kind == 'negative-atp':
+        cell.pools[a4.a3.POOL_ATP] = -1e-12
+    else:
+        raise AssertionError('unknown A4.8c8 exclusion fixture')
+    world.initial_total_material = world.total_material()
+    world.last_step_material_residual = 0.0
+    capacity_values = _a48c8_capacity_values(cell)
+    # Empty complete genomes still require one representable zero-length row.
+    capacity_values['max_sequences'] = max(
+        capacity_values['max_sequences'], 2,
+    )
+    capacity_values['max_symbols'] = max(capacity_values['max_symbols'], 2)
+    return {
+        'label': kind + ('-mutation' if mutation else '-deterministic'),
+        'state': v3.pickle_clone(world.state_dict()),
+        'cell_id': int(cell.cell_id), 'dt': 0.1,
+        'capacity': a4.GPU068A4Config(**capacity_values),
+    }
+
+
+def test_a48c8_capacity_trust_exclusions_rollback_and_exact_once():
+    devices = _a48c8_devices()
+    capacity_case = _a48c8_case(
+        'inactive-multi-genome', seed=17401,
+        mutation=True, prime_uint32=True,
+    )
+    values = dict(capacity_case['capacity_values'])
+    exact_tuple = tuple(values[name] for name in (
+        'max_cells', 'max_sequences', 'max_symbols',
+        'max_sequence_symbols', 'max_proteins_per_cell',
+    ))
+    if (exact_tuple[0] != 1 or exact_tuple[1] != 2
+            or exact_tuple[2] <= 0 or exact_tuple[3] <= 0
+            or exact_tuple[4] <= 1):
+        raise AssertionError('A4.8c8 exact source capacity drifted')
+    capacity_details = []
+    for device in devices:
+        direct = _a48c8_world_for_case(capacity_case)
+        direct.cells[0]._replicate_genome(
+            direct, capacity_case['dt'], direct.config,
+        )
+        world = _a48c8_world_for_case(capacity_case)
+        cell = world.cells[0]
+        scheduler = a48c8.A4ReplicationEarlyNoopEventScheduler(
+            a4.GPU068A4Config(**values), device,
+        )
+        _a48c_begin_replication_direct(
+            scheduler, world, cell, capacity_case['dt'],
+        )
+        try:
+            scheduler.cpu_replication(
+                world, cell, capacity_case['dt'], world.config,
+            )
+            v3.assert_recursive_close(
+                direct.cells[0].state_dict(), cell.state_dict(),
+                0.0, 0.0, 'a48c8.capacity_exact.' + device,
+            )
+        finally:
+            _a48_abort_direct(scheduler, cell)
+        for axis, key in (
+                ('Q', 'max_sequences'), ('S', 'max_symbols'),
+                ('W', 'max_sequence_symbols'),
+                ('P', 'max_proteins_per_cell')):
+            short = dict(values)
+            short[key] -= 1
+            _a48c8_assert_preclaim_failure(
+                capacity_case, a4.GPU068A4Config(**short), device,
+                'capacity_' + axis,
+            )
+            capacity_details.append(device + ':' + axis)
+
+    exclusions = (
+        _a48c8_exclusion_case('empty-genome', 17420, mutation=False),
+        _a48c8_exclusion_case('empty-genome', 17421, mutation=True),
+        _a48c8_exclusion_case('negative-atp', 17422, mutation=False),
+    )
+    # These direct probes prove why they must not be relabelled ordinary no-op.
+    empty_off = _a48c8_world_for_case(exclusions[0])
+    empty_before_cycles = int(empty_off.cells[0].replication_cycles)
+    empty_off.cells[0]._replicate_genome(
+        empty_off, exclusions[0]['dt'], empty_off.config,
+    )
+    if (len(empty_off.cells[0].genomes) != 2
+            or int(empty_off.cells[0].replication_cycles)
+            != empty_before_cycles + 1):
+        raise AssertionError('empty deterministic genome became a no-op')
+    empty_on = _a48c8_world_for_case(exclusions[1])
+    empty_rng = copy.deepcopy(empty_on.rng.bit_generator.state)
+    empty_on.cells[0]._replicate_genome(
+        empty_on, exclusions[1]['dt'], empty_on.config,
+    )
+    if (len(empty_on.cells[0].genomes) != 2
+            or len(empty_on.cells[0].genomes[-1]) == 0
+            or empty_on.rng.bit_generator.state == empty_rng):
+        raise AssertionError('empty mutation genome became a no-op')
+    negative = _a48c8_world_for_case(exclusions[2])
+    negative.cells[0]._replicate_genome(
+        negative, exclusions[2]['dt'], negative.config,
+    )
+    if (negative.cells[0].replication_template is None
+            or not float(negative.cells[0].replication_fractional) < 0.0):
+        raise AssertionError('negative ATP became a no-op')
+
+    legacy_called = []
+    original_legacy = a48b.A4TranslationEventScheduler.cpu_replication
+
+    def legacy_bomb(*args, **kwargs):
+        legacy_called.append(True)
+        raise AssertionError('legacy CPU replication fallback was called')
+
+    a48b.A4TranslationEventScheduler.cpu_replication = legacy_bomb
+    try:
+        for case in exclusions:
+            for device in devices:
+                _a48c8_assert_preclaim_failure(
+                    case, case['capacity'], device,
+                    'scope_' + case['label'],
+                )
+    finally:
+        a48b.A4TranslationEventScheduler.cpu_replication = original_legacy
+    if legacy_called:
+        raise AssertionError('an A4.8c8 exclusion used CPU fallback')
+
+    trust_case = _a48c8_case(
+        'inactive-multi-genome', seed=17424,
+        mutation=True, prime_uint32=True,
+    )
+
+    def stale_cache_nested(world, cell):
+        fingerprint = next(iter(cell.gene_specs))
+        cell.gene_specs[fingerprint]['parameter'] = (
+            int(cell.gene_specs[fingerprint]['parameter']) + 1
+        )
+
+    def malformed_config_bool(world, cell):
+        world.config.genome_replication = 0
+
+    def malformed_source_copy(world, cell):
+        cell.replication_copy = tuple(cell.replication_copy)
+
+    for label, mutator in (
+            ('stale_cache_nested', stale_cache_nested),
+            ('malformed_config_bool', malformed_config_bool),
+            ('malformed_source_copy', malformed_source_copy)):
+        _a48c8_assert_preclaim_failure(
+            trust_case, trust_case['capacity'], 'cpu', label,
+            mutator=mutator,
+        )
+
+    association_kinds = (
+        'wrong_cell', 'wrong_world_cell', 'wrong_dt',
+        'wrong_rng', 'wrong_device',
+    )
+    for kind in association_kinds:
+        _a48c8_assert_candidate_association_reject(trust_case, kind)
+
+    nested_flags = (
+        '_a4_replication_commit_active',
+        '_a4_replication_completion_commit_active',
+        '_a4_replication_completion_mutation_commit_active',
+        '_a4_replication_start_commit_active',
+        '_a4_replication_mutation_free_start_commit_active',
+        '_a4_replication_start_completion_commit_active',
+        '_a4_replication_start_completion_mutation_commit_active',
+        '_a4_replication_early_noop_commit_active',
+    )
+    for flag in nested_flags:
+        nested_world = _a48c8_world_for_case(trust_case)
+        nested_cell = nested_world.cells[0]
+        nested_scheduler = a48c8.A4ReplicationEarlyNoopEventScheduler(
+            trust_case['capacity'], 'cpu',
+        )
+        _a48c_begin_replication_direct(
+            nested_scheduler, nested_world, nested_cell, trust_case['dt'],
+        )
+        before = v3.pickle_clone(nested_world.state_dict())
+        identities = _a48c_identity_snapshot(nested_world, nested_cell)
+        rng_state = copy.deepcopy(nested_world.rng.bit_generator.state)
+        setattr(nested_scheduler, flag, True)
+        try:
+            _assert_raises(
+                a3s.A3SchedulerProtocolError,
+                lambda: nested_scheduler.cpu_replication(
+                    nested_world, nested_cell, trust_case['dt'],
+                    nested_world.config,
+                ),
+            )
+            v3.assert_recursive_close(
+                before, nested_world.state_dict(), 0.0, 0.0,
+                'a48c8.nested.' + flag,
+            )
+            _, nested_record = nested_scheduler._record(nested_cell)
+            if (_a48c_identity_snapshot(nested_world, nested_cell)
+                    != identities
+                    or nested_world.rng.bit_generator.state != rng_state
+                    or any(entry['event'] == 'replication_cpu'
+                           for entry in nested_record['events'])):
+                raise AssertionError(flag + ' crossed the nested guard')
+        finally:
+            setattr(nested_scheduler, flag, False)
+            _a48_abort_direct(nested_scheduler, nested_cell)
+
+    # A dead cell is excluded from direct c8 entry; the full scheduler marks
+    # the event skipped before any replication backend runs.
+    dead_case = _a48c8_case('disabled', seed=17430)
+    dead = _a48c8_world_for_case(dead_case)
+    dead_cell = dead.cells[0]
+    dead_scheduler = a48c8.A4ReplicationEarlyNoopEventScheduler(
+        dead_case['capacity'], 'cpu',
+    )
+    _a48c_begin_replication_direct(
+        dead_scheduler, dead, dead_cell, dead_case['dt'],
+    )
+    dead_cell.alive = False
+    dead_before = v3.pickle_clone(dead.state_dict())
+    dead_ids = _a48c_identity_snapshot(dead, dead_cell)
+    dead_rng = copy.deepcopy(dead.rng.bit_generator.state)
+    try:
+        _assert_raises(
+            a48c8.A4ReplicationEarlyNoopCommitError,
+            lambda: dead_scheduler.cpu_replication(
+                dead, dead_cell, dead_case['dt'], dead.config,
+            ),
+        )
+        v3.assert_recursive_close(
+            dead_before, dead.state_dict(), 0.0, 0.0,
+            'a48c8.dead_direct',
+        )
+        if (_a48c_identity_snapshot(dead, dead_cell) != dead_ids
+                or dead.rng.bit_generator.state != dead_rng):
+            raise AssertionError('dead direct exclusion changed authority')
+    finally:
+        _a48_abort_direct(dead_scheduler, dead_cell)
+
+    dead_world = _a48c8_world_for_case(dead_case)
+    dead_world.cells[0].alive = False
+    dead_world.initial_total_material = dead_world.total_material()
+    dead_state = v3.pickle_clone(dead_world.state_dict())
+    dead_hybrid = _a48c8_hybrid_from_state(
+        dead_state, dead_case['capacity'], 'cpu',
+    )
+    dead_receipt = dead_hybrid.step(dead_case['dt'])
+    dead_entries = [
+        entry for entry in dead_receipt['cells'][0]['events']
+        if entry['event'] == 'replication_cpu'
+    ]
+    if (len(dead_entries) != 1
+            or dead_entries[0]['status'] != 'skipped'
+            or dead_entries[0]['metadata'].get('reason')
+            != 'dead_before_metabolism'
+            or dead_entries[0]['metadata'].get('authority') is not None):
+        raise AssertionError('dead world replication skip differs')
+
+    duplicate = _a48c8_world_for_case(capacity_case)
+    duplicate_cell = duplicate.cells[0]
+    duplicate_scheduler = a48c8.A4ReplicationEarlyNoopEventScheduler(
+        capacity_case['capacity'], 'cpu',
+    )
+    _a48c_begin_replication_direct(
+        duplicate_scheduler, duplicate, duplicate_cell,
+        capacity_case['dt'],
+    )
+    try:
+        duplicate_scheduler.cpu_replication(
+            duplicate, duplicate_cell, capacity_case['dt'], duplicate.config,
+        )
+        committed = v3.pickle_clone(duplicate.state_dict())
+        committed_ids = _a48c_identity_snapshot(duplicate, duplicate_cell)
+        committed_rng = copy.deepcopy(duplicate.rng.bit_generator.state)
+        _assert_raises(
+            a3s.A3DuplicateEventError,
+            lambda: duplicate_scheduler.cpu_replication(
+                duplicate, duplicate_cell,
+                capacity_case['dt'], duplicate.config,
+            ),
+        )
+        v3.assert_recursive_close(
+            committed, duplicate.state_dict(), 0.0, 0.0,
+            'a48c8.duplicate',
+        )
+        if (_a48c_identity_snapshot(duplicate, duplicate_cell)
+                != committed_ids
+                or duplicate.rng.bit_generator.state != committed_rng):
+            raise AssertionError('duplicate c8 event changed authority')
+    finally:
+        _a48_abort_direct(duplicate_scheduler, duplicate_cell)
+
+    order = _a48c8_world_for_case(capacity_case)
+    order_cell = order.cells[0]
+    order_scheduler = a48c8.A4ReplicationEarlyNoopEventScheduler(
+        capacity_case['capacity'], 'cpu',
+    )
+    _a48b_begin_translation_direct(
+        order_scheduler, order, order_cell, capacity_case['dt'],
+    )
+    order_before = v3.pickle_clone(order.state_dict())
+    order_ids = _a48c_identity_snapshot(order, order_cell)
+    order_rng = copy.deepcopy(order.rng.bit_generator.state)
+    try:
+        _assert_raises(
+            a3s.A3EventOrderError,
+            lambda: order_scheduler.cpu_replication(
+                order, order_cell, capacity_case['dt'], order.config,
+            ),
+        )
+        v3.assert_recursive_close(
+            order_before, order.state_dict(), 0.0, 0.0,
+            'a48c8.out_of_order',
+        )
+        if (_a48c_identity_snapshot(order, order_cell) != order_ids
+                or order.rng.bit_generator.state != order_rng):
+            raise AssertionError('out-of-order c8 event changed authority')
+    finally:
+        _a48_abort_direct(order_scheduler, order_cell)
+
+    class FailAfterPublish(a48c8.A4ReplicationEarlyNoopEventScheduler):
+        def _publish_replication_early_noop_candidate(
+                self, world, cell, candidate):
+            super(
+                FailAfterPublish, self,
+            )._publish_replication_early_noop_candidate(
+                world, cell, candidate,
+            )
+            cell.last_replication_symbols = 991
+            cell.pools[a4.a3.POOL_ATP] += 0.125
+            cell.genomes[0][0] ^= np.uint8(1)
+            cell.genome_lesions.append(0.75)
+            cell.mutation_events['a48c8_sentinel'] += 1
+            cell.proteins[next(iter(cell.proteins))] += 0.25
+            first = next(iter(cell.gene_specs))
+            cell.gene_specs[first]['promoter'] += 0.25
+            cell.age += 2.0
+            world.dissipated_energy += 1.0
+            world.rng.random()
+            raise RuntimeError('injected A4.8c8 publish failure')
+
+    rollback = _a48c8_world_for_case(capacity_case)
+    rollback_cell = rollback.cells[0]
+    rollback_scheduler = FailAfterPublish(
+        capacity_case['capacity'], 'cpu',
+    )
+    _a48c_begin_replication_direct(
+        rollback_scheduler, rollback, rollback_cell, capacity_case['dt'],
+    )
+    rollback_before = v3.pickle_clone(rollback.state_dict())
+    rollback_ids = _a48c_identity_snapshot(rollback, rollback_cell)
+    rollback_rng = copy.deepcopy(rollback.rng.bit_generator.state)
+    caught = None
+    try:
+        rollback_scheduler.cpu_replication(
+            rollback, rollback_cell, capacity_case['dt'], rollback.config,
+        )
+    except RuntimeError as error:
+        caught = error
+    if caught is None:
+        raise AssertionError('injected A4.8c8 publish failure did not escape')
+    v3.assert_recursive_close(
+        rollback_before, rollback.state_dict(), 0.0, 0.0,
+        'a48c8.publish_rollback',
+    )
+    if (_a48c_identity_snapshot(rollback, rollback_cell) != rollback_ids
+            or rollback.rng.bit_generator.state != rollback_rng):
+        raise AssertionError('A4.8c8 rollback lost identity/RNG')
+    entry = _a48c_replication_entry(rollback_scheduler, rollback_cell)
+    receipt = _a48_abort_direct(
+        rollback_scheduler, rollback_cell, caught,
+    )
+    if (entry['event'] != 'replication_cpu'
+            or entry['metadata'].get('authority') != _A48C8_AUTHORITY
+            or receipt['status'] != 'aborted'):
+        raise AssertionError('A4.8c8 publish failure receipt differs')
+
+    return ('exact C/Q/S/W/P %s; each one-short %s; empty mutation-off/on '
+            'and negative ATP direct non-noop but preclaim fail closed; '
+            'stale nested cache/malformed bool config/source copy; wrong '
+            'cell/world/dt/RNG/device association; c1-c8 nested guards; dead '
+            'world skip; duplicate/order; bounded identity/RNG publish rollback' % (
+                '/'.join(str(value) for value in exact_tuple),
+                '/'.join(capacity_details),
+            ))
+
+
+def _a48c8_delegated_cases():
+    cases = []
+    c1_world, c1_cells, c1_capacity, c1_dt = (
+        _a45_substitution_fixture(seed=17501)
+    )
+    _a48c_reduce_world(c1_world, [c1_cells[0]])
+    cases.append({
+        'label': 'c1-active-noncompletion',
+        'state': v3.pickle_clone(c1_world.state_dict()),
+        'dt': float(c1_dt), 'capacity': c1_capacity,
+        'authority': 'A4.8c1-resident-plan-atomic-cpu-cell-rng-commit',
+        'drop_lesions': False,
+    })
+
+    c2_state, _, c2_dt = _a48c2_completion_case(seed=17502, row=0)
+    c2_before = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(c2_state),
+    )
+    c2_after = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(c2_state),
+    )
+    c2_after.cells[0]._replicate_genome(
+        c2_after, c2_dt, c2_after.config,
+    )
+    cases.append({
+        'label': 'c2-mutation-free-active-completion',
+        'state': c2_state, 'dt': float(c2_dt),
+        'capacity': a4.GPU068A4Config(**_a48c2_capacity_for_transition(
+            c2_before.cells[0], c2_after.cells[0],
+        )),
+        'authority': (
+            'A4.8c2-resident-completion-plan-atomic-cpu-cell-commit'
+        ),
+        'drop_lesions': False,
+    })
+
+    c3 = _a48c3_completion_mutation_cases()[0]
+    cases.append({
+        'label': 'c3-mutation-active-completion',
+        'state': c3['state'], 'dt': float(c3['dt']),
+        'capacity': c3['integration_capacity'],
+        'authority': (
+            'A4.8c3-resident-completion-mutation-plan-atomic-'
+            'cpu-cell-rng-commit'
+        ),
+        'drop_lesions': False,
+    })
+
+    for label, source, authority in (
+            (
+                'c4-mutation-start-noncompletion', _a48c4_cases()[0],
+                'A4.8c4-resident-template-start-plan-atomic-'
+                'cpu-cell-pcg64-commit',
+            ),
+            (
+                'c5-mutation-free-start-noncompletion', _a48c5_cases()[0],
+                'A4.8c5-resident-mutation-free-template-start-plan-'
+                'atomic-cpu-cell-pcg64-commit',
+            ),
+            (
+                'c6-mutation-free-start-completion', _a48c6_cases()[0],
+                'A4.8c6-resident-mutation-free-start-completion-plan-'
+                'selection-only-pcg64-atomic-commit',
+            ),
+            (
+                'c7-mutation-start-completion', _a48c7_cases()[0],
+                'A4.8c7-resident-mutation-enabled-start-completion-'
+                'final-plan-pcg64-chain-atomic-commit',
+            )):
+        cases.append({
+            'label': label, 'state': source['state'],
+            'dt': float(source['dt']), 'capacity': source['capacity'],
+            'authority': authority,
+            'drop_lesions': bool(source.get('drop_lesions', False)),
+        })
+    return cases
+
+
+def test_a48c8_inherited_c7_c6_c5_c4_c3_c2_c1_save_clone_successor_and_authority():
+    devices = _a48c8_devices()
+    delegated = []
+    legacy_called = []
+    original_legacy = a48b.A4TranslationEventScheduler.cpu_replication
+
+    def legacy_bomb(*args, **kwargs):
+        legacy_called.append(True)
+        raise AssertionError('legacy CPU replication fallback was called')
+
+    a48b.A4TranslationEventScheduler.cpu_replication = legacy_bomb
+    try:
+        for case in _a48c8_delegated_cases():
+            for device in devices:
+                direct = _a48c7_world_for_case(case)
+                world = _a48c7_world_for_case(case)
+                direct.cells[0]._replicate_genome(
+                    direct, case['dt'], direct.config,
+                )
+                scheduler = a48c8.A4ReplicationEarlyNoopEventScheduler(
+                    case['capacity'], device,
+                )
+                _a48c_begin_replication_direct(
+                    scheduler, world, world.cells[0], case['dt'],
+                )
+                try:
+                    scheduler.cpu_replication(
+                        world, world.cells[0], case['dt'], world.config,
+                    )
+                    _a48b_assert_cell_matches(
+                        direct.cells[0], world.cells[0],
+                        'a48c8.delegate.%s.%s' % (
+                            device, case['label'],
+                        ),
+                        atol=a48c8.REPLICATION_ORACLE_ATOL,
+                    )
+                    metadata = _a48c_replication_entry(
+                        scheduler, world.cells[0],
+                    )['metadata']
+                    if (direct.rng.bit_generator.state
+                            != world.rng.bit_generator.state
+                            or float(direct.dissipated_energy)
+                            != float(world.dissipated_energy)
+                            or metadata.get('authority')
+                            != case['authority']):
+                        raise AssertionError(
+                            device + '/' + case['label']
+                            + ' inherited authority differs'
+                        )
+                    delegated.append(device + ':' + case['label'])
+                finally:
+                    _a48_abort_direct(scheduler, world.cells[0])
+    finally:
+        a48b.A4TranslationEventScheduler.cpu_replication = original_legacy
+    if legacy_called:
+        raise AssertionError('a c1-c7 delegate used frozen CPU fallback')
+
+    successor_case = _a48c8_case(
+        'disabled', seed=17540, mutation=True, prime_uint32=True,
+    )
+    successor_details = []
+    for device in devices:
+        expected = _a48c8_world_for_case(successor_case)
+        hybrid = _a48c8_hybrid_from_state(
+            successor_case['state'], successor_case['capacity'], device,
+        )
+        expected.step(successor_case['dt'])
+        original_legacy = a48b.A4TranslationEventScheduler.cpu_replication
+        a48b.A4TranslationEventScheduler.cpu_replication = legacy_bomb
+        try:
+            receipt = hybrid.step(successor_case['dt'])
+        finally:
+            a48b.A4TranslationEventScheduler.cpu_replication = original_legacy
+        v3._assert_world_pair(
+            expected, hybrid, state_atol=v3.WORLD_FP64_ATOL,
+            ledger_atol=v3.LEDGER_ATOL,
+            label='a48c8.successor.' + device,
+        )
+        record = receipt['cells'][0]
+        names = [entry['event'] for entry in record['events']]
+        by_name = {entry['event']: entry for entry in record['events']}
+        if (names.count('replication_cpu') != 1
+                or names.count('genome_hydrolysis_cpu_rng') != 1
+                or not names.index('translation_cpu')
+                < names.index('replication_cpu')
+                < names.index('surface_assembly')
+                < names.index('genome_hydrolysis_cpu_rng')
+                < names.index('motion')
+                or by_name['replication_cpu']['status'] != 'executed'
+                or by_name['replication_cpu']['metadata'].get('authority')
+                != _A48C8_AUTHORITY
+                or by_name['replication_cpu']['metadata'].get('branch')
+                != 'disabled'):
+            raise AssertionError(device + ' c8 successor order differs')
+        successor_details.append(device)
+    if legacy_called:
+        raise AssertionError('owned A4.8c8 successor used CPU fallback')
+
+    seed_hybrid = _a48c8_hybrid_from_state(
+        successor_case['state'], successor_case['capacity'], 'cpu',
+    )
+    twin = seed_hybrid.clone()
+    with tempfile.TemporaryDirectory() as directory:
+        path = os.path.join(directory, 'a48c8.pkl')
+        seed_hybrid.save(path)
+        restored = a48c8.Hybrid066WorldA4ReplicationEarlyNoop.load(path)
+        for value in (seed_hybrid, twin, restored):
+            if (type(value)
+                    is not a48c8.Hybrid066WorldA4ReplicationEarlyNoop
+                    or type(value.scheduler)
+                    is not a48c8.A4ReplicationEarlyNoopEventScheduler
+                    or value.scheduler.a4_device != 'cpu'
+                    or value.scheduler.a4_config
+                    != successor_case['capacity']
+                    or value.scheduler.
+                    replication_early_noop_integration_state() != {
+                        'schema': a48c8.INTEGRATION_SCHEMA_VERSION,
+                        'config': a48._config_state(
+                            successor_case['capacity'],
+                        ),
+                        'device': 'cpu',
+                    }):
+                raise AssertionError('A4.8c8 save/clone authority was lost')
+        for index, value in enumerate((seed_hybrid, twin, restored)):
+            expected = _a48c8_world_for_case(successor_case)
+            expected.step(successor_case['dt'])
+            receipt = value.step(successor_case['dt'])
+            v3._assert_world_pair(
+                expected, value, state_atol=v3.WORLD_FP64_ATOL,
+                ledger_atol=v3.LEDGER_ATOL,
+                label='a48c8.persisted.%d' % index,
+            )
+            metadata = {
+                entry['event']: entry['metadata']
+                for entry in receipt['cells'][0]['events']
+            }
+            if metadata['replication_cpu'].get('authority') != _A48C8_AUTHORITY:
+                raise AssertionError('persisted c8 authority differs')
+
+    active = _a48c8_hybrid_from_state(
+        successor_case['state'], successor_case['capacity'], 'cpu',
+    )
+    active.scheduler.begin_step(active.world, active.world.cells)
+    _assert_raises(a3s.A3SchedulerProtocolError, active.clone)
+    active.scheduler.abort_step(RuntimeError('expected pending-save rejection'))
+    for flag in (
+            '_a4_replication_commit_active',
+            '_a4_replication_completion_commit_active',
+            '_a4_replication_completion_mutation_commit_active',
+            '_a4_replication_start_commit_active',
+            '_a4_replication_mutation_free_start_commit_active',
+            '_a4_replication_start_completion_commit_active',
+            '_a4_replication_start_completion_mutation_commit_active',
+            '_a4_replication_early_noop_commit_active'):
+        setattr(active.scheduler, flag, True)
+        try:
+            _assert_raises(a3s.A3SchedulerProtocolError, active.state_dict)
+        finally:
+            setattr(active.scheduler, flag, False)
+
+    signature = inspect.signature(
+        a48c8.A4ReplicationEarlyNoopEventScheduler.cpu_replication,
+    )
+    c8_names = tuple(fn.__name__ for fn in A48C8_TESTS)
+    expected_status = (
+        'a4.8c8-canonical-valid-alive-nonempty-nonnegative-atp-ordered-'
+        'disabled-no-genome-replicase-gate-inactive-multi-genome-'
+        'resident-early-noop-last-symbol-only-atomic-commit-plus-a4.8c7-'
+        'c6-c5-c4-c3-c2-c1-inherited-normal-work'
+    )
+    if (tuple(signature.parameters)
+            != ('self', 'world', 'cell', 'dt', 'config')
+            or not callable(a48c8.paid_replication_early_noop_numpy)
+            or not callable(a48c8.paid_replication_early_noop_torch)
+            or not issubclass(
+                a48c8.A4ReplicationEarlyNoopEventScheduler,
+                a48c7.A4ReplicationStartCompletionMutationEventScheduler,
+            )
+            or not issubclass(
+                a48c8.Hybrid066WorldA4ReplicationEarlyNoop,
+                a48c7.Hybrid066WorldA4ReplicationStartCompletionMutation,
+            )
+            or a48c8.PORT_STATUS.get('genome_replication')
+            != expected_status
+            or a48c8.FULL_GPU_WORLD_STEP is not False
+            or a48c8.PORT_STATUS.get('full_gpu_world_step') is not False
+            or len(TESTS) != 82
+            or len(A48C8_TESTS) != 4
+            or len(VALIDATION_TESTS) != 86
+            or c8_names != (
+                'test_a48c8_pre_active_noop_branch_order_formal066_oracle',
+                'test_a48c8_candidate_cpu_cuda_resident_classifier_purity_and_fresh_binding',
+                'test_a48c8_capacity_trust_exclusions_rollback_and_exact_once',
+                'test_a48c8_inherited_c7_c6_c5_c4_c3_c2_c1_save_clone_successor_and_authority',
+            )
+            or hashlib.sha256(
+                '\n'.join(fn.__name__ for fn in TESTS).encode('utf-8')
+            ).hexdigest() != _A48C8_PRIOR_TEST_NAMES_SHA256
+            or _a48c7_prior_test_ast_sha256(TESTS)
+            != _A48C8_PRIOR_TEST_AST_SHA256):
+        raise AssertionError(
+            'A4.8c8 API/scope/frozen82/total86 authority differs'
+        )
+    expected_hashes = dict(_A48C7_PRIOR_CORE_SHA256)
+    expected_hashes[
+        'src/0_6_8/'
+        'SOMA_CELL_0_6_8_gpu_a4_replication_start_completion_mutation_integration.py'
+    ] = _A48C7_CORE_SHA256
+    expected_hashes[
+        'src/0_6_8/'
+        'SOMA_CELL_0_6_8_gpu_a4_replication_early_noop_integration.py'
+    ] = _A48C8_CORE_SHA256
+    for relative, expected_hash in expected_hashes.items():
+        if _sha256(os.path.join(ROOT, *relative.split('/'))) != expected_hash:
+            raise AssertionError(relative + ' changed from frozen authority')
+    return ('c1-c7 CPU/CUDA delegates %s; owned successor %s; save/load/'
+            'clone exact; c1-c8 active/pending save reject; frozen82 names/'
+            'function-AST + total86 + A3/pure/c1-c8 hashes/full_gpu=false' % (
+                '/'.join(delegated), '/'.join(successor_details),
+            ))
+
+
 TESTS = (
     test_api_scope,
     test_source_hash_inputs_present,
@@ -19144,11 +20864,20 @@ TESTS = (
     test_a48c7_inherited_c6_c5_c4_c3_c2_c1_save_clone_successor_and_authority,
 )
 
+A48C8_TESTS = (
+    test_a48c8_pre_active_noop_branch_order_formal066_oracle,
+    test_a48c8_candidate_cpu_cuda_resident_classifier_purity_and_fresh_binding,
+    test_a48c8_capacity_trust_exclusions_rollback_and_exact_once,
+    test_a48c8_inherited_c7_c6_c5_c4_c3_c2_c1_save_clone_successor_and_authority,
+)
+
+VALIDATION_TESTS = TESTS + A48C8_TESTS
+
 
 def run_all(write=False, output_dir=None):
     rows = []
     started = time.time()
-    for fn in TESTS:
+    for fn in VALIDATION_TESTS:
         then = time.perf_counter()
         try:
             detail = fn()
@@ -19169,7 +20898,7 @@ def run_all(write=False, output_dir=None):
     failed = sum(row['status'] == 'FAIL' for row in rows)
     elapsed = time.time() - started
     payload = {
-        'build': a48c7.BUILD,
+        'build': a48c8.BUILD,
         'schema': {
             'ragged_genome': a4.SCHEMA_VERSION,
             'gene_cache': a4.GENE_CACHE_SCHEMA_VERSION,
@@ -19218,10 +20947,14 @@ def run_all(write=False, output_dir=None):
             'mutation_enabled_inactive_start_completion_atomic_commit': (
                 a48c7.SCHEMA_VERSION
             ),
+            'replication_early_noop_plan': a48c8.SCHEMA_VERSION,
+            'replication_early_noop_atomic_commit': (
+                a48c8.INTEGRATION_SCHEMA_VERSION
+            ),
         },
         'development_slice': (
-            'A4.8c7-mutation-enabled-inactive-template-start-'
-            'same-call-completion-atomic-commit-bridge'
+            'A4.8c8-pre-active-ordinary-early-noop-'
+            'resident-classifier-atomic-commit-bridge'
         ),
         'promoted_baseline_unchanged': 'SOMA-CELL 0.6.8-GPU A3',
         'full_gpu_world_step': False,
@@ -19243,7 +20976,7 @@ def run_all(write=False, output_dir=None):
             writer.writeheader()
             writer.writerows(rows)
         lines = [
-            '%s VALIDATION' % a48c7.BUILD,
+            '%s VALIDATION' % a48c8.BUILD,
             '%d PASS / %d FAIL / %d TOTAL' % (passed, failed, len(rows)),
             'elapsed %.6fs' % elapsed,
             '',
