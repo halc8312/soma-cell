@@ -1,6 +1,6 @@
 # SOMA-CELL 0.6.8-GPU A4 contract
 
-Status: A4 development contract through slice A4.8c6. This is not an A4
+Status: A4 development contract through slice A4.8c7. This is not an A4
 promotion.
 
 ## Authority
@@ -955,6 +955,81 @@ does not implement mutation-enabled same-call start completion, ordinary
 pre-active early-return authority, persistent resident state, a device RNG,
 speedup, A4 completion, or a full GPU world-step.
 
+## A4.8c7 scope
+
+A4.8c7 adds the mutation-enabled inactive-template-start/same-call-completion
+branch above A4.8c6 in a new module.
+`A4ReplicationStartCompletionMutationEventScheduler` accepts one alive cell
+with `mutation == true`, no active template, an empty copy, and exactly one
+non-empty complete genome when an event-local synthetic active-start source
+completes through the A4.6b1/A4.6b2 completion-mutation path. Active sources,
+inactive mutation-free sources, and mutation-enabled start/noncompletion retain
+their A4.8c1-c6 authorities. Ordinary pre-active no-op branches stop before
+claim without frozen-CPU fallback.
+
+Dispatch uses a deep-copied `mutation == false` config only to classify the
+synthetic resident public completion plan as completion or noncompletion. That
+clone is never commit authority. The A4.5b start tape is not concatenated with
+A4.6b1 because it rejects same-call completion and would replay the append RNG
+draws twice. Instead, private factory-authenticated selection evidence executes
+exactly one real high-level `integers(0, 1)` call on a cloned PCG64 state and
+binds both live and synthetic identities, cell ID, exact `dt`, mutation config
+digest, bounds/index/count, schedule digest, and complete before/after state.
+Its after-state is exactly the A4.6b1 tape before-state. A combined chain digest
+binds both factory-verified schedules, identities/provenance, config, `dt`, and
+all three PCG64 boundaries and is rederived before claim and recorded in the
+receipt.
+
+The remaining frozen RNG order is one scalar threshold draw per paid append
+with an immediate bounded-integer replacement draw only on a hit, followed by
+insertion, deletion, duplication, inversion, transposition, and minimum-padding
+draws. Maximum-length and nucleotide-budget tail trims occur after those draws,
+consume no further RNG, and do not erase already recorded event counts. The
+explicit A4.6b2 resident Torch final-polymer plan is commit authority; the
+independently replayed NumPy plan is validation only. Discrete fields and final
+bytes are exact, permitted fp64 fields use absolute tolerance at most `2e-12`,
+and the registered lesion-mean division permits at most one ULP. Host oracle
+values are never substituted.
+
+For source length `T` and final length `L = T + delta`, topology moves from
+live `Q=1, S=T`, through the deep-isolated synthetic active state `Q=3, S=2T`,
+to final `Q=2, S=T+L`. The A4.6b2 plan is synthetic-relative, so its sequence
+delta is `-1` and symbol delta is `delta`; the live net change is one complete
+genome and lesion entry plus `L` material symbols. Exact transaction capacity
+is `Q=3`, `S=max(2T,T+L)`, `W=max(T,L)`, and the maximum source/synthetic/final
+protein and decoded-cache union `P`; every one-short case fails before claim
+without clipping, reallocation, or fallback. NUCLEOTIDE pays `T` append symbols
+then pays or refunds `delta`, for net cost `L`; ATP follows only the paid append.
+
+After one claim, the bridge appends a new non-aliasing final genome and lesion,
+clears template state, installs a fresh empty copy list, publishes cycle and
+replication/proofreading telemetry, refreshes the existing gene-cache mapping,
+conditionally sets `novel_path_first_age`, and applies the attested tape
+after-state to the same live Generator. The existing mutation-ledger object,
+key set, and insertion order are preserved; substitution and the five ordered
+structural counters are added to their existing values while unknown keys are
+untouched. This is a final-state guarantee, not a frozen-CPU internal
+write-trace claim. Receipt metadata includes the ordered structural-count list,
+final length, exact transaction capacity, selection and tape schedule digests,
+combined chain digest, and combined high-level RNG call count.
+
+Immediately before claim, live source/config/`dt`/RNG, selection evidence,
+synthetic binding, A4.6b1 tape, NumPy oracle, resident source/tape/plan, direct
+net candidate, and fresh final binding are all regenerated or re-attested,
+including factory tokens, digests, object associations, non-aliasing storage,
+device, pointers, versions, and values. Preclaim failure changes no live state,
+RNG, or receipt. Publish failure restores the inactive `None` template, original
+empty-copy object, pools, prior genome arrays and genome/lesion outer lists,
+nested gene cache, mutation ledger, proteins, damaged proteins, cycle,
+telemetry, novel-path age, world energy, and live RNG object/state, then leaves
+an aborted outer receipt. Save/load/clone preserve the c7 world/scheduler type,
+capacity, config, device, and inherited c1-c6 metadata; active or pending
+serialization is rejected and all transaction artifacts remain event-local.
+
+A4.8c7 remains a correctness-only, per-event explicit-readback bridge. It does
+not implement ordinary pre-active early-return authority, persistent resident
+state, a device RNG, speedup, A4 completion, or a full GPU world-step.
+
 ## Fail-closed invariants
 
 Ragged foundation invariants remain unchanged:
@@ -1085,25 +1160,25 @@ Hydrolysis-deletion-plan invariants are:
   Failure while publishing restores the original object identities and values
   and is recorded by the outer scheduler as an aborted step.
 
-## Explicit exclusions through A4.8c6
+## Explicit exclusions through A4.8c7
 
 - No scheduler/world integration other than the single-cell translation,
   pre-existing-active noncompletion, mutation-free completion, mutation-
   enabled completion, mutation-enabled inactive-template-start noncompletion
   replication, mutation-free inactive-template-start noncompletion and
-  same-call-completion replication, and hydrolysis event replacements in
-  `Hybrid066WorldA4ReplicationStartCompletion`.
+  mutation-free and mutation-enabled same-call-completion replication, and
+  hydrolysis event replacements in
+  `Hybrid066WorldA4ReplicationStartCompletionMutation`.
 - No caller-supplied tape/plan/candidate authority, persistent A4 arena, or
   multi-cell translation/replication/RNG batch. The wrapper rebuilds one
   disposable binding per event and preserves inherited per-cell event/RNG
   interleaving.
-- No mutation-enabled same-call start-completion, or disabled/no-genome/
-  replicase-gated and other ordinary pre-active-return authority. Those
-  replication branches remain outside the A4.8c6 wrapper
+- No disabled/no-genome/replicase-gated and other ordinary pre-active-return
+  authority. Those replication branches remain outside the A4.8c7 wrapper
   scope; inherited active zero-work noncompletion remains A4.8c1 authority.
 - No change to promoted A3 standalone `gene_refresh`, `translation_cpu`,
   `replication_cpu`, or hydrolysis bridge code, and no change to A4.3/A4.8a
-  or A4.8b/c1/c2/c3/c4/c5 implementations. Their behavior is replaced only
+  or A4.8b/c1/c2/c3/c4/c5/c6 implementations. Their behavior is replaced only
   inside the new wrapper.
 - No device RNG kernel or performance claim; the correctness bridges
   intentionally perform explicit per-cell host/device validation round trips.
@@ -1112,7 +1187,7 @@ Hydrolysis-deletion-plan invariants are:
   CUDA, multi-stream, multi-GPU, or online-GPU abstraction.
 - No formal 13-spec/65-measurement benchmark and no speedup claim.
 
-## Acceptance through A4.8c6
+## Acceptance through A4.8c7
 
 - All A4.1 lossless/corruption/capacity/residency tests remain PASS.
 - Nested valid markers and invalid-outer/valid-inner recovery match frozen
@@ -1468,6 +1543,31 @@ Hydrolysis-deletion-plan invariants are:
   A3 and prior A4 pure/A4.8a/b/c1/c2/c3/c4/c5 sources remain unchanged and
   `full_gpu_world_step=false`.
 
+- Direct Formal066 mutation-enabled inactive-start/same-call-completion
+  fixtures cover deletion/refund (`L=574`), expansion (`L=592`), short
+  padding plus budget trim (`L=3`), and primed missing-lesion completion
+  (`L=496`). They preserve the literal selection-to-append-to-structural PCG64
+  call order and complete state, final polymer/lesion, paid pools, topology,
+  six additive mutation counters, unknown ledger key/order, refreshed cache,
+  telemetry, and novel-path behavior.
+- Torch CPU and explicit RTX 4060 Ti CUDA candidates use the A4.6b2 resident
+  final plan as authority. All 109 recorded resident pointers remain on the
+  requested device and stable through preparation; the factory-authenticated
+  selection/A4.6b1 chain digest, explicit readback, independent NumPy plan,
+  fresh final binding, and direct Formal066 state agree.
+- Exact `Q=3`, `S=max(2T,T+L)`, `W=max(T,L)`, and exact `P` pass on CPU/CUDA;
+  every one-short host case fails before claim. Twenty-four trust mutations, seven
+  no-fallback ordinary scopes, duplicate/order errors, and injected
+  post-publish corruption obey the declared preclaim no-change or complete
+  identity-preserving rollback semantics.
+- All c1-c6 authorities delegate correctly on CPU/CUDA without frozen-CPU
+  fallback. The owned c7 branch does not delegate, a legal full-world successor
+  preserves event order and Formal066 state, save/load/clone retain exact c7
+  authority, and all c1-c7 active/pending saves are rejected.
+- All 82 A4 development tests pass with explicit CUDA required while promoted
+  A3 and prior A4 pure/A4.8a/b/c1/c2/c3/c4/c5/c6 sources and the first 78 test
+  names/function AST remain unchanged and `full_gpu_world_step=false`.
+
 Known A4.4b integration blockers are recorded rather than hidden.  On the
 measured six-cell development fixture the current fixed symbol-rank Torch plan
 was about 503 ms per call versus about 10.1 ms for NumPy, so it is not a
@@ -1485,14 +1585,15 @@ division was rejected as disproportionate complexity.  The launch-heavy path
 must be redesigned and remeasured before scheduler authority, promotion, or
 any speedup claim.
 
-A4.8a, A4.8b, A4.8c1, A4.8c2, A4.8c3, A4.8c4, A4.8c5, and A4.8c6 are bounded
+A4.8a, A4.8b, A4.8c1, A4.8c2, A4.8c3, A4.8c4, A4.8c5, A4.8c6, and A4.8c7
+are bounded
 exceptions to the earlier pure-descriptor boundary: the opt-in wrapper commits
 paid translation, pre-existing-active noncompletion replication, mutation-free
 active completion, mutation-enabled active completion, mutation-enabled and
-mutation-free inactive template-start noncompletion, mutation-free inactive
-template-start same-call completion, and one hydrolysis event only after
+mutation-free inactive template-start noncompletion, mutation-free and
+mutation-enabled inactive template-start same-call completion, and one
+hydrolysis event only after
 complete resident readback/replay. The promoted A3 standalone bridges remain
 byte-identical, no persistent resident chain or performance claim is implied,
-and mutation-enabled same-call start completion, pre-active-gate early-return
-replication authority, division, and the A5/A6 subsystems remain separate
-later slices.
+and pre-active-gate early-return replication authority, division, and the A5/A6
+subsystems remain separate later slices.

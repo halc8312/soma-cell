@@ -1,5 +1,5 @@
 # coding: utf-8
-"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.8c6 slices."""
+"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.8c7 slices."""
 from __future__ import division
 
 import argparse
@@ -32,6 +32,7 @@ import SOMA_CELL_0_6_8_gpu_a4_replication_completion_mutation_integration as a48
 import SOMA_CELL_0_6_8_gpu_a4_replication_start_integration as a48c4
 import SOMA_CELL_0_6_8_gpu_a4_replication_start_mutation_free_integration as a48c5
 import SOMA_CELL_0_6_8_gpu_a4_replication_start_completion_integration as a48c6
+import SOMA_CELL_0_6_8_gpu_a4_replication_start_completion_mutation_integration as a48c7
 import SOMA_CELL_0_6_8_gpu_a3_scheduler as a3s
 import SOMA_CELL_0_6_8_A3_validation as v3
 
@@ -40,9 +41,9 @@ try:
 except Exception:  # pragma: no cover
     torch = None
 
-RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_8C6_VALIDATION_RESULTS.json'
-RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_8c6_validation.csv'
-RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_8C6_VALIDATION_RESULTS.txt'
+RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_8C7_VALIDATION_RESULTS.json'
+RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_8c7_validation.csv'
+RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_8C7_VALIDATION_RESULTS.txt'
 
 SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4.py',
@@ -56,6 +57,7 @@ SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_start_integration.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_start_mutation_free_integration.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_start_completion_integration.py',
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_start_completion_mutation_integration.py',
     'src/0_6_8/SOMA_CELL_0_6_8_A4_validation.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3_scheduler.py',
@@ -17228,6 +17230,1835 @@ def test_a48c6_inherited_c5_c4_c3_c2_c1_save_clone_successor_and_authority():
             ))
 
 
+_A48C7_TEST_NAMES_SHA256 = (
+    '11575e2e6642db726cd4d4da633ed3a4a6d6eaccae195ffe1bc7d681cb9c33f7'
+)
+
+_A48C7_TEST_AST_SHA256 = (
+    'a73f0fceadedc8029704574d9861831d033720fe5f59777bfabc4c4c59ecd087'
+)
+
+_A48C7_PRIOR_CORE_SHA256 = dict(_A48C6_PRIOR_CORE_SHA256)
+_A48C7_PRIOR_CORE_SHA256[
+    'src/0_6_8/'
+    'SOMA_CELL_0_6_8_gpu_a4_replication_start_completion_integration.py'
+] = _A48C6_CORE_SHA256
+
+# Filled from the audited final c7 bytes before canonical insertion.
+_A48C7_CORE_SHA256 = (
+    '91c1c8ae7e3f623100353d2e51a8a12b96454d2e08de262031c1d97b8f5de7fb'
+)
+
+_A48C7_EXPECTED_CASES = {
+    'deletion-refund': {
+        'requested': 4083, 'template_length': 576, 'final_length': 574,
+        'substitution': 179, 'structural': (0, 2, 0, 0, 0),
+        'padding': 0, 'material_delta': -2,
+        'capacity': (1, 3, 1152, 576, 46), 'rng_call_count': 763,
+        'rng_before_cache': (0, 0),
+        'rng_after_cache': (1, 1669040376),
+        'new_lesion': 10.941200030393253,
+    },
+    'expansion': {
+        'requested': 4083, 'template_length': 576, 'final_length': 592,
+        'substitution': 194, 'structural': (0, 0, 16, 0, 1),
+        'padding': 0, 'material_delta': 16,
+        'capacity': (1, 3, 1168, 592, 42), 'rng_call_count': 781,
+        'rng_before_cache': (0, 0),
+        'rng_after_cache': (1, 4106076383),
+        'new_lesion': 11.277114991615834,
+    },
+    'padding-budget-trim': {
+        'requested': 166, 'template_length': 3, 'final_length': 3,
+        'substitution': 0, 'structural': (3, 0, 0, 1, 0),
+        'padding': 26, 'material_delta': 0,
+        'capacity': (1, 3, 6, 3, 31), 'rng_call_count': 14,
+        'rng_before_cache': (0, 0),
+        'rng_after_cache': (0, 2655235611),
+        'new_lesion': 0.181072,
+    },
+    'missing-lesion-primed': {
+        'requested': 5972, 'template_length': 496, 'final_length': 496,
+        'substitution': 133, 'structural': (0, 0, 0, 0, 1),
+        'padding': 0, 'material_delta': 0,
+        'capacity': (1, 3, 992, 496, 41), 'rng_call_count': 638,
+        'rng_before_cache': (1, 925098552),
+        'rng_after_cache': (1, 183994996),
+        'new_lesion': 8.21351039154056,
+    },
+}
+
+
+def _a48c7_world_for_case(case, track_rng=False, track_ledger=False):
+    return _a48c6_world_for_case(
+        case, track_rng=track_rng, track_ledger=track_ledger,
+    )
+
+
+def _a48c7_cases():
+    """Four fixed continuous selection/append/structural PCG64 chains."""
+    bases = {case['label']: case for case in _a48c6_cases()}
+    definitions = (
+        ('deletion-refund', 'normal-unprimed', 13039, False, False),
+        ('expansion', 'normal-unprimed', 13122, False, False),
+        ('padding-budget-trim', 'normal-unprimed', 15335, False, True),
+        (
+            'missing-lesion-primed', 'missing-lesion-unprimed',
+            16001, True, False,
+        ),
+    )
+    result = []
+    structural_names = tuple(a44.STRUCTURAL_EVENT_NAMES)
+    for offset, (label, base_label, seed, primed, short) in enumerate(
+            definitions):
+        base = bases[base_label]
+        world = _a48c6_world_for_case(base)
+        cell = world.cells[0]
+        world.config.mutation = True
+        if short:
+            cell.genomes = [np.asarray((3, 4, 5), dtype=np.uint8)]
+            cell.genome_lesions = [0.2]
+            cell.pools[a4.a3.POOL_NUCLEOTIDE] = (
+                3.0 * float(a4.g2.MONOMER_MASS)
+            )
+            cell.pools[a4.a3.POOL_ATP] = 2.0
+            cell._refresh_gene_cache()
+        else:
+            cell.pools[a4.a3.POOL_NUCLEOTIDE] = 2.0
+            cell.pools[a4.a3.POOL_ATP] = 2.0
+        cell.mutation_events['a48c7_extra_sentinel'] = 501 + offset
+        world.rng = np.random.Generator(np.random.PCG64(seed))
+        if primed:
+            world.rng.integers(0, int(a4.g2.ALPHABET_SIZE) - 1)
+        world.initial_total_material = world.total_material()
+        world.last_step_material_residual = 0.0
+        state = v3.pickle_clone(world.state_dict())
+        provisional = {
+            'state': state,
+            'drop_lesions': bool(base.get('drop_lesions', False)),
+        }
+
+        direct = _a48c7_world_for_case(provisional, track_rng=True)
+        before = copy.deepcopy(direct.cells[0])
+        mutation_before = copy.deepcopy(before.mutation_events)
+        rng_before = copy.deepcopy(direct.rng.bit_generator.state)
+        direct.cells[0]._replicate_genome(direct, 100.0, direct.config)
+        after = direct.cells[0]
+
+        selection = _A48C5TrackingGenerator(rng_before)
+        if (a48c5._formal066_single_template_selection(selection) != 0
+                or selection.calls != [('integers', (0, 1), {})]):
+            raise AssertionError(label + ' literal selection call drifted')
+        rng_after_selection = copy.deepcopy(
+            selection.bit_generator.state,
+        )
+        synthetic = _a48c6_synthetic_active_cell(before)
+        capacity_values = _a48c2_capacity_for_transition(
+            synthetic, after,
+        )
+        capacity = a4.GPU068A4Config(**capacity_values)
+        packed_world = _a48c7_world_for_case(provisional)
+        source_ragged, _, source_binding = _paid_replication_binding(
+            [packed_world.cells[0]], packed_world.config, capacity,
+        )
+        synthetic_ragged, _, synthetic_binding = _paid_replication_binding(
+            [synthetic], packed_world.config, capacity,
+        )
+        tape = a44.prepare_completion_mutation_rng_tape(
+            synthetic_binding, 100.0, packed_world.config,
+            rng_after_selection,
+        )
+        plan = a44.paid_replication_completion_mutation_plan(
+            synthetic_binding, 100.0, packed_world.config, tape,
+        )
+        final_ragged = a4.FullFidelityA4GenomeAdapter(
+            capacity,
+        ).pack_cells([after])
+
+        # Independent frozen replay begins after selection from the synthetic
+        # active state.  Its exact high-level call signatures must equal the
+        # tail of the one-call inactive Formal066 trace.
+        replay_world = _a48c7_world_for_case(provisional)
+        replay_world.rng = _A48C5TrackingGenerator(rng_after_selection)
+        replay_cell = copy.deepcopy(synthetic)
+        replay_world.cells = [replay_cell]
+        replay_cell._replicate_genome(
+            replay_world, 100.0, replay_world.config,
+        )
+        _a48b_assert_cell_matches(
+            after, replay_cell, 'a48c7.fixture.replay.' + label,
+            atol=a48c7.REPLICATION_ORACLE_ATOL,
+        )
+
+        expected = _A48C7_EXPECTED_CASES[label]
+        structural = tuple(
+            int(after.mutation_events[name])
+            - int(mutation_before[name])
+            for name in structural_names
+        )
+        substitution = (
+            int(after.mutation_events['substitution'])
+            - int(mutation_before['substitution'])
+        )
+        capacity_tuple = tuple(
+            int(capacity_values[name]) for name in (
+                'max_cells', 'max_sequences', 'max_symbols',
+                'max_sequence_symbols', 'max_proteins_per_cell',
+            )
+        )
+        before_cache = (
+            int(rng_before['has_uint32']), int(rng_before['uinteger']),
+        )
+        rng_after = copy.deepcopy(direct.rng.bit_generator.state)
+        after_cache = (
+            int(rng_after['has_uint32']), int(rng_after['uinteger']),
+        )
+        template_length = len(before.genomes[0])
+        final_length = len(after.genomes[-1])
+        values = {
+            'requested': int(plan.requested_symbols[0]),
+            'template_length': template_length,
+            'final_length': final_length,
+            'substitution': substitution,
+            'structural': structural,
+            'padding': int(tape.padding_count[0]),
+            'material_delta': int(plan.material_delta_symbols[0]),
+            'capacity': capacity_tuple,
+            'rng_call_count': len(direct.rng.calls),
+            'rng_before_cache': before_cache,
+            'rng_after_cache': after_cache,
+        }
+        if (values != {
+                key: expected[key] for key in values
+                }
+                or abs(
+                    float(after.genome_lesions[-1])
+                    - float(expected['new_lesion'])
+                ) > 1e-15
+                or direct.rng.calls[:1]
+                != [('integers', (0, 1), {})]
+                or direct.rng.calls[1:] != replay_world.rng.calls
+                or tape.rng_before_state != rng_after_selection
+                or tape.rng_after_state != rng_after
+                or len(direct.rng.calls)
+                != 1 + _a48c3_completion_mutation_rng_call_count(tape)
+                or int(source_ragged.sequence_count) != 1
+                or int(source_ragged.symbol_count) != template_length
+                or int(synthetic_ragged.sequence_count) != 3
+                or int(synthetic_ragged.symbol_count) != 2 * template_length
+                or int(final_ragged.sequence_count) != 2
+                or int(final_ragged.symbol_count)
+                != template_length + final_length
+                or not np.array_equal(
+                    plan.final_symbols[0, :final_length],
+                    after.genomes[-1],
+                )):
+            raise AssertionError(label + ' fixed c7 fixture drifted')
+
+        result.append({
+            'label': label, 'state': state,
+            'drop_lesions': provisional['drop_lesions'],
+            'cell_id': int(cell.cell_id), 'dt': 100.0,
+            'capacity': capacity, 'capacity_values': capacity_values,
+            'template_length': template_length,
+            'final_length': final_length,
+            'requested': int(plan.requested_symbols[0]),
+            'substitution': substitution,
+            'structural': structural,
+            'padding': int(tape.padding_count[0]),
+            'material_delta': int(plan.material_delta_symbols[0]),
+            'rng_call_count': len(direct.rng.calls),
+            'rng_before_state': rng_before,
+            'rng_after_selection_state': rng_after_selection,
+            'rng_after_state': rng_after,
+            'tape_state': tape.state_dict(),
+            'plan_state': plan.state_dict(),
+            'mutation_before': tuple(mutation_before.items()),
+            'mutation_after': tuple(after.mutation_events.items()),
+            'source_lesions': len(before.genome_lesions),
+            'final_lesions': len(after.genome_lesions),
+            'new_lesion': float(after.genome_lesions[-1]),
+        })
+    return result
+
+
+def _a48c7_assert_completion_oracle(expected_world, expected_cell,
+                                     actual_world, actual_cell, label):
+    _a48b_assert_cell_matches(
+        expected_cell, actual_cell, label,
+        atol=a48c7.REPLICATION_ORACLE_ATOL,
+    )
+    if (expected_world.rng.bit_generator.state
+            != actual_world.rng.bit_generator.state
+            or float(expected_world.dissipated_energy)
+            != float(actual_world.dissipated_energy)
+            or len(actual_cell.genomes) != 2
+            or actual_cell.replication_template is not None
+            or actual_cell.replication_copy
+            or float(actual_cell.replication_template_lesion) != 0.0
+            or float(actual_cell.replication_fractional) != 0.0
+            or actual_cell.genomes[-1] is actual_cell.genomes[0]
+            or np.shares_memory(
+                actual_cell.genomes[-1], actual_cell.genomes[0],
+            )):
+        raise AssertionError(label + ' completion/topology/PCG64 differs')
+
+
+def _a48c7_hybrid_from_state(state, capacity=None, device='cpu'):
+    world = a4.a3.s66.Formal066World.from_state(v3.pickle_clone(state))
+    backend = a4.a3.TorchKernelBackendA3(
+        v3._a3_config(device=device, precision='float64'),
+    )
+    return a48c7.Hybrid066WorldA4ReplicationStartCompletionMutation(
+        world, backend=backend,
+        a4_config=capacity or a4.GPU068A4Config(),
+        a4_device=device,
+    )
+
+
+def _a48c7_prior_test_ast_sha256(functions):
+    ast_module = __import__('ast')
+    payload = '\n'.join(
+        ast_module.dump(
+            ast_module.parse(inspect.getsource(function)).body[0],
+            include_attributes=False,
+        )
+        for function in functions
+    )
+    return hashlib.sha256(payload.encode('utf-8')).hexdigest()
+
+
+def test_a48c7_mutation_enabled_inactive_start_completion_formal066_oracle():
+    if torch is None:
+        raise AssertionError('PyTorch is required for A4.8c7')
+    if _REQUIRE_CUDA and not torch.cuda.is_available():
+        raise AssertionError('CUDA required but unavailable; fallback forbidden')
+
+    class ObserveStartCompletionMutation(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            self.observed_candidate = candidate
+            return candidate
+
+    details = []
+    structural_names = tuple(a44.STRUCTURAL_EVENT_NAMES)
+    for case in _a48c7_cases():
+        devices = ['cpu']
+        if torch.cuda.is_available():
+            devices.append('cuda')
+        for device in devices:
+            direct = _a48c7_world_for_case(case, track_rng=True)
+            direct_cell = direct.cells[0]
+            direct_before = copy.deepcopy(direct_cell)
+            direct_cell._replicate_genome(
+                direct, case['dt'], direct.config,
+            )
+
+            selection = _A48C5TrackingGenerator(
+                case['rng_before_state'],
+            )
+            a48c5._formal066_single_template_selection(selection)
+            synthetic = _a48c6_synthetic_active_cell(direct_before)
+            replay = _a48c7_world_for_case(case)
+            replay.rng = _A48C5TrackingGenerator(
+                selection.bit_generator.state,
+            )
+            replay_cell = copy.deepcopy(synthetic)
+            replay.cells = [replay_cell]
+            replay_cell._replicate_genome(
+                replay, case['dt'], replay.config,
+            )
+            if (direct.rng.calls[:1]
+                    != [('integers', (0, 1), {})]
+                    or direct.rng.calls[1:] != replay.rng.calls
+                    or selection.bit_generator.state
+                    != case['rng_after_selection_state']
+                    or len(direct.rng.calls) != case['rng_call_count']):
+                raise AssertionError(
+                    case['label'] + ' direct continuous call order differs'
+                )
+
+            world = _a48c7_world_for_case(
+                case, track_rng=True, track_ledger=True,
+            )
+            cell = world.cells[0]
+            ledger = cell.mutation_events
+            before_ids = _a48c_identity_snapshot(world, cell)
+            old_copy = cell.replication_copy
+            pools_before = np.asarray(cell.pools, np.float64).copy()
+            energy_before = float(world.dissipated_energy)
+            scheduler = ObserveStartCompletionMutation(
+                case['capacity'], device,
+            )
+            _a48c_begin_replication_direct(
+                scheduler, world, cell, case['dt'],
+            )
+            try:
+                scheduler.cpu_replication(
+                    world, cell, case['dt'], world.config,
+                )
+                candidate = scheduler.observed_candidate
+                evidence = candidate.evidence
+                tape = candidate.tape
+                plan = candidate.plan
+                label = 'a48c7.oracle.%s.%s' % (
+                    device, case['label'],
+                )
+                _a48c7_assert_completion_oracle(
+                    direct, direct_cell, world, cell, label,
+                )
+                after_ids = _a48c_identity_snapshot(world, cell)
+                for key in (
+                        'rng', 'pools', 'genomes', 'lesions', 'events',
+                        'proteins', 'damaged', 'gene_specs'):
+                    if after_ids[key] != before_ids[key]:
+                        raise AssertionError(
+                            '%s changed %s identity' % (label, key)
+                        )
+                if (after_ids['genome_items'][:-1]
+                        != before_ids['genome_items']
+                        or cell.replication_copy is old_copy
+                        or cell.replication_copy
+                        is candidate.candidate_cell.replication_copy
+                        or cell.genomes[-1]
+                        is candidate.candidate_cell.genomes[-1]
+                        or np.shares_memory(
+                            cell.genomes[-1],
+                            candidate.candidate_cell.genomes[-1],
+                        )
+                        or np.shares_memory(
+                            cell.genomes[-1],
+                            candidate.synthetic_cell.replication_template,
+                        )):
+                    raise AssertionError(label + ' final topology aliases')
+
+                expected_structural = [
+                    int(value) for value in case['structural']
+                ]
+                paid = {
+                    int(a4.a3.POOL_NUCLEOTIDE),
+                    int(a4.a3.POOL_ATP),
+                }
+                unpaid = [
+                    index for index in range(int(a4.a3.POOL_COUNT))
+                    if index not in paid
+                ]
+                metadata = _a48c_replication_entry(
+                    scheduler, cell,
+                )['metadata']
+                expected_capacity = {
+                    'Q': 3,
+                    'S': int(case['capacity_values']['max_symbols']),
+                    'W': int(
+                        case['capacity_values']['max_sequence_symbols']
+                    ),
+                    'P': int(
+                        case['capacity_values']['max_proteins_per_cell']
+                    ),
+                }
+                final_length = case['final_length']
+                if (cell.mutation_events is not ledger
+                        or tuple(ledger.items())
+                        != case['mutation_after']
+                        or tuple(ledger) != tuple(
+                            key for key, _ in case['mutation_before']
+                        )
+                        or not np.array_equal(
+                            np.asarray(
+                                cell.pools[unpaid], np.float64,
+                            ).view(np.uint64),
+                            pools_before[unpaid].view(np.uint64),
+                        )
+                        or world.rng.calls
+                        or world.rng.bit_generator.state
+                        != case['rng_after_state']
+                        or world.rng is not candidate.live_rng
+                        or float(world.dissipated_energy) != energy_before
+                        or evidence.low != 0 or evidence.high != 1
+                        or evidence.selected_index != 0
+                        or evidence.call_count != 1
+                        or evidence.rng_before_state
+                        != case['rng_before_state']
+                        or evidence.rng_after_state
+                        != case['rng_after_selection_state']
+                        or candidate.rng_after_selection_state
+                        != tape.rng_before_state
+                        or tape.rng_after_state
+                        != candidate.rng_after_state
+                        or candidate.rng_after_state
+                        != case['rng_after_state']
+                        or not a48._state_arrays_bit_exact(
+                            tape.state_dict(), case['tape_state'],
+                        )
+                        or int(plan.requested_symbols[0])
+                        != case['requested']
+                        or int(plan.append_count[0])
+                        != case['template_length']
+                        or int(plan.final_lengths[0]) != final_length
+                        or int(plan.substitution_events[0])
+                        != case['substitution']
+                        or tuple(
+                            int(value) for value in
+                            plan.structural_event_counts[0]
+                        ) != case['structural']
+                        or int(tape.padding_count[0]) != case['padding']
+                        or int(plan.material_delta_symbols[0])
+                        != case['material_delta']
+                        or abs(
+                            float(plan.new_genome_lesions[0])
+                            - case['new_lesion']
+                        ) > a48c7.REPLICATION_ORACLE_ATOL
+                        or not np.array_equal(
+                            plan.final_symbols[0, :final_length],
+                            cell.genomes[-1],
+                        )
+                        or candidate.transaction_capacity
+                        != expected_capacity
+                        or metadata.get('authority') != (
+                            'A4.8c7-resident-mutation-enabled-start-'
+                            'completion-final-plan-pcg64-chain-atomic-commit'
+                        )
+                        or metadata.get('branch') != (
+                            'inactive-template-start-completion-mutation'
+                        )
+                        or metadata.get('mutation_enabled') is not True
+                        or metadata.get('device') != device
+                        or int(metadata.get('template_start_events', 0)) != 1
+                        or int(metadata.get('completion_events', 0)) != 1
+                        or int(metadata.get('substitution_events', -1))
+                        != case['substitution']
+                        or metadata.get('structural_event_counts')
+                        != expected_structural
+                        or int(metadata.get('material_delta_symbols', 999))
+                        != case['material_delta']
+                        or int(metadata.get('final_length', -1))
+                        != final_length
+                        or int(metadata.get('rng_call_count', -1))
+                        != case['rng_call_count']
+                        or metadata.get('rng_schedule_sha256')
+                        != candidate.rng_chain_sha256
+                        or metadata.get('selection_schedule_sha256')
+                        != evidence.schedule_sha256
+                        or metadata.get(
+                            'completion_mutation_schedule_sha256'
+                        ) != tape.schedule_sha256
+                        or metadata.get('transaction_capacity')
+                        != expected_capacity
+                        or not candidate.consumed):
+                    raise AssertionError(
+                        label + ' plan/chain/ledger/receipt differs'
+                    )
+
+                source = candidate.source_binding.ragged
+                transient = candidate.synthetic_binding.ragged
+                final = candidate.fresh_binding.ragged
+                tlen = case['template_length']
+                if (int(source.sequence_count) != 1
+                        or int(source.symbol_count) != tlen
+                        or int(transient.sequence_count) != 3
+                        or int(transient.symbol_count) != 2 * tlen
+                        or int(final.sequence_count) != 2
+                        or int(final.symbol_count) != tlen + final_length
+                        or int(final.lesion_count) != case['final_lesions']):
+                    raise AssertionError(label + ' Q/S/lesion topology differs')
+                details.append('%s:%s:%d/%d' % (
+                    device, case['label'], final_length,
+                    case['rng_call_count'],
+                ))
+            finally:
+                _a48_abort_direct(scheduler, cell)
+    return ('Formal066 deletion/refund, expansion, short padding+budget '
+            'trim, missing-lesion primed; literal selection then independent '
+            'active replay exact calls/state; resident final polymer/pools/'
+            'lesion/counters/cache/ledger/QSWP receipt: '
+            + ', '.join(details))
+
+
+def test_a48c7_candidate_cpu_cuda_synthetic_tape_plan_purity_and_fresh_binding():
+    if torch is None:
+        raise AssertionError('PyTorch is required for A4.8c7')
+    devices = ['cpu']
+    if torch.cuda.is_available():
+        devices.append('cuda')
+    elif _REQUIRE_CUDA:
+        raise AssertionError('CUDA required but unavailable; fallback forbidden')
+
+    case = next(
+        item for item in _a48c7_cases() if item['label'] == 'expansion'
+    )
+    reference = None
+    details = []
+    for device in devices:
+        direct = _a48c7_world_for_case(case)
+        direct.cells[0]._replicate_genome(
+            direct, case['dt'], direct.config,
+        )
+        world = _a48c7_world_for_case(
+            case, track_rng=True, track_ledger=True,
+        )
+        cell = world.cells[0]
+        scheduler = (
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler(
+                case['capacity'], device,
+            )
+        )
+        _a48c_begin_replication_direct(
+            scheduler, world, cell, case['dt'],
+        )
+        before = v3.pickle_clone(world.state_dict())
+        before_ids = _a48c_identity_snapshot(world, cell)
+        before_rng = copy.deepcopy(world.rng.bit_generator.state)
+        before_energy = float(world.dissipated_energy)
+        try:
+            candidate = (
+                scheduler.
+                _prepare_replication_start_completion_mutation_candidate(
+                    world, cell, case['dt'], world.config,
+                )
+            )
+            v3.assert_recursive_close(
+                before, world.state_dict(), 0.0, 0.0,
+                'a48c7.prepare_purity.' + device,
+            )
+            _, record = scheduler._record(cell)
+            if (world.rng.bit_generator.state != before_rng
+                    or world.rng.calls
+                    or float(world.dissipated_energy) != before_energy
+                    or _a48c_identity_snapshot(world, cell) != before_ids
+                    or any(entry['event'] == 'replication_cpu'
+                           for entry in record['events'])):
+                raise AssertionError(device + ' prepare crossed claim/purity')
+
+            if (candidate.candidate_cell is cell
+                    or candidate.synthetic_cell is cell
+                    or candidate.synthetic_cell.pools is cell.pools
+                    or candidate.candidate_cell.pools is cell.pools
+                    or candidate.synthetic_cell.genomes is cell.genomes
+                    or candidate.candidate_cell.genomes is cell.genomes
+                    or candidate.synthetic_cell.replication_template
+                    is cell.genomes[0]
+                    or np.shares_memory(
+                        candidate.synthetic_cell.replication_template,
+                        cell.genomes[0],
+                    )
+                    or np.shares_memory(
+                        candidate.synthetic_cell.replication_template,
+                        candidate.synthetic_cell.genomes[0],
+                    )
+                    or np.shares_memory(
+                        candidate.candidate_cell.genomes[-1],
+                        candidate.synthetic_cell.replication_template,
+                    )
+                    or candidate.plan is candidate.host_replay
+                    or candidate.plan is candidate.resident_plan
+                    or candidate.tape is candidate.resident_tape
+                    or candidate.source_binding
+                    is candidate.synthetic_binding
+                    or candidate.synthetic_binding
+                    is candidate.fresh_binding
+                    or candidate.live_rng is not world.rng):
+                raise AssertionError(device + ' candidate alias/authority differs')
+
+            a48c7._validate_single_template_completion_mutation_selection_evidence(
+                candidate.evidence, candidate.source_binding,
+                candidate.synthetic_binding, case['dt'], world.config,
+            )
+            a44.validate_a4_completion_mutation_rng_tape(
+                candidate.tape, candidate.synthetic_binding,
+                case['dt'], world.config,
+            )
+            if (candidate.evidence.rng_after_state
+                    != candidate.tape.rng_before_state
+                    or candidate.tape.rng_after_state
+                    != candidate.rng_after_state
+                    or a48c7._completion_mutation_rng_chain_sha256(
+                        candidate.evidence, candidate.tape,
+                    ) != candidate.rng_chain_sha256
+                    or a48c3._resident_completion_mutation_artifacts(
+                        candidate.resident_binding,
+                        candidate.resident_tape,
+                        candidate.resident_plan,
+                        device,
+                    ) != candidate.resident_artifacts
+                    or a48c3._host_completion_mutation_artifacts(
+                        candidate.tape, candidate.host_replay,
+                        candidate.plan,
+                    ) != candidate.host_artifacts
+                    or not a48._state_arrays_bit_exact(
+                        candidate.resident_tape.to_numpy().state_dict(),
+                        candidate.tape.state_dict(),
+                    )
+                    or not a48._state_arrays_bit_exact(
+                        candidate.resident_plan.to_numpy().state_dict(),
+                        candidate.plan.state_dict(),
+                    )):
+                raise AssertionError(device + ' tape/plan artifact chain differs')
+
+            a48c3._completion_mutation_plan_semantic_match(
+                candidate.plan, candidate.host_replay,
+            )
+            oracle_mean = np.float64(
+                candidate.host_replay.genome_lesion_mean_after[0]
+            )
+            one_ulp = candidate.plan.clone()
+            one_ulp.genome_lesion_mean_after[0] = np.nextafter(
+                oracle_mean, np.float64(np.inf),
+            )
+            a48c3._completion_mutation_plan_semantic_match(
+                one_ulp, candidate.host_replay,
+            )
+            two_ulp = candidate.plan.clone()
+            two_ulp.genome_lesion_mean_after[0] = np.nextafter(
+                np.nextafter(oracle_mean, np.float64(np.inf)),
+                np.float64(np.inf),
+            )
+            _assert_raises(
+                a48c3.A4ReplicationCompletionMutationCommitError,
+                lambda: a48c3._completion_mutation_plan_semantic_match(
+                    two_ulp, candidate.host_replay,
+                ),
+            )
+            _a48b_assert_cell_matches(
+                direct.cells[0], candidate.candidate_cell,
+                'a48c7.candidate.' + device,
+                atol=a48c7.REPLICATION_ORACLE_ATOL,
+            )
+            a4._require_translation_binding(candidate.fresh_binding)
+            if (not isinstance(
+                    candidate.fresh_binding.ragged.symbols, np.ndarray)
+                    or not isinstance(
+                        candidate.fresh_binding.cache.fingerprints,
+                        np.ndarray)
+                    or np.shares_memory(
+                        candidate.fresh_binding.ragged.symbols,
+                        candidate.source_binding.ragged.symbols,
+                    )
+                    or np.shares_memory(
+                        candidate.fresh_binding.ragged.symbols,
+                        candidate.synthetic_binding.ragged.symbols,
+                    )):
+                raise AssertionError(device + ' fresh host binding aliases')
+
+            stable = (
+                candidate.tape.state_dict(), candidate.plan.state_dict(),
+                candidate.rng_chain_sha256,
+            )
+            if reference is None:
+                reference = stable
+            else:
+                if (not a48._state_arrays_bit_exact(
+                        reference[0], stable[0])
+                        or not a48._state_arrays_bit_exact(
+                            reference[1], stable[1])
+                        or reference[2] != stable[2]):
+                    raise AssertionError(
+                        device + ' differs from CPU candidate authority'
+                    )
+
+            scheduler._commit_replication_start_completion_mutation_candidate(
+                world, cell, case['dt'], world.config, candidate,
+            )
+            _a48c7_assert_completion_oracle(
+                direct, direct.cells[0], world, cell,
+                'a48c7.commit.' + device,
+            )
+            committed = v3.pickle_clone(world.state_dict())
+            committed_rng = copy.deepcopy(world.rng.bit_generator.state)
+            _assert_raises(
+                a48c7.A4ReplicationStartCompletionMutationCommitError,
+                lambda:
+                scheduler._commit_replication_start_completion_mutation_candidate(
+                    world, cell, case['dt'], world.config, candidate,
+                ),
+            )
+            v3.assert_recursive_close(
+                committed, world.state_dict(), 0.0, 0.0,
+                'a48c7.one_shot.' + device,
+            )
+            if world.rng.bit_generator.state != committed_rng:
+                raise AssertionError(device + ' one-shot rejection changed RNG')
+            pointer_count = sum(
+                len(values) for values in
+                candidate.resident_artifacts['data_ptrs'].values()
+            )
+            details.append('%s:%d-pointers' % (device, pointer_count))
+        finally:
+            _a48_abort_direct(scheduler, cell)
+    return ('CPU/CUDA prepare purity; source->synthetic->selection/tape->'
+            'NumPy oracle/Torch resident plan->fresh binding association; '
+            'explicit pointer/version/readback, 1-ULP accept/2-ULP reject, '
+            'deep nonalias and one-shot PASS: ' + '/'.join(details))
+
+
+def _a48c7_assert_preclaim_failure(case, capacity, scheduler_type=None,
+                                    device='cpu', label='scope'):
+    world = _a48c7_world_for_case(case)
+    cell = next(
+        item for item in world.cells
+        if int(item.cell_id) == int(case['cell_id'])
+    )
+    scheduler_type = (
+        scheduler_type
+        or a48c7.A4ReplicationStartCompletionMutationEventScheduler
+    )
+    scheduler = scheduler_type(capacity, device)
+    _a48c_begin_replication_direct(
+        scheduler, world, cell, case['dt'],
+    )
+    before = v3.pickle_clone(world.state_dict())
+    before_ids = _a48c_identity_snapshot(world, cell)
+    before_rng_object = world.rng
+    before_rng = copy.deepcopy(world.rng.bit_generator.state)
+    before_energy = float(world.dissipated_energy)
+    before_receipts = len(scheduler._receipts)
+    try:
+        _assert_raises(
+            (a48c7.A4ReplicationStartCompletionMutationCommitError,
+             a4.A4Error, a3s.A3SchedulerError),
+            lambda: scheduler.cpu_replication(
+                world, cell, case['dt'], world.config,
+            ),
+        )
+        expected_world = getattr(
+            scheduler, 'expected_world_state', before,
+        )
+        expected_rng = getattr(
+            scheduler, 'expected_rng_state', before_rng,
+        )
+        v3.assert_recursive_close(
+            expected_world, world.state_dict(), 0.0, 0.0,
+            'a48c7.preclaim.' + label,
+        )
+        _, record = scheduler._record(cell)
+        if (world.rng is not before_rng_object
+                or world.rng.bit_generator.state != expected_rng
+                or float(world.dissipated_energy) != before_energy
+                or _a48c_identity_snapshot(world, cell) != before_ids
+                or len(scheduler._receipts) != before_receipts
+                or any(entry['event'] == 'replication_cpu'
+                       for entry in record['events'])):
+            raise AssertionError(label + ' crossed preclaim boundary')
+    finally:
+        _a48_abort_direct(scheduler, cell)
+
+
+def test_a48c7_capacity_trust_scope_rollback_and_exact_once():
+    if torch is None:
+        raise AssertionError('PyTorch is required for A4.8c7 trust tests')
+    devices = ['cpu']
+    if torch.cuda.is_available():
+        devices.append('cuda')
+    elif _REQUIRE_CUDA:
+        raise AssertionError('CUDA required but unavailable; fallback forbidden')
+    cases = {case['label']: case for case in _a48c7_cases()}
+
+    axes = (
+        ('Q', 'max_sequences', 'deletion-refund'),
+        ('S', 'max_symbols', 'expansion'),
+        ('W', 'max_sequence_symbols', 'expansion'),
+        ('P', 'max_proteins_per_cell', 'deletion-refund'),
+    )
+    capacity_details = []
+    for axis, key, case_label in axes:
+        case = cases[case_label]
+        exact = a4.GPU068A4Config(**case['capacity_values'])
+        direct = _a48c7_world_for_case(case)
+        direct.cells[0]._replicate_genome(
+            direct, case['dt'], direct.config,
+        )
+        for device in devices:
+            world = _a48c7_world_for_case(case)
+            cell = world.cells[0]
+            scheduler = (
+                a48c7.A4ReplicationStartCompletionMutationEventScheduler(
+                    exact, device,
+                )
+            )
+            _a48c_begin_replication_direct(
+                scheduler, world, cell, case['dt'],
+            )
+            try:
+                scheduler.cpu_replication(
+                    world, cell, case['dt'], world.config,
+                )
+                _a48c7_assert_completion_oracle(
+                    direct, direct.cells[0], world, cell,
+                    'a48c7.capacity.%s.%s' % (axis, device),
+                )
+            finally:
+                _a48_abort_direct(scheduler, cell)
+            capacity_details.append('%s@%s' % (axis, device))
+        short = dict(case['capacity_values'])
+        short[key] -= 1
+        _a48c7_assert_preclaim_failure(
+            case, a4.GPU068A4Config(**short),
+            label='capacity_%s_one_short' % axis,
+        )
+    del scheduler, world, cell, direct
+    gc.collect()
+
+    base = cases['deletion-refund']
+    trust_details = []
+
+    def assert_tamper_failure(scheduler_type, label,
+                              test_devices=('cpu',)):
+        for device in test_devices:
+            world = _a48c7_world_for_case(base)
+            cell = world.cells[0]
+            scheduler = scheduler_type(base['capacity'], device)
+            _a48c_begin_replication_direct(
+                scheduler, world, cell, base['dt'],
+            )
+            before = v3.pickle_clone(world.state_dict())
+            before_ids = _a48c_identity_snapshot(world, cell)
+            before_rng = copy.deepcopy(world.rng.bit_generator.state)
+            before_receipts = len(scheduler._receipts)
+            try:
+                _assert_raises(
+                    (a48c7.A4ReplicationStartCompletionMutationCommitError,
+                     a4.A4Error, a3s.A3SchedulerError),
+                    lambda: scheduler.cpu_replication(
+                        world, cell, base['dt'], world.config,
+                    ),
+                )
+                expected_world = getattr(
+                    scheduler, 'expected_world_state', before,
+                )
+                expected_rng = getattr(
+                    scheduler, 'expected_rng_state', before_rng,
+                )
+                v3.assert_recursive_close(
+                    expected_world, world.state_dict(), 0.0, 0.0,
+                    'a48c7.trust.%s.%s' % (device, label),
+                )
+                _, record = scheduler._record(cell)
+                if (world.rng.bit_generator.state != expected_rng
+                        or _a48c_identity_snapshot(world, cell)
+                        != before_ids
+                        or len(scheduler._receipts) != before_receipts
+                        or any(entry['event'] == 'replication_cpu'
+                               for entry in record['events'])):
+                    raise AssertionError(
+                        '%s/%s tamper crossed preclaim' % (device, label)
+                    )
+                trust_details.append(device + ':' + label)
+            finally:
+                _a48_abort_direct(scheduler, cell)
+            del scheduler, cell, world
+            gc.collect()
+
+    class TamperSource(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.source_binding.ragged.symbols[0] ^= np.uint8(1)
+            return candidate
+
+    class TamperEvidence(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.evidence.selected_index = 1
+            return candidate
+
+    class AliasSyntheticTemplate(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.synthetic_cell.replication_template = (
+                candidate.synthetic_cell.genomes[0][::]
+            )
+            return candidate
+
+    class TamperSyntheticBinding(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.synthetic_binding.ragged.symbols[0] ^= np.uint8(1)
+            return candidate
+
+    class TamperTape(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.tape.append_uniform_draws[0, 0] = np.nextafter(
+                candidate.tape.append_uniform_draws[0, 0], np.inf,
+            )
+            return candidate
+
+    class TamperHostReplay(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.host_replay.final_symbols[0, 0] ^= np.uint8(1)
+            return candidate
+
+    class TamperReadbackPlan(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.plan.final_symbols[0, 0] ^= np.uint8(1)
+            return candidate
+
+    class TamperResidentSource(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.resident_binding.ragged.symbols.data[0].bitwise_xor_(1)
+            return candidate
+
+    class TamperResidentState(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.resident_binding.state.pools.data[
+                0, a4.a3.POOL_NUCLEOTIDE
+            ].add_(1e-8)
+            return candidate
+
+    class TamperResidentCache(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.resident_binding.cache.copy_numbers.data[0].add_(1)
+            return candidate
+
+    class TamperResidentTape(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.resident_tape.append_uniform_draws.data[0, 0].add_(0.125)
+            return candidate
+
+    class TamperResidentPlan(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.resident_plan.final_symbols.data[0, 0].bitwise_xor_(1)
+            return candidate
+
+    class SwapResidentPointer(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.resident_plan.final_symbols = (
+                candidate.resident_plan.final_symbols.clone()
+            )
+            return candidate
+
+    class TamperResidentArtifacts(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.resident_artifacts['data_ptrs']['plan'][
+                'final_symbols'
+            ] += 1
+            return candidate
+
+    class TamperCandidate(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.candidate_cell.genomes[-1][0] ^= np.uint8(1)
+            return candidate
+
+    class AliasFinalView(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.candidate_cell.genomes[-1] = (
+                candidate.candidate_cell.genomes[-1][::]
+            )
+            return candidate
+
+    class TamperFreshBinding(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.fresh_binding.ragged.symbols[-1] ^= np.uint8(1)
+            return candidate
+
+    class TamperCapacity(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.transaction_capacity['S'] += 1
+            return candidate
+
+    class TamperChainDigest(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.rng_chain_sha256 = '0' * 64
+            return candidate
+
+    class TamperSchedulerConfig(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            self.a4_config = a4.GPU068A4Config(
+                max_cells=1, max_sequences=1, max_symbols=1,
+                max_sequence_symbols=1, max_proteins_per_cell=1,
+            )
+            self.a4_device = (
+                'cuda' if self.a4_device == 'cpu' else 'cpu'
+            )
+            return candidate
+
+    class TamperLiveConfig(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            world.config.mutation_rate = float(np.nextafter(
+                world.config.mutation_rate, np.inf,
+            ))
+            self.expected_world_state = v3.pickle_clone(world.state_dict())
+            return candidate
+
+    class TamperLiveSource(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            cell.genomes[0][0] ^= np.uint8(1)
+            self.expected_world_state = v3.pickle_clone(world.state_dict())
+            return candidate
+
+    class TamperLiveRng(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            world.rng.random()
+            self.expected_rng_state = copy.deepcopy(
+                world.rng.bit_generator.state,
+            )
+            self.expected_world_state = v3.pickle_clone(world.state_dict())
+            return candidate
+
+    class TamperCandidateRng(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _replication_start_completion_mutation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            generator = np.random.Generator(np.random.PCG64())
+            generator.bit_generator.state = copy.deepcopy(
+                candidate.rng_after_selection_state,
+            )
+            generator.random()
+            candidate.rng_after_selection_state = copy.deepcopy(
+                generator.bit_generator.state,
+            )
+            return candidate
+
+    for scheduler_type, label in (
+            (TamperSource, 'source_binding'),
+            (TamperEvidence, 'selection_evidence'),
+            (AliasSyntheticTemplate, 'synthetic_template_view_alias'),
+            (TamperSyntheticBinding, 'synthetic_binding'),
+            (TamperTape, 'host_tape'),
+            (TamperHostReplay, 'host_oracle'),
+            (TamperReadbackPlan, 'readback_plan'),
+            (SwapResidentPointer, 'resident_pointer'),
+            (TamperResidentArtifacts, 'resident_private_artifacts'),
+            (TamperCandidate, 'candidate_cell'),
+            (AliasFinalView, 'final_view_alias'),
+            (TamperFreshBinding, 'fresh_binding'),
+            (TamperCapacity, 'transaction_capacity'),
+            (TamperChainDigest, 'rng_chain_digest'),
+            (TamperSchedulerConfig, 'scheduler_config_device'),
+            (TamperLiveConfig, 'live_config'),
+            (TamperLiveSource, 'live_source'),
+            (TamperLiveRng, 'live_rng'),
+            (TamperCandidateRng, 'candidate_rng')):
+        assert_tamper_failure(scheduler_type, label)
+    for scheduler_type, label in (
+            (TamperResidentSource, 'resident_source_data'),
+            (TamperResidentState, 'resident_state_data'),
+            (TamperResidentCache, 'resident_cache_data'),
+            (TamperResidentTape, 'resident_tape_data'),
+            (TamperResidentPlan, 'resident_plan_data')):
+        assert_tamper_failure(
+            scheduler_type, label, test_devices=tuple(devices),
+        )
+
+    # Wrong live associations cannot consume one prepared candidate.
+    world = _a48c7_world_for_case(base)
+    cell = world.cells[0]
+    scheduler = a48c7.A4ReplicationStartCompletionMutationEventScheduler(
+        base['capacity'], 'cpu',
+    )
+    _a48c_begin_replication_direct(
+        scheduler, world, cell, base['dt'],
+    )
+    before = v3.pickle_clone(world.state_dict())
+    before_rng = copy.deepcopy(world.rng.bit_generator.state)
+    try:
+        candidate = (
+            scheduler.
+            _prepare_replication_start_completion_mutation_candidate(
+                world, cell, base['dt'], world.config,
+            )
+        )
+        for label, wrong_cell, wrong_dt, wrong_config in (
+                ('cell', copy.deepcopy(cell), base['dt'], world.config),
+                ('dt', cell, np.nextafter(base['dt'], np.inf), world.config),
+                ('config', cell, base['dt'], copy.deepcopy(world.config))):
+            _assert_raises(
+                a48c7.A4ReplicationStartCompletionMutationCommitError,
+                lambda wrong_cell=wrong_cell, wrong_dt=wrong_dt,
+                       wrong_config=wrong_config:
+                scheduler.
+                _commit_replication_start_completion_mutation_candidate(
+                    world, wrong_cell, wrong_dt, wrong_config, candidate,
+                ),
+            )
+            if candidate.consumed:
+                raise AssertionError('wrong ' + label + ' consumed candidate')
+        v3.assert_recursive_close(
+            before, world.state_dict(), 0.0, 0.0,
+            'a48c7.wrong_cell_dt_config',
+        )
+        if world.rng.bit_generator.state != before_rng:
+            raise AssertionError('wrong inputs changed RNG')
+    finally:
+        _a48_abort_direct(scheduler, cell)
+    del candidate, scheduler, world, cell
+    gc.collect()
+
+    scope_cases = []
+
+    def add_scope(label, mutate):
+        scoped = _a48c7_world_for_case(base)
+        scoped_cell = scoped.cells[0]
+        mutate(scoped, scoped_cell)
+        scoped.initial_total_material = scoped.total_material()
+        scoped.last_step_material_residual = 0.0
+        scope_cases.append({
+            'label': label,
+            'state': v3.pickle_clone(scoped.state_dict()),
+            'drop_lesions': False,
+            'cell_id': int(scoped_cell.cell_id),
+            'dt': base['dt'],
+        })
+
+    add_scope('disabled', lambda world, cell: setattr(
+        world.config, 'genome_replication', False))
+    add_scope('negative_atp', lambda world, cell: cell.pools.__setitem__(
+        a4.a3.POOL_ATP, -1e-12))
+
+    def no_genome(world, cell):
+        cell.genomes = []
+        cell.genome_lesions = []
+        cell._refresh_gene_cache()
+
+    add_scope('no_genome', no_genome)
+
+    def empty_genome(world, cell):
+        cell.genomes = [np.zeros((0,), dtype=np.uint8)]
+        cell.genome_lesions = [0.0]
+        cell._refresh_gene_cache()
+
+    add_scope('empty_genome', empty_genome)
+
+    def two_genomes(world, cell):
+        cell.genomes.append(np.asarray(cell.genomes[0], np.uint8).copy())
+        cell.genome_lesions.append(0.2)
+        cell._refresh_gene_cache()
+
+    add_scope('two_genomes', two_genomes)
+
+    def no_replicase(world, cell):
+        world.config.external_replicase = False
+        for fingerprint, spec in list(cell.gene_specs.items()):
+            if int(spec['role']) == int(a4.g2.ROLE_REPLICASE):
+                cell.proteins.pop(fingerprint, None)
+        cell._sync_protein_pool()
+
+    add_scope('replicase_gate', no_replicase)
+    legacy_called = []
+    original_legacy = a48b.A4TranslationEventScheduler.cpu_replication
+
+    def legacy_bomb(*args, **kwargs):
+        legacy_called.append(True)
+        raise AssertionError('legacy CPU replication fallback was called')
+
+    a48b.A4TranslationEventScheduler.cpu_replication = legacy_bomb
+    try:
+        for scoped in scope_cases:
+            _a48c7_assert_preclaim_failure(
+                scoped, a4.GPU068A4Config(),
+                label='scope_' + scoped['label'],
+            )
+
+        dead = _a48c7_world_for_case(base)
+        dead_cell = dead.cells[0]
+        dead_scheduler = (
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler(
+                base['capacity'], 'cpu',
+            )
+        )
+        _a48c_begin_replication_direct(
+            dead_scheduler, dead, dead_cell, base['dt'],
+        )
+        dead_cell.alive = False
+        dead_before = v3.pickle_clone(dead.state_dict())
+        dead_ids = _a48c_identity_snapshot(dead, dead_cell)
+        dead_rng = copy.deepcopy(dead.rng.bit_generator.state)
+        _assert_raises(
+            a48c7.A4ReplicationStartCompletionMutationCommitError,
+            lambda: dead_scheduler.cpu_replication(
+                dead, dead_cell, base['dt'], dead.config,
+            ),
+        )
+        v3.assert_recursive_close(
+            dead_before, dead.state_dict(), 0.0, 0.0,
+            'a48c7.scope_dead',
+        )
+        if (dead.rng.bit_generator.state != dead_rng
+                or _a48c_identity_snapshot(dead, dead_cell) != dead_ids):
+            raise AssertionError('dead scope changed biology/RNG')
+        _a48_abort_direct(dead_scheduler, dead_cell)
+    finally:
+        a48b.A4TranslationEventScheduler.cpu_replication = original_legacy
+    if legacy_called:
+        raise AssertionError('excluded c7 scope used CPU fallback')
+
+    duplicate = _a48c7_world_for_case(base)
+    duplicate_cell = duplicate.cells[0]
+    duplicate_scheduler = (
+        a48c7.A4ReplicationStartCompletionMutationEventScheduler(
+            base['capacity'], 'cpu',
+        )
+    )
+    _a48c_begin_replication_direct(
+        duplicate_scheduler, duplicate, duplicate_cell, base['dt'],
+    )
+    duplicate_scheduler.cpu_replication(
+        duplicate, duplicate_cell, base['dt'], duplicate.config,
+    )
+    duplicate_before = v3.pickle_clone(duplicate.state_dict())
+    duplicate_rng = copy.deepcopy(duplicate.rng.bit_generator.state)
+    _assert_raises(
+        a3s.A3DuplicateEventError,
+        lambda: duplicate_scheduler.cpu_replication(
+            duplicate, duplicate_cell, base['dt'], duplicate.config,
+        ),
+    )
+    v3.assert_recursive_close(
+        duplicate_before, duplicate.state_dict(), 0.0, 0.0,
+        'a48c7.duplicate',
+    )
+    if duplicate.rng.bit_generator.state != duplicate_rng:
+        raise AssertionError('duplicate c7 event changed RNG')
+    _a48_abort_direct(duplicate_scheduler, duplicate_cell)
+
+    order = _a48c7_world_for_case(base)
+    order_cell = order.cells[0]
+    order_scheduler = (
+        a48c7.A4ReplicationStartCompletionMutationEventScheduler(
+            base['capacity'], 'cpu',
+        )
+    )
+    _a48b_begin_translation_direct(
+        order_scheduler, order, order_cell, base['dt'],
+    )
+    order_before = v3.pickle_clone(order.state_dict())
+    order_rng = copy.deepcopy(order.rng.bit_generator.state)
+    _assert_raises(
+        a3s.A3EventOrderError,
+        lambda: order_scheduler.cpu_replication(
+            order, order_cell, base['dt'], order.config,
+        ),
+    )
+    v3.assert_recursive_close(
+        order_before, order.state_dict(), 0.0, 0.0,
+        'a48c7.out_of_order',
+    )
+    if order.rng.bit_generator.state != order_rng:
+        raise AssertionError('out-of-order c7 event changed RNG')
+    _a48_abort_direct(order_scheduler, order_cell)
+
+    class FailAfterPublish(
+            a48c7.A4ReplicationStartCompletionMutationEventScheduler):
+        def _publish_replication_start_completion_mutation_candidate(
+                self, world, cell, candidate):
+            super(FailAfterPublish, self)._publish_replication_start_completion_mutation_candidate(
+                world, cell, candidate,
+            )
+            cell.pools[a4.a3.POOL_ATP] += 0.125
+            cell.genomes[0][0] ^= np.uint8(1)
+            cell.genomes[-1][0] ^= np.uint8(1)
+            cell.genome_lesions[-1] += 0.25
+            cell.replication_template = np.asarray((1,), np.uint8)
+            cell.replication_copy.append(7)
+            cell.replication_copy = list(cell.replication_copy)
+            cell.mutation_events['a48c7_extra_sentinel'] += 1
+            cell.proteins[-901] = 0.25
+            cell.damaged_proteins[-902] = 0.5
+            first = next(iter(cell.gene_specs.values()))
+            first['parameter'] = int(first['parameter']) + 1
+            cell.replication_cycles += 3
+            cell.last_replication_symbols += 2
+            cell.last_effective_error_rate += 0.125
+            cell.cumulative_proofreading_atp += 0.5
+            cell.novel_path_first_age = -9.0
+            world.dissipated_energy += 1.0
+            world.rng.random()
+            raise RuntimeError('injected A4.8c7 publish failure')
+
+    rollback = _a48c7_world_for_case(base)
+    rollback_cell = rollback.cells[0]
+    rollback_scheduler = FailAfterPublish(base['capacity'], 'cpu')
+    _a48c_begin_replication_direct(
+        rollback_scheduler, rollback, rollback_cell, base['dt'],
+    )
+    rollback_before = v3.pickle_clone(rollback.state_dict())
+    rollback_ids = _a48c_identity_snapshot(rollback, rollback_cell)
+    rollback_spec_ids = tuple(
+        (key, id(spec)) for key, spec in rollback_cell.gene_specs.items()
+    )
+    old_copy = rollback_cell.replication_copy
+    rollback_rng_object = rollback.rng
+    rollback_rng = copy.deepcopy(rollback.rng.bit_generator.state)
+    caught = None
+    try:
+        rollback_scheduler.cpu_replication(
+            rollback, rollback_cell, base['dt'], rollback.config,
+        )
+    except RuntimeError as error:
+        caught = error
+    if caught is None:
+        raise AssertionError('injected A4.8c7 publish failure did not escape')
+    v3.assert_recursive_close(
+        rollback_before, rollback.state_dict(), 0.0, 0.0,
+        'a48c7.publish_rollback',
+    )
+    if (rollback.rng is not rollback_rng_object
+            or rollback.rng.bit_generator.state != rollback_rng
+            or _a48c_identity_snapshot(rollback, rollback_cell)
+            != rollback_ids
+            or rollback_cell.replication_template is not None
+            or rollback_cell.replication_copy is not old_copy
+            or tuple(
+                (key, id(spec))
+                for key, spec in rollback_cell.gene_specs.items()
+            ) != rollback_spec_ids):
+        raise AssertionError(
+            'c7 rollback lost source/nested/copy/RNG identity'
+        )
+    entry = _a48c_replication_entry(rollback_scheduler, rollback_cell)
+    receipt = _a48_abort_direct(
+        rollback_scheduler, rollback_cell, caught,
+    )
+    if entry['event'] != 'replication_cpu' or receipt['status'] != 'aborted':
+        raise AssertionError('publish failure did not leave aborted receipt')
+    return ('Q/S/W/P exact CPU/CUDA and each one-short; %d source/'
+            'selection/synthetic/tape/oracle/resident/public/private/view/'
+            'candidate/live trust checks; wrong inputs; %d no-fallback '
+            'ordinary scopes; duplicate/order; full inactive None/old-copy/'
+            'nested ledger/cache/RNG rollback PASS (%s)' % (
+                len(trust_details), len(scope_cases) + 1,
+                '/'.join(capacity_details),
+            ))
+
+
+def test_a48c7_inherited_c6_c5_c4_c3_c2_c1_save_clone_successor_and_authority():
+    if torch is None:
+        raise AssertionError('PyTorch is required for A4.8c7')
+    devices = ['cpu']
+    if torch.cuda.is_available():
+        devices.append('cuda')
+    elif _REQUIRE_CUDA:
+        raise AssertionError('CUDA required but unavailable; fallback forbidden')
+
+    delegated_cases = []
+    c1_world, c1_cells, c1_capacity, c1_dt = (
+        _a45_substitution_fixture(seed=13601)
+    )
+    _a48c_reduce_world(c1_world, [c1_cells[0]])
+    delegated_cases.append({
+        'label': 'c1-active-noncompletion',
+        'state': v3.pickle_clone(c1_world.state_dict()),
+        'dt': float(c1_dt), 'capacity': c1_capacity,
+        'authority': 'A4.8c1-resident-plan-atomic-cpu-cell-rng-commit',
+        'drop_lesions': False,
+    })
+
+    c2_state, _, c2_dt = _a48c2_completion_case(seed=13602, row=0)
+    c2_before = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(c2_state),
+    )
+    c2_after = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(c2_state),
+    )
+    c2_after.cells[0]._replicate_genome(
+        c2_after, c2_dt, c2_after.config,
+    )
+    c2_capacity = a4.GPU068A4Config(**_a48c2_capacity_for_transition(
+        c2_before.cells[0], c2_after.cells[0],
+    ))
+    delegated_cases.append({
+        'label': 'c2-mutation-free-active-completion',
+        'state': c2_state, 'dt': float(c2_dt),
+        'capacity': c2_capacity,
+        'authority': (
+            'A4.8c2-resident-completion-plan-atomic-cpu-cell-commit'
+        ),
+        'drop_lesions': False,
+    })
+
+    c3_case = _a48c3_completion_mutation_cases()[0]
+    delegated_cases.append({
+        'label': 'c3-mutation-active-completion',
+        'state': c3_case['state'], 'dt': float(c3_case['dt']),
+        'capacity': c3_case['integration_capacity'],
+        'authority': (
+            'A4.8c3-resident-completion-mutation-plan-atomic-'
+            'cpu-cell-rng-commit'
+        ),
+        'drop_lesions': False,
+    })
+
+    c4_case = _a48c4_cases()[0]
+    delegated_cases.append({
+        'label': 'c4-mutation-start-noncompletion',
+        'state': c4_case['state'], 'dt': float(c4_case['dt']),
+        'capacity': c4_case['capacity'],
+        'authority': (
+            'A4.8c4-resident-template-start-plan-atomic-'
+            'cpu-cell-pcg64-commit'
+        ),
+        'drop_lesions': bool(c4_case.get('drop_lesions', False)),
+    })
+
+    c5_case = _a48c5_cases()[0]
+    delegated_cases.append({
+        'label': 'c5-mutation-free-start-noncompletion',
+        'state': c5_case['state'], 'dt': float(c5_case['dt']),
+        'capacity': c5_case['capacity'],
+        'authority': (
+            'A4.8c5-resident-mutation-free-template-start-plan-'
+            'atomic-cpu-cell-pcg64-commit'
+        ),
+        'drop_lesions': bool(c5_case.get('drop_lesions', False)),
+    })
+
+    c6_case = _a48c6_cases()[0]
+    delegated_cases.append({
+        'label': 'c6-mutation-free-start-completion',
+        'state': c6_case['state'], 'dt': float(c6_case['dt']),
+        'capacity': c6_case['capacity'],
+        'authority': (
+            'A4.8c6-resident-mutation-free-start-completion-plan-'
+            'selection-only-pcg64-atomic-commit'
+        ),
+        'drop_lesions': bool(c6_case.get('drop_lesions', False)),
+    })
+
+    delegated = []
+    legacy_called = []
+    original_legacy = a48b.A4TranslationEventScheduler.cpu_replication
+
+    def legacy_bomb(*args, **kwargs):
+        legacy_called.append(True)
+        raise AssertionError('legacy CPU replication fallback was called')
+
+    a48b.A4TranslationEventScheduler.cpu_replication = legacy_bomb
+    try:
+        for case in delegated_cases:
+            for device in devices:
+                direct = _a48c7_world_for_case(case)
+                world = _a48c7_world_for_case(case)
+                direct.cells[0]._replicate_genome(
+                    direct, case['dt'], direct.config,
+                )
+                scheduler = (
+                    a48c7.
+                    A4ReplicationStartCompletionMutationEventScheduler(
+                        case['capacity'], device,
+                    )
+                )
+                _a48c_begin_replication_direct(
+                    scheduler, world, world.cells[0], case['dt'],
+                )
+                try:
+                    scheduler.cpu_replication(
+                        world, world.cells[0], case['dt'], world.config,
+                    )
+                    _a48b_assert_cell_matches(
+                        direct.cells[0], world.cells[0],
+                        'a48c7.delegate.%s.%s' % (
+                            device, case['label'],
+                        ),
+                        atol=a48c7.REPLICATION_ORACLE_ATOL,
+                    )
+                    metadata = _a48c_replication_entry(
+                        scheduler, world.cells[0],
+                    )['metadata']
+                    if (direct.rng.bit_generator.state
+                            != world.rng.bit_generator.state
+                            or float(direct.dissipated_energy)
+                            != float(world.dissipated_energy)
+                            or metadata.get('authority')
+                            != case['authority']):
+                        raise AssertionError(
+                            device + '/' + case['label']
+                            + ' inherited authority differs'
+                        )
+                    delegated.append(device + ':' + case['label'])
+                finally:
+                    _a48_abort_direct(scheduler, world.cells[0])
+    finally:
+        a48b.A4TranslationEventScheduler.cpu_replication = original_legacy
+    if legacy_called:
+        raise AssertionError('a c1-c6 delegate used CPU fallback')
+
+    own = _a48c7_cases()[0]
+    direct = _a48c7_world_for_case(own)
+    direct.cells[0]._replicate_genome(
+        direct, own['dt'], direct.config,
+    )
+    world = _a48c7_world_for_case(own)
+    scheduler = (
+        a48c7.A4ReplicationStartCompletionMutationEventScheduler(
+            own['capacity'], 'cpu',
+        )
+    )
+    _a48c_begin_replication_direct(
+        scheduler, world, world.cells[0], own['dt'],
+    )
+    original_c6 = (
+        a48c6.A4ReplicationStartCompletionEventScheduler.cpu_replication
+    )
+
+    def c6_dispatch_bomb(*args, **kwargs):
+        raise AssertionError('owned c7 completion delegated to c6')
+
+    a48c6.A4ReplicationStartCompletionEventScheduler.cpu_replication = (
+        c6_dispatch_bomb
+    )
+    try:
+        scheduler.cpu_replication(
+            world, world.cells[0], own['dt'], world.config,
+        )
+        _a48c7_assert_completion_oracle(
+            direct, direct.cells[0], world, world.cells[0],
+            'a48c7.owned_no_c6_dispatch',
+        )
+    finally:
+        a48c6.A4ReplicationStartCompletionEventScheduler.cpu_replication = (
+            original_c6
+        )
+        _a48_abort_direct(scheduler, world.cells[0])
+
+    # Full Formal066 step clamps biology to 0.1.  A one-symbol genome with
+    # ample pools reaches c7 and then continues through hydrolysis/motion.
+    successor_world = _a48c7_world_for_case(own)
+    successor_cell = successor_world.cells[0]
+    successor_cell.genomes = [np.asarray((3,), dtype=np.uint8)]
+    successor_cell.genome_lesions = [0.2]
+    successor_cell.replication_template = None
+    successor_cell.replication_template_lesion = 0.0
+    successor_cell.replication_copy = []
+    successor_cell.replication_fractional = 0.0
+    successor_cell.pools[a4.a3.POOL_NUCLEOTIDE] = 10.0
+    successor_cell.pools[a4.a3.POOL_ATP] = 10.0
+    successor_cell.age = 0.0
+    successor_cell.novel_path_first_age = None
+    successor_cell._refresh_gene_cache()
+    successor_world.initial_total_material = successor_world.total_material()
+    successor_world.last_step_material_residual = 0.0
+    successor_state = v3.pickle_clone(successor_world.state_dict())
+    successor_dt = 0.1
+    probe = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(successor_state),
+    )
+    probe.cells[0]._replicate_genome(
+        probe, successor_dt, probe.config,
+    )
+    if (len(probe.cells[0].genomes) != 2
+            or probe.cells[0].replication_template is not None):
+        raise AssertionError('A4.8c7 successor completion probe drifted')
+    roomy = a4.GPU068A4Config(
+        max_cells=4, max_sequences=12, max_symbols=8192,
+        max_sequence_symbols=a4.MAX_FROZEN_GENOME_SYMBOLS,
+        max_proteins_per_cell=64,
+    )
+
+    successor_details = []
+    for device in devices:
+        expected = a4.a3.s66.Formal066World.from_state(
+            v3.pickle_clone(successor_state),
+        )
+        hybrid = _a48c7_hybrid_from_state(
+            successor_state, roomy, device,
+        )
+        expected.step(successor_dt)
+        original_c6 = (
+            a48c6.A4ReplicationStartCompletionEventScheduler.cpu_replication
+        )
+        a48c6.A4ReplicationStartCompletionEventScheduler.cpu_replication = (
+            c6_dispatch_bomb
+        )
+        try:
+            receipt = hybrid.step(successor_dt)
+        finally:
+            a48c6.A4ReplicationStartCompletionEventScheduler.cpu_replication = (
+                original_c6
+            )
+        v3._assert_world_pair(
+            expected, hybrid, state_atol=v3.WORLD_FP64_ATOL,
+            ledger_atol=v3.LEDGER_ATOL,
+            label='a48c7.successor.' + device,
+        )
+        record = receipt['cells'][0]
+        names = [entry['event'] for entry in record['events']]
+        by_name = {entry['event']: entry for entry in record['events']}
+        if (names.count('replication_cpu') != 1
+                or names.count('genome_hydrolysis_cpu_rng') != 1
+                or not names.index('translation_cpu')
+                < names.index('replication_cpu')
+                < names.index('surface_assembly')
+                < names.index('genome_hydrolysis_cpu_rng')
+                < names.index('motion')
+                or by_name['replication_cpu']['metadata'].get('authority')
+                != (
+                    'A4.8c7-resident-mutation-enabled-start-completion-'
+                    'final-plan-pcg64-chain-atomic-commit'
+                )):
+            raise AssertionError(device + ' c7 successor order differs')
+        successor_details.append(device)
+
+    seed_hybrid = _a48c7_hybrid_from_state(
+        successor_state, roomy, 'cpu',
+    )
+    twin = seed_hybrid.clone()
+    with tempfile.TemporaryDirectory() as directory:
+        path = os.path.join(directory, 'a48c7.pkl')
+        seed_hybrid.save(path)
+        restored = (
+            a48c7.Hybrid066WorldA4ReplicationStartCompletionMutation.load(
+                path,
+            )
+        )
+        for value in (seed_hybrid, twin, restored):
+            if (type(value) is not (
+                    a48c7.Hybrid066WorldA4ReplicationStartCompletionMutation)
+                    or type(value.scheduler) is not (
+                        a48c7.
+                        A4ReplicationStartCompletionMutationEventScheduler)
+                    or value.scheduler.a4_device != 'cpu'
+                    or value.scheduler.a4_config != roomy
+                    or value.scheduler.
+                    replication_start_completion_mutation_integration_state()
+                    != {
+                        'schema': a48c7.SCHEMA_VERSION,
+                        'config': a48._config_state(roomy),
+                        'device': 'cpu',
+                    }):
+                raise AssertionError('A4.8c7 save/clone authority was lost')
+        expected = a4.a3.s66.Formal066World.from_state(
+            v3.pickle_clone(successor_state),
+        )
+        expected.step(successor_dt)
+        for index, value in enumerate((seed_hybrid, twin, restored)):
+            receipt = value.step(successor_dt)
+            v3._assert_world_pair(
+                expected, value, state_atol=v3.WORLD_FP64_ATOL,
+                ledger_atol=v3.LEDGER_ATOL,
+                label='a48c7.persisted_successor.%d' % index,
+            )
+            metadata = {
+                entry['event']: entry['metadata']
+                for entry in receipt['cells'][0]['events']
+            }
+            if metadata['replication_cpu'].get('authority') != (
+                    'A4.8c7-resident-mutation-enabled-start-completion-'
+                    'final-plan-pcg64-chain-atomic-commit'):
+                raise AssertionError('persisted c7 authority differs')
+
+    active = _a48c7_hybrid_from_state(
+        successor_state, roomy, 'cpu',
+    )
+    active.scheduler.begin_step(active.world, active.world.cells)
+    _assert_raises(a3s.A3SchedulerProtocolError, active.clone)
+    active.scheduler.abort_step(RuntimeError('expected pending-save rejection'))
+    for flag in (
+            '_a4_replication_commit_active',
+            '_a4_replication_completion_commit_active',
+            '_a4_replication_completion_mutation_commit_active',
+            '_a4_replication_start_commit_active',
+            '_a4_replication_mutation_free_start_commit_active',
+            '_a4_replication_start_completion_commit_active',
+            '_a4_replication_start_completion_mutation_commit_active'):
+        setattr(active.scheduler, flag, True)
+        try:
+            _assert_raises(a3s.A3SchedulerProtocolError, active.state_dict)
+        finally:
+            setattr(active.scheduler, flag, False)
+
+    expected_status = (
+        'a4.8c7-mutation-enabled-inactive-one-genome-template-start-'
+        'same-call-completion-selection-to-completion-mutation-tape-'
+        'resident-final-plan-atomic-commit-a4.8c6-c5-c4-c3-c2-c1-'
+        'inherited-other-inactive-early-noop-fail-closed'
+    )
+    signature = inspect.signature(
+        a48c7.
+        A4ReplicationStartCompletionMutationEventScheduler.cpu_replication,
+    )
+    prior_names = '\n'.join(fn.__name__ for fn in TESTS[:78])
+    c7_names = tuple(fn.__name__ for fn in TESTS[78:82])
+    if (tuple(signature.parameters)
+            != ('self', 'world', 'cell', 'dt', 'config')
+            or '_A4ReplicationStartCompletionMutationCommitCandidate'
+            in set(a48c7.__all__)
+            or '_A4SingleTemplateCompletionMutationSelectionEvidence'
+            in set(a48c7.__all__)
+            or not issubclass(
+                a48c7.
+                A4ReplicationStartCompletionMutationEventScheduler,
+                a48c6.A4ReplicationStartCompletionEventScheduler,
+            )
+            or not issubclass(
+                a48c7.Hybrid066WorldA4ReplicationStartCompletionMutation,
+                a48c6.Hybrid066WorldA4ReplicationStartCompletion,
+            )
+            or a48c7.PORT_STATUS.get('genome_replication')
+            != expected_status
+            or a48c7.FULL_GPU_WORLD_STEP is not False
+            or a48c7.PORT_STATUS.get('full_gpu_world_step') is not False
+            or len(TESTS) != 82
+            or c7_names != (
+                'test_a48c7_mutation_enabled_inactive_start_completion_formal066_oracle',
+                'test_a48c7_candidate_cpu_cuda_synthetic_tape_plan_purity_and_fresh_binding',
+                'test_a48c7_capacity_trust_scope_rollback_and_exact_once',
+                'test_a48c7_inherited_c6_c5_c4_c3_c2_c1_save_clone_successor_and_authority',
+            )
+            or hashlib.sha256(
+                prior_names.encode('utf-8')
+            ).hexdigest() != _A48C7_TEST_NAMES_SHA256
+            or _a48c7_prior_test_ast_sha256(TESTS[:78])
+            != _A48C7_TEST_AST_SHA256):
+        raise AssertionError(
+            'A4.8c7 API/scope/first78 name+function-AST authority differs'
+        )
+    expected_hashes = dict(PROMOTED_A3_SHA256)
+    expected_hashes.update(_A48C7_PRIOR_CORE_SHA256)
+    expected_hashes[
+        'src/0_6_8/'
+        'SOMA_CELL_0_6_8_gpu_a4_replication_start_completion_mutation_integration.py'
+    ] = _A48C7_CORE_SHA256
+    for relative, expected_hash in expected_hashes.items():
+        if _sha256(os.path.join(ROOT, *relative.split('/'))) != expected_hash:
+            raise AssertionError(relative + ' changed from frozen authority')
+    return ('c1-c6 CPU/CUDA delegates %s; owned c7 no c6/frozen '
+            'fallback; CPU/CUDA successor %s; save/load/clone exact type; '
+            'c1-c7 active/pending save reject; first78 names/function-AST + '
+            'A3/pure/c1-c7 hashes/full_gpu=false PASS' % (
+                '/'.join(delegated), '/'.join(successor_details),
+            ))
+
+
 TESTS = (
     test_api_scope,
     test_source_hash_inputs_present,
@@ -17307,6 +19138,10 @@ TESTS = (
     test_a48c6_candidate_cpu_cuda_synthetic_plan_purity_and_fresh_binding,
     test_a48c6_capacity_trust_scope_rollback_and_exact_once,
     test_a48c6_inherited_c5_c4_c3_c2_c1_save_clone_successor_and_authority,
+    test_a48c7_mutation_enabled_inactive_start_completion_formal066_oracle,
+    test_a48c7_candidate_cpu_cuda_synthetic_tape_plan_purity_and_fresh_binding,
+    test_a48c7_capacity_trust_scope_rollback_and_exact_once,
+    test_a48c7_inherited_c6_c5_c4_c3_c2_c1_save_clone_successor_and_authority,
 )
 
 
@@ -17334,7 +19169,7 @@ def run_all(write=False, output_dir=None):
     failed = sum(row['status'] == 'FAIL' for row in rows)
     elapsed = time.time() - started
     payload = {
-        'build': a48c6.BUILD,
+        'build': a48c7.BUILD,
         'schema': {
             'ragged_genome': a4.SCHEMA_VERSION,
             'gene_cache': a4.GENE_CACHE_SCHEMA_VERSION,
@@ -17377,9 +19212,15 @@ def run_all(write=False, output_dir=None):
             'mutation_free_inactive_start_completion_atomic_commit': (
                 a48c6.SCHEMA_VERSION
             ),
+            'single_template_completion_mutation_selection_evidence': (
+                a48c7.SELECTION_EVIDENCE_SCHEMA_VERSION
+            ),
+            'mutation_enabled_inactive_start_completion_atomic_commit': (
+                a48c7.SCHEMA_VERSION
+            ),
         },
         'development_slice': (
-            'A4.8c6-mutation-free-inactive-template-start-'
+            'A4.8c7-mutation-enabled-inactive-template-start-'
             'same-call-completion-atomic-commit-bridge'
         ),
         'promoted_baseline_unchanged': 'SOMA-CELL 0.6.8-GPU A3',
@@ -17402,7 +19243,7 @@ def run_all(write=False, output_dir=None):
             writer.writeheader()
             writer.writerows(rows)
         lines = [
-            '%s VALIDATION' % a48c6.BUILD,
+            '%s VALIDATION' % a48c7.BUILD,
             '%d PASS / %d FAIL / %d TOTAL' % (passed, failed, len(rows)),
             'elapsed %.6fs' % elapsed,
             '',

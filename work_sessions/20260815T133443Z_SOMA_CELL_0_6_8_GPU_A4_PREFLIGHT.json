@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.1",
+  "receipt_type": "preflight",
+  "session_id": "20260815T133443Z_SOMA_CELL_0_6_8_GPU_A4_PREFLIGHT",
+  "started_utc": "2026-08-15T13:34:43Z",
+  "actor": "OpenAI Codex on user's RTX 4060 Ti 16GB",
+  "purpose": "SOMA-CELL 0.6.8-GPU A4.8c7: mutation-enabled inactive template-start same-call completion atomic commit bridge",
+  "acknowledgement": "READ_LATEST_SOURCES_AND_CONTRACTS",
+  "rule_id": "SOMA-RULELOCK-20260801-R2",
+  "checkpoint_id": "SOMA-20260814-CELL068-GPU-A3-TO-A4-RULELOCK2",
+  "baseline": "SOMA-CELL 0.6.8-GPU A3",
+  "canonical_source": "src/0_6_8/SOMA_CELL_0_6_8_gpu_a3.py",
+  "git_commit": "a8191d98847ab930227d6bd2b82aea81bb87eb9b",
+  "git_status_at_start": "",
+  "required_sources_read_and_hash_checked": {
+    "00_MANDATORY_STARTUP_GATE_JA.md": {
+      "sha256": "b7bb903f64d3dfb895e4f3ca91d55586dbb789637706ac65ed597b5b203de0c4",
+      "size": 3962
+    },
+    "MANDATORY_WORKFLOW.json": {
+      "sha256": "c85a73a9856c313f31da252094d0d531af047fd40b41e7f39221a6dd3449644f",
+      "size": 5542
+    },
+    "PROJECT_STATE.json": {
+      "sha256": "3e8730107251ee493fd3f7b24c74a4c5c4c8f5aa9fce5004f8454c77512840fd",
+      "size": 24191
+    },
+    "CURRENT_BASELINE.txt": {
+      "sha256": "1130cd5c4d11eb74e370f5de06c35b6d70927a758526aa0833b076b45646f5a0",
+      "size": 1601
+    },
+    "docs/SOMA_CONTEXT_HANDOFF_JA.md": {
+      "sha256": "a4cc7bcfb00db7094f5377bc6412802c812bfb8656c6d86b9691cf2f0c3208fd",
+      "size": 27528
+    },
+    "docs/SOMA_CELL_0_6_INTEGRATION_CONTRACT.md": {
+      "sha256": "375358c0e76f0c497ce4cb25a53d66a29159ac56ed0b5443af71bf15ff9d2238",
+      "size": 16724
+    },
+    "planning/ROADMAP_0_6_JA.md": {
+      "sha256": "594f55adb55a68e885a49fcc941d926b314a4c3a094d2d9188c02069da7a9e63",
+      "size": 15944
+    },
+    "docs/SOMA_CELL_0_6_8_GPU_A3_CONTRACT.md": {
+      "sha256": "6d67db913d801c04034113a24875c77aae5bc59b6f7c948cd760e79f6f5d3433",
+      "size": 9240
+    },
+    "docs/SOMA_CELL_0_6_8_GPU_A3_SCHEMA.json": {
+      "sha256": "83496a358fd62fef2524a4ee656bc3542c0aa5bc3e138c3e28d280a95a927b7e",
+      "size": 7266
+    },
+    "src/0_6_8/SOMA_CELL_0_6_8_gpu_a3.py": {
+      "sha256": "6ca66378702dabd5a388553ca92279376deae5ba8c39bea9bdbe3488aa41b4f6",
+      "size": 119942
+    },
+    "results/SOMA_CELL_0_6_8_GPU_A3_VALIDATION_RESULTS.txt": {
+      "sha256": "1eb07a81a286fd571631e9c16efd75233642eab06d24e4be5da52b70b6a838c9",
+      "size": 4173
+    },
+    "results/SOMA_CELL_0_6_8_GPU_A3_REGRESSION_RESULTS.txt": {
+      "sha256": "be6ba49478eb749fb03f40d1e194981718b7152833a58defc093bd3198189a95",
+      "size": 2936
+    },
+    "planning/SOMA_CELL_0_6_8_GPU_A3_PREREGISTRATION_JA.md": {
+      "sha256": "a85fb236e37885048280f08d6c1d07bde6d3f5fb587814dc65b541819249f90d",
+      "size": 2837
+    },
+    "results/SOMA_CELL_0_6_8_GPU_A3_EXPERIMENT_REPORT.txt": {
+      "sha256": "2d4aa97a5e50df6bb9039708b3e1a93b23d2ab8b92e5d29e517b4eefbfe0258b",
+      "size": 6853
+    }
+  },
+  "declared_reviews": [
+    "latest PROJECT_STATE",
+    "current canonical source",
+    "context handoff",
+    "0.6 integration contract",
+    "current baseline validation and experiment results",
+    "known failures and open risks",
+    "next milestone roadmap"
+  ],
+  "fail_closed": true,
+  "milestone": "SOMA-CELL 0.6.8-GPU A4"
+}
