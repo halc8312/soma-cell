@@ -1,5 +1,5 @@
 # coding: utf-8
-"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.8c8 slices."""
+"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.9a slices."""
 from __future__ import division
 
 import argparse
@@ -10,6 +10,7 @@ import hashlib
 import inspect
 import json
 import os
+import pickle
 import sys
 import tempfile
 import time
@@ -34,6 +35,7 @@ import SOMA_CELL_0_6_8_gpu_a4_replication_start_mutation_free_integration as a48
 import SOMA_CELL_0_6_8_gpu_a4_replication_start_completion_integration as a48c6
 import SOMA_CELL_0_6_8_gpu_a4_replication_start_completion_mutation_integration as a48c7
 import SOMA_CELL_0_6_8_gpu_a4_replication_early_noop_integration as a48c8
+import SOMA_CELL_0_6_8_gpu_a4_resident_arena as a49a
 import SOMA_CELL_0_6_8_gpu_a3_scheduler as a3s
 import SOMA_CELL_0_6_8_A3_validation as v3
 
@@ -42,9 +44,9 @@ try:
 except Exception:  # pragma: no cover
     torch = None
 
-RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_8C8_VALIDATION_RESULTS.json'
-RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_8c8_validation.csv'
-RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_8C8_VALIDATION_RESULTS.txt'
+RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_9A_VALIDATION_RESULTS.json'
+RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_9a_validation.csv'
+RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_9A_VALIDATION_RESULTS.txt'
 
 SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4.py',
@@ -60,6 +62,7 @@ SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_start_completion_integration.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_start_completion_mutation_integration.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_early_noop_integration.py',
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_resident_arena.py',
     'src/0_6_8/SOMA_CELL_0_6_8_A4_validation.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3_scheduler.py',
@@ -20779,6 +20782,1039 @@ def test_a48c8_inherited_c7_c6_c5_c4_c3_c2_c1_save_clone_successor_and_authority
             ))
 
 
+_A49A_CORE_SHA256 = (
+    '03d689830b71dced3531d8d0a289faaecf3b22553cb5c51f9e5cb6071536982a'
+)
+
+_A49A_PRIOR_86_NAMES_SHA256 = (
+    '43671c2a9c328c932260a8f80bdce2995454cd9a4a28fa81a508d841293e1d38'
+)
+
+_A49A_PRIOR_86_AST_SHA256 = (
+    '23dccb9ac7115c260562ba2e77abfe194b6fb80646e49ed003ec6ce1b5dc1df5'
+)
+
+_A49A_FROZEN_CORE_SHA256 = {
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3.py': (
+        '6ca66378702dabd5a388553ca92279376deae5ba8c39bea9bdbe3488aa41b4f6'
+    ),
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3_scheduler.py': (
+        '5e207f68fd0d9aa674ab054dc43d62247e84c1f3c61fc6c7b455960ff84413aa'
+    ),
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4.py': (
+        '84ba52d6f6185e298ae10358c2a44172f049cef21bc6add5d2ed4d6d7aabbb8e'
+    ),
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication.py': (
+        'c4e27520b8665ba036322e9b1e23ccec280b40ad5d19016ba523bd4bf3dd1e0a'
+    ),
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_hydrolysis.py': (
+        '210a64f4906309aaeb2fb9ef2e363f1f07d104e830334f11cdbc26d6941b7019'
+    ),
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_integration.py': (
+        'f380293f66d2ca78ce2b927105be38a785181938516fcf00b842b8f9c24f7cb0'
+    ),
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_translation_integration.py': (
+        'ec86f855287d20fcb300daa47b1b5a615720b18642b999251c3e2a499b99bc20'
+    ),
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_integration.py': (
+        'fa9787a6dfc59a7767fcc00095ad052f7afe77877eef78b6e02e992015b2bbef'
+    ),
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_completion_integration.py': (
+        '6bf4c979b524c176c2e72b1630b14f630638cdd7eb883bdeeb48208e9ba5b416'
+    ),
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_completion_mutation_integration.py': (
+        '9e34a63322e717f646f225588abd3f908e335c5527bc3068bd357d438f73057c'
+    ),
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_start_integration.py': (
+        '10f3e357e1b2466245ba10add7b22599b4a2853abf2c7bb5cd1f247dc022fd3d'
+    ),
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_start_mutation_free_integration.py': (
+        'e433e7f051cd265bcd2350c396f8aa1365905197e815b101767d12aa1be625ec'
+    ),
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_start_completion_integration.py': (
+        '6dd747d9fb1451b9ddcbc790b4e695108763975313dda3d241ce982e383cc8d8'
+    ),
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_start_completion_mutation_integration.py': (
+        '91c1c8ae7e3f623100353d2e51a8a12b96454d2e08de262031c1d97b8f5de7fb'
+    ),
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_early_noop_integration.py': (
+        '4bfe5ef02c20bb435319c4e6d59520fe863a61d7995d836e7fd159576f6ab36f'
+    ),
+}
+
+_A49A_PUBLIC_API = (
+    'BUILD', 'BUILD_ID', 'BUILD_LONG', 'SCHEMA_VERSION',
+    'FULL_GPU_WORLD_STEP', 'COHERENT', 'CPU_NEWER', 'INVALID',
+    'PORT_STATUS', 'A4ResidentArenaError', 'A4ResidentArenaScopeError',
+    'A4ResidentArenaEpochs', 'A4ResidentArenaOwner',
+)
+
+
+def _a49a_devices():
+    if torch is None:
+        raise AssertionError('PyTorch is required for A4.9a')
+    devices = ['cpu']
+    if _REQUIRE_CUDA:
+        if not torch.cuda.is_available():
+            raise AssertionError(
+                'CUDA required for A4.9a but unavailable; fallback forbidden'
+            )
+        devices.append('cuda')
+    return devices
+
+
+def _a49a_fixture(seed=7401):
+    world, cells = _fixture_cells(seed=seed)
+    capacity = _a48c8_capacity_for_cells(cells)
+    observed = (
+        int(capacity.max_cells), int(capacity.max_sequences),
+        int(capacity.max_symbols), int(capacity.max_sequence_symbols),
+        int(capacity.max_proteins_per_cell),
+    )
+    if observed != (4, 10, 340, 48, 32):
+        raise AssertionError(
+            'A4.9a heterogeneous fixture C/Q/S/W/P drifted: %r' %
+            (observed,)
+        )
+    return world, cells, capacity
+
+
+def _a49a_host_binding(world, capacity):
+    adapter = a4.FullFidelityA4GenomeAdapter(capacity)
+    ragged = adapter.pack_cells(tuple(world.cells))
+    state = a4.pack_a4_translation_state(
+        tuple(world.cells), ragged, world.config, capacity,
+    )
+    return a4.bind_a4_translation(ragged, state)
+
+
+def _a49a_expect_error(fn, kinds=None):
+    kinds = kinds or (
+        a49a.A4ResidentArenaError, a49a.A4ResidentArenaScopeError,
+    )
+    try:
+        fn()
+    except kinds as exc:
+        return exc
+    raise AssertionError('expected A4.9a fail-closed exception')
+
+
+def _a49a_assert_snapshot_matches(world, capacity, snapshot, label):
+    host = _a49a_host_binding(world, capacity)
+    v3.assert_recursive_close(
+        host.ragged.state_dict(), snapshot.ragged.state_dict(),
+        0.0, 0.0, label + '.ragged',
+    )
+    v3.assert_recursive_close(
+        host.state.state_dict(), snapshot.state.state_dict(),
+        0.0, 0.0, label + '.state',
+    )
+    v3.assert_recursive_close(
+        host.cache.state_dict(), snapshot.cache.state_dict(),
+        0.0, 0.0, label + '.cache',
+    )
+    if (a4._ragged_translation_provenance(snapshot.ragged)
+            != host.state.source_provenance
+            or a4._gene_cache_provenance(snapshot.cache)
+            != a4._gene_cache_provenance(host.cache)):
+        raise AssertionError(label + ' resident provenance differs')
+    return host
+
+
+def _a49a_signature_sets(signature):
+    records = tuple(signature.tensor_records)
+    if len(records) != 50:
+        raise AssertionError('A4.9a resident signature is not exactly 50 tensors')
+    groups = {name: 0 for name in ('ragged', 'state', 'cache')}
+    object_ids = set()
+    storage = set()
+    nonempty_storage_count = 0
+    for record in records:
+        group, name, object_id, pointer, version, device, dtype, shape = record
+        if group not in groups or not name or int(object_id) <= 0:
+            raise AssertionError('malformed A4.9a tensor record')
+        if (int(pointer) < 0 or int(version) < 0
+                or not device or not dtype):
+            raise AssertionError('invalid A4.9a pointer/version/device record')
+        if any(int(value) < 0 for value in shape):
+            raise AssertionError('negative A4.9a tensor dimension')
+        zero_sized = any(int(value) == 0 for value in shape)
+        if int(pointer) == 0 and not zero_sized:
+            raise AssertionError('nonempty A4.9a tensor has null storage')
+        groups[group] += 1
+        object_ids.add(int(object_id))
+        if int(pointer) != 0:
+            storage.add((str(device), int(pointer)))
+            nonempty_storage_count += 1
+    if groups != {'ragged': 11, 'state': 30, 'cache': 9}:
+        raise AssertionError('A4.9a tensor group counts differ: %r' % groups)
+    if (len(object_ids) != 50
+            or len(storage) != nonempty_storage_count):
+        raise AssertionError('A4.9a resident tensors alias each other')
+    return object_ids, storage
+
+
+def _a49a_assert_world_unchanged(before, rng_object, rng_state, world, label):
+    v3.assert_recursive_close(
+        before, world.state_dict(), 0.0, 0.0, label + '.world',
+    )
+    if (world.rng is not rng_object
+            or world.rng.bit_generator.state != rng_state):
+        raise AssertionError(label + ' changed CPU world RNG identity/state')
+
+
+def _a49a_full_rebuild(owner, world):
+    expected_id = owner.arena_id
+    expected_lifecycle = owner.lifecycle
+    expected_epochs = owner.epochs
+    old_signature = owner._arena.resident_signature
+    candidate = owner.prepare_rebuild(world)
+    _, old_storage = _a49a_signature_sets(old_signature)
+    _, new_storage = _a49a_signature_sets(candidate._arena.resident_signature)
+    if old_storage.intersection(new_storage):
+        raise AssertionError('A4.9a rebuild candidate aliases old storage')
+    owner.swap_rebuild(
+        candidate, world, expected_id, expected_lifecycle, expected_epochs,
+    )
+    if (owner.lifecycle != a49a.COHERENT
+            or owner.arena_id == expected_id
+            or candidate._consumed is not True):
+        raise AssertionError('A4.9a rebuild did not publish exactly once')
+    return candidate
+
+
+def test_a49a_fresh_world_arena_lease_pointer_stability_and_devices():
+    details = []
+    for device in _a49a_devices():
+        world, cells, capacity = _a49a_fixture(seed=18100)
+        before = v3.pickle_clone(world.state_dict())
+        rng_object = world.rng
+        rng_state = v3.pickle_clone(world.rng.bit_generator.state)
+        owner = a49a.A4ResidentArenaOwner.from_cpu(
+            world, capacity, device,
+        )
+        if (owner.lifecycle != a49a.COHERENT
+                or owner.epochs != a49a.A4ResidentArenaEpochs(1, 1, 1, 1, 1)):
+            raise AssertionError(device + ' fresh A4.9a lifecycle/epochs differ')
+        first = owner._validation_snapshot(world)
+        _a49a_assert_snapshot_matches(
+            world, capacity, first, 'a49a.fresh.' + device,
+        )
+        objects, storage = _a49a_signature_sets(first.resident_signature)
+        if (first.device != device
+                or first.lifecycle != a49a.COHERENT
+                or int(first.storage_generation) != 1
+                or int(first.cache.entry_count) != 6
+                or int(first.cache.entry_capacity) != 21
+                or int(first.ragged.cell_count) != 4
+                or int(first.ragged.sequence_count) != 10
+                or int(first.ragged.symbol_count) != 340):
+            raise AssertionError(device + ' fresh A4.9a fixture metadata differs')
+
+        for lease_index in range(2):
+            lease = owner._open_read_lease(world)
+            with lease as active:
+                binding = active._binding_once()
+                if ((id(binding), id(binding.ragged), id(binding.state),
+                     id(binding.cache))
+                        != tuple(first.resident_signature.binding_object_ids)):
+                    raise AssertionError(device + ' lease binding identity differs')
+                _a49a_expect_error(active._binding_once)
+                if (set(binding.ragged.data_ptrs().values()).difference(
+                        pointer for resident_device, pointer in storage
+                        if torch.device(str(resident_device)).type
+                        == torch.device(str(device)).type)):
+                    raise AssertionError(device + ' lease ragged pointer differs')
+            _a49a_expect_error(lease.__enter__)
+            if owner.lifecycle != a49a.COHERENT:
+                raise AssertionError(device + ' closed lease changed lifecycle')
+
+        second = owner._validation_snapshot(world)
+        if (second.resident_signature != first.resident_signature
+                or second.arena_id != first.arena_id
+                or second.epochs != first.epochs
+                or owner.audit_cpu(world) != a49a.COHERENT):
+            raise AssertionError(device + ' repeated view changed immutable arena')
+        second_objects, second_storage = _a49a_signature_sets(
+            second.resident_signature,
+        )
+        if objects != second_objects or storage != second_storage:
+            raise AssertionError(device + ' resident pointer lifetime changed')
+        detached_epochs = owner.epochs
+        if detached_epochs is owner._epochs:
+            raise AssertionError('owner epochs property leaked canonical object')
+        _a49a_expect_error(
+            lambda: setattr(detached_epochs, 'state_epoch', 99),
+            kinds=(Exception,),
+        )
+        if owner.epochs != a49a.A4ResidentArenaEpochs(1, 1, 1, 1, 1):
+            raise AssertionError('detached epoch mutation reached owner')
+        _a49a_assert_world_unchanged(
+            before, rng_object, rng_state, world, 'a49a.fresh.' + device,
+        )
+        details.append('%s:50ptr/K21' % device)
+    return ('world-wide fresh shadow exact; two one-shot leases retain 50 '
+            'ragged/state/cache pointers and CPU/RNG on %s' % '/'.join(details))
+
+
+def test_a49a_cpu_newer_epochs_dirty_domains_and_separate_rebuild():
+    expected = {
+        'S': a49a.A4ResidentArenaEpochs(1, 1, 2, 1, 1),
+        'R': a49a.A4ResidentArenaEpochs(1, 2, 2, 2, 1),
+        'C': a49a.A4ResidentArenaEpochs(1, 1, 1, 2, 1),
+        'M': a49a.A4ResidentArenaEpochs(2, 2, 2, 2, 1),
+    }
+    details = []
+    for index, domain in enumerate(('S', 'R', 'C', 'M')):
+        world, cells, capacity = _a49a_fixture(seed=18200 + index)
+        rng_object = world.rng
+        rng_state = v3.pickle_clone(world.rng.bit_generator.state)
+        owner = a49a.A4ResidentArenaOwner.from_cpu(
+            world, capacity, 'cpu',
+        )
+        original = owner._validation_snapshot(world)
+        original_records = tuple(original.resident_signature.tensor_records)
+
+        if domain == 'S':
+            cells[1].pools[0] = np.nextafter(
+                float(cells[1].pools[0]), np.inf,
+            )
+        elif domain == 'R':
+            cells[1].genomes[0][0] = np.uint8(
+                (int(cells[1].genomes[0][0]) + 1) % 8
+            )
+            cells[1]._refresh_gene_cache()
+        elif domain == 'C':
+            cells[1].gene_specs = {}
+        else:
+            world.cells[0], world.cells[1] = world.cells[1], world.cells[0]
+
+        lifecycle = owner.audit_cpu(world)
+        expected_lifecycle = (
+            a49a.INVALID if domain == 'M' else a49a.CPU_NEWER
+        )
+        if lifecycle != expected_lifecycle or owner.epochs != expected[domain]:
+            raise AssertionError(
+                '%s drift lifecycle/epochs differ: %s %r' % (
+                    domain, lifecycle, owner.epochs,
+                )
+            )
+        once = owner.epochs
+        if owner.audit_cpu(world) != expected_lifecycle or owner.epochs != once:
+            raise AssertionError(domain + ' repeated audit was not idempotent')
+        if tuple(owner._arena.resident_signature.tensor_records) != original_records:
+            raise AssertionError(domain + ' CPU drift changed old storage')
+        _a49a_expect_error(lambda: owner._validation_snapshot(world))
+        _a49a_expect_error(lambda: owner._open_read_lease(world))
+
+        if domain == 'C':
+            # A stale caller cache cannot be rebuilt as resident authority.
+            before_failed = (
+                owner.arena_id, owner.lifecycle, owner.epochs,
+                tuple(owner._arena.resident_signature.tensor_records),
+            )
+            _a49a_expect_error(lambda: owner.prepare_rebuild(world))
+            after_failed = (
+                owner.arena_id, owner.lifecycle, owner.epochs,
+                tuple(owner._arena.resident_signature.tensor_records),
+            )
+            if after_failed != before_failed:
+                raise AssertionError('failed stale-cache rebuild changed owner')
+            cells[1]._refresh_gene_cache()
+            if owner.audit_cpu(world) != a49a.CPU_NEWER:
+                raise AssertionError('refreshed CPU cache unexpectedly recohered')
+            if owner.epochs != a49a.A4ResidentArenaEpochs(1, 1, 1, 3, 1):
+                raise AssertionError('CPU cache refresh epoch did not advance once')
+
+        candidate = _a49a_full_rebuild(owner, world)
+        rebuilt = owner._validation_snapshot(world)
+        _a49a_assert_snapshot_matches(
+            world, capacity, rebuilt, 'a49a.rebuild.' + domain,
+        )
+        if (int(rebuilt.storage_generation) != 2
+                or rebuilt.epochs.cache_source_ragged_epoch
+                != rebuilt.epochs.ragged_epoch
+                or tuple(rebuilt.resident_signature.tensor_records)
+                == original_records):
+            raise AssertionError(domain + ' rebuild did not use a fresh generation')
+        _a49a_expect_error(
+            lambda: owner.swap_rebuild(
+                candidate, world, owner.arena_id, owner.lifecycle,
+                owner.epochs,
+            )
+        )
+        if (world.rng is not rng_object
+                or world.rng.bit_generator.state != rng_state):
+            raise AssertionError(domain + ' audit/rebuild changed CPU RNG')
+        details.append('%s:%s' % (domain, '/'.join(map(str, (
+            rebuilt.epochs.membership_epoch,
+            rebuilt.epochs.ragged_epoch,
+            rebuilt.epochs.state_epoch,
+            rebuilt.epochs.cache_epoch,
+        )))))
+
+    # The actual A3 unpack path rebinds lesions, pools and protein mappings even
+    # when their values are equal.  The identity-aware audit must advance R/S/C
+    # once, and only once.
+    world, cells, capacity = _a49a_fixture(seed=18220)
+    owner = a49a.A4ResidentArenaOwner.from_cpu(world, capacity, 'cpu')
+    packed = a4.a3.pack_a3_cell(cells[2], model_config=world.config)
+    a4.a3.unpack_a3_cell(packed, cells[2])
+    if (owner.audit_cpu(world) != a49a.CPU_NEWER
+            or owner.epochs != a49a.A4ResidentArenaEpochs(1, 2, 2, 2, 1)):
+        raise AssertionError('real A3 unpack did not stale R/S/C together')
+    unpack_epochs = owner.epochs
+    if owner.audit_cpu(world) != a49a.CPU_NEWER or owner.epochs != unpack_epochs:
+        raise AssertionError('real A3 unpack drift advanced more than once')
+
+    # The c8-only last-symbol field is outside M/R/S/C and must not dirty 9a.
+    world, cells, capacity = _a49a_fixture(seed=18221)
+    owner = a49a.A4ResidentArenaOwner.from_cpu(world, capacity, 'cpu')
+    telemetry_signature = owner._arena.resident_signature
+    cells[0].last_replication_symbols = 987654321
+    if (owner.audit_cpu(world) != a49a.COHERENT
+            or owner.epochs != a49a.A4ResidentArenaEpochs(1, 1, 1, 1, 1)
+            or owner._arena.resident_signature != telemetry_signature):
+        raise AssertionError('out-of-shadow c8 telemetry dirtied A4.9a')
+    return ('S/R/C/M one-way epochs + separate nonalias rebuild %s; real '
+            'A3 unpack stales R/S/C once; c8 last-symbol remains coherent' %
+            '/'.join(details))
+
+
+def test_a49a_capacity_creation_seals_leases_candidates_and_scope_fail_closed():
+    world, cells, exact = _a49a_fixture(seed=18300)
+    before = v3.pickle_clone(world.state_dict())
+    rng_object = world.rng
+    rng_state = v3.pickle_clone(world.rng.bit_generator.state)
+    values = {
+        'max_cells': int(exact.max_cells),
+        'max_sequences': int(exact.max_sequences),
+        'max_symbols': int(exact.max_symbols),
+        'max_sequence_symbols': int(exact.max_sequence_symbols),
+        'max_proteins_per_cell': int(exact.max_proteins_per_cell),
+    }
+    shorts = {
+        'C': ('max_cells', 3),
+        'Q': ('max_sequences', 9),
+        'S': ('max_symbols', 339),
+        'W': ('max_sequence_symbols', 47),
+        'P': ('max_proteins_per_cell', 31),
+    }
+    upload_calls = []
+    original_to_torch = a4.A4RaggedGenomeBatch.to_torch
+
+    def upload_bomb(*args, **kwargs):
+        upload_calls.append(True)
+        raise AssertionError('one-short capacity reached resident upload')
+
+    a4.A4RaggedGenomeBatch.to_torch = upload_bomb
+    try:
+        for axis, (field, short_value) in shorts.items():
+            candidate_values = dict(values)
+            candidate_values[field] = short_value
+            config = a4.GPU068A4Config(**candidate_values)
+            _a49a_expect_error(
+                lambda config=config: a49a.A4ResidentArenaOwner.from_cpu(
+                    world, config, 'cpu',
+                )
+            )
+    finally:
+        a4.A4RaggedGenomeBatch.to_torch = original_to_torch
+    if upload_calls:
+        raise AssertionError('capacity preflight allocated resident storage')
+    _a49a_assert_world_unchanged(
+        before, rng_object, rng_state, world, 'a49a.capacity',
+    )
+
+    def tamper_arena_id(owner):
+        owner._arena.arena_id += ':tampered'
+
+    def tamper_source(owner):
+        object.__setattr__(owner._arena.source, 'ragged_digest', '0' * 64)
+
+    def tamper_expected_digest(owner):
+        owner._arena.expected_cache_digest = '1' * 64
+
+    def tamper_config(owner):
+        owner._arena.config_state = tuple(reversed(owner._arena.config_state))
+
+    def tamper_storage_generation(owner):
+        owner._arena.storage_generation += 1
+
+    def tamper_owner_epochs(owner):
+        owner._epochs = a49a.A4ResidentArenaEpochs(9, 9, 9, 9, 9)
+
+    def tamper_arena_epochs(owner):
+        owner._arena.epochs = a49a.A4ResidentArenaEpochs(1, 2, 1, 1, 1)
+
+    def tamper_lifecycle(owner):
+        owner._arena.lifecycle = a49a.CPU_NEWER
+
+    def tamper_last_observed(owner):
+        object.__setattr__(owner._last_observed, 'state_digest', '2' * 64)
+
+    metadata_tampers = (
+        ('arena_id', tamper_arena_id),
+        ('source', tamper_source),
+        ('expected_digest', tamper_expected_digest),
+        ('config', tamper_config),
+        ('storage_generation', tamper_storage_generation),
+        ('owner_epochs', tamper_owner_epochs),
+        ('arena_epochs', tamper_arena_epochs),
+        ('lifecycle', tamper_lifecycle),
+        ('last_observed', tamper_last_observed),
+    )
+    tamper_details = []
+    for index, (label, mutate) in enumerate(metadata_tampers):
+        test_world, _, capacity = _a49a_fixture(seed=18320 + index)
+        test_before = v3.pickle_clone(test_world.state_dict())
+        test_rng = test_world.rng
+        test_rng_state = v3.pickle_clone(test_rng.bit_generator.state)
+        owner = a49a.A4ResidentArenaOwner.from_cpu(
+            test_world, capacity, 'cpu',
+        )
+        mutate(owner)
+        _a49a_expect_error(lambda: owner.audit_cpu(test_world))
+        if owner.lifecycle != a49a.INVALID:
+            raise AssertionError(label + ' metadata tamper did not invalidate')
+        _a49a_assert_world_unchanged(
+            test_before, test_rng, test_rng_state, test_world,
+            'a49a.tamper.' + label,
+        )
+        tamper_details.append(label)
+
+    # Pointer/version checks and the explicit content seal independently catch
+    # ordinary writes, storage replacement, and Tensor.data version bypass.
+    for index, mode in enumerate(('ordinary', 'pointer', 'data')):
+        test_world, _, capacity = _a49a_fixture(seed=18350 + index)
+        owner = a49a.A4ResidentArenaOwner.from_cpu(
+            test_world, capacity, 'cpu',
+        )
+        tensor = owner._arena.binding.ragged.symbols
+        if mode == 'ordinary':
+            tensor[0] = (int(tensor[0]) + 1) % 8
+        elif mode == 'pointer':
+            owner._arena.binding.ragged.symbols = tensor.clone()
+        else:
+            tensor.data[0] = (int(tensor.data[0]) + 1) % 8
+        _a49a_expect_error(lambda: owner.audit_cpu(test_world))
+        if owner.lifecycle != a49a.INVALID:
+            raise AssertionError(mode + ' tensor tamper did not invalidate')
+
+    # A coordinated Tensor.data + expected digest + source attestation + inner
+    # seal rewrite must still fail against the owner's detached outer snapshot.
+    # Exercise the derived-cache relation explicitly.
+    coforge_world, _, coforge_capacity = _a49a_fixture(seed=18353)
+    coforge_owner = a49a.A4ResidentArenaOwner.from_cpu(
+        coforge_world, coforge_capacity, 'cpu',
+    )
+    coforge_tensor = coforge_owner._arena.binding.cache.copy_numbers
+    coforge_tensor.data[0] = int(coforge_tensor.data[0]) + 1
+    coforge_digest = a4._gene_cache_provenance(
+        coforge_owner._arena.binding.cache.to_numpy(),
+    )
+    if coforge_digest == coforge_owner._arena.source.derived_cache_digest:
+        raise AssertionError('active cache coforge did not change its digest')
+    coforge_owner._arena.expected_cache_digest = coforge_digest
+    coforge_seal = coforge_owner._arena_seal
+    object.__setattr__(
+        coforge_owner._arena.source, 'derived_cache_digest', coforge_digest,
+    )
+    object.__setattr__(
+        coforge_seal, 'expected_digests',
+        (coforge_seal.expected_digests[0],
+         coforge_seal.expected_digests[1], coforge_digest),
+    )
+    object.__setattr__(
+        coforge_seal, 'source_values',
+        a49a._source_identity_values(coforge_owner._arena.source),
+    )
+    if (a49a._require_arena_creation_seal(
+            coforge_owner._arena, coforge_seal)
+            is not coforge_owner._arena):
+        raise AssertionError('active cache inner coforge was incomplete')
+    _a49a_expect_error(lambda: coforge_owner.audit_cpu(coforge_world))
+    if coforge_owner.lifecycle != a49a.INVALID:
+        raise AssertionError('active cache digest/seal coforge stayed valid')
+
+    # Equal-value current-seal copies are non-authoritative records and remain
+    # legal.  They must not let a stale former guard seal be coforged with the
+    # live arena epoch object behind the current seal's association.
+    epoch_world, _, epoch_capacity = _a49a_fixture(seed=18354)
+    epoch_before = v3.pickle_clone(epoch_world.state_dict())
+    epoch_rng = epoch_world.rng
+    epoch_rng_state = v3.pickle_clone(epoch_rng.bit_generator.state)
+    epoch_owner = a49a.A4ResidentArenaOwner.from_cpu(
+        epoch_world, epoch_capacity, 'cpu',
+    )
+    stale_guard_seal = epoch_owner._arena_seal
+    epoch_owner._arena_seal = copy.copy(stale_guard_seal)
+    if epoch_owner.lifecycle != a49a.COHERENT:
+        raise AssertionError('equal current arena-seal copy changed authority')
+    forged_epochs = a49a.A4ResidentArenaEpochs(9, 9, 9, 9, 9)
+    epoch_owner._arena.epochs = forged_epochs
+    object.__setattr__(stale_guard_seal, 'epochs_ref', forged_epochs)
+    object.__setattr__(
+        stale_guard_seal, 'epochs_values', (9, 9, 9, 9, 9),
+    )
+    if (a49a._require_arena_creation_seal(
+            epoch_owner._arena, stale_guard_seal)
+            is not epoch_owner._arena):
+        raise AssertionError('stale guard inner epoch coforge was incomplete')
+    if (epoch_owner.lifecycle != a49a.INVALID
+            or epoch_owner.epochs
+            != a49a.A4ResidentArenaEpochs(2, 2, 2, 2, 1)):
+        raise AssertionError('stale-seal epoch coforge did not fail closed')
+    invalid_epochs = epoch_owner.epochs
+    if (epoch_owner.audit_cpu(epoch_world) != a49a.INVALID
+            or epoch_owner.epochs != invalid_epochs):
+        raise AssertionError('epoch coforge invalidation advanced twice')
+    _a49a_assert_world_unchanged(
+        epoch_before, epoch_rng, epoch_rng_state, epoch_world,
+        'a49a.active.epoch-coforge',
+    )
+
+    # Issued lease A becomes stale when B is issued; neither serial nor token
+    # may be replayed A -> B -> A, and a binding is consumable exactly once.
+    world, _, capacity = _a49a_fixture(seed=18360)
+    owner = a49a.A4ResidentArenaOwner.from_cpu(world, capacity, 'cpu')
+    lease_a = owner._open_read_lease(world)
+    lease_b = owner._open_read_lease(world)
+    _a49a_expect_error(lease_a.__enter__)
+    with lease_b as active:
+        active._binding_once()
+        _a49a_expect_error(active._binding_once)
+        active._consumed = False
+        _a49a_expect_error(active._binding_once)
+    _a49a_expect_error(lease_a.__enter__)
+    _a49a_expect_error(lease_b.__enter__)
+
+    other_world, _, other_capacity = _a49a_fixture(seed=18361)
+    other = a49a.A4ResidentArenaOwner.from_cpu(
+        other_world, other_capacity, 'cpu',
+    )
+    cross = owner._open_read_lease(world)
+    _a49a_expect_error(lambda: other._activate_lease(cross))
+    with cross as active:
+        active._binding_once()
+
+    # A .data mutation inside a lease must be found at close and must always
+    # clear the active token, even while the generation becomes INVALID.
+    lease_world, _, lease_capacity = _a49a_fixture(seed=18362)
+    lease_owner = a49a.A4ResidentArenaOwner.from_cpu(
+        lease_world, lease_capacity, 'cpu',
+    )
+    in_lease = lease_owner._open_read_lease(lease_world)
+
+    def mutate_inside_lease():
+        with in_lease as active:
+            binding = active._binding_once()
+            tensor = binding.ragged.symbols
+            tensor.data[0] = (int(tensor.data[0]) + 1) % 8
+
+    _a49a_expect_error(mutate_inside_lease)
+    if (lease_owner.lifecycle != a49a.INVALID
+            or lease_owner._active_lease_token is not None
+            or lease_owner._issued_lease_token is not None
+            or int(lease_owner._arena.active_leases) != 0):
+        raise AssertionError('failed lease close retained active authority')
+
+    # An issued lease is also stale across CPU drift and a complete A->B swap.
+    stale_world, stale_cells, stale_capacity = _a49a_fixture(seed=18363)
+    stale_owner = a49a.A4ResidentArenaOwner.from_cpu(
+        stale_world, stale_capacity, 'cpu',
+    )
+    stale_lease = stale_owner._open_read_lease(stale_world)
+    stale_cells[0].pools[0] = np.nextafter(
+        float(stale_cells[0].pools[0]), np.inf,
+    )
+    if stale_owner.audit_cpu(stale_world) != a49a.CPU_NEWER:
+        raise AssertionError('lease drift did not stale owner')
+    _a49a_expect_error(stale_lease.__enter__)
+    _a49a_full_rebuild(stale_owner, stale_world)
+    _a49a_expect_error(stale_lease.__enter__)
+
+    # Candidate creation seals reject an equal-value epoch-object rebind, an
+    # old-arena alias, and a CPU source changed after preparation.
+    candidate_modes = ('epochs_equal_rebind', 'old_alias', 'cpu_freshness')
+    for index, mode in enumerate(candidate_modes):
+        candidate_world, candidate_cells, candidate_capacity = (
+            _a49a_fixture(seed=18370 + index)
+        )
+        candidate_owner = a49a.A4ResidentArenaOwner.from_cpu(
+            candidate_world, candidate_capacity, 'cpu',
+        )
+        candidate_cells[0].pools[0] = np.nextafter(
+            float(candidate_cells[0].pools[0]), np.inf,
+        )
+        candidate_owner.audit_cpu(candidate_world)
+        expected_id = candidate_owner.arena_id
+        expected_lifecycle = candidate_owner.lifecycle
+        expected_epochs = candidate_owner.epochs
+        old_signature = candidate_owner._arena.resident_signature
+        candidate = candidate_owner.prepare_rebuild(candidate_world)
+        if mode == 'epochs_equal_rebind':
+            candidate._expected_epochs = copy.deepcopy(
+                candidate._expected_epochs,
+            )
+        elif mode == 'old_alias':
+            candidate._arena = candidate_owner._arena
+        else:
+            candidate_cells[0].pools[1] = np.nextafter(
+                float(candidate_cells[0].pools[1]), np.inf,
+            )
+        _a49a_expect_error(
+            lambda: candidate_owner.swap_rebuild(
+                candidate, candidate_world, expected_id,
+                expected_lifecycle, expected_epochs,
+            )
+        )
+        if (candidate_owner.arena_id != expected_id
+                or candidate_owner._arena.resident_signature != old_signature
+                or candidate_owner.lifecycle == a49a.COHERENT):
+            raise AssertionError(mode + ' failed candidate changed old owner')
+
+    # The same content/expected/source/inner-seal coforge on a private rebuild
+    # must fail against its outer candidate snapshot before CAS publication.
+    coforge_world, coforge_cells, coforge_capacity = _a49a_fixture(seed=18373)
+    coforge_owner = a49a.A4ResidentArenaOwner.from_cpu(
+        coforge_world, coforge_capacity, 'cpu',
+    )
+    coforge_cells[0].pools[0] = np.nextafter(
+        float(coforge_cells[0].pools[0]), np.inf,
+    )
+    coforge_owner.audit_cpu(coforge_world)
+    coforge_id = coforge_owner.arena_id
+    coforge_lifecycle = coforge_owner.lifecycle
+    coforge_epochs = coforge_owner.epochs
+    coforge_signature = coforge_owner._arena.resident_signature
+    coforge_candidate = coforge_owner.prepare_rebuild(coforge_world)
+    coforge_before = v3.pickle_clone(coforge_world.state_dict())
+    coforge_rng = coforge_world.rng
+    coforge_rng_state = v3.pickle_clone(coforge_rng.bit_generator.state)
+    coforge_tensor = coforge_candidate._arena.binding.ragged.symbols
+    coforge_tensor.data[0] = (int(coforge_tensor.data[0]) + 1) % 8
+    coforge_digest = a4._ragged_translation_provenance(
+        coforge_candidate._arena.binding.ragged.to_numpy(),
+    )
+    if coforge_digest == coforge_candidate._arena.source.ragged_digest:
+        raise AssertionError('candidate ragged coforge did not change its digest')
+    coforge_candidate._arena.expected_ragged_digest = coforge_digest
+    coforge_seal = coforge_candidate._seal.arena_seal
+    object.__setattr__(
+        coforge_candidate._arena.source, 'ragged_digest', coforge_digest,
+    )
+    object.__setattr__(
+        coforge_seal, 'expected_digests',
+        (coforge_digest, coforge_seal.expected_digests[1],
+         coforge_seal.expected_digests[2]),
+    )
+    object.__setattr__(
+        coforge_seal, 'source_values',
+        a49a._source_identity_values(coforge_candidate._arena.source),
+    )
+    if (a49a._require_arena_creation_seal(
+            coforge_candidate._arena, coforge_seal)
+            is not coforge_candidate._arena):
+        raise AssertionError('candidate ragged inner coforge was incomplete')
+    _a49a_expect_error(
+        lambda: coforge_owner.swap_rebuild(
+            coforge_candidate, coforge_world, coforge_id,
+            coforge_lifecycle, coforge_epochs,
+        )
+    )
+    if (coforge_owner.arena_id != coforge_id
+            or coforge_owner._arena.resident_signature != coforge_signature
+            or coforge_owner.lifecycle != coforge_lifecycle
+            or coforge_candidate._consumed):
+        raise AssertionError('candidate digest/seal coforge changed old owner')
+    _a49a_assert_world_unchanged(
+        coforge_before, coforge_rng, coforge_rng_state, coforge_world,
+        'a49a.candidate.coforge',
+    )
+
+    # Replace every resident object in a prepared candidate with fresh cloned
+    # ragged/state storage, its freshly derived cache, binding and signature.
+    # Even a completely self-consistent inner arena/seal rewrite must not pass
+    # the candidate's detached outer creation snapshot.
+    binding_world, binding_cells, binding_capacity = _a49a_fixture(seed=18374)
+    binding_owner = a49a.A4ResidentArenaOwner.from_cpu(
+        binding_world, binding_capacity, 'cpu',
+    )
+    binding_cells[0].pools[0] = np.nextafter(
+        float(binding_cells[0].pools[0]), np.inf,
+    )
+    binding_owner.audit_cpu(binding_world)
+    binding_id = binding_owner.arena_id
+    binding_lifecycle = binding_owner.lifecycle
+    binding_epochs = binding_owner.epochs
+    binding_signature = binding_owner._arena.resident_signature
+    _, owner_storage = _a49a_signature_sets(binding_signature)
+    binding_candidate = binding_owner.prepare_rebuild(binding_world)
+    _, candidate_storage = _a49a_signature_sets(
+        binding_candidate._arena.resident_signature,
+    )
+    binding_before = v3.pickle_clone(binding_world.state_dict())
+    binding_rng = binding_world.rng
+    binding_rng_state = v3.pickle_clone(binding_rng.bit_generator.state)
+
+    fresh_ragged = binding_candidate._arena.binding.ragged.clone()
+    fresh_state = binding_candidate._arena.binding.state.clone()
+    fresh_binding = a4.bind_a4_translation(fresh_ragged, fresh_state)
+    fresh_signature = a49a._resident_signature(fresh_binding)
+    _, fresh_storage = _a49a_signature_sets(fresh_signature)
+    if (fresh_storage.intersection(owner_storage)
+            or fresh_storage.intersection(candidate_storage)):
+        raise AssertionError('candidate fresh binding aliases prior storage')
+    fresh_source = copy.copy(binding_candidate._arena.source)
+    fresh_digests = (
+        a4._ragged_translation_provenance(fresh_ragged.to_numpy()),
+        a4._translation_state_provenance(fresh_state.to_numpy()),
+        a4._gene_cache_provenance(fresh_binding.cache.to_numpy()),
+    )
+    binding_candidate._arena.binding = fresh_binding
+    binding_candidate._arena.resident_signature = fresh_signature
+    binding_candidate._arena.source = fresh_source
+    (binding_candidate._arena.expected_ragged_digest,
+     binding_candidate._arena.expected_state_digest,
+     binding_candidate._arena.expected_cache_digest) = fresh_digests
+    binding_seal = binding_candidate._seal.arena_seal
+    object.__setattr__(binding_seal, 'binding_ref', fresh_binding)
+    object.__setattr__(binding_seal, 'resident_signature_ref', fresh_signature)
+    object.__setattr__(binding_seal, 'source_ref', fresh_source)
+    object.__setattr__(
+        binding_seal, 'source_values',
+        a49a._source_identity_values(fresh_source),
+    )
+    object.__setattr__(
+        binding_seal, 'resident_signature_values',
+        (tuple(fresh_signature.binding_object_ids),
+         tuple(fresh_signature.tensor_records)),
+    )
+    object.__setattr__(binding_seal, 'expected_digests', fresh_digests)
+    if (a49a._require_arena_creation_seal(
+            binding_candidate._arena, binding_seal)
+            is not binding_candidate._arena):
+        raise AssertionError('candidate fresh-binding inner coforge incomplete')
+    _a49a_expect_error(
+        lambda: binding_owner.swap_rebuild(
+            binding_candidate, binding_world, binding_id,
+            binding_lifecycle, binding_epochs,
+        )
+    )
+    if (binding_owner.arena_id != binding_id
+            or binding_owner.lifecycle != binding_lifecycle
+            or binding_owner._arena.resident_signature != binding_signature
+            or binding_candidate._consumed):
+        raise AssertionError('candidate binding coforge changed old owner')
+    _, after_owner_storage = _a49a_signature_sets(
+        binding_owner._arena.resident_signature,
+    )
+    if after_owner_storage != owner_storage:
+        raise AssertionError('candidate binding coforge changed old pointers')
+    _a49a_assert_world_unchanged(
+        binding_before, binding_rng, binding_rng_state, binding_world,
+        'a49a.candidate.binding-coforge',
+    )
+
+    # A4.9a exposes no successful device-dirty/D2H/publish/serialization path.
+    forbidden_public = ('write', 'dirty', 'd2h', 'publish', 'sync', 'state_dict',
+                        'from_state', 'clone', 'to_cpu')
+    public_names = tuple(a49a.__all__)
+    if any(any(token in name.lower() for token in forbidden_public)
+           for name in public_names):
+        raise AssertionError('A4.9a public API leaks resident authority')
+    scope_world, _, scope_capacity = _a49a_fixture(seed=18380)
+    scope_owner = a49a.A4ResidentArenaOwner.from_cpu(
+        scope_world, scope_capacity, 'cpu',
+    )
+    for operation in (
+            lambda: pickle.dumps(scope_owner),
+            lambda: pickle.dumps(scope_owner._arena),
+            lambda: copy.copy(scope_owner),
+            lambda: copy.deepcopy(scope_owner)):
+        _a49a_expect_error(
+            operation, kinds=(a49a.A4ResidentArenaScopeError,),
+        )
+    if (a49a.PORT_STATUS.get('resident_device_writes')
+            != 'not-implemented-scope-error'
+            or a49a.PORT_STATUS.get('resident_d2h_publish')
+            != 'not-implemented-scope-error'):
+        raise AssertionError('A4.9a unsupported resident authority drifted')
+    return ('exact C/Q/S/W/P and each one-short pre-upload; %d metadata/'
+            'source/digest + 3 tensor tamper + 4 outer-snapshot coforge; lease '
+            'serial/token/local-rearm/one-shot/in-close data; candidate '
+            'equal-epoch/alias/freshness; no successful public D2H publish/'
+            'CPU overwrite path' %
+            len(tamper_details))
+
+
+def test_a49a_fresh_reconstruction_c8_successor_frozen86_and_authority():
+    case = _a48c8_case(
+        'disabled', seed=18400, mutation=True, prime_uint32=True,
+    )
+    source = _a48c8_hybrid_from_state(
+        case['state'], case['capacity'], 'cpu',
+    )
+    twin = source.clone()
+    with tempfile.TemporaryDirectory() as directory:
+        path = os.path.join(directory, 'a49a_cpu_authority.pkl')
+        source.save(path)
+        restored = a48c8.Hybrid066WorldA4ReplicationEarlyNoop.load(path)
+
+    wrappers = (source, twin, restored)
+    owners = [
+        a49a.A4ResidentArenaOwner.from_cpu(
+            wrapper.world, case['capacity'], 'cpu',
+        )
+        for wrapper in wrappers
+    ]
+    snapshots = [
+        owner._validation_snapshot(wrapper.world)
+        for owner, wrapper in zip(owners, wrappers)
+    ]
+    arena_ids = {snapshot.arena_id for snapshot in snapshots}
+    if len(arena_ids) != len(snapshots):
+        raise AssertionError('load/clone reused an A4.9a arena ID')
+    all_storage = []
+    all_objects = []
+    for index, (wrapper, owner, snapshot) in enumerate(
+            zip(wrappers, owners, snapshots)):
+        _a49a_assert_snapshot_matches(
+            wrapper.world, case['capacity'], snapshot,
+            'a49a.persisted.%d' % index,
+        )
+        objects, storage = _a49a_signature_sets(
+            snapshot.resident_signature,
+        )
+        all_objects.append(objects)
+        all_storage.append(storage)
+        if (owner.epochs != a49a.A4ResidentArenaEpochs(1, 1, 1, 1, 1)
+                or int(snapshot.storage_generation) != 1):
+            raise AssertionError('fresh reconstructed arena did not reset namespace')
+    for left in range(len(snapshots)):
+        for right in range(left + 1, len(snapshots)):
+            if (all_storage[left].intersection(all_storage[right])
+                    or all_objects[left].intersection(all_objects[right])):
+                raise AssertionError('load/clone A4.9a arenas alias resident tensors')
+            v3.assert_recursive_close(
+                snapshots[left].ragged.state_dict(),
+                snapshots[right].ragged.state_dict(),
+                0.0, 0.0, 'a49a.persisted.ragged.%d.%d' % (left, right),
+            )
+            v3.assert_recursive_close(
+                snapshots[left].state.state_dict(),
+                snapshots[right].state.state_dict(),
+                0.0, 0.0, 'a49a.persisted.state.%d.%d' % (left, right),
+            )
+            v3.assert_recursive_close(
+                snapshots[left].cache.state_dict(),
+                snapshots[right].cache.state_dict(),
+                0.0, 0.0, 'a49a.persisted.cache.%d.%d' % (left, right),
+            )
+
+    # The shadow is external to the scheduler.  A complete successor step must
+    # retain the exact c8 event/RNG authority; its ordinary CPU object recast
+    # invalidates the old membership-bound arena and requires a fresh rebuild.
+    expected = source
+    shadow = twin
+    shadow_owner = owners[1]
+    expected_receipt = expected.step(case['dt'])
+    shadow_receipt = shadow.step(case['dt'])
+    v3._assert_world_pair(
+        expected.world, shadow, state_atol=v3.WORLD_FP64_ATOL,
+        ledger_atol=v3.LEDGER_ATOL, label='a49a.c8.successor',
+    )
+    v3.assert_recursive_close(
+        expected_receipt, shadow_receipt, 0.0, 0.0,
+        'a49a.c8.successor.receipt',
+    )
+    names = [entry['event'] for entry in shadow_receipt['cells'][0]['events']]
+    ordinals = [entry['ordinal'] for entry in shadow_receipt['cells'][0]['events']]
+    if (tuple(names) != tuple(a3s.CELL_EVENT_ORDER)
+            or len(ordinals) != len(set(ordinals))
+            or names.count('translation_cpu') != 1
+            or names.count('replication_cpu') != 1
+            or names.count('genome_hydrolysis_cpu_rng') != 1):
+        raise AssertionError('A4.9a shadow changed c8 successor event order')
+    if shadow_owner.audit_cpu(shadow.world) != a49a.INVALID:
+        raise AssertionError('full CPU successor did not invalidate old membership')
+    step_before = v3.pickle_clone(shadow.world.state_dict())
+    step_rng = shadow.world.rng
+    step_rng_state = v3.pickle_clone(step_rng.bit_generator.state)
+    _a49a_full_rebuild(shadow_owner, shadow.world)
+    _a49a_assert_world_unchanged(
+        step_before, step_rng, step_rng_state, shadow.world,
+        'a49a.c8.post_step_rebuild',
+    )
+
+    # Pending scheduler serialization remains a CPU-world guard; the external
+    # arena neither weakens it nor becomes part of the durable state.
+    pending = restored
+    pending_owner = owners[2]
+    pending.scheduler.begin_step(pending.world, pending.world.cells)
+    _assert_raises(a3s.A3SchedulerProtocolError, pending.clone)
+    if pending_owner.audit_cpu(pending.world) != a49a.COHERENT:
+        raise AssertionError('pending scheduler alone dirtied external shadow')
+    pending.scheduler.abort_step(RuntimeError('expected A4.9a pending guard'))
+
+    # Runtime owner/candidate/lease state is never durable biology.
+    lease = pending_owner._open_read_lease(pending.world)
+    _a49a_expect_error(
+        lambda: pickle.dumps(lease),
+        kinds=(a49a.A4ResidentArenaScopeError,),
+    )
+    with lease as active:
+        active._binding_once()
+    pending.world.cells[0].pools[0] = np.nextafter(
+        float(pending.world.cells[0].pools[0]), np.inf,
+    )
+    pending_owner.audit_cpu(pending.world)
+    candidate = pending_owner.prepare_rebuild(pending.world)
+    _a49a_expect_error(
+        lambda: pickle.dumps(candidate),
+        kinds=(a49a.A4ResidentArenaScopeError,),
+    )
+
+    prior_names = '\n'.join(fn.__name__ for fn in VALIDATION_TESTS)
+    new_names = tuple(fn.__name__ for fn in A49A_TESTS)
+    if (tuple(a49a.__all__) != _A49A_PUBLIC_API
+            or a49a.FULL_GPU_WORLD_STEP is not False
+            or a49a.PORT_STATUS.get('full_gpu_world_step') is not False
+            or a48c8.FULL_GPU_WORLD_STEP is not False
+            or len(TESTS) != 82
+            or len(A48C8_TESTS) != 4
+            or len(VALIDATION_TESTS) != 86
+            or len(A49A_TESTS) != 4
+            or len(A49A_VALIDATION_TESTS) != 90
+            or new_names != (
+                'test_a49a_fresh_world_arena_lease_pointer_stability_and_devices',
+                'test_a49a_cpu_newer_epochs_dirty_domains_and_separate_rebuild',
+                'test_a49a_capacity_creation_seals_leases_candidates_and_scope_fail_closed',
+                'test_a49a_fresh_reconstruction_c8_successor_frozen86_and_authority',
+            )
+            or hashlib.sha256(prior_names.encode('utf-8')).hexdigest()
+            != _A49A_PRIOR_86_NAMES_SHA256
+            or _a48c7_prior_test_ast_sha256(VALIDATION_TESTS)
+            != _A49A_PRIOR_86_AST_SHA256):
+        raise AssertionError(
+            'A4.9a API/scope/frozen86/total90 authority differs'
+        )
+    for relative, expected_hash in _A49A_FROZEN_CORE_SHA256.items():
+        if _sha256(os.path.join(ROOT, *relative.split('/'))) != expected_hash:
+            raise AssertionError(relative + ' changed from frozen authority')
+    core_path = os.path.join(
+        ROOT, 'src', '0_6_8',
+        'SOMA_CELL_0_6_8_gpu_a4_resident_arena.py',
+    )
+    if _sha256(core_path) != _A49A_CORE_SHA256:
+        raise AssertionError('A4.9a core differs from preregistered authority')
+    return ('CPU save/load/clone rebuild three fresh nonalias arenas; c8 '
+            'successor event/RNG exact then membership-invalid/full rebuild; '
+            'pending and arena serialization guards; frozen86 AST/names + '
+            'A3/pure/c1-c8/core hashes + total90/full_gpu=false')
+
+
 TESTS = (
     test_api_scope,
     test_source_hash_inputs_present,
@@ -20873,11 +21909,20 @@ A48C8_TESTS = (
 
 VALIDATION_TESTS = TESTS + A48C8_TESTS
 
+A49A_TESTS = (
+    test_a49a_fresh_world_arena_lease_pointer_stability_and_devices,
+    test_a49a_cpu_newer_epochs_dirty_domains_and_separate_rebuild,
+    test_a49a_capacity_creation_seals_leases_candidates_and_scope_fail_closed,
+    test_a49a_fresh_reconstruction_c8_successor_frozen86_and_authority,
+)
+
+A49A_VALIDATION_TESTS = VALIDATION_TESTS + A49A_TESTS
+
 
 def run_all(write=False, output_dir=None):
     rows = []
     started = time.time()
-    for fn in VALIDATION_TESTS:
+    for fn in A49A_VALIDATION_TESTS:
         then = time.perf_counter()
         try:
             detail = fn()
@@ -20898,7 +21943,7 @@ def run_all(write=False, output_dir=None):
     failed = sum(row['status'] == 'FAIL' for row in rows)
     elapsed = time.time() - started
     payload = {
-        'build': a48c8.BUILD,
+        'build': a49a.BUILD,
         'schema': {
             'ragged_genome': a4.SCHEMA_VERSION,
             'gene_cache': a4.GENE_CACHE_SCHEMA_VERSION,
@@ -20951,13 +21996,24 @@ def run_all(write=False, output_dir=None):
             'replication_early_noop_atomic_commit': (
                 a48c8.INTEGRATION_SCHEMA_VERSION
             ),
+            'resident_world_arena_shadow': a49a.SCHEMA_VERSION,
         },
         'development_slice': (
-            'A4.8c8-pre-active-ordinary-early-noop-'
-            'resident-classifier-atomic-commit-bridge'
+            'A4.9a-immutable-world-wide-H2D-shadow-cache-'
+            'coherence-foundation'
         ),
         'promoted_baseline_unchanged': 'SOMA-CELL 0.6.8-GPU A3',
         'full_gpu_world_step': False,
+        'resident_biology_authority': False,
+        'resident_device_writes': False,
+        'resident_d2h_publish': False,
+        'frozen_prior_test_count': 86,
+        'frozen_prior_test_names_sha256': _A49A_PRIOR_86_NAMES_SHA256,
+        'frozen_prior_test_ast_sha256': _A49A_PRIOR_86_AST_SHA256,
+        'resident_arena_core_sha256': _A49A_CORE_SHA256,
+        'fixed_fixture_capacity': {
+            'C': 4, 'Q': 10, 'S': 340, 'W': 48, 'P': 32, 'K': 21,
+        },
         'require_cuda': bool(_REQUIRE_CUDA),
         'source_sha256_map': source_sha256_map(),
         'passed': passed, 'failed': failed, 'total': len(rows),
@@ -20976,7 +22032,7 @@ def run_all(write=False, output_dir=None):
             writer.writeheader()
             writer.writerows(rows)
         lines = [
-            '%s VALIDATION' % a48c8.BUILD,
+            '%s VALIDATION' % a49a.BUILD,
             '%d PASS / %d FAIL / %d TOTAL' % (passed, failed, len(rows)),
             'elapsed %.6fs' % elapsed,
             '',

@@ -1,6 +1,6 @@
 # SOMA-CELL 0.6.8-GPU A4 contract
 
-Status: A4 development contract through slice A4.8c8. This is not an A4
+Status: A4 development contract through slice A4.9a. This is not an A4
 promotion.
 
 ## Authority
@@ -1088,6 +1088,82 @@ A4.8c8 remains a correctness-only, per-event explicit-readback bridge. It
 does not provide a persistent resident arena/cache, device RNG, performance
 or speedup result, A4 completion or promotion, or a full GPU world-step.
 
+## A4.9a scope
+
+A4.9a adds one runtime-persistent but non-durable, immutable, world-wide
+resident shadow in the new
+`SOMA_CELL_0_6_8_gpu_a4_resident_arena.py` module. It does not edit or replace
+the A3 world/scheduler, A4 pure cores, or A4.8a/c1-c8 event authorities. The
+committed CPU world and its full PCG64 state remain the only durable biology
+and RNG authority, and `full_gpu_world_step` remains `false`.
+
+`A4ResidentArenaOwner.from_cpu()` takes one exact world object, its concrete
+ordered `world.cells` container, an explicit fixed C/Q/S/W/P configuration,
+and an explicit Torch CPU or CUDA device. One fresh build episode packs the
+complete world into `A4RaggedGenomeBatch` and `A4TranslationStateBatch`,
+uploads them into fresh storage, and derives `A4GeneCacheBatch` internally
+from that same resident ragged object. CPU `gene_specs` must exactly equal the
+complete-genome decode, but no caller cache, binding, tensor, partial arena,
+or fallback source is accepted. Exact CPU attestations before and after the
+build prevent a changing world from becoming a successful shadow. “One build
+episode” does not claim that all resident members are transferred by one
+literal H2D call.
+
+All 50 ragged/state/cache tensors, their metadata, object identities, storage
+pointers, versions, device, shapes, and sealed content remain immutable for
+one arena lifetime. The owner may change only coherence metadata and its
+active-arena pointer. A private diagnostic readback seals and rechecks content;
+it is not D2H publish, CPU overwrite, save authority, or a live biological
+commit.
+
+The only lifecycle states are:
+
+- `COHERENT`: the active immutable generation and the current CPU source have
+  matching membership, ragged, translation-state, cache, configuration, and
+  provenance attestations;
+- `CPU_NEWER`: membership is unchanged but an R, S, or C CPU source domain is
+  newer than the immutable shadow; and
+- `INVALID`: membership/order/identity, source validity, capacity, owner/arena
+  metadata, or resident pointer/version/content trust has failed.
+
+An old generation never transitions from `CPU_NEWER` or `INVALID` back to
+`COHERENT`, and an audit never refreshes old storage. The owner-local logical
+epochs are `membership_epoch`, `ragged_epoch`, `state_epoch`, and
+`cache_epoch`, with `cache_source_ragged_epoch` recording the ragged epoch
+from which the resident cache was decoded. Ragged drift advances R/S/C;
+state-only drift advances S; CPU cache/provenance drift advances C; and
+membership/count/order/cell-identity drift advances M/R/S/C and invalidates
+the arena. Repeated observation of the same drift is idempotent. A coherent
+arena requires its cache-source ragged epoch to equal its ragged epoch; a
+stale owner may expose the older cache-source value only as diagnostic proof
+that the old cache cannot be rebound to newer ragged state.
+
+The event-free read lease is private, owner-bound, epoch- and arena-bound,
+one-shot, and context-managed. It re-audits the CPU source and resident seal
+before open, consumption, and close. A stale, duplicate, rearmed, cross-owner,
+or forged lease fails closed. Only one lease may be active, and an active
+lease prevents invalidation or generation swap. No lease is connected to a
+c1-c8 scheduler event in A4.9a.
+
+`prepare_rebuild()` is permitted only after a stale audit or invalidation. It
+packs, uploads, and derives the entire current CPU world into separate,
+non-aliasing storage without changing the old generation. `swap_rebuild()`
+publishes only the new owner pointer after an expected old arena ID,
+lifecycle, epoch tuple, storage generation, zero-active-lease condition,
+candidate seal, fresh CPU attestation, and cache/ragged epoch relation all
+pass. Candidate construction, freshness, or CAS failure leaves the old owner
+and CPU biology unchanged; a newly discovered old-owner or resident trust
+breach instead invalidates that old generation while still leaving CPU
+biology unchanged. There is no in-place refresh, partial upload, slot reuse,
+compaction, silent growth, clipping, or stale-arena CPU fallback.
+
+The public surface is limited to build/schema/status constants, the two arena
+errors, `A4ResidentArenaEpochs`, and `A4ResidentArenaOwner` with
+`from_cpu`, `audit_cpu`, `prepare_rebuild`, `swap_rebuild`, `invalidate`, and
+read-only `arena_id`, `lifecycle`, and `epochs`. It exposes no successful
+device-write, device-dirty, `RESIDENT_NEWER`, D2H-publish, CPU-overwrite,
+serialization, scheduler, RNG, or live-commit operation.
+
 ## Fail-closed invariants
 
 Ragged foundation invariants remain unchanged:
@@ -1218,7 +1294,34 @@ Hydrolysis-deletion-plan invariants are:
   Failure while publishing restores the original object identities and values
   and is recorded by the outer scheduler as an aborted step.
 
-## Explicit exclusions through A4.8c8
+Resident-shadow invariants are:
+
+- One owner binds one exact world object, ordered cell-container identity,
+  cell order/IDs/generation/alive participation, model configuration, and the
+  complete R/S/C source relation. A clone or reordered/equal-valued substitute
+  is not the same source.
+- Fresh construction and every rebuild use full, non-aliasing storage. The
+  old immutable generation is never updated, resized, recycled, or partially
+  refreshed.
+- CPU drift advances owner-local epochs at most once per newly observed
+  source state. R implies S/C, and M implies R/S/C plus `INVALID`.
+- A resident cache is disposable derived state and never independent biology.
+  A coherent generation requires
+  `cache_source_ragged_epoch == ragged_epoch`.
+- Pointer/version/metadata checks and explicit diagnostic content readback
+  both pass before private resident meaning is consumed. Diagnostic D2H never
+  becomes CPU publish authority.
+- Exact C/Q/S/W/P capacity passes and any required one-short capacity fails
+  before resident upload. No cell, sequence, symbol, protein, cache entry, or
+  source field is clipped, dropped, silently grown, or delegated to fallback.
+- Arena owner, arena, rebuild candidate, and read lease are runtime-only and
+  nonserializable. CPU save/load/clone never waits for a resident flush and
+  reconstructs a fresh owner, arena ID, cache, and non-aliasing storage only
+  when explicitly requested afterward.
+- A4.9a performs no device biology write, D2H publish, CPU overwrite,
+  scheduler claim, event receipt, RNG call, or live c1-c8 commit.
+
+## Explicit exclusions through A4.9a
 
 - No scheduler/world integration other than the single-cell translation,
   pre-existing-active noncompletion, mutation-free completion, mutation-
@@ -1227,10 +1330,11 @@ Hydrolysis-deletion-plan invariants are:
   mutation-free and mutation-enabled same-call-completion replication, the
   four bounded pre-active ordinary early no-ops, and hydrolysis event
   replacements in `Hybrid066WorldA4ReplicationEarlyNoop`.
-- No caller-supplied tape/plan/candidate authority, persistent A4 arena, or
-  multi-cell translation/replication/RNG batch. The wrapper rebuilds one
-  disposable binding per event and preserves inherited per-cell event/RNG
-  interleaving.
+- No caller-supplied tape/plan/candidate authority, persistent writable
+  resident biology authority, or multi-cell translation/replication/RNG
+  batch. A4.9a's runtime-persistent object is only an immutable external
+  shadow; the A4.8 wrapper still rebuilds one disposable binding per event and
+  preserves inherited per-cell event/RNG interleaving.
 - No A4.8c8 authority for a zero-length complete genome, negative entry ATP,
   a dead direct call, or a guarded replicase comparison-boundary row. Zero
   genome count remains the distinct supported `no-genome` branch. Inherited
@@ -1241,12 +1345,16 @@ Hydrolysis-deletion-plan invariants are:
   only inside the new wrapper.
 - No device RNG kernel or performance claim; the correctness bridges
   intentionally perform explicit per-cell host/device validation round trips.
+- No resident in-place update, automatic or incremental H2D refresh,
+  per-cell dirty upload, allocator/compaction, slot reuse, device-dirty or
+  `RESIDENT_NEWER` state, D2H biology publish, CPU overwrite, scheduler/world
+  hook, live c1-c8 arena binding, or multi-cell GPU-primary biological kernel.
 - No division, death, corpse/eDNA/HGT, neural, or causal-system port.
 - No fp32 claim, mixed precision, `torch.compile`, CUDA Graph, Triton, custom
   CUDA, multi-stream, multi-GPU, or online-GPU abstraction.
 - No formal 13-spec/65-measurement benchmark and no speedup claim.
 
-## Acceptance through A4.8c8
+## Acceptance through A4.9a
 
 - All A4.1 lossless/corruption/capacity/residency tests remain PASS.
 - Nested valid markers and invalid-outer/valid-inner recovery match frozen
@@ -1649,8 +1757,39 @@ Hydrolysis-deletion-plan invariants are:
 - All 86 A4 development tests pass with explicit RTX 4060 Ti CUDA required
   while promoted A3 and prior A4 pure/A4.8a/b/c1/c2/c3/c4/c5/c6/c7 sources
   and the first 82 test names/function AST remain unchanged.
-  `full_gpu_world_step=false`; no persistent, batched live, performance,
-  speedup, A4-completion, or promotion claim is made.
+  `full_gpu_world_step=false`; A4.8c8 itself makes no persistent, batched live,
+  performance, speedup, A4-completion, or promotion claim.
+
+- The heterogeneous A4.9a fixture is packed as one world-wide shadow with
+  exact `C=4, Q=10, S=340, W=48, P=32`, derived cache capacity `K=21`, six
+  used cache entries, and 50 non-aliasing resident tensors split as 11 ragged,
+  30 translation-state, and nine cache fields. NumPy/Torch CPU and explicit
+  RTX 4060 Ti CUDA readbacks agree exactly, while CPU biology and the live RNG
+  identity/state remain unchanged.
+- Two successive one-shot leases preserve every resident pointer. Fresh
+  lifecycle/epochs are `(COHERENT, 1/1/1/1, cache-source 1)`. Tested state,
+  ragged, cache, and membership drift produce respectively
+  `CPU_NEWER 1/1/2/1`, `CPU_NEWER 1/2/2/2`,
+  `CPU_NEWER 1/1/1/2`, and `INVALID 2/2/2/2`, while retaining cache-source 1
+  until a separate full rebuild. Repeated audits do not advance the same
+  drift twice; real A3 unpack identity rebinding stales R/S/C once; c8's
+  shadow-external last-symbol telemetry leaves the arena coherent.
+- Exact C/Q/S/W/P passes and each one-short value fails before upload.
+  Metadata/source/digest, tensor content/version, lease token/serial/rearm,
+  candidate association/alias/freshness, CPU-change-during-build, and CAS
+  disagreement probes fail closed. A successful rebuild uses generation two,
+  a new arena ID and storage, exact cache/ragged epoch binding, and a one-use
+  candidate without changing CPU biology or RNG.
+- CPU save/load/clone reconstruct three fresh, non-aliasing arenas only after
+  explicit `from_cpu`. A legal c8 successor retains exact event order, receipt,
+  biology, and PCG64 behavior, then invalidates the old membership-bound
+  shadow and permits a separate full rebuild. Pending scheduler save guards
+  remain unchanged, and owner/arena/candidate/lease serialization is rejected.
+- The four A4.9a tests pass on Torch CPU and explicit RTX 4060 Ti CUDA. All 90
+  A4 development tests pass; the previous 86 names/function AST and promoted
+  A3, A4 pure, and A4.8a/c1-c8 source hashes remain frozen.
+  `full_gpu_world_step=false`; no resident biology authority, device write,
+  D2H publish, performance, speedup, A4-completion, or promotion claim is made.
 
 Known A4.4b integration blockers are recorded rather than hidden.  On the
 measured six-cell development fixture the current fixed symbol-rank Torch plan
@@ -1678,7 +1817,10 @@ mutation-free inactive template-start noncompletion, mutation-free and
 mutation-enabled inactive template-start same-call completion, and one
 of four ordered pre-active ordinary early no-ops, plus one hydrolysis event,
 only after complete resident readback/replay. The promoted A3 standalone
-bridges remain byte-identical, no persistent resident chain, batched live
-authority, or performance claim is implied, and zero-length complete genomes,
-negative entry ATP, dead direct calls, guarded fp64 replicase-boundary cases,
-division, and the A5/A6 subsystems remain separate later slices.
+bridges remain byte-identical. A4.9a separately adds a runtime-persistent
+immutable shadow and coherence owner, but does not connect that shadow to any
+wrapper event, publish resident results to CPU, or make it durable biology.
+No writable resident chain, batched live authority, or performance claim is
+implied, and zero-length complete genomes, negative entry ATP, dead direct
+calls, guarded fp64 replicase-boundary cases, division, and the A5/A6
+subsystems remain separate later slices.

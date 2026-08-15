@@ -1519,3 +1519,131 @@ cycleを進め、mutation trueではminimum paddingとmaterial移動を伴う。
   維持してSTOPする。
 - A4.8c8でもA4は未完である。次はpersistent resident ragged arena/cacheとmulti-cell GPU-primary pathを別sliceで進め、
   `full_gpu_world_step=false`、速度向上なしを維持する。
+
+## A4.9a追加仮説
+
+Rule Lock receipt `20260815T173703Z`（`work_sessions/20260815T173703Z_SOMA_CELL_0_6_8_GPU_A4_PREFLIGHT.json`、
+clean-start HEAD `2f8a6a52914ccada9336b890e85a2ef82b53c7fe`）の範囲は、schedulerが非activeなCPU正本の
+world-wide ordered cell setを一度だけexact H2Dして作るimmutable shadowに限定する。shadowは既存
+`A4RaggedGenomeBatch`、`A4TranslationStateBatch`と、その同じresident raggedから内部decodeした`A4GeneCacheBatch`を
+同じarena generationへ束縛する。CPU正本が変化しない間だけprivate read leaseを発行し、変化後は旧storageを
+再同期せず拒否し、CPU正本から別storageへworld全体を再構築してcallerが原子的にswapすれば、c1〜c8の
+CPU durable authority、event order、RNG、rollbackを一切変えずに、後続resident化へ必要なcoherence境界だけを
+先に閉じられるはずである。
+
+## A4.9aで実装するもの
+
+- 新規module `SOMA_CELL_0_6_8_gpu_a4_resident_arena.py`だけを追加する。既存A4 pure core、A3 scheduler/world、
+  A4.8a、A4.8c1〜c8はbyte不変とし、scheduler hook、world subclass、event commitを追加しない。public surfaceは
+  `A4ResidentArenaError`、`A4ResidentArenaScopeError`、`A4ResidentArenaEpochs`、`A4ResidentArenaOwner`、build/schema/status
+  constantsだけとする。ownerのpublic operationは`from_cpu`、`audit_cpu`、`prepare_rebuild`、`swap_rebuild`、`invalidate`と
+  read-onlyな`arena_id/lifecycle/epochs`だけに固定し、tensor/binding/leaseをpublic authorityとして返さない。
+- `from_cpu`はexactな`tuple(world.cells)`相当のordered sourceを一つのworld-wide arenaとしてpackする。cell count、
+  cell ID、cell order、complete genome order、genome symbol、lesion、template、copy、fractional progressと既存
+  `A4TranslationStateBatch`全fieldを失わず、CPU `gene_specs`はcomplete genomeからのdecodeとのexact照合だけに使う。
+  caller cache、caller binding、caller tensorを受理せず、resident cacheは同じcandidate resident raggedからだけ
+  decodeする。build前後にCPU sourceを再attestし、途中変化を成功arenaへしない。
+- arenaのresident ragged/state/cache tensor、offset、mask、metadata、pointer、storage、Torch versionはarena lifetime中
+  immutableとする。CPU NumPy/list/dict、既存event-local binding、別arena、cloneとのstorage aliasを禁止する。
+  lifecycle metadataとownerのactive-arena pointerだけを可変とし、resident storageへのin-place copy、resize、append、
+  compact、slot reuse、pointer差替えを行わない。
+- lifecycleは`COHERENT`、`CPU_NEWER`、`INVALID`の3値だけとする。fresh buildのdouble attestation後だけ`COHERENT`、同じ
+  membershipでshadow対象R/S/CのCPU sourceまたはsource-object provenanceが変化したら`CPU_NEWER`、membership/order/
+  cell identity変化、resident pointer/version/content tamper、malformed source、capacity違反、epoch不整合なら`INVALID`とする。
+  旧arenaは`CPU_NEWER`または`INVALID`から`COHERENT`へ戻さず、auditのたびに自動H2Dもしない。
+- ownerは単調非減少かつ再利用しない`membership_epoch`、`ragged_epoch`、`state_epoch`、`cache_epoch`を保持し、arenaは
+  build時の同じ4 epochをimmutable snapshotする。same-membershipのragged driftはragged/state/cache epochを進め、
+  state-only driftはstate epoch、CPU gene-cache/provenance driftはcache epochを進める。membership/count/order/identity driftは
+  membership epochを進めて`INVALID`にする。cacheは独立biology authorityを持たず、各arenaの
+  `cache_source_ragged_epoch`がそのarenaの`ragged_epoch`とexact一致し、`cache_epoch`がそのdecode generationへ一致する時だけ
+  validとする。epoch rollback、wrap、手動代入、同一owner内のarena generation間再利用を拒否する。epoch namespaceはowner-local
+  とし、fresh load/clone owner間で同じ数値から始まってもarena IDとowner tokenで区別する。
+- privateなevent-free read leaseはarena ID、lifecycle、4 epoch、`cache_source_ragged_epoch`、device、全resident pointer/
+  version/provenanceを取得時に束縛し、取得直前にCPU sourceを再auditする。`COHERENT`かつ全値一致時だけ一回発行し、
+  lease中もstorageを変更しない。`CPU_NEWER/INVALID`、epoch差、cache-source差、stale/duplicate/cross-owner leaseを
+  `A4TranslationBinding`またはkernelへ渡す前に拒否する。active lease中のswap/invalidateを拒否し、lease終了後も同じ
+  tokenを再利用しない。
+- `prepare_rebuild`は現在のCPU正本を別のfresh storageへworld-wide full pack/H2D/decodeしてprivate candidateを作る。
+  old arena/storage/lifecycle/epochを一切変更せず、candidate作成後にもCPUをexact再attestする。`swap_rebuild`はexpected
+  old arena ID、expected lifecycle/epochs、zero active lease、candidateのfresh CPU attestationをCAS guardとし、成功時だけ
+  ownerのactive pointerを一回差し替える。raggedだけ、stateだけ、cacheだけのincremental refreshや旧storage再利用はしない。
+- private creation sealはbiology/source authorityではなく、記録済みstrong referenceとdetached valueの照合recordとする。同じ
+  reference/valueを保持するseal record自体の等値copy identityはtrust条件にせず、記録対象のsource/candidate/epoch/tensor/
+  digestのidentity、order、value、associationが一つでも変わればclaim前に拒否する。
+- capacityはcandidate全体について既存fixed C/Q/S/W/Pとcell-count requirementをallocation/publish前にexact検査する。
+  一つでもone-short、offset/mask/tail/topology不正、duplicate cell ID、nonfinite、cache decode不足ならclip、drop、truncate、
+  silent grow、CPU fallbackをせずcandidateを破棄し、old arenaとowner状態を不変に保つ。ただしCPUが既にdriftしたold arenaを
+  fallback readしてstepを続けることも禁止する。
+
+## A4.9a dirty-domainとCPU境界の固定
+
+- M（membership）はworld cell count/order/identityとarena参加可否、R（ragged）はgenomes/lesions/template/copy/
+  fractional、S（state）は既存`A4TranslationStateBatch`全field、C（cache）はcomplete genomeから導くgene cacheとする。
+  R driftはgenome-count、lesion-mean、replication-active、material-symbol等のderived stateとbinding provenanceも変えるため
+  R/S/Cを同時にstaleとする。Cのcontentが変わらないlesion/template/copyだけのR変化でも、旧cache leaseを新ragged
+  epochへ付け替えない。S-onlyはS、CPU `gene_specs`だけの置換/汚染はCをstaleにし、再構築時のdecode exact照合に失敗すれば
+  fail closedとする。
+- A4 translation commitはS、A4 hydrolysis commitはR/S/C、replication c1 noncompletion、c4 start、c5 mutation-free startは
+  R/S/C（cache content不変でもragged provenance失効）、c2 completion、c3 completion-mutation、c6 start-completion、
+  c7 start-completion-mutationはR/S/Cをstaleにする。c8 ordered early-noopはshadow外のlast-replication-symbolだけなので
+  M/R/S/Cをstaleにしない。全c1〜c8 publishは従来どおりCPUへ行い、A4.9a arenaへpublishしない。
+- CPU gene refreshはS/Cとする。A3 adapterのgeneric/precursor/maintenance/surface assembly/protein damage/aggregation/
+  reactive/membrane oxidation/ordinary decay/export/radius/division-progress/repair/learning/mobile-export/supplemental metabolism/
+  segregation planningは、共通unpackが`genome_lesions` outer listとtemplate-lesion provenanceを再束縛するため、contentが
+  等値でもR/S/Cを一回staleにする。A4 translation単独commitはSだけをstaleにする。lesion gain、genome-lesion repair、
+  replication-copy leakはR/S/C、hydrolysis deletion、eDNA/HGT integration、Formal066 grammar mutationはR/S/Cをstaleにする。
+  pre/post P2、current-stress assignment、sense/surface exchange/effector/corpse-contactは対象pool、damage、signal、behavior、
+  neural-osmolyteを変更した時Sをstaleにする。位置、age、mutation ledger等のshadow外fieldだけの変化はM/R/S/C epochを
+  進めないが、同じroutineがpool等を変更した時はSを進める。
+- alive/dead participationの変化、actual split、daughter replacement、death removal、washout、cell reorderはMを変えて旧arenaを
+  `INVALID`にする。A5 CPU segregation/split、death release、washout、HGTは常にCPU正本だけを読むため、A4.9aにはD2H boundaryが
+  存在しない。A5前にflushを装ってはならず、A5後の旧leaseを拒否し、必要なら安定CPU worldから全arenaを別途再構築する。
+  corpse/eDNA/environmentだけの変化はcell R/S/Cへ反映されるinteractionが起きるまでarenaをdirtyにしない。
+- 既存world event order、cell event order、exactly-once claim、PCG64 call order、receipt、rollbackを完全に維持する。
+  arena build/audit/rebuild/swapはscheduler active/pending commit中に実行せず、A4.9a leaseをc1〜c8 live eventへ接続しない。
+
+## A4.9a save/load/cloneとsource-of-truth
+
+- CPU world/cellだけをdurable source-of-truthとする。arena、candidate、epoch-bound lease、resident cache、pointer/provenance、
+  lifecycleは`state_dict`へ保存せず、既存c1〜c8のactive/pending save拒否を変更しない。`CPU_NEWER`または`INVALID` shadowがあっても
+  resident-newer biologyは存在しないため、CPU saveをD2H待ちにせずshadowを破棄できる。
+- load/cloneはCPU durable stateと既存RNGだけを復元/複製し、必要時に`from_cpu`で新しいarena ID、fresh storage、fresh cache、
+  fresh epochsから再構築する。元world/clone/load先のtensor、cache、candidate、lease、ownerを共有せず、epoch値やpointer identityの
+  一致をclone correctness条件にしない。biologyと次のCPU event/RNG resultは従来どおりexactでなければならない。
+- residentをsource-of-truthとするwrite、device-dirty、`RESIDENT_NEWER`、D2H、CPU overwrite、live commit、multi-cell GPU-primary
+  authorityをpublic/privateを問わずscope errorで拒否する。これらの状態、flag、APIを成功pathとして先回り実装しない。
+
+## A4.9aで実装しないもの
+
+- CPU drift後の自動またはincremental H2D refresh、old storageへのcopy、per-cell dirty upload、allocator/compaction、slot reuse、
+  partial arena、resident write、device-dirty/`RESIDENT_NEWER`/D2H、A5 flush、live c1〜c8 binding、scheduler/world integration。
+- c1〜c8 authority/dispatch/publish/rollbackの変更、CPU fallback置換、device RNG、multi-cell biological kernel、event fusion、
+  fp32、compile/graph/Triton/custom CUDA、performance/speedup claim、A4完成/昇格、A5/A6。
+  `full_gpu_world_step=false`を維持する。
+
+## A4.9a固定テスト
+
+1. heterogeneous world-wide fixtureをfresh CPU sourceからbuildし、ragged/stateのexact readback、resident-only cache decode、
+   cell/genome order、M/R/S/C/cache-source epoch、CPU/Torch CPU/明示CUDA fp64一致、pointer/version不変、全入力非変更、
+   CPU/event-local/clone/arena間non-aliasを固定する。
+2. 各dirty categoryとc1〜c8 write-setをfixtureで再現し、`COHERENT`からsame-membership `CPU_NEWER`またはmembership `INVALID`への
+   一方向遷移、RからS/Cへの波及、c8/out-of-scope-only不変、private leaseのfresh/one-shot/cross-owner/stale拒否、resident
+   pointer/version/content tamper拒否を固定する。
+3. `CPU_NEWER/INVALID`からの別storage `prepare_rebuild`とexpected-ID/epoch CAS `swap_rebuild`、build途中CPU drift、active lease、duplicate/
+   reordered cell、C/Q/S/W/P/cell-count各one-short、malformed ragged/cache/stateを注入し、失敗時old arena/epoch/lifecycle/
+   CPU biology不変、clip/grow/fallbackなしを固定する。
+4. existing c1〜c8/A3 event order、RNG、receipt、save/load/clone、CPU A5 split/death/washout結果とbyte hashが不変であること、
+   arena非serializationとload/clone fresh identity、device-dirty/`RESIDENT_NEWER`/D2H/live-authority operationのscope拒否を固定する。
+   既存最大86 + 新規最大4 = 合計最大90 testsとし、performanceを測定しない。
+
+## A4.9a GO/STOP判定
+
+- 上記fresh Rule Lockに結び付く新module実装開始はGOとする。最大90/90、world-wide lossless pack/readback、resident-derived
+  cache、全epoch/lifecycle/lease、immutable pointer/storage、separate rebuild/CAS swap、capacity fail-closed、save/load/clone、
+  A5 CPU boundary、promoted A3/A4 pure/A4.8c1〜c8 byte不変が全てPASSした場合だけ
+  「A4.9a immutable world-wide H2D shadow/cache coherence foundation」と記録する。
+- stale lease受理、CPU drift見逃し、old arenaの再cohere、`cache_source_ragged_epoch`不一致、resident in-place mutation、alias、
+  partial/incremental refresh、capacity clip/grow、CPU fallback、D2H/device-dirty/`RESIDENT_NEWER`、scheduler/event/RNG/save semantics
+  変更、c1〜c8またはA4 pure編集が必要ならA4.8c8を正式authorityとして維持してSTOPする。
+- A4.9aでもresident biology authority、multi-cell GPU-primary path、性能向上は未達であり、A4完成または昇格と呼ばない。
+  `full_gpu_world_step=false`、baseline A3、CPU durable authorityを維持する。

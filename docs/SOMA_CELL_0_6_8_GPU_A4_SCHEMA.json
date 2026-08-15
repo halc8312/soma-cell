@@ -1,8 +1,126 @@
 {
-  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.8c8-pre-active-ordinary-early-noop-atomic-commit",
+  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.9a-immutable-world-wide-resident-shadow",
   "status": "development_slice_not_promoted",
+  "promoted_baseline": "SOMA-CELL 0.6.8-GPU A3",
   "full_gpu_world_step": false,
-  "authoritative_state": "committed_CPU_world_and_full_PCG64_are_durable_after_A4_8c8;_A4_resident_descriptors_selection_evidence_completion_mutation_tapes_plans_synthetic_bindings_and_candidates_are_event_local_validated_evidence_only",
+  "authoritative_state": "committed_CPU_world_and_full_PCG64_remain_the_only_durable_biology_and_RNG_authority_after_A4_9a;_the_runtime_persistent_world_wide_resident_arena_is_an_immutable_CPU_derived_shadow_only",
+  "resident_world_shadow": {
+    "schema_version": "0.6.8-GPU-A4.9a-resident-arena-shadow",
+    "status": "runtime_persistent_immutable_shadow_not_durable_biology_not_scheduler_authority",
+    "ownership": "one_owner_binds_one_exact_world_object_ordered_world_cells_container_and_one_full_fresh_resident_generation_while_the_CPU_world_remains_source_of_truth",
+    "public_api": {
+      "types": [
+        "A4ResidentArenaError",
+        "A4ResidentArenaScopeError",
+        "A4ResidentArenaEpochs",
+        "A4ResidentArenaOwner"
+      ],
+      "owner_operations": [
+        "from_cpu",
+        "audit_cpu",
+        "prepare_rebuild",
+        "swap_rebuild",
+        "invalidate"
+      ],
+      "read_only_properties": ["arena_id", "lifecycle", "epochs"],
+      "not_public_authority": "resident_tensors_bindings_read_leases_creation_seals_and_rebuild_candidates_remain_private_or_opaque"
+    },
+    "fresh_build_episode": {
+      "source": "one_exact_world_object_concrete_ordered_world_cells_container_cell_ID_generation_alive_participation_and_active_world_config",
+      "capacity": "explicit_fixed_C_Q_S_W_P_configuration_checked_for_the_complete_world_before_resident_upload",
+      "resident_members": [
+        "A4RaggedGenomeBatch",
+        "A4TranslationStateBatch",
+        "A4GeneCacheBatch_derived_internally_from_the_same_resident_ragged_object"
+      ],
+      "CPU_gene_specs": "exact_validation_against_complete_genome_decode_only_not_an_independent_cache_source",
+      "attestation": "stable_CPU_attestation_before_and_after_the_full_pack_upload_decode_and_content_seal_rejects_mid_build_change",
+      "H2D_meaning": "one_fresh_full_build_episode_not_a_claim_of_one_literal_transfer_call",
+      "diagnostic_readback": "explicit_private_full_content_readback_seals_and_rechecks_the_immutable_upload_but_never_publishes_biology_to_CPU"
+    },
+    "resident_storage": {
+      "tensor_count": 50,
+      "groups": {"ragged": 11, "translation_state": 30, "gene_cache": 9},
+      "immutable_for_arena_lifetime": [
+        "tensor_objects",
+        "storage_pointers",
+        "versions",
+        "device_dtype_shape",
+        "offsets_masks_metadata",
+        "sealed_content"
+      ],
+      "forbidden": "in_place_copy_resize_append_compaction_slot_reuse_pointer_replacement_partial_refresh_and_alias_with_CPU_event_local_binding_clone_or_other_arena"
+    },
+    "lifecycle": {
+      "COHERENT": "fresh_double_attested_generation_exactly_matches_current_CPU_membership_ragged_state_cache_config_and_provenance",
+      "CPU_NEWER": "membership_is_unchanged_but_one_or_more_R_S_C_CPU_domains_are_newer_than_the_immutable_generation",
+      "INVALID": "membership_order_identity_source_capacity_owner_metadata_epoch_or_resident_pointer_version_content_trust_failed_or_owner_was_explicitly_invalidated",
+      "one_way_old_generation": "CPU_NEWER_or_INVALID_never_returns_to_COHERENT_and_audit_never_updates_old_storage"
+    },
+    "owner_local_epochs": {
+      "fields": [
+        "membership_epoch",
+        "ragged_epoch",
+        "state_epoch",
+        "cache_epoch",
+        "cache_source_ragged_epoch"
+      ],
+      "fresh": [1, 1, 1, 1, 1],
+      "drift_rules": {
+        "S_only": "advance_state",
+        "R": "advance_ragged_state_cache",
+        "C_only": "advance_cache",
+        "M": "advance_membership_ragged_state_cache_and_invalidate"
+      },
+      "idempotence": "the_same_observed_CPU_drift_does_not_advance_epochs_twice",
+      "cache_relation": "a_COHERENT_arena_requires_cache_source_ragged_epoch_equal_ragged_epoch;_a_stale_owner_retains_the_older_source_epoch_as_diagnostic_proof_and_cannot_rebind_that_cache",
+      "namespace": "owner_local_and_disambiguated_by_owner_token_arena_ID_and_storage_generation_not_serialized_or_compared_across_fresh_load_or_clone_owners"
+    },
+    "private_read_lease": {
+      "binding": "owner_token_arena_ID_lifecycle_all_epochs_cache_source_epoch_device_source_provenance_and_all_resident_pointer_version_records",
+      "lifetime": "event_free_context_managed_one_shot_with_at_most_one_active_lease",
+      "attestation": "CPU_and_resident_integrity_are_rechecked_before_open_consumption_and_close",
+      "fail_closed": "stale_duplicate_rearmed_cross_owner_forged_or_modified_lease_is_rejected_before_binding_meaning_is_consumed",
+      "active_guard": "swap_and_explicit_invalidate_are_rejected_while_a_lease_is_active",
+      "scheduler": "not_connected_to_A4_8a_or_c1_through_c8_live_events"
+    },
+    "separate_rebuild_and_swap": {
+      "prepare": "only_after_stale_audit_or_invalidation_build_the_complete_current_CPU_world_into_fresh_nonaliasing_storage_without_changing_the_old_generation",
+      "swap_CAS": "expected_old_arena_ID_lifecycle_epoch_tuple_storage_generation_zero_active_lease_candidate_creation_relation_fresh_CPU_attestation_and_cache_ragged_epoch_equality",
+      "success": "publish_only_the_owner_active_arena_pointer_once_then_retire_the_old_generation",
+      "failure": "candidate_freshness_or_CAS_failure_leaves_the_old_owner_generation_CPU_biology_and_live_RNG_unchanged;_a_newly_detected_old_owner_or_resident_trust_breach_invalidates_that_old_generation_without_changing_CPU_biology_or_RNG",
+      "not_supported": "incremental_or_per_cell_upload_old_storage_reuse_partial_arena_silent_growth_clipping_or_stale_arena_fallback"
+    },
+    "persistence": {
+      "durable": "CPU_world_cells_and_full_PCG64_only",
+      "not_serialized": "owner_arena_candidate_lease_lifecycle_epochs_cache_pointer_and_creation_seal_state",
+      "save": "requires_no_D2H_flush_or_resident_publish_because_resident_newer_biology_does_not_exist",
+      "load_clone": "restore_CPU_and_RNG_authority_then_only_an_explicit_from_cpu_constructs_a_fresh_owner_arena_ID_epoch_namespace_cache_and_nonaliasing_storage"
+    },
+    "explicit_exclusions": [
+      "resident_biology_write_or_device_dirty_state",
+      "RESIDENT_NEWER_lifecycle",
+      "D2H_biology_publish_or_CPU_overwrite",
+      "scheduler_world_hook_event_claim_receipt_or_live_c1_through_c8_binding",
+      "device_RNG_or_multi_cell_GPU_primary_biological_kernel",
+      "automatic_or_incremental_H2D_refresh_allocator_compaction_or_slot_reuse",
+      "performance_speedup_fp32_compile_graph_Triton_custom_CUDA_or_A4_completion_promotion"
+    ],
+    "validation": {
+      "fixed_fixture": {"C": 4, "Q": 10, "S": 340, "W": 48, "P": 32, "K": 21, "used_cache_entries": 6},
+      "devices": "Torch_CPU_and_explicit_RTX_4060_Ti_CUDA_fp64",
+      "fresh": "exact_ragged_state_cache_readback_two_one_shot_leases_50_stable_nonaliasing_pointers_and_unchanged_CPU_world_RNG",
+      "drift": "S_R_C_and_M_lifecycle_epoch_rules_repeated_audit_idempotence_real_A3_unpack_R_S_C_identity_drift_and_c8_last_symbol_non_drift",
+      "capacity_and_trust": "exact_C_Q_S_W_P_pass_each_one_short_fails_preupload_and_metadata_tensor_lease_candidate_build_freshness_and_CAS_tampering_fail_closed",
+      "persistence_and_authority": "CPU_save_load_clone_create_three_fresh_nonalias_arenas_c8_successor_event_RNG_receipt_exact_pending_save_guard_unchanged_and_arena_artifacts_nonserializable",
+      "development_tests": "4_of_4_A4_9a_targeted_PASS_on_CPU_and_CUDA_and_90_of_90_total_PASS_with_the_previous_86_names_function_AST_and_A3_A4_pure_c1_through_c8_hashes_frozen",
+      "performance": "not_measured_and_no_speedup_claim"
+    },
+    "resident_biology_authority": false,
+    "resident_device_writes": false,
+    "resident_d2h_publish": false,
+    "full_gpu_world_step": false
+  },
   "ragged_genome": {
     "schema_version": "0.6.8-GPU-A4.1-ragged-genome",
     "sequence_order": [
@@ -1319,11 +1437,13 @@
       "resident_Torch_plan_readback_is_commit_authority_and_NumPy_is_validation_only",
       "the_four_success_branches_follow_frozen_CPU_first_applicable_order_and_change_only_last_replication_symbols_to_zero",
       "zero_genome_count_is_supported_but_zero_length_complete_genomes_negative_entry_ATP_dead_direct_calls_and_guarded_replicase_boundaries_reached_after_the_prior_ordered_branches_are_excluded",
-      "no_persistent_resident_arena_or_cache_multi_cell_live_authority_device_RNG_performance_or_speedup_claim_is_made",
+      "A4_8c8_itself_makes_no_persistent_resident_arena_or_cache_multi_cell_live_authority_device_RNG_performance_or_speedup_claim;_the_separate_A4_9a_immutable_shadow_has_no_c8_live_authority",
       "A4_remains_incomplete_unpromoted_and_full_gpu_world_step_remains_false"
     ]
   },
   "cpu_authoritative_after_slice": [
+    "all_durable_world_cell_biology_and_full_PCG64_state_while_the_A4_9a_resident_generation_is_an_immutable_runtime_shadow_only",
+    "all_resident_device_biology_write_D2H_publish_CPU_overwrite_scheduler_connection_live_c1_through_c8_arena_binding_and_multi_cell_GPU_primary_kernel_paths_remain_unimplemented_and_CPU_authoritative",
     "zero_length_complete_genome_negative_entry_ATP_dead_direct_and_guarded_replicase_boundary_cases_excluded_from_the_A4_8c8_wrapper",
     "all_scheduler_events_except_the_A4_wrapper_single_cell_paid_translation_supported_pre_existing_active_and_inactive_template_start_replication_four_ordered_pre_active_ordinary_early_noops_and_genome_hydrolysis_events",
     "promoted_A3_standalone_paid_translation_behavior_outside_the_A4_wrapper",
