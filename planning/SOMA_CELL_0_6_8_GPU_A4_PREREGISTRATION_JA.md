@@ -737,3 +737,76 @@ polymer/lesion/pools/derived stateをsource値へrollback、event telemetryをze
 - 次はresident chain全体のsource/tape/planをcommit直前に再attestし、compact arena、cache、
   live RNG、CPU/worldとの境界をatomicに扱う別sliceとする。A3 dt0 bridge修正とmulti-cell
   event interleaveもその統合前に別途固定する。
+
+## A4.8a追加仮説
+
+A4.7a/bで、post-lesion-gainの一cell source、literal PCG64 call列、row-padded deletion/
+ledger結果をbinding-awareに再演算できるようになった。そこで既存A3 event順とevent名を
+変えず、`genome_hydrolysis_cpu_rng` 一eventだけを、外部planを受けない内部生成・即時検証・
+原子的publish bridgeへ置換できるはずである。
+
+これはA4.7b末尾の「scheduler統合は後段」という一般則に対する、hydrolysis一event限定の
+correctness exceptionである。per-cell host/device往復を含み、速度候補、resident world-step、
+A4主経路、A4昇格とは扱わない。translation、replication、multi-cell RNG batchを同時に
+置換しない。
+
+## A4.8aで実装するもの
+
+- promoted A3 source/schedulerを変更せず、新規A4 integration moduleだけに置く
+  `A3EventScheduler` subclass。既存event IDとcell event順を維持する。
+- A4 scheduler/config/deviceをstep境界で保存・復元する最小Hybrid world wrapper。
+  active schedulerまたはpending transactionのsave/cloneは拒否し、完了eventのtape、plan、
+  bindingは永続化しない。
+- post-`genome_lesion_gain`のlive cellを一cellNumPy A4 bindingへpackし、live PCG64 before-stateの
+  cloneからA4.7a tapeを作り、明示Torch CPU/CUDA resident plan、明示readback、binding-aware
+  host replay、compact CPU candidate、fresh A4 bindingまでclaim前に完成させるprivate one-shot
+  transaction。
+- live cell identity/source、exact `dt.hex()`、A4 capacities、world config、完全PCG64 before-stateを
+  commit直前に再照合してから、既存`genome_hydrolysis_cpu_rng`をexactly once claimする。
+- 成功時だけcomplete genomes、ordered lesions、pools、gene cache、`genome_damage_events`、完全
+  PCG64 after-stateを一括publishする。active replication template/copyと他stateは不変にする。
+- hitごとのsequential waste、lesion `*=0.80`、damage-event delta、final cacheをA4.7b正本から
+  commitする。no-hitおよびeligible `dt==0`もeventはexecuted、delete workはfalseだが、凍結
+  literalどおりeligible genomeごとにrandom drawを消費する。
+- preclaim failureはreceipt、生物状態、live RNGを完全不変とする。claim後publish exceptionは
+  touched CPU/RNG stateを局所rollbackし、outer schedulerにはaborted receiptを残す。
+- scheduler receiptへsource/final provenance、draw/hit count、device、A4.8a authority、
+  `work_performed`を記録する。`full_gpu_world_step=false`を維持する。
+
+live commitは内部factoryで作ったcandidateだけを受ける。public APIからtape/plan/candidateを
+注入したり、scope/capacity/trust failureを旧CPU bridgeへfallbackしたりしない。旧A3 hazard
+tupleは呼出形だけ検証しても、生物/RNG authorityには使わず、post-gain sourceからliteral gateを
+再導出する。
+
+## A4.8aで実装しないもの
+
+- A4.3 translation commitまたは`translation_cpu` scheduler置換
+- A4.4〜A4.6 replication commit、inactive/no-op/completion fallback分類、live mutation ledger
+- multi-cell連続tape、cell順の並べ替え、device RNG、persistent cross-step arena authority
+- generic transaction manager、generic allocator/RNG framework、custom CUDA/Triton、fp32
+- division/death/corpse/eDNA/HGT（A5）、neural/causal system（A6）
+- promoted A3 file、A3 baseline/results、event ID/orderの変更
+- performance、speedup、full GPU world-step、A4完成または昇格の主張
+
+## A4.8a固定テスト
+
+1. direct Formal066のhit/miss/hit、no-hit、eligible `dt==0`を照合し、compact genomes/offsets、
+   lesions、sequential waste、cache、damage counter、完全PCG64 after-stateをexactに固定する。
+2. Torch CPUと明示RTX CUDA candidate/commitを照合し、source/live RNG purity、fresh bindingの
+   full validation、変更後sourceに対するold binding/candidateの拒否を確認する。
+3. wrong cell/dt/source/config/RNG、tape/plan/public・private `.data` tamper、Q/S/W exactと
+   one-short、duplicate/out-of-order、one-shot再利用、claim前失敗、注入publish失敗の局所
+   rollbackをfail closedとして固定する。
+4. 2-cellのper-cell replication→hydrolysis→later RNG interleave、旧CPU hydrolysis bridge未呼出し、
+   1-step/10-step/stress、step-boundary save/load/clone継続、A3 authority非重複を固定する。
+5. A4.1〜A4.7bの46 testsを変更せず継続し、合計最大50 testsをCUDA必須でPASSさせる。
+
+## A4.8a判定
+
+- 上記全test、direct CPU semantics、PCG64 interleave、atomic rollback、fresh source/cache binding、
+  save/clone、promoted A3 byte不変がPASSした場合だけ「A4.8a single-cell genome hydrolysis
+  atomic commit bridge」と記録する。
+- A4.8aだけでtranslation/replication統合、A4 world-step完成、persistent GPU authority、speedup、
+  A4昇格とは呼ばない。
+- 次はA4.8b1としてtranslationのbinding-aware output replayとCPU commitを先に作る。
+  replicationはさらにA4.8b2へ分離し、single-cell event orderとlive PCG64 commitを独立固定する。

@@ -1,8 +1,8 @@
 {
-  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.7b-hydrolysis-deletion-plan",
+  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.8a-hydrolysis-atomic-commit",
   "status": "development_slice_not_promoted",
   "full_gpu_world_step": false,
-  "authoritative_state": "A4RaggedGenomeBatch",
+  "authoritative_state": "committed_CPU_world_and_full_PCG64_are_durable_after_A4_8a;_A4_resident_descriptors_are_event_local_validated_evidence_only",
   "ragged_genome": {
     "schema_version": "0.6.8-GPU-A4.1-ragged-genome",
     "sequence_order": [
@@ -504,7 +504,7 @@
       "readback": "explicit_to_numpy_compares_actual_and_private_expected_resident_values_with_the_original_host_content_digest_before_reissuing_a_host_tape",
       "live_state": "the_input_binding_CPU_cell_world_and_live_RNG_are_unchanged_and_rng_after_state_is_future_commit_evidence_only"
     },
-    "known_A3_bridge_difference": "current_A3_genome_hydrolysis_plan_skips_probability_less_than_or_equal_to_zero_and_therefore_omits_the_frozen_eligible_dt_zero_draw;_A4_7a_preserves_the_frozen_call_and_does_not_replace_the_bridge",
+    "known_A3_bridge_difference": "promoted_A3_genome_hydrolysis_plan_skips_probability_less_than_or_equal_to_zero_and_omits_the_frozen_eligible_dt_zero_draw;_A4_7a_preserves_the_call_and_A4_8a_commits_it_only_inside_the_new_A4_wrapper_without_editing_A3",
     "invariants": [
       "genome_slot_mask_is_the_complete_genome_prefix_and_all_other_slots_are_false",
       "draw_mask_is_a_subset_of_genome_slot_mask_and_hit_mask_is_a_subset_of_draw_mask",
@@ -586,14 +586,74 @@
       "topology_symbol_delta_is_negative_hit_count_and_damage_event_delta_refresh_count_equal_hit_count",
       "gene_cache_dirty_is_true_if_and_only_if_hit_count_is_positive",
       "deletion_only_shrinks_state_and_capacity_is_never_clipped_or_silently_grown",
-      "actual_compact_arena_cache_live_RNG_CPU_cell_world_and_scheduler_commit_remain_later",
-      "the_A3_dt_zero_bridge_difference_and_multi_cell_hydrolysis_remain_unresolved",
+      "the_A4_7b_descriptor_itself_has_no_compact_arena_cache_live_RNG_CPU_cell_world_or_scheduler_authority",
+      "A4_8a_may_consume_only_an_internally_regenerated_and_fully_replayed_descriptor_for_one_single_cell_event",
+      "full_gpu_world_step_remains_false"
+    ]
+  },
+  "integration_hydrolysis_atomic_commit": {
+    "schema_version": "0.6.8-GPU-A4.8a-hydrolysis-atomic-commit",
+    "ownership": "private_one_shot_single_cell_correctness_bridge_with_CPU_world_and_full_PCG64_as_durable_step_boundary_authority",
+    "public_apis": [
+      "A4HydrolysisEventScheduler",
+      "Hybrid066WorldA4Hydrolysis",
+      "A4HydrolysisCommitError"
+    ],
+    "scheduler_event": {
+      "event_id": "genome_hydrolysis_cpu_rng",
+      "rank_and_predecessors": "inherited_unchanged_from_A3_exact_once_scheduler",
+      "scope": "only_this_event_is_replaced_every_other_A3_event_keeps_existing_authority",
+      "external_inputs": "no_external_binding_tape_plan_or_candidate_is_accepted"
+    },
+    "source_boundary": [
+      "exactly_one_live_cell_after_genome_lesion_gain_and_before_hydrolysis",
+      "fresh_host_A4_binding_with_explicit_fixed_capacities",
+      "exact_live_NumPy_PCG64_before_state",
+      "explicit_Torch_CPU_or_CUDA_device"
+    ],
+    "preclaim_pipeline": [
+      "pack_and_bind_the_live_single_cell_without_mutation",
+      "clone_PCG64_and_prepare_the_literal_A4_7a_tape",
+      "upload_source_and_tape_then_evaluate_the_A4_7b_resident_plan",
+      "explicitly_read_back_every_resident_source_tape_and_plan_value",
+      "perform_full_binding_dt_tape_and_plan_host_replay",
+      "build_a_disposable_compact_CPU_candidate_refresh_its_gene_cache_and_issue_a_fresh_binding",
+      "recheck_cell_identity_generation_counter_dt_world_config_A4_capacity_device_source_and_live_RNG",
+      "require_candidate_and_tape_PCG64_before_and_after_states_to_match_exactly",
+      "repeat_explicit_resident_value_reattestation_to_detect_data_version_bypass"
+    ],
+    "atomic_publish": [
+      "claim_genome_hydrolysis_cpu_rng_exactly_once_only_after_all_checks_pass",
+      "publish_complete_genomes_ordered_lesions_pools_gene_specs_genome_damage_events_and_full_PCG64_after_state",
+      "preserve_active_replication_template_copy_and_all_unrelated_cell_state",
+      "record_no_hit_and_eligible_dt_zero_events_as_executed_with_work_performed_false_when_no_deletion_occurs"
+    ],
+    "failure_semantics": {
+      "before_claim": "receipts_biology_object_identity_and_live_RNG_are_unchanged_and_the_legacy_CPU_bridge_is_not_called",
+      "after_claim": "restore_original_list_array_dictionary_and_RNG_identities_and_values_then_record_an_aborted_outer_step",
+      "capacity": "exact_Q_S_W_pass_and_each_one_short_case_fails_before_claim_without_clip_reallocation_or_fallback",
+      "lifetime": "binding_tape_plan_and_candidate_are_private_one_shot_disposable_objects"
+    },
+    "persistence": {
+      "durable_authority": "committed_CPU_world_and_full_PCG64_state_at_step_boundary",
+      "saved_A4_metadata": "fixed_capacities_device_and_scheduler_type",
+      "save_load_clone": "restore_Hybrid066WorldA4Hydrolysis_and_A4HydrolysisEventScheduler_with_exact_next_step_continuation",
+      "active_or_pending": "serialization_is_rejected"
+    },
+    "invariants": [
+      "promoted_A3_source_and_scheduler_remain_byte_identical",
+      "the_eligible_dt_zero_draw_difference_is_corrected_only_inside_the_A4_wrapper",
+      "single_cell_event_order_preserves_world_PCG64_interleaving_and_no_multi_cell_tape_is_created",
+      "explicit_per_cell_host_device_round_trips_are_correctness_validation_not_a_performance_candidate",
+      "paid_translation_and_all_replication_commits_remain_CPU_authoritative",
       "full_gpu_world_step_remains_false"
     ]
   },
   "cpu_authoritative_after_slice": [
     "paid_translation_world_commit_and_scheduler_event",
-    "replication_mutation_free_inactive_template_start_actual_template_copy_or_completed_genome_arena_commit_live_lesion_cycle_cache_novel_path_update_compact_hydrolysis_arena_cache_live_RNG_CPU_cell_world_and_scheduler_commit_A3_dt_zero_bridge_correction_and_multi_cell_hydrolysis",
+    "all_replication_branches_and_actual_template_copy_completed_genome_arena_lesion_cycle_cache_and_novel_path_commits",
+    "all_scheduler_events_except_the_A4_wrapper_single_cell_genome_hydrolysis_event",
+    "promoted_A3_standalone_dt_zero_hydrolysis_bridge_behavior_outside_the_A4_wrapper",
     "division_death_corpse_edna_hgt",
     "neural_and_causal_systems"
   ]

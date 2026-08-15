@@ -1,5 +1,5 @@
 # coding: utf-8
-"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.7b slices."""
+"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.8a slices."""
 from __future__ import division
 
 import argparse
@@ -10,6 +10,7 @@ import inspect
 import json
 import os
 import sys
+import tempfile
 import time
 
 import numpy as np
@@ -22,6 +23,8 @@ if HERE not in sys.path:
 import SOMA_CELL_0_6_8_gpu_a4 as a4
 import SOMA_CELL_0_6_8_gpu_a4_replication as a44
 import SOMA_CELL_0_6_8_gpu_a4_hydrolysis as a47
+import SOMA_CELL_0_6_8_gpu_a4_integration as a48
+import SOMA_CELL_0_6_8_gpu_a3_scheduler as a3s
 import SOMA_CELL_0_6_8_A3_validation as v3
 
 try:
@@ -29,14 +32,15 @@ try:
 except Exception:  # pragma: no cover
     torch = None
 
-RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_7B_VALIDATION_RESULTS.json'
-RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_7b_validation.csv'
-RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_7B_VALIDATION_RESULTS.txt'
+RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_8A_VALIDATION_RESULTS.json'
+RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_8a_validation.csv'
+RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_8A_VALIDATION_RESULTS.txt'
 
 SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_hydrolysis.py',
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_integration.py',
     'src/0_6_8/SOMA_CELL_0_6_8_A4_validation.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3_scheduler.py',
@@ -52,6 +56,15 @@ SOURCE_PATHS = (
     'docs/SOMA_CELL_0_6_8_GPU_A4_SCHEMA.json',
     'planning/SOMA_CELL_0_6_8_GPU_A4_PREREGISTRATION_JA.md',
 )
+
+PROMOTED_A3_SHA256 = {
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3.py': (
+        '6ca66378702dabd5a388553ca92279376deae5ba8c39bea9bdbe3488aa41b4f6'
+    ),
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3_scheduler.py': (
+        '5e207f68fd0d9aa674ab054dc43d62247e84c1f3c61fc6c7b455960ff84413aa'
+    ),
+}
 
 _REQUIRE_CUDA = False
 
@@ -232,7 +245,11 @@ def _assert_raises(kind, fn):
         fn()
     except kind:
         return
-    raise AssertionError('expected %s' % kind.__name__)
+    if isinstance(kind, tuple):
+        label = '/'.join(item.__name__ for item in kind)
+    else:
+        label = kind.__name__
+    raise AssertionError('expected %s' % label)
 
 
 def _paid_translation_fixture(seed=7701):
@@ -830,6 +847,102 @@ def _a47b_formal066_oracle(world, cell, dt):
     }
 
 
+def _a48_binding(world, cell, config):
+    ragged = a4.FullFidelityA4GenomeAdapter(config).pack_cells([cell])
+    state = a4.pack_a4_translation_state(
+        [cell], ragged, world.config, config,
+    )
+    return a4.bind_a4_translation(ragged, state)
+
+
+def _a48_begin_direct(scheduler, world, cell, dt):
+    """Enter exactly the post-lesion-gain A3 event boundary."""
+    scheduler.begin_step(world, [cell])
+    metabolism_rank = a3s.WORLD_EVENT_ORDER.index('cell_metabolism_loop')
+    for event in a3s.WORLD_EVENT_ORDER[:metabolism_rank]:
+        scheduler.claim_world(
+            event, status='skipped', metadata={'validation': 'A4.8a'},
+        )
+    scheduler.claim(
+        cell, 'surface_exchange', status='skipped',
+        metadata={'validation': 'A4.8a'},
+    )
+    scheduler.reserve_metabolism_dispatch(world, cell, dt)
+    if not scheduler.begin_a3_metabolism(world, cell, dt):
+        raise AssertionError('A4.8a direct fixture cell is not alive')
+    stop = a3s.CELL_EVENT_ORDER.index('genome_hydrolysis_cpu_rng')
+    for event in a3s.CELL_EVENT_ORDER[1:stop]:
+        scheduler.claim(
+            cell, event, status='skipped',
+            metadata={'validation': 'A4.8a'},
+        )
+    return scheduler
+
+
+def _a48_hydrolysis_entry(scheduler, cell):
+    _, record = scheduler._record(cell)
+    entries = [entry for entry in record['events']
+               if entry['event'] == 'genome_hydrolysis_cpu_rng']
+    if len(entries) != 1:
+        raise AssertionError(
+            'A4.8a hydrolysis event count is %d' % len(entries)
+        )
+    return copy.deepcopy(entries[0])
+
+
+def _a48_abort_direct(scheduler, cell, error=None):
+    cell._defer_damage_viability = False
+    if scheduler.active:
+        return scheduler.abort_step(
+            RuntimeError('A4.8a direct validation close')
+            if error is None else error
+        )
+    return None
+
+
+def _a48_assert_committed_oracle(world, cell, expected_world,
+                                 expected_cell, label):
+    _assert_structural_equal(expected_cell, cell, label + '.structure')
+    v3.assert_recursive_close(
+        expected_cell.pools, cell.pools, atol=0.0, rtol=0.0,
+        path=label + '.pools',
+    )
+    if (int(expected_cell.genome_damage_events)
+            != int(cell.genome_damage_events)):
+        raise AssertionError(label + ' damage-event counter differs')
+    if expected_world.rng.bit_generator.state != world.rng.bit_generator.state:
+        raise AssertionError(label + ' full PCG64 state differs')
+
+
+def _a48_assert_plan_equal(expected, actual, label):
+    left = expected.state_dict()
+    right = actual.state_dict()
+    lesion_mean = 'genome_lesion_mean_after'
+    left_mean = np.asarray(left.pop(lesion_mean), dtype=np.float64)
+    right_mean = np.asarray(right.pop(lesion_mean), dtype=np.float64)
+    v3.assert_recursive_close(
+        left, right, atol=0.0, rtol=0.0, path=label,
+    )
+    left_bits = left_mean.view(np.uint64).reshape(-1)
+    right_bits = right_mean.view(np.uint64).reshape(-1)
+    if (left_mean.shape != right_mean.shape
+            or not all(abs(int(a) - int(b)) <= 1
+                       for a, b in zip(left_bits, right_bits))):
+        raise AssertionError(label + ' lesion mean differs by more than 1 ULP')
+
+
+def _a48_hybrid_from_state(state, a4_config=None, device='cpu'):
+    world = a4.a3.s66.Formal066World.from_state(v3.pickle_clone(state))
+    backend = a4.a3.TorchKernelBackendA3(
+        v3._a3_config(device=device, precision='float64'),
+    )
+    return a48.Hybrid066WorldA4Hydrolysis(
+        world, backend=backend,
+        a4_config=a4_config or a4.GPU068A4Config(),
+        a4_device=device,
+    )
+
+
 def _assert_completion_cpu_parity(plan, before_cells, cpu_cells, label,
                                   atol=2e-12):
     if int(plan.cell_count) != len(before_cells):
@@ -1051,6 +1164,14 @@ def test_api_scope():
     missing = [name for name in hydrolysis_required if not hasattr(a47, name)]
     if missing:
         raise AssertionError('missing A4.7b API: %s' % missing)
+    integration_required = (
+        'A4HydrolysisCommitError', 'A4HydrolysisEventScheduler',
+        'Hybrid066WorldA4Hydrolysis',
+    )
+    missing = [name for name in integration_required
+               if not hasattr(a48, name)]
+    if missing:
+        raise AssertionError('missing A4.8a API: %s' % missing)
     if a4.FULL_GPU_WORLD_STEP is not False:
         raise AssertionError('A4.1 must not claim full GPU world-step')
     if hasattr(a4.A4GeneCacheBatch, 'from_state_dict'):
@@ -1154,11 +1275,26 @@ def test_api_scope():
     )
     if a47.PORT_STATUS.get('genome_symbol_hydrolysis') != expected_hydrolysis:
         raise AssertionError('A4.7b hydrolysis authority status differs')
-    return '%s / %s + %s + %s + %s + %s / full_gpu=false' % (
-        a47.BUILD, a4.SCHEMA_VERSION,
+    public_names = set(a48.__all__)
+    if (a48.BUILD != 'SOMA-CELL 0.6.8-GPU A4.8a'
+            or a48.SCHEMA_VERSION
+            != '0.6.8-GPU-A4.8a-hydrolysis-atomic-commit'
+            or a48.FULL_GPU_WORLD_STEP is not False
+            or '_A4HydrolysisCommitCandidate' in public_names):
+        raise AssertionError('A4.8a identity/public scope differs')
+    signature = inspect.signature(
+        a48.A4HydrolysisEventScheduler.cpu_genome_hydrolysis,
+    )
+    if tuple(signature.parameters) != ('self', 'world', 'cell', 'hazards', 'dt'):
+        raise AssertionError('A4.8a bridge accepts external plan authority')
+    if not issubclass(
+            a48.A4HydrolysisEventScheduler, a3s.A3EventScheduler):
+        raise AssertionError('A4.8a scheduler is not an A3 scheduler subtype')
+    return '%s / %s + %s + %s + %s + %s + %s / full_gpu=false' % (
+        a48.BUILD, a4.SCHEMA_VERSION,
         a4.GENE_CACHE_SCHEMA_VERSION + ' + ' + a4.TRANSLATION_SCHEMA_VERSION,
         a44.SCHEMA_VERSION, a47.SCHEMA_VERSION,
-        a47.DELETION_PLAN_SCHEMA_VERSION,
+        a47.DELETION_PLAN_SCHEMA_VERSION, a48.SCHEMA_VERSION,
     )
 
 
@@ -6775,6 +6911,589 @@ def test_a47b_hydrolysis_capacity_trust_rollback_and_authority():
             len(corruptions))
 
 
+def test_a48a_atomic_commit_formal066_hit_nohit_dt0():
+    cases = []
+    world, cell, capacity, dt = _a47b_hydrolysis_fixture()
+    cases.append(('hit_miss_hit', world, cell, capacity, dt, 3, 2))
+
+    world, cell, capacity, _ = _a47b_hydrolysis_fixture(zero_hit=True)
+    cell.genome_lesions = [0.751, 1.0, 0.751]
+    cell._refresh_gene_cache()
+    cases.append(('no_hit', world, cell, capacity, 1.0, 2, 0))
+
+    world, cell, capacity, dt = _a47b_hydrolysis_fixture(zero_hit=True)
+    cases.append(('eligible_dt0', world, cell, capacity, dt, 1, 0))
+
+    summaries = []
+    for (label, world, cell, capacity, dt,
+         expected_draws, expected_hits) in cases:
+        source = _a48_binding(world, cell, capacity)
+        rng_before = copy.deepcopy(world.rng.bit_generator.state)
+        tape = a47.prepare_genome_hydrolysis_rng_tape(
+            source, dt, rng_before,
+        )
+        expected_world, expected_cell, expected = _a47b_formal066_oracle(
+            world, cell, dt,
+        )
+        if (int(tape.draw_count) != expected_draws
+                or int(tape.hit_count) != expected_hits):
+            raise AssertionError(label + ' fixture draw/hit schedule drifted')
+
+        scheduler = a48.A4HydrolysisEventScheduler(capacity, 'cpu')
+        _a48_begin_direct(scheduler, world, cell, dt)
+        try:
+            changed = scheduler.cpu_genome_hydrolysis(
+                world, cell, (), dt,
+            )
+            entry = _a48_hydrolysis_entry(scheduler, cell)
+            fresh = _a48_binding(world, cell, capacity)
+            a4._require_translation_binding(fresh)
+            sequence_count = len(expected['final_lengths'])
+            if (int(fresh.ragged.sequence_count) != sequence_count
+                    or int(fresh.ragged.symbol_count)
+                    != int(expected['final_symbol_count'])
+                    or not np.array_equal(
+                        fresh.ragged.sequence_offsets[:sequence_count + 1],
+                        expected['final_offsets'],
+                    )):
+                raise AssertionError(label + ' compact offsets differ')
+            _a48_assert_committed_oracle(
+                world, cell, expected_world, expected_cell,
+                'a48a.' + label,
+            )
+            metadata = entry['metadata']
+            expected_metadata = {
+                'authority': (
+                    'A4.8a-resident-plan-atomic-cpu-rng-commit'
+                ),
+                'enabled': True,
+                'device': 'cpu',
+                'legacy_hazard_count': 0,
+                'eligible_genome_count': expected_draws,
+                'draw_count': expected_draws,
+                'hit_count': expected_hits,
+                'source_provenance': source.state.source_provenance,
+                'final_provenance': fresh.state.source_provenance,
+                'mutation_count': expected_hits,
+                'rng_draw_count': expected_draws + expected_hits,
+                'gene_cache_refresh_count': expected_hits,
+                'work_performed': expected_hits > 0,
+            }
+            if metadata != expected_metadata:
+                raise AssertionError(label + ' receipt metadata differs')
+            if entry['status'] != 'executed' or bool(changed) != (expected_hits > 0):
+                raise AssertionError(label + ' executed/change status differs')
+            if expected_hits:
+                if source.state.source_provenance == fresh.state.source_provenance:
+                    raise AssertionError(label + ' old binding remained current')
+            elif source.state.source_provenance != fresh.state.source_provenance:
+                raise AssertionError(label + ' no-hit source provenance changed')
+            summaries.append('%s=%d/%d' % (
+                label, expected_draws, expected_hits,
+            ))
+        finally:
+            _a48_abort_direct(scheduler, cell)
+    return ('Formal066 exact compact/lesion/waste/cache/counter/full-PCG64; '
+            + ', '.join(summaries))
+
+
+def test_a48a_candidate_cpu_cuda_purity_fresh_binding_and_one_shot():
+    if torch is None:
+        raise AssertionError('PyTorch unavailable')
+    if _REQUIRE_CUDA and not torch.cuda.is_available():
+        raise AssertionError('CUDA required but unavailable')
+    devices = ['cpu']
+    if torch.cuda.is_available():
+        devices.append('cuda')
+
+    reference = None
+    summaries = []
+    for device in devices:
+        world, cell, capacity, dt = _a47b_hydrolysis_fixture()
+        scheduler = a48.A4HydrolysisEventScheduler(capacity, device)
+        _a48_begin_direct(scheduler, world, cell, dt)
+        before_cell = v3.pickle_clone(cell.state_dict())
+        before_rng = copy.deepcopy(world.rng.bit_generator.state)
+        try:
+            candidate = scheduler._prepare_candidate(world, cell, dt)
+            v3.assert_recursive_close(
+                before_cell, cell.state_dict(), atol=0.0, rtol=0.0,
+                path='a48a.%s.prepare_cell_purity' % device,
+            )
+            if world.rng.bit_generator.state != before_rng:
+                raise AssertionError(device + ' candidate advanced live RNG')
+            for owner in (
+                    candidate.resident_binding.ragged,
+                    candidate.resident_binding.state,
+                    candidate.resident_binding.cache,
+                    candidate.resident_tape, candidate.resident_plan):
+                pointers = owner.data_ptrs()
+                if (not pointers
+                        or any(getattr(owner, name).device.type != device
+                               for name in pointers)):
+                    raise AssertionError(device + ' resident device differs')
+            a4._require_translation_binding(candidate.fresh_binding)
+            if (candidate.source_binding.state.source_provenance
+                    == candidate.fresh_binding.state.source_provenance):
+                raise AssertionError(device + ' hit candidate is not fresh')
+
+            if reference is None:
+                reference = (
+                    candidate.tape.clone(), candidate.plan.clone(),
+                    v3.pickle_clone(candidate.candidate_cell.state_dict()),
+                )
+            else:
+                v3.assert_recursive_close(
+                    reference[0].state_dict(), candidate.tape.state_dict(),
+                    atol=0.0, rtol=0.0,
+                    path='a48a.%s.tape_parity' % device,
+                )
+                _a48_assert_plan_equal(
+                    reference[1], candidate.plan,
+                    'a48a.%s.plan_parity' % device,
+                )
+                v3.assert_recursive_close(
+                    reference[2], candidate.candidate_cell.state_dict(),
+                    atol=0.0, rtol=0.0,
+                    path='a48a.%s.candidate_cell_parity' % device,
+                )
+
+            scheduler._commit_candidate(
+                world, cell, dt, (), candidate,
+            )
+            final_binding = _a48_binding(world, cell, capacity)
+            if (a48._binding_identity(final_binding)
+                    != a48._binding_identity(candidate.fresh_binding)):
+                raise AssertionError(device + ' committed binding is not fresh')
+            committed_cell = v3.pickle_clone(cell.state_dict())
+            committed_rng = copy.deepcopy(world.rng.bit_generator.state)
+            _assert_raises(
+                a48.A4HydrolysisCommitError,
+                lambda: scheduler._commit_candidate(
+                    world, cell, dt, (), candidate,
+                ),
+            )
+            v3.assert_recursive_close(
+                committed_cell, cell.state_dict(), atol=0.0, rtol=0.0,
+                path='a48a.%s.one_shot_cell' % device,
+            )
+            if world.rng.bit_generator.state != committed_rng:
+                raise AssertionError(device + ' one-shot retry changed RNG')
+            summaries.append(device)
+        finally:
+            _a48_abort_direct(scheduler, cell)
+    return ('/'.join(summaries) +
+            ' candidate exact parity, prepare purity, resident device, '
+            'fresh binding and one-shot rejection')
+
+
+def test_a48a_fail_closed_capacity_trust_order_and_publish_rollback():
+    one_short = (
+        ('Q', dict(max_sequences=4, max_symbols=199,
+                   max_sequence_symbols=48)),
+        ('S', dict(max_sequences=5, max_symbols=198,
+                   max_sequence_symbols=48)),
+        ('W', dict(max_sequences=5, max_symbols=199,
+                   max_sequence_symbols=47)),
+    )
+    for label, values in one_short:
+        world, cell, _, dt = _a47b_hydrolysis_fixture()
+        capacity = a4.GPU068A4Config(
+            max_cells=1, max_proteins_per_cell=64, **values
+        )
+        scheduler = a48.A4HydrolysisEventScheduler(capacity, 'cpu')
+        _a48_begin_direct(scheduler, world, cell, dt)
+        before_cell = v3.pickle_clone(cell.state_dict())
+        before_rng = copy.deepcopy(world.rng.bit_generator.state)
+        try:
+            _assert_raises(
+                a4.A4CapacityError,
+                lambda: scheduler.cpu_genome_hydrolysis(
+                    world, cell, (), dt,
+                ),
+            )
+            v3.assert_recursive_close(
+                before_cell, cell.state_dict(), 0.0, 0.0,
+                'a48a.capacity_' + label,
+            )
+            if (world.rng.bit_generator.state != before_rng
+                    or any(entry['event'] == 'genome_hydrolysis_cpu_rng'
+                           for entry in scheduler._record(cell)[1]['events'])):
+                raise AssertionError(label + ' preclaim failure was not atomic')
+        finally:
+            _a48_abort_direct(scheduler, cell)
+
+    class TamperResidentPlan(a48.A4HydrolysisEventScheduler):
+        def _candidate_ready(self, world, cell, dt, candidate):
+            candidate.resident_plan.final_symbols.data[0, 0].bitwise_xor_(1)
+            return candidate
+
+    world, cell, capacity, dt = _a47b_hydrolysis_fixture()
+    scheduler = TamperResidentPlan(capacity, 'cpu')
+    _a48_begin_direct(scheduler, world, cell, dt)
+    before_cell = v3.pickle_clone(cell.state_dict())
+    before_rng = copy.deepcopy(world.rng.bit_generator.state)
+    try:
+        _assert_raises(
+            (a48.A4HydrolysisCommitError, a4.A4SchemaError),
+            lambda: scheduler.cpu_genome_hydrolysis(
+                world, cell, (), dt,
+            ),
+        )
+        v3.assert_recursive_close(
+            before_cell, cell.state_dict(), 0.0, 0.0,
+            'a48a.resident_data_tamper',
+        )
+        if (world.rng.bit_generator.state != before_rng
+                or any(entry['event'] == 'genome_hydrolysis_cpu_rng'
+                       for entry in scheduler._record(cell)[1]['events'])):
+            raise AssertionError('resident .data tamper crossed claim boundary')
+    finally:
+        _a48_abort_direct(scheduler, cell)
+
+    world, cell, capacity, dt = _a47b_hydrolysis_fixture()
+    scheduler = a48.A4HydrolysisEventScheduler(capacity, 'cpu')
+    _a48_begin_direct(scheduler, world, cell, dt)
+    before_cell = v3.pickle_clone(cell.state_dict())
+    before_rng = copy.deepcopy(world.rng.bit_generator.state)
+    _assert_raises(
+        a3s.A3SchedulerProtocolError,
+        lambda: scheduler.cpu_genome_hydrolysis(
+            world, cell, (), np.nextafter(dt, np.inf),
+        ),
+    )
+    foreign_cell = copy.deepcopy(cell)
+    _assert_raises(
+        a3s.A3SchedulerProtocolError,
+        lambda: scheduler.cpu_genome_hydrolysis(
+            world, foreign_cell, (), dt,
+        ),
+    )
+    v3.assert_recursive_close(
+        before_cell, cell.state_dict(), 0.0, 0.0,
+        'a48a.wrong_cell_dt',
+    )
+    if world.rng.bit_generator.state != before_rng:
+        raise AssertionError('wrong cell/dt changed RNG')
+    _a48_abort_direct(scheduler, cell)
+
+    class TamperResidentTape(a48.A4HydrolysisEventScheduler):
+        def _candidate_ready(self, world, cell, dt, candidate):
+            candidate.resident_tape.uniform_draws.data[0].add_(0.125)
+            return candidate
+
+    class TamperHostSource(a48.A4HydrolysisEventScheduler):
+        def _candidate_ready(self, world, cell, dt, candidate):
+            candidate.source_binding.ragged.symbols[0] ^= np.uint8(1)
+            return candidate
+
+    class TamperSchedulerSettings(a48.A4HydrolysisEventScheduler):
+        def _candidate_ready(self, world, cell, dt, candidate):
+            self.a4_config = a4.GPU068A4Config(
+                max_cells=1, max_sequences=4, max_symbols=199,
+                max_sequence_symbols=48, max_proteins_per_cell=64,
+            )
+            self.a4_device = 'cuda'
+            return candidate
+
+    class TamperCandidateBeforeState(a48.A4HydrolysisEventScheduler):
+        def _candidate_ready(self, world, cell, dt, candidate):
+            bit_generator = np.random.PCG64()
+            bit_generator.state = copy.deepcopy(candidate.rng_before_state)
+            generator = np.random.Generator(bit_generator)
+            generator.random()
+            candidate.rng_before_state = copy.deepcopy(
+                generator.bit_generator.state
+            )
+            return candidate
+
+    for scheduler_type, label in (
+            (TamperResidentTape, 'resident_tape_data'),
+            (TamperHostSource, 'host_source'),
+            (TamperSchedulerSettings, 'scheduler_config_device'),
+            (TamperCandidateBeforeState, 'candidate_rng_before')):
+        world, cell, capacity, dt = _a47b_hydrolysis_fixture()
+        scheduler = scheduler_type(capacity, 'cpu')
+        _a48_begin_direct(scheduler, world, cell, dt)
+        before_cell = v3.pickle_clone(cell.state_dict())
+        before_rng = copy.deepcopy(world.rng.bit_generator.state)
+        try:
+            _assert_raises(
+                (a48.A4HydrolysisCommitError, a4.A4SchemaError),
+                lambda: scheduler.cpu_genome_hydrolysis(
+                    world, cell, (), dt,
+                ),
+            )
+            v3.assert_recursive_close(
+                before_cell, cell.state_dict(), 0.0, 0.0,
+                'a48a.' + label,
+            )
+            if (world.rng.bit_generator.state != before_rng
+                    or any(entry['event'] == 'genome_hydrolysis_cpu_rng'
+                           for entry in scheduler._record(cell)[1]['events'])):
+                raise AssertionError(label + ' crossed claim boundary')
+        finally:
+            _a48_abort_direct(scheduler, cell)
+
+    class TamperCandidateAfterState(a48.A4HydrolysisEventScheduler):
+        def _candidate_ready(self, world, cell, dt, candidate):
+            bit_generator = np.random.PCG64()
+            bit_generator.state = copy.deepcopy(candidate.rng_after_state)
+            generator = np.random.Generator(bit_generator)
+            generator.random()
+            candidate.rng_after_state = copy.deepcopy(
+                generator.bit_generator.state
+            )
+            return candidate
+
+    world, cell, capacity, dt = _a47b_hydrolysis_fixture()
+    scheduler = TamperCandidateAfterState(capacity, 'cpu')
+    _a48_begin_direct(scheduler, world, cell, dt)
+    before_cell = v3.pickle_clone(cell.state_dict())
+    before_rng = copy.deepcopy(world.rng.bit_generator.state)
+    try:
+        _assert_raises(
+            a48.A4HydrolysisCommitError,
+            lambda: scheduler.cpu_genome_hydrolysis(
+                world, cell, (), dt,
+            ),
+        )
+        v3.assert_recursive_close(
+            before_cell, cell.state_dict(), 0.0, 0.0,
+            'a48a.candidate_rng_after_tamper',
+        )
+        if (world.rng.bit_generator.state != before_rng
+                or any(entry['event'] == 'genome_hydrolysis_cpu_rng'
+                       for entry in scheduler._record(cell)[1]['events'])):
+            raise AssertionError(
+                'candidate RNG after-state tamper crossed claim boundary'
+            )
+    finally:
+        _a48_abort_direct(scheduler, cell)
+
+    class FailAfterPublish(a48.A4HydrolysisEventScheduler):
+        def _publish_candidate(self, world, cell, candidate):
+            super(FailAfterPublish, self)._publish_candidate(
+                world, cell, candidate,
+            )
+            cell.genomes[0][0] ^= np.uint8(1)
+            raise RuntimeError('injected A4.8a publish failure')
+
+    world, cell, capacity, dt = _a47b_hydrolysis_fixture()
+    scheduler = FailAfterPublish(capacity, 'cpu')
+    _a48_begin_direct(scheduler, world, cell, dt)
+    before_cell = v3.pickle_clone(cell.state_dict())
+    before_rng = copy.deepcopy(world.rng.bit_generator.state)
+    object_ids = (
+        id(cell.genomes), id(cell.genome_lesions), id(cell.pools),
+        id(cell.gene_specs), id(world.rng),
+    )
+    caught = None
+    try:
+        scheduler.cpu_genome_hydrolysis(world, cell, (), dt)
+    except RuntimeError as error:
+        caught = error
+    if caught is None:
+        raise AssertionError('injected publish failure did not escape')
+    v3.assert_recursive_close(
+        before_cell, cell.state_dict(), 0.0, 0.0,
+        'a48a.publish_rollback_cell',
+    )
+    if (world.rng.bit_generator.state != before_rng
+            or object_ids != (
+                id(cell.genomes), id(cell.genome_lesions), id(cell.pools),
+                id(cell.gene_specs), id(world.rng),
+            )):
+        raise AssertionError('publish rollback did not restore identity/state')
+    entry = _a48_hydrolysis_entry(scheduler, cell)
+    receipt = _a48_abort_direct(scheduler, cell, caught)
+    if (receipt['status'] != 'aborted'
+            or entry['event'] != 'genome_hydrolysis_cpu_rng'):
+        raise AssertionError('postclaim failure did not leave aborted receipt')
+
+    world, cell, capacity, dt = _a47b_hydrolysis_fixture()
+    scheduler = a48.A4HydrolysisEventScheduler(capacity, 'cpu')
+    _a48_begin_direct(scheduler, world, cell, dt)
+    scheduler.cpu_genome_hydrolysis(world, cell, (), dt)
+    committed = v3.pickle_clone(cell.state_dict())
+    committed_rng = copy.deepcopy(world.rng.bit_generator.state)
+    _assert_raises(
+        a3s.A3DuplicateEventError,
+        lambda: scheduler.cpu_genome_hydrolysis(world, cell, (), dt),
+    )
+    v3.assert_recursive_close(
+        committed, cell.state_dict(), 0.0, 0.0,
+        'a48a.duplicate_atomic',
+    )
+    if world.rng.bit_generator.state != committed_rng:
+        raise AssertionError('duplicate attempt changed RNG')
+    _a48_abort_direct(scheduler, cell)
+
+    world, cell, capacity, dt = _a47b_hydrolysis_fixture()
+    scheduler = a48.A4HydrolysisEventScheduler(capacity, 'cpu')
+    scheduler.begin_step(world, [cell])
+    for event in a3s.WORLD_EVENT_ORDER[:5]:
+        scheduler.claim_world(event, status='skipped')
+    scheduler.claim(cell, 'surface_exchange', status='skipped')
+    scheduler.reserve_metabolism_dispatch(world, cell, dt)
+    scheduler.begin_a3_metabolism(world, cell, dt)
+    before_cell = v3.pickle_clone(cell.state_dict())
+    before_rng = copy.deepcopy(world.rng.bit_generator.state)
+    _assert_raises(
+        a3s.A3EventOrderError,
+        lambda: scheduler.cpu_genome_hydrolysis(world, cell, (), dt),
+    )
+    v3.assert_recursive_close(
+        before_cell, cell.state_dict(), 0.0, 0.0,
+        'a48a.out_of_order_atomic',
+    )
+    if world.rng.bit_generator.state != before_rng:
+        raise AssertionError('out-of-order attempt changed RNG')
+    _a48_abort_direct(scheduler, cell)
+    return ('Q/S/W one-short; wrong cell/dt/source/config/device/PCG64; '
+            'resident tape+plan .data preclaim atomic; postclaim object/'
+            'state/RNG rollback + aborted receipt; duplicate/out-of-order '
+            'exact-once')
+
+
+def test_a48a_world_interleave_lockstep_save_clone_and_a3_authority():
+    capacity = a4.GPU068A4Config()
+    for steps, seed in ((1, 9881), (10, 9882)):
+        source = v3.make_world(seed=seed, cells=2)
+        state = v3.pickle_clone(source.state_dict())
+        cpu = a4.a3.s66.Formal066World.from_state(v3.pickle_clone(state))
+        hybrid = _a48_hybrid_from_state(state, capacity, 'cpu')
+        for _ in range(steps):
+            cpu.step(0.1)
+            hybrid.step(0.1)
+        v3._assert_world_pair(
+            cpu, hybrid, state_atol=v3.WORLD_FP64_ATOL,
+            ledger_atol=v3.LEDGER_ATOL,
+            label='a48a.lockstep_%d' % steps,
+        )
+
+    stressed = v3.make_world(seed=9886, cells=2)
+    for cell in stressed.cells:
+        cell.current_stress = 1.5
+        cell.damage_trace[:] = 0.9
+        cell.membrane_oxidation[:] = np.linspace(
+            0.3, 1.8, len(cell.membrane_oxidation),
+        )
+        cell.pools[a4.a3.POOL_REACTIVE] += 0.16
+        cell.pools[a4.a3.POOL_ATP] += 0.4
+        cell._sync_damage_pool()
+    state = v3.pickle_clone(stressed.state_dict())
+    cpu = a4.a3.s66.Formal066World.from_state(v3.pickle_clone(state))
+    hybrid = _a48_hybrid_from_state(state, capacity, 'cpu')
+    for _ in range(3):
+        cpu.step(0.1)
+        hybrid.step(0.1)
+    v3._assert_world_pair(
+        cpu, hybrid, state_atol=v3.WORLD_FP64_ATOL,
+        ledger_atol=v3.LEDGER_ATOL,
+        label='a48a.repair_heavy_stress_3',
+    )
+
+    source = v3.make_world(seed=9883, cells=2)
+    source.config.endogenous_damage = False
+    for cell in source.cells:
+        cell.genome_lesions = [
+            0.5 / 0.00065 for _ in cell.genomes
+        ]
+        cell._refresh_gene_cache()
+    state = v3.pickle_clone(source.state_dict())
+    cpu = a4.a3.s66.Formal066World.from_state(v3.pickle_clone(state))
+    hybrid = _a48_hybrid_from_state(state, capacity, 'cpu')
+    cpu.step(0.1)
+    original_bridge = a3s.A3EventScheduler.cpu_genome_hydrolysis
+
+    def legacy_bridge_bomb(*args, **kwargs):
+        raise AssertionError('legacy A3 hydrolysis bridge was called')
+
+    a3s.A3EventScheduler.cpu_genome_hydrolysis = legacy_bridge_bomb
+    try:
+        receipt = hybrid.step(0.1)
+    finally:
+        a3s.A3EventScheduler.cpu_genome_hydrolysis = original_bridge
+    v3._assert_world_pair(
+        cpu, hybrid, state_atol=v3.WORLD_FP64_ATOL,
+        ledger_atol=v3.LEDGER_ATOL,
+        label='a48a.two_cell_interleave',
+    )
+    previous_motion = None
+    for record in receipt['cells']:
+        by_name = {entry['event']: entry for entry in record['events']}
+        names = [entry['event'] for entry in record['events']]
+        if names.count('genome_hydrolysis_cpu_rng') != 1:
+            raise AssertionError('A4.8a integrated hydrolysis count differs')
+        replication = by_name['replication_cpu']['ordinal']
+        hydrolysis = by_name['genome_hydrolysis_cpu_rng']['ordinal']
+        motion = by_name['motion']['ordinal']
+        if not replication < hydrolysis < motion:
+            raise AssertionError('per-cell RNG event order differs')
+        if previous_motion is not None and previous_motion >= replication:
+            raise AssertionError('two-cell RNG interleave was batched/reordered')
+        previous_motion = motion
+        if by_name['genome_hydrolysis_cpu_rng']['metadata'][
+                'eligible_genome_count'] < 1:
+            raise AssertionError('two-cell hydrolysis fixture drew no RNG')
+
+    hybrid = _a48_hybrid_from_state(
+        v3.make_world(seed=9884, cells=2).state_dict(), capacity, 'cpu',
+    )
+    for _ in range(2):
+        hybrid.step(0.1)
+    twin = hybrid.clone()
+    with tempfile.TemporaryDirectory() as directory:
+        path = os.path.join(directory, 'a48a.pkl')
+        hybrid.save(path)
+        restored = a48.Hybrid066WorldA4Hydrolysis.load(path)
+        for value in (twin, restored):
+            if (type(value) is not a48.Hybrid066WorldA4Hydrolysis
+                    or type(value.scheduler)
+                    is not a48.A4HydrolysisEventScheduler
+                    or value.scheduler.a4_device != 'cpu'
+                    or value.scheduler.a4_config != capacity):
+                raise AssertionError('A4.8a save/clone authority was lost')
+        for _ in range(3):
+            hybrid.step(0.1)
+            twin.step(0.1)
+            restored.step(0.1)
+        v3.assert_recursive_close(
+            hybrid.world.state_dict(), twin.world.state_dict(),
+            0.0, 0.0, 'a48a.clone_continuation',
+        )
+        v3.assert_recursive_close(
+            hybrid.world.state_dict(), restored.world.state_dict(),
+            0.0, 0.0, 'a48a.save_continuation',
+        )
+
+    active = _a48_hybrid_from_state(
+        v3.make_world(seed=9885, cells=1).state_dict(), capacity, 'cpu',
+    )
+    active.scheduler.begin_step(active.world, active.world.cells)
+    _assert_raises(a3s.A3SchedulerProtocolError, active.clone)
+    active.scheduler.abort_step(RuntimeError('expected active-save rejection'))
+    active.scheduler._a4_hydrolysis_commit_active = True
+    try:
+        _assert_raises(a3s.A3SchedulerProtocolError, active.state_dict)
+    finally:
+        active.scheduler._a4_hydrolysis_commit_active = False
+
+    if (a4.a3.PORT_STATUS.get('genome_symbol_hydrolysis_rng')
+            != 'cpu-authoritative-explicit-hazard-plan'
+            or a48.FULL_GPU_WORLD_STEP is not False):
+        raise AssertionError('A4.8a changed promoted A3/full-GPU authority')
+    for relative, expected in PROMOTED_A3_SHA256.items():
+        path = os.path.join(ROOT, *relative.split('/'))
+        if _sha256(path) != expected:
+            raise AssertionError(relative + ' changed from promoted A3 bytes')
+    return ('1/10-step + repair-heavy 3-step + 2-cell hydrolysis-stress '
+            'replication/hydrolysis/motion PCG64 lockstep; '
+            'legacy bridge bomb; save/load/clone continuation; active reject; '
+            'A3 baseline authority unchanged')
+
+
 TESTS = (
     test_api_scope,
     test_source_hash_inputs_present,
@@ -6822,6 +7541,10 @@ TESTS = (
     test_a47b_hydrolysis_apply_formal066_oracle_and_noop,
     test_a47b_hydrolysis_numpy_torch_devices_and_purity,
     test_a47b_hydrolysis_capacity_trust_rollback_and_authority,
+    test_a48a_atomic_commit_formal066_hit_nohit_dt0,
+    test_a48a_candidate_cpu_cuda_purity_fresh_binding_and_one_shot,
+    test_a48a_fail_closed_capacity_trust_order_and_publish_rollback,
+    test_a48a_world_interleave_lockstep_save_clone_and_a3_authority,
 )
 
 
@@ -6849,7 +7572,7 @@ def run_all(write=False, output_dir=None):
     failed = sum(row['status'] == 'FAIL' for row in rows)
     elapsed = time.time() - started
     payload = {
-        'build': a47.BUILD,
+        'build': a48.BUILD,
         'schema': {
             'ragged_genome': a4.SCHEMA_VERSION,
             'gene_cache': a4.GENE_CACHE_SCHEMA_VERSION,
@@ -6866,9 +7589,10 @@ def run_all(write=False, output_dir=None):
             'genome_hydrolysis_deletion_plan': (
                 a47.DELETION_PLAN_SCHEMA_VERSION
             ),
+            'genome_hydrolysis_atomic_commit': a48.SCHEMA_VERSION,
         },
         'development_slice': (
-            'A4.7b-single-cell-resident-genome-hydrolysis-deletion-plan'
+            'A4.8a-single-cell-genome-hydrolysis-atomic-commit-bridge'
         ),
         'promoted_baseline_unchanged': 'SOMA-CELL 0.6.8-GPU A3',
         'full_gpu_world_step': False,
@@ -6890,7 +7614,7 @@ def run_all(write=False, output_dir=None):
             writer.writeheader()
             writer.writerows(rows)
         lines = [
-            '%s VALIDATION' % a47.BUILD,
+            '%s VALIDATION' % a48.BUILD,
             '%d PASS / %d FAIL / %d TOTAL' % (passed, failed, len(rows)),
             'elapsed %.6fs' % elapsed,
             '',

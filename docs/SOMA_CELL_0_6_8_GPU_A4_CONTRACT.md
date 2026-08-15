@@ -1,6 +1,6 @@
 # SOMA-CELL 0.6.8-GPU A4 contract
 
-Status: A4 development contract through slice A4.7b. This is not an A4
+Status: A4 development contract through slice A4.8a. This is not an A4
 promotion.
 
 ## Authority
@@ -520,6 +520,53 @@ no `.item()`, `.cpu()`, `.numpy()`, `.tolist()`, `torch.equal`, or implicit
 synchronization is used.  Full plan/source replay occurs only after explicit
 readback.
 
+## A4.8a scope
+
+A4.8a is the first bounded scheduler commit, and it replaces only the existing
+`genome_hydrolysis_cpu_rng` event inside a new A4 wrapper. The promoted A3
+source and scheduler remain byte-identical and retain authority for every
+other event. `A4HydrolysisEventScheduler` subclasses the exact-once A3
+scheduler, preserves the event ID and rank, and accepts no external binding,
+tape, plan, or commit candidate. `Hybrid066WorldA4Hydrolysis` preserves the
+explicit A4 capacity/device settings across step-boundary save, load, and
+clone; active scheduler or pending-commit serialization remains forbidden.
+
+For each invocation, the bridge packs the post-`genome_lesion_gain` live cell
+as a fresh exactly-one-cell host binding. It clones the complete live PCG64
+before-state, prepares the A4.7a literal tape, uploads source and tape to the
+explicit Torch CPU/CUDA device, evaluates the A4.7b resident plan, reads every
+resident input and output back explicitly, and performs full binding-aware
+host replay. A shallow disposable CPU candidate is populated from the
+validated compact rows, its final gene cache is refreshed, and a new host A4
+binding proves compact topology, physiology, material count, and lesion mean.
+All of this completes before the scheduler event is claimed.
+
+Immediately before claim, the bridge rechecks the live cell object and stable
+ID, generation and damage counter, exact `dt.hex()`, world-config bytes, A4
+capacity/device settings, biological binding identity, and live PCG64
+before-state. The private candidate before/after states must equal the A4.7
+tape before/after states exactly. Retained resident ragged, physiology, cache,
+tape, and plan values are explicitly read back again, so ordinary writes and
+Torch `.data` version bypasses fail before meaning is committed.
+
+Only after those checks does the bridge claim `genome_hydrolysis_cpu_rng`
+exactly once and publish complete genomes, ordered lesions, pools, final gene
+cache, `genome_damage_events`, and the full PCG64 after-state. Active
+replication template/copy and unrelated cell state are unchanged. A no-hit
+event, including an eligible `dt == 0` event, is still recorded as executed;
+`work_performed` is false, while the literal eligible random draws are kept.
+This corrects the zero-probability draw only in the A4 wrapper; the promoted
+A3 bridge itself is not edited.
+
+Capacity, source, trust, or ordering failure before claim leaves receipts,
+biology, and live RNG unchanged and never falls back to the old CPU bridge.
+If publishing fails after claim, the original list/array/dictionary/RNG object
+identity and values are restored locally and the outer scheduler records an
+aborted step. Event-local bindings, tape, plan, and candidate are one-shot and
+disposable; the committed CPU world and PCG64 state remain the durable
+step-boundary save authority. This correctness bridge performs intentional
+per-cell host/device round trips and makes no performance claim.
+
 ## Fail-closed invariants
 
 Ragged foundation invariants remain unchanged:
@@ -642,27 +689,35 @@ Hydrolysis-deletion-plan invariants are:
   division boundary only.
 - Deletion only shrinks state.  Capacity is never clipped, repurposed as a
   material trim, or silently grown; allocation failure is fail closed.
-- The result is a pure descriptor.  Actual arena compaction, cache refresh,
-  RNG advancement, CPU/world application, and scheduling remain separate.
+- The A4.7b result remains a pure descriptor.  A4.8a consumes only an
+  internally regenerated, fully replayed descriptor and commits the one
+  declared hydrolysis event; a caller-supplied descriptor is never commit
+  authority.
+- A4.8a failure before claim leaves biology, RNG, and receipts unchanged.
+  Failure while publishing restores the original object identities and values
+  and is recorded by the outer scheduler as an aborted step.
 
-## Explicit exclusions through A4.7b
+## Explicit exclusions through A4.8a
 
-- No scheduler/world integration or CPU-cell protein/material commit.
-- No mutation-free inactive-template start, actual template/copy/completed-
-  genome arena commit, compact hydrolysis arena rebuild, live lesion/cycle/
-  cache/novel-path update, live RNG commit, or device RNG kernel.
-- No live gene-cache refresh, despite recording the literal dirty bit and
-  refresh count; no multi-cell hydrolysis tape or deletion plan.
-- No A3 zero-probability bridge correction.  Its eligible `dt == 0` draw
-  difference remains recorded until a later scheduler-integration slice.
-- No scheduler replacement and no change to A3 `gene_refresh`,
-  `translation_cpu`, or `replication_cpu` authority.
+- No scheduler/world integration other than the single-cell hydrolysis event
+  replacement in `Hybrid066WorldA4Hydrolysis`.
+- No caller-supplied tape/plan/candidate authority, persistent A4 arena, or
+  multi-cell RNG tape/batch.  The wrapper rebuilds one disposable binding per
+  event and preserves inherited per-cell RNG interleaving.
+- No mutation-free inactive-template start or live template/copy/completed-
+  genome replication commit.  Paid translation and every replication branch
+  remain CPU-authoritative scheduler events.
+- No change to promoted A3 standalone `gene_refresh`, `translation_cpu`,
+  `replication_cpu`, or hydrolysis bridge code.  The eligible `dt == 0` draw
+  difference is corrected only by the A4 wrapper.
+- No device RNG kernel or performance claim; the A4.8a correctness bridge
+  intentionally performs explicit per-cell host/device validation round trips.
 - No division, death, corpse/eDNA/HGT, neural, or causal-system port.
 - No fp32 claim, mixed precision, `torch.compile`, CUDA Graph, Triton, custom
   CUDA, multi-stream, multi-GPU, or online-GPU abstraction.
 - No formal 13-spec/65-measurement benchmark and no speedup claim.
 
-## Acceptance through A4.7b
+## Acceptance through A4.8a
 
 - All A4.1 lossless/corruption/capacity/residency tests remain PASS.
 - Nested valid markers and invalid-outer/valid-inner recovery match frozen
@@ -830,6 +885,26 @@ Hydrolysis-deletion-plan invariants are:
   a single-cell row-padded pure descriptor.  Compact arena/cache/live RNG/
   CPU-cell/world commit and A3 scheduler authority remain unchanged.
 
+- Direct Formal066 hit/miss/hit, no-hit, and eligible `dt == 0` fixtures match
+  the A4.8a commit for compact polymers, lesions, sequential waste, final gene
+  cache, damage counter, full PCG64 state, and receipt draw/hit metadata.
+- Torch CPU and explicit RTX CUDA candidates agree after explicit readback;
+  retained source/tape/plan values, fresh binding provenance, and one-shot
+  consumption are checked without making an external descriptor authoritative.
+- Exact Q/S/W capacities pass.  One-short capacity, wrong cell or `dt`, stale
+  source, scheduler config/device disagreement, candidate PCG64 tampering, and
+  resident tape/plan `.data` mutation all fail before claim without changing
+  biology, RNG, or receipts.
+- Injected failure after claim restores the original list, array, dictionary,
+  and RNG identities and values and records an aborted step.  Duplicate and
+  out-of-order execution remain rejected by the inherited exact-once scheduler.
+- One-step, ten-step, repair-heavy stressed three-step, and two-cell interleave
+  fixtures remain lockstep with the frozen world; save/load/clone preserve the
+  A4 scheduler type, capacity, device, PCG64 continuation, and next-step
+  outcome.  The promoted A3 source and scheduler hashes remain unchanged.
+- All 50 A4 development tests pass with explicit CUDA required while the
+  promoted A3 validation remains PASS and `full_gpu_world_step=false`.
+
 Known A4.4b integration blockers are recorded rather than hidden.  On the
 measured six-cell development fixture the current fixed symbol-rank Torch plan
 was about 503 ms per call versus about 10.1 ms for NumPy, so it is not a
@@ -847,8 +922,9 @@ division was rejected as disproportionate complexity.  The launch-heavy path
 must be redesigned and remeasured before scheduler authority, promotion, or
 any speedup claim.
 
-Actual compact ragged/cache/live-RNG/CPU-cell/world commit, mutation-free
-inactive start, multi-cell hydrolysis scheduling, and A3 zero-probability
-bridge correction remain separate later slices.  Scheduler replacement
-remains later, after a contiguous resident chain can commit without recreating
-A3's per-cell host/device round trips.
+A4.8a is a bounded exception to the earlier pure-descriptor boundary: it
+commits only one hydrolysis event in a new wrapper, including compact genome
+state, final cache, CPU ledgers, and live PCG64.  The promoted A3 bridge keeps
+its recorded zero-probability difference, and no persistent resident chain or
+performance claim is implied.  Paid translation, all replication commits,
+division, and the A5/A6 subsystems remain separate later slices.
