@@ -810,3 +810,75 @@ tupleは呼出形だけ検証しても、生物/RNG authorityには使わず、p
   A4昇格とは呼ばない。
 - 次はA4.8b1としてtranslationのbinding-aware output replayとCPU commitを先に作る。
   replicationはさらにA4.8b2へ分離し、single-cell event orderとlive PCG64 commitを独立固定する。
+
+## A4.8b追加仮説
+
+A4.3のpaid translation planは、凍結CPUの遺伝子挿入順、逐次FUEL/MINERAL/ATP支払い、
+active/damaged protein辞書、`last_translation`、条件付き`last_quiescence`をNumPyとresident
+Torch fp64で再現する。A4.8aで確立したclaim前のsource/resident/output再attestとclaim後の局所
+rollbackをtranslation一eventへ限定して適用すれば、既存`translation_cpu` eventを外部planや
+CPU fallbackなしで原子的に置換できるはずである。
+
+commit値は明示readbackしたresident Torch出力とする。独立NumPy replayはdiscrete値と辞書順を
+exact、floatを最大`2e-12`でclaim前に検証するoracleであり、host値を代わりにcommitしない。
+通常有効fixtureでもCPU/CUDAに数ULP差があるためbit-exactを偽装しない。resident差が直後のCPU
+replicationのgate、RNG、離散結果を変える反例が出た場合はCPUへfallbackせずA4.8bをSTOPする。
+
+## A4.8bで実装するもの
+
+- A4.8a schedulerを継承する新schedulerとworld wrapper。promoted A3、A4.3 pure core、A4.8a
+  classを変更せず、既存event ID/rankの`translation_cpu`だけを追加置換する。hydrolysisは
+  A4.8a、replication以下はA3 authorityを維持する。
+- post-maintenance/live-translation境界の一cellをfresh host A4 bindingへpackし、独立NumPy
+  replay、明示Torch CPU/CUDA source/cache/state、resident paid plan、全resident値の明示readback、
+  fresh CPU candidateとfresh bindingまでclaim前に作るprivate one-shot candidate。
+- live cell object/ID/generation、exact `dt.hex()`、world config bytes、A4 capacity/device、binding
+  provenance、resident pointer/version/content、candidate physiologyをcommit直前に再照合する。
+  Torch `.data` version bypassも全値readbackで拒否する。
+- NumPyとresidentのcell/mask/fingerprint/count/orderをexact比較し、全float64配列を`2e-12`
+  以内で比較する。signed fp64支払残差はclipせず、schemaで許すpaid poolだけ保持する。
+- 検証後だけ`translation_cpu`をexactly once claimし、resident候補の`pools`、active `proteins`、
+  `damaged_proteins`、`last_translation`、条件付き`last_quiescence`を一括publishする。CPUの
+  `_sync_protein_pool`/`_sync_damage_pool`と同じ閾値・挿入順を保つ。
+- genomes、lesions、gene specs/cache、replication state、world state、live PCG64 identity/stateは
+  不変にする。no-op、disabled、no-genome、translator gateもeventはexecutedでwork=falseとする。
+- preclaim failureはreceipt/biology/RNGを完全不変とし旧CPU translateへfallbackしない。claim後
+  publish例外は元のpool/dictionary/scalar object identityと値へrollbackし、outer schedulerへ
+  aborted receiptを残す。
+- scheduler/worldのA4.8b schema/config/device/typeをsave/load/cloneで保持し、active/pending
+  serializationを拒否する。`full_gpu_world_step=false`、速度主張なしを維持する。
+
+## A4.8bで実装しないもの
+
+- replication template start、paid elongation、substitution/structural completionのlive commit
+- translationとreplicationを一candidateへ束ねるgeneric transaction manager
+- persistent cross-step arena/cache、multi-cell translation batch、device RNG、CPU fallback
+- promoted A3 file、A4.3 pure plan、A4.8a class、event ID/rank、baseline/resultsの変更
+- division/death/corpse/eDNA/HGT（A5）、neural/causal system（A6）
+- fp32、compile/graph/Triton/custom CUDA、performance、speedup、full GPU world-step、A4昇格
+
+## A4.8b固定テスト
+
+1. rich/exhaustion/reserve/no-translator、disabled/no-genome、`dt==0`、実signed residualをdirect
+   Formal066 translateと照合する。辞書順・離散値・genotype/RNGはexact、floatは`2e-12`以内、
+   no-opもreceipt exactly onceとする。
+2. 明示Torch CPU/CUDA candidate/commit、independent NumPy replay、resident device/pointer、source
+   purity、fresh binding、resident値publish、one-shotを照合する。genome/cache/RNGは不変とする。
+3. Q/S/W/P exactと各one-short、wrong cell/dt/source/config/device、host replay、resident
+   ragged/state/cache/plan `.data`、candidate/fresh binding tamper、duplicate/out-of-order、claim前
+   failure、注入publish failureのrollbackをfail closedとして固定する。
+4. 1-step/10-step/translation-heavy stress/2-cell event interleave、旧CPU translate bridge未呼出し、
+   save/load/clone継続、active/pending拒否、A3 byte不変を固定する。resident translation commit直後の
+   CPU replicationについてreplicase/resource exact/nextafter境界、RNG state、離散copy結果をdirect
+   CPU-translation後と照合する。
+5. A4.1〜A4.8aの50 testsを変更せず継続し、合計最大54 testsをCUDA必須でPASSさせる。
+
+## A4.8b判定
+
+- 54/54、direct CPU semantics、resident/NumPy association、signed ledger、dict order、直後CPU
+  replicationのgate/RNG、atomic rollback、save/clone、promoted A3 byte不変が全てPASSした場合だけ
+  「A4.8b paid translation atomic commit bridge」と記録する。
+- CPU/CUDA差が直後replicationの離散結果を変える、hidden D2H、外部plan authority、host値commit、
+  CPU fallback、scope拡大が必要になった場合はA4.8aを維持してSTOPする。
+- 次sliceはreplication一eventをinactive/no-op/partial/completion/mutationごとに明示分類して扱う。
+  A4.8bだけでA4完成、persistent GPU world、speedup、昇格とは呼ばない。

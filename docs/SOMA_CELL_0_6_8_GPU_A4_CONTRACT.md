@@ -567,6 +567,56 @@ disposable; the committed CPU world and PCG64 state remain the durable
 step-boundary save authority. This correctness bridge performs intentional
 per-cell host/device round trips and makes no performance claim.
 
+## A4.8b scope
+
+A4.8b adds one further bounded event replacement in a new module without
+editing the promoted A3 files, the A4.3 pure plan, or the A4.8a bridge.
+`A4TranslationEventScheduler` inherits the A4.8a hydrolysis override and
+replaces only the existing rank-5 `translation_cpu` event after maintenance
+and before the still-CPU-authoritative replication event.
+`Hybrid066WorldA4Translation` preserves the derived scheduler type, fixed A4
+capacities, and explicit Torch device across step-boundary save, load, and
+clone. Active or pending serialization remains forbidden.
+
+For one live post-maintenance cell, the scheduler constructs a fresh host A4
+binding, independently evaluates the NumPy paid-translation oracle, uploads
+the source/cache/state to the explicit Torch CPU or CUDA device, evaluates the
+resident A4.3 plan, and explicitly reads every resident input and output back.
+The resident readback is commit authority. The NumPy replay must have exact
+cell/discrete/fingerprint/count/order state and every fp64 array must agree
+within the registered absolute `2e-12` tolerance; its host values are never
+substituted for the resident result.
+
+A private one-shot CPU candidate is rebuilt only from that resident result.
+Its pools, ordered active and damaged protein dictionaries,
+`last_translation`, and `last_quiescence` are repacked into a fresh binding.
+Live `gene_specs` must agree exactly with the genome-derived A4.2 cache at
+preparation and final validation, and the candidate holds a deep copy so an
+in-place dictionary alias cannot bypass source attestation. Immediately
+before claim, the bridge rechecks cell/object identity, generation and alive
+state, exact `dt.hex()`, the active world-config object and bytes, A4
+capacity/device state, full live PCG64 identity/state, all host replay values,
+all resident source/cache/plan values including Torch `.data` bypasses, the
+dictionary-sync gate, and the fresh candidate binding.
+
+Only after those checks does the scheduler claim `translation_cpu` exactly
+once and publish the resident paid FUEL/MINERAL/ATP result, synchronized
+CATALYST/DAMAGED_PROTEIN ledgers, ordered active/damaged dictionaries,
+`last_translation`, and conditionally written `last_quiescence`. Frozen
+object behavior is preserved: an early return retains both protein dictionary
+objects, while reaching the weight gate replaces both through the equivalent
+of `_sync_*`, even when reserve or `dt == 0` yields no translated mass. The
+pools array identity is retained. Genomes, lesions, template/copy,
+`gene_specs`, replication telemetry, world energy ledgers, and live PCG64 are
+unchanged, and translation records zero RNG draws.
+
+Failure before claim performs no bridge mutation and never invokes the legacy
+CPU translation bridge. Failure while publishing restores the original
+pool/dictionary/gene-cache/scalar/RNG identities and values and leaves an
+aborted outer scheduler receipt. The event-local bindings, oracle, resident
+plan, and candidate are disposable and have no save authority. The bridge is
+correctness-only and makes no speed or full-world claim.
+
 ## Fail-closed invariants
 
 Ragged foundation invariants remain unchanged:
@@ -697,27 +747,27 @@ Hydrolysis-deletion-plan invariants are:
   Failure while publishing restores the original object identities and values
   and is recorded by the outer scheduler as an aborted step.
 
-## Explicit exclusions through A4.8a
+## Explicit exclusions through A4.8b
 
-- No scheduler/world integration other than the single-cell hydrolysis event
-  replacement in `Hybrid066WorldA4Hydrolysis`.
+- No scheduler/world integration other than the single-cell translation and
+  hydrolysis event replacements in `Hybrid066WorldA4Translation`.
 - No caller-supplied tape/plan/candidate authority, persistent A4 arena, or
-  multi-cell RNG tape/batch.  The wrapper rebuilds one disposable binding per
-  event and preserves inherited per-cell RNG interleaving.
+  multi-cell translation/RNG batch. The wrapper rebuilds one disposable
+  binding per event and preserves inherited per-cell event/RNG interleaving.
 - No mutation-free inactive-template start or live template/copy/completed-
-  genome replication commit.  Paid translation and every replication branch
-  remain CPU-authoritative scheduler events.
+  genome replication commit. Every replication branch remains the promoted
+  A3 CPU-authoritative scheduler event.
 - No change to promoted A3 standalone `gene_refresh`, `translation_cpu`,
-  `replication_cpu`, or hydrolysis bridge code.  The eligible `dt == 0` draw
-  difference is corrected only by the A4 wrapper.
-- No device RNG kernel or performance claim; the A4.8a correctness bridge
-  intentionally performs explicit per-cell host/device validation round trips.
+  `replication_cpu`, or hydrolysis bridge code, and no change to A4.3/A4.8a
+  implementations. Their behavior is replaced only inside the new wrapper.
+- No device RNG kernel or performance claim; both correctness bridges
+  intentionally perform explicit per-cell host/device validation round trips.
 - No division, death, corpse/eDNA/HGT, neural, or causal-system port.
 - No fp32 claim, mixed precision, `torch.compile`, CUDA Graph, Triton, custom
   CUDA, multi-stream, multi-GPU, or online-GPU abstraction.
 - No formal 13-spec/65-measurement benchmark and no speedup claim.
 
-## Acceptance through A4.8a
+## Acceptance through A4.8b
 
 - All A4.1 lossless/corruption/capacity/residency tests remain PASS.
 - Nested valid markers and invalid-outer/valid-inner recovery match frozen
@@ -905,6 +955,31 @@ Hydrolysis-deletion-plan invariants are:
 - All 50 A4 development tests pass with explicit CUDA required while the
   promoted A3 validation remains PASS and `full_gpu_world_step=false`.
 
+- Direct Formal066 rich, sequential-exhaustion, ATP-reserve, no-translator,
+  disabled, no-genome, `dt == 0`, and signed paid-ledger-residual fixtures
+  match the A4.8b resident commit. Discrete state and both dictionary orders
+  are exact; fp64 values remain within `2e-12` without clipping residuals.
+- Torch CPU and explicit RTX CUDA candidate/commit paths preserve source
+  values, device and pointer identity, full PCG64 state, genomes, gene cache,
+  replication state, and world energy ledgers. Fresh binding and one-shot
+  checks pass, including the frozen early-return versus `_sync_*` dictionary-
+  identity branch.
+- Exact Q/S/W/P capacities pass. Every one-short capacity, wrong cell or
+  `dt`, stale or aliased `gene_specs`, config/device/source disagreement,
+  host-oracle mutation, resident ragged/state/cache/plan `.data` mutation,
+  candidate/fresh-binding tampering, duplicate/order error, and injected
+  publish failure is rejected at its declared atomic boundary.
+- One-step, ten-step, translation-heavy stress, two-cell nonbatched event/RNG
+  interleave, save/load/clone continuation, and active-save rejection remain
+  lockstep with the frozen world while the legacy translation bridge is not
+  invoked and the A4.8a hydrolysis override remains active.
+- Immediately following the resident commit, Torch CPU and CUDA each match
+  direct frozen translate-then-replicate behavior for ATP and nucleotide exact
+  versus next-below resource gates and replicase below versus above threshold:
+  all twelve discrete-copy/event/full-PCG64 controls agree without fallback.
+- All 54 A4 development tests pass with explicit CUDA required while promoted
+  A3 source/scheduler bytes remain unchanged and `full_gpu_world_step=false`.
+
 Known A4.4b integration blockers are recorded rather than hidden.  On the
 measured six-cell development fixture the current fixed symbol-rank Torch plan
 was about 503 ms per call versus about 10.1 ms for NumPy, so it is not a
@@ -922,9 +997,9 @@ division was rejected as disproportionate complexity.  The launch-heavy path
 must be redesigned and remeasured before scheduler authority, promotion, or
 any speedup claim.
 
-A4.8a is a bounded exception to the earlier pure-descriptor boundary: it
-commits only one hydrolysis event in a new wrapper, including compact genome
-state, final cache, CPU ledgers, and live PCG64.  The promoted A3 bridge keeps
-its recorded zero-probability difference, and no persistent resident chain or
-performance claim is implied.  Paid translation, all replication commits,
-division, and the A5/A6 subsystems remain separate later slices.
+A4.8a and A4.8b are bounded exceptions to the earlier pure-descriptor
+boundary: the new wrapper commits only paid translation and one hydrolysis
+event after complete resident readback/replay. The promoted A3 standalone
+bridges remain byte-identical, no persistent resident chain or performance
+claim is implied, and all replication commits, division, and the A5/A6
+subsystems remain separate later slices.

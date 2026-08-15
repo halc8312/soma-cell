@@ -1,5 +1,5 @@
 # coding: utf-8
-"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.8a slices."""
+"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.8b slices."""
 from __future__ import division
 
 import argparse
@@ -24,6 +24,7 @@ import SOMA_CELL_0_6_8_gpu_a4 as a4
 import SOMA_CELL_0_6_8_gpu_a4_replication as a44
 import SOMA_CELL_0_6_8_gpu_a4_hydrolysis as a47
 import SOMA_CELL_0_6_8_gpu_a4_integration as a48
+import SOMA_CELL_0_6_8_gpu_a4_translation_integration as a48b
 import SOMA_CELL_0_6_8_gpu_a3_scheduler as a3s
 import SOMA_CELL_0_6_8_A3_validation as v3
 
@@ -32,15 +33,16 @@ try:
 except Exception:  # pragma: no cover
     torch = None
 
-RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_8A_VALIDATION_RESULTS.json'
-RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_8a_validation.csv'
-RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_8A_VALIDATION_RESULTS.txt'
+RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_8B_VALIDATION_RESULTS.json'
+RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_8b_validation.csv'
+RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_8B_VALIDATION_RESULTS.txt'
 
 SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_hydrolysis.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_integration.py',
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_translation_integration.py',
     'src/0_6_8/SOMA_CELL_0_6_8_A4_validation.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3_scheduler.py',
@@ -943,6 +945,121 @@ def _a48_hybrid_from_state(state, a4_config=None, device='cpu'):
     )
 
 
+def _a48b_begin_translation_direct(scheduler, world, cell, dt):
+    """Enter exactly the post-maintenance translation event boundary."""
+    scheduler.begin_step(world, [cell])
+    metabolism_rank = a3s.WORLD_EVENT_ORDER.index('cell_metabolism_loop')
+    for event in a3s.WORLD_EVENT_ORDER[:metabolism_rank]:
+        scheduler.claim_world(
+            event, status='skipped', metadata={'validation': 'A4.8b'},
+        )
+    scheduler.claim(
+        cell, 'surface_exchange', status='skipped',
+        metadata={'validation': 'A4.8b'},
+    )
+    scheduler.reserve_metabolism_dispatch(world, cell, dt)
+    if not scheduler.begin_a3_metabolism(world, cell, dt):
+        raise AssertionError('A4.8b direct fixture cell is not alive')
+    stop = a3s.CELL_EVENT_ORDER.index('translation_cpu')
+    for event in a3s.CELL_EVENT_ORDER[1:stop]:
+        scheduler.claim(
+            cell, event, status='skipped',
+            metadata={'validation': 'A4.8b'},
+        )
+    return scheduler
+
+
+def _a48b_translation_entry(scheduler, cell):
+    _, record = scheduler._record(cell)
+    entries = [entry for entry in record['events']
+               if entry['event'] == 'translation_cpu']
+    if len(entries) != 1:
+        raise AssertionError(
+            'A4.8b translation event count is %d' % len(entries)
+        )
+    return copy.deepcopy(entries[0])
+
+
+def _a48b_assert_cell_matches(expected, actual, label, atol=2e-12):
+    if list(expected.proteins.keys()) != list(actual.proteins.keys()):
+        raise AssertionError(label + ' active protein order differs')
+    if (list(expected.damaged_proteins.keys())
+            != list(actual.damaged_proteins.keys())):
+        raise AssertionError(label + ' damaged protein order differs')
+    v3.assert_recursive_close(
+        expected.state_dict(), actual.state_dict(),
+        atol=atol, rtol=0.0, path=label,
+    )
+
+
+def _a48b_hybrid_from_state(state, a4_config=None, device='cpu'):
+    world = a4.a3.s66.Formal066World.from_state(v3.pickle_clone(state))
+    backend = a4.a3.TorchKernelBackendA3(
+        v3._a3_config(device=device, precision='float64'),
+    )
+    return a48b.Hybrid066WorldA4Translation(
+        world, backend=backend,
+        a4_config=a4_config or a4.GPU068A4Config(),
+        a4_device=device,
+    )
+
+
+def _a48b_replication_boundary_cases(seed=9971):
+    """Post-translation CPU-replication branch controls with real RNG work."""
+    cases = []
+    world, cells, _, dt = _paid_replication_fixture(seed=seed)
+    world.config.mutation = True
+    world.config.mutation_rate = 1.0
+    for label, index, copied, rng_changed in (
+            ('atp_exact', 2, 1, True),
+            ('atp_nextbelow', 3, 0, False),
+            ('nucleotide_exact', 4, 1, True),
+            ('nucleotide_nextbelow', 5, 0, False)):
+        cases.append((
+            label, v3.pickle_clone(world.state_dict()),
+            int(cells[index].cell_id), dt, copied, rng_changed,
+        ))
+
+    gate_world, gate_cells, _, gate_dt = _paid_replication_fixture(
+        seed=seed + 1,
+    )
+    gate_world.config.gene_expression = False
+    gate_world.config.mutation = True
+    gate_world.config.mutation_rate = 1.0
+    gate = gate_cells[0]
+    gate.genome_lesions = [0.0 for _ in gate.genomes]
+    gate.damaged_proteins = {}
+    gate.pools[a4.a3.POOL_DAMAGED_PROTEIN] = 0.0
+    gate.pools[a4.a3.POOL_AGGREGATE] = 0.0
+    replicases = [
+        (fingerprint, spec)
+        for fingerprint, spec in gate.gene_specs.items()
+        if int(spec['role']) == int(a4.a3.ROLE_REPLICASE)
+    ]
+    if len(replicases) != 1:
+        raise AssertionError('replicase boundary fixture is not singular')
+    fingerprint, spec = replicases[0]
+    gate_mass = 1e-6 * 0.040 / float(spec['efficiency'])
+    for label, mass, copied, rng_changed in (
+            ('replicase_below', np.nextafter(gate_mass, 0.0), 0, False),
+            ('replicase_above', gate_mass, 1, True)):
+        candidate_world = a4.a3.s66.Formal066World.from_state(
+            v3.pickle_clone(gate_world.state_dict()),
+        )
+        candidate = candidate_world.cells[0]
+        candidate.proteins = {fingerprint: float(mass)}
+        candidate._sync_protein_pool()
+        activity = candidate.role_activity(a4.a3.ROLE_REPLICASE)
+        if ((label.endswith('below') and not activity <= 1e-6)
+                or (label.endswith('above') and not activity > 1e-6)):
+            raise AssertionError(label + ' did not straddle replicase gate')
+        cases.append((
+            label, v3.pickle_clone(candidate_world.state_dict()),
+            int(candidate.cell_id), gate_dt, copied, rng_changed,
+        ))
+    return cases
+
+
 def _assert_completion_cpu_parity(plan, before_cells, cpu_cells, label,
                                   atol=2e-12):
     if int(plan.cell_count) != len(before_cells):
@@ -1172,6 +1289,14 @@ def test_api_scope():
                if not hasattr(a48, name)]
     if missing:
         raise AssertionError('missing A4.8a API: %s' % missing)
+    translation_integration_required = (
+        'A4TranslationCommitError', 'A4TranslationEventScheduler',
+        'Hybrid066WorldA4Translation',
+    )
+    missing = [name for name in translation_integration_required
+               if not hasattr(a48b, name)]
+    if missing:
+        raise AssertionError('missing A4.8b API: %s' % missing)
     if a4.FULL_GPU_WORLD_STEP is not False:
         raise AssertionError('A4.1 must not claim full GPU world-step')
     if hasattr(a4.A4GeneCacheBatch, 'from_state_dict'):
@@ -1290,11 +1415,32 @@ def test_api_scope():
     if not issubclass(
             a48.A4HydrolysisEventScheduler, a3s.A3EventScheduler):
         raise AssertionError('A4.8a scheduler is not an A3 scheduler subtype')
-    return '%s / %s + %s + %s + %s + %s + %s / full_gpu=false' % (
-        a48.BUILD, a4.SCHEMA_VERSION,
+    translation_public_names = set(a48b.__all__)
+    if (a48b.BUILD != 'SOMA-CELL 0.6.8-GPU A4.8b'
+            or a48b.SCHEMA_VERSION
+            != '0.6.8-GPU-A4.8b-translation-atomic-commit'
+            or a48b.FULL_GPU_WORLD_STEP is not False
+            or '_A4TranslationCommitCandidate' in translation_public_names):
+        raise AssertionError('A4.8b identity/public scope differs')
+    translation_signature = inspect.signature(
+        a48b.A4TranslationEventScheduler.cpu_translation,
+    )
+    if tuple(translation_signature.parameters) != (
+            'self', 'world', 'cell', 'dt', 'config'):
+        raise AssertionError('A4.8b bridge accepts external plan authority')
+    if (not issubclass(
+            a48b.A4TranslationEventScheduler,
+            a48.A4HydrolysisEventScheduler)
+            or not issubclass(
+                a48b.Hybrid066WorldA4Translation,
+                a48.Hybrid066WorldA4Hydrolysis)):
+        raise AssertionError('A4.8b wrapper did not preserve A4.8a authority')
+    return '%s / %s + %s + %s + %s + %s + %s + %s / full_gpu=false' % (
+        a48b.BUILD, a4.SCHEMA_VERSION,
         a4.GENE_CACHE_SCHEMA_VERSION + ' + ' + a4.TRANSLATION_SCHEMA_VERSION,
         a44.SCHEMA_VERSION, a47.SCHEMA_VERSION,
         a47.DELETION_PLAN_SCHEMA_VERSION, a48.SCHEMA_VERSION,
+        a48b.SCHEMA_VERSION,
     )
 
 
@@ -7494,6 +7640,1177 @@ def test_a48a_world_interleave_lockstep_save_clone_and_a3_authority():
             'A3 baseline authority unchanged')
 
 
+def test_a48b_translation_atomic_commit_formal066_oracle_and_gates():
+    source_world, source_cells, capacity, source_dt = _paid_translation_fixture(
+        seed=9981,
+    )
+    source_state = v3.pickle_clone(source_world.state_dict())
+    cases = []
+    for label, index in (
+            ('rich', 0), ('atp_reserve', 1),
+            ('mineral_exhaustion', 2), ('no_translator', 3)):
+        world = a4.a3.s66.Formal066World.from_state(
+            v3.pickle_clone(source_state),
+        )
+        cases.append((label, world, world.cells[index], source_dt))
+
+    disabled = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(source_state),
+    )
+    disabled.config.gene_expression = False
+    cases.append(('disabled', disabled, disabled.cells[0], source_dt))
+
+    no_genome = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(source_state),
+    )
+    no_genome_cell = no_genome.cells[0]
+    no_genome_cell.genomes = []
+    no_genome_cell.genome_lesions = []
+    no_genome_cell.replication_template = None
+    no_genome_cell.replication_copy = []
+    no_genome_cell.replication_template_lesion = 0.0
+    no_genome_cell.replication_fractional = 0.0
+    no_genome_cell._refresh_gene_cache()
+    cases.append(('no_genome', no_genome, no_genome_cell, source_dt))
+
+    zero_dt = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(source_state),
+    )
+    cases.append(('eligible_dt0', zero_dt, zero_dt.cells[0], 0.0))
+
+    residual = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(source_state),
+    )
+    residual.cells[0].pools[a4.a3.POOL_FUEL] = 9.936293309191388e-08
+    cases.append(('signed_residual', residual, residual.cells[0], 0.001))
+
+    details = []
+    for label, world, cell, dt in cases:
+        expected = copy.deepcopy(cell)
+        expected_pool_id = id(expected.pools)
+        expected_active_id = id(expected.proteins)
+        expected_damaged_id = id(expected.damaged_proteins)
+        expected.translate(dt, world.config)
+        expected_sync = (
+            id(expected.proteins) != expected_active_id
+            and id(expected.damaged_proteins) != expected_damaged_id
+        )
+        if id(expected.pools) != expected_pool_id:
+            raise AssertionError(label + ' CPU oracle replaced pools')
+
+        scheduler = a48b.A4TranslationEventScheduler(capacity, 'cpu')
+        _a48b_begin_translation_direct(scheduler, world, cell, dt)
+        source = _a48_binding(world, cell, capacity)
+        before_rng_object = world.rng
+        before_rng = copy.deepcopy(world.rng.bit_generator.state)
+        pool_id = id(cell.pools)
+        active_id = id(cell.proteins)
+        damaged_id = id(cell.damaged_proteins)
+        try:
+            result = scheduler.cpu_translation(
+                world, cell, dt, world.config,
+            )
+            if result is not None:
+                raise AssertionError(label + ' translation return differs')
+            _a48b_assert_cell_matches(
+                expected, cell, 'a48b.formal066.' + label,
+            )
+            if id(cell.pools) != pool_id:
+                raise AssertionError(label + ' replaced pools ndarray')
+            actual_sync = (
+                id(cell.proteins) != active_id
+                and id(cell.damaged_proteins) != damaged_id
+            )
+            if actual_sync != expected_sync:
+                raise AssertionError(label + ' dictionary identity branch differs')
+            if (world.rng is not before_rng_object
+                    or world.rng.bit_generator.state != before_rng):
+                raise AssertionError(label + ' translation changed PCG64')
+
+            final = _a48_binding(world, cell, capacity)
+            entry = _a48b_translation_entry(scheduler, cell)
+            metadata = entry['metadata']
+            expected_metadata = {
+                'authority': (
+                    'A4.8b-resident-plan-atomic-cpu-cell-commit'
+                ),
+                'enabled': bool(world.config.gene_expression),
+                'device': 'cpu',
+                'genome_count': len(cell.genomes),
+                'source_provenance': a4._translation_state_provenance(
+                    source.state,
+                ),
+                'final_provenance': a4._translation_state_provenance(
+                    final.state,
+                ),
+                'sync_performed': expected_sync,
+                'amount': float(cell.last_translation),
+                'work_performed': float(cell.last_translation) > 0.0,
+                'rng_draw_count': 0,
+            }
+            if entry['status'] != 'executed' or metadata != expected_metadata:
+                raise AssertionError(label + ' receipt metadata differs')
+            details.append('%s:%s' % (
+                label, 'sync' if expected_sync else 'early',
+            ))
+        finally:
+            _a48_abort_direct(scheduler, cell)
+
+    residual_pool = cases[-1][2].pools[a4.a3.POOL_FUEL]
+    if not (-a4.TRANSLATION_LEDGER_ATOL <= residual_pool < 0.0):
+        raise AssertionError('integrated signed payment residual was clipped')
+    return ('8 direct Formal066 cases; discrete/order/genotype/PCG64 exact, '
+            'fp64 <=2e-12, pools identity and early/sync dict identity; ' +
+            ', '.join(details))
+
+
+def test_a48b_translation_candidate_cpu_cuda_commit_purity_and_fresh_binding():
+    if torch is None:
+        raise AssertionError('PyTorch unavailable')
+    if _REQUIRE_CUDA and not torch.cuda.is_available():
+        raise AssertionError('CUDA required but unavailable')
+    public_names = set(a48b.__all__)
+    signature = inspect.signature(a48b.A4TranslationEventScheduler.cpu_translation)
+    if (a48b.BUILD != 'SOMA-CELL 0.6.8-GPU A4.8b'
+            or a48b.SCHEMA_VERSION
+            != '0.6.8-GPU-A4.8b-translation-atomic-commit'
+            or a48b.FULL_GPU_WORLD_STEP is not False
+            or '_A4TranslationCommitCandidate' in public_names
+            or tuple(signature.parameters)
+            != ('self', 'world', 'cell', 'dt', 'config')
+            or not issubclass(
+                a48b.A4TranslationEventScheduler,
+                a48.A4HydrolysisEventScheduler,
+            )):
+        raise AssertionError('A4.8b identity/public authority differs')
+    devices = ['cpu']
+    if torch.cuda.is_available():
+        devices.append('cuda')
+
+    source_world, _, capacity, dt = _paid_translation_fixture(seed=9982)
+    source_state = v3.pickle_clone(source_world.state_dict())
+    reference_plan = None
+    reference_cell = None
+    details = []
+    for device in devices:
+        world = a4.a3.s66.Formal066World.from_state(
+            v3.pickle_clone(source_state),
+        )
+        cell = world.cells[0]
+        expected = copy.deepcopy(cell)
+        expected.translate(dt, world.config)
+        scheduler = a48b.A4TranslationEventScheduler(capacity, device)
+        _a48b_begin_translation_direct(scheduler, world, cell, dt)
+        before_cell = v3.pickle_clone(cell.state_dict())
+        before_rng_object = world.rng
+        before_rng = copy.deepcopy(world.rng.bit_generator.state)
+        pool_id = id(cell.pools)
+        active_id = id(cell.proteins)
+        damaged_id = id(cell.damaged_proteins)
+        try:
+            candidate = scheduler._prepare_translation_candidate(
+                world, cell, dt, world.config,
+            )
+            v3.assert_recursive_close(
+                before_cell, cell.state_dict(), 0.0, 0.0,
+                'a48b.%s.prepare_purity' % device,
+            )
+            if (world.rng is not before_rng_object
+                    or world.rng.bit_generator.state != before_rng):
+                raise AssertionError(device + ' prepare changed PCG64')
+            for owner in (
+                    candidate.resident_binding.ragged,
+                    candidate.resident_binding.state,
+                    candidate.resident_binding.cache,
+                    candidate.resident_plan):
+                pointers = owner.data_ptrs()
+                if (not pointers
+                        or any(getattr(owner, name).device.type != device
+                               for name in pointers)):
+                    raise AssertionError(device + ' resident device differs')
+            _a48b_assert_cell_matches(
+                expected, candidate.candidate_cell,
+                'a48b.%s.candidate' % device,
+            )
+            _assert_translation_matches_cells(
+                candidate.plan, [expected],
+                'a48b.%s.resident_authority' % device,
+            )
+            v3.assert_recursive_close(
+                candidate.host_replay.state_dict(),
+                candidate.plan.state_dict(),
+                atol=a48b.TRANSLATION_ORACLE_ATOL, rtol=0.0,
+                path='a48b.%s.independent_replay' % device,
+            )
+            source_identity = a48._binding_identity(
+                candidate.source_binding,
+            )
+            fresh_identity = a48._binding_identity(candidate.fresh_binding)
+            if (source_identity[0] != fresh_identity[0]
+                    or source_identity[2] != fresh_identity[2]
+                    or source_identity[1] == fresh_identity[1]):
+                raise AssertionError(
+                    device + ' fresh physiology/genome/cache provenance differs'
+                )
+            if not candidate.sync_performed:
+                raise AssertionError(device + ' rich fixture missed sync gate')
+
+            if reference_plan is None:
+                reference_plan = candidate.plan.clone()
+                reference_cell = v3.pickle_clone(
+                    candidate.candidate_cell.state_dict(),
+                )
+            else:
+                v3.assert_recursive_close(
+                    reference_plan.state_dict(), candidate.plan.state_dict(),
+                    atol=a48b.TRANSLATION_ORACLE_ATOL, rtol=0.0,
+                    path='a48b.%s.device_plan' % device,
+                )
+                v3.assert_recursive_close(
+                    reference_cell, candidate.candidate_cell.state_dict(),
+                    atol=a48b.TRANSLATION_ORACLE_ATOL, rtol=0.0,
+                    path='a48b.%s.device_candidate' % device,
+                )
+
+            scheduler._commit_translation_candidate(
+                world, cell, dt, world.config, candidate,
+            )
+            _a48b_assert_cell_matches(
+                expected, cell, 'a48b.%s.commit' % device,
+            )
+            if (id(cell.pools) != pool_id
+                    or id(cell.proteins) == active_id
+                    or id(cell.damaged_proteins) == damaged_id):
+                raise AssertionError(device + ' success object identity differs')
+            if (world.rng is not before_rng_object
+                    or world.rng.bit_generator.state != before_rng):
+                raise AssertionError(device + ' commit changed PCG64')
+            committed = v3.pickle_clone(cell.state_dict())
+            committed_rng = copy.deepcopy(world.rng.bit_generator.state)
+            _assert_raises(
+                a48b.A4TranslationCommitError,
+                lambda: scheduler._commit_translation_candidate(
+                    world, cell, dt, world.config, candidate,
+                ),
+            )
+            v3.assert_recursive_close(
+                committed, cell.state_dict(), 0.0, 0.0,
+                'a48b.%s.one_shot' % device,
+            )
+            if world.rng.bit_generator.state != committed_rng:
+                raise AssertionError(device + ' one-shot changed PCG64')
+            details.append(device)
+        finally:
+            _a48_abort_direct(scheduler, cell)
+    return ('/'.join(details) +
+            ' resident authority + independent replay, prepare purity, '
+            'fresh binding, CPU identity branch, no RNG and one-shot')
+
+
+def test_a48b_translation_capacity_trust_rollback_and_exact_once():
+    source_world, _, roomy, dt = _paid_translation_fixture(seed=9983)
+    source_state = v3.pickle_clone(source_world.state_dict())
+    source_cell = source_world.cells[0]
+    probe = a4.FullFidelityA4GenomeAdapter(roomy).pack_cells([source_cell])
+    lengths = np.diff(
+        probe.sequence_offsets[:int(probe.sequence_count) + 1],
+    )
+    specs = a4.decode_a4_gene_cache_numpy(probe).materialize_gene_specs_host()[0]
+    protein_capacity = max(
+        len(set(source_cell.proteins).union(specs)),
+        len(set(source_cell.damaged_proteins).union(specs)),
+    )
+    exact_values = {
+        'max_cells': 1,
+        'max_sequences': int(probe.sequence_count),
+        'max_symbols': int(probe.symbol_count),
+        'max_sequence_symbols': int(np.max(lengths)),
+        'max_proteins_per_cell': int(protein_capacity),
+    }
+    if any(exact_values[name] <= 1 for name in (
+            'max_sequences', 'max_symbols', 'max_sequence_symbols',
+            'max_proteins_per_cell')):
+        raise AssertionError('A4.8b capacity fixture is too small')
+
+    exact = a4.GPU068A4Config(**exact_values)
+    exact_world = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(source_state),
+    )
+    exact_cell = exact_world.cells[0]
+    exact_scheduler = a48b.A4TranslationEventScheduler(exact, 'cpu')
+    _a48b_begin_translation_direct(
+        exact_scheduler, exact_world, exact_cell, dt,
+    )
+    try:
+        exact_scheduler.cpu_translation(
+            exact_world, exact_cell, dt, exact_world.config,
+        )
+    finally:
+        _a48_abort_direct(exact_scheduler, exact_cell)
+
+    for axis in (
+            'max_sequences', 'max_symbols', 'max_sequence_symbols',
+            'max_proteins_per_cell'):
+        values = dict(exact_values)
+        values[axis] -= 1
+        capacity = a4.GPU068A4Config(**values)
+        world = a4.a3.s66.Formal066World.from_state(
+            v3.pickle_clone(source_state),
+        )
+        cell = world.cells[0]
+        scheduler = a48b.A4TranslationEventScheduler(capacity, 'cpu')
+        _a48b_begin_translation_direct(scheduler, world, cell, dt)
+        before = v3.pickle_clone(cell.state_dict())
+        before_rng = copy.deepcopy(world.rng.bit_generator.state)
+        try:
+            _assert_raises(
+                a4.A4CapacityError,
+                lambda: scheduler.cpu_translation(
+                    world, cell, dt, world.config,
+                ),
+            )
+            v3.assert_recursive_close(
+                before, cell.state_dict(), 0.0, 0.0,
+                'a48b.capacity_' + axis,
+            )
+            _, record = scheduler._record(cell)
+            if (world.rng.bit_generator.state != before_rng
+                    or any(entry['event'] == 'translation_cpu'
+                           for entry in record['events'])):
+                raise AssertionError(axis + ' one-short crossed claim')
+        finally:
+            _a48_abort_direct(scheduler, cell)
+
+    class TamperHostSource(a48b.A4TranslationEventScheduler):
+        def _translation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.source_binding.state.pools[0, a4.a3.POOL_FUEL] += 1e-8
+            return candidate
+
+    class TamperHostReplay(a48b.A4TranslationEventScheduler):
+        def _translation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.host_replay.last_translation[0] += 1e-8
+            return candidate
+
+    class TamperResidentRagged(a48b.A4TranslationEventScheduler):
+        def _translation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.resident_binding.ragged.symbols.data[0].bitwise_xor_(1)
+            return candidate
+
+    class TamperResidentState(a48b.A4TranslationEventScheduler):
+        def _translation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.resident_binding.state.pools.data[
+                0, a4.a3.POOL_FUEL
+            ].add_(1e-8)
+            return candidate
+
+    class TamperResidentCache(a48b.A4TranslationEventScheduler):
+        def _translation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.resident_binding.cache.copy_numbers.data[0].add_(1)
+            return candidate
+
+    class SwapResidentRaggedClone(a48b.A4TranslationEventScheduler):
+        def _translation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            object.__setattr__(
+                candidate.resident_binding, 'ragged',
+                candidate.resident_binding.ragged.clone(),
+            )
+            return candidate
+
+    class SwapResidentStateClone(a48b.A4TranslationEventScheduler):
+        def _translation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            object.__setattr__(
+                candidate.resident_binding, 'state',
+                candidate.resident_binding.state.clone(),
+            )
+            return candidate
+
+    class SwapResidentCacheClone(a48b.A4TranslationEventScheduler):
+        def _translation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            object.__setattr__(
+                candidate.resident_binding, 'cache',
+                candidate.resident_binding.cache.clone(),
+            )
+            return candidate
+
+    class TamperResidentPlan(a48b.A4TranslationEventScheduler):
+        def _translation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.resident_plan.last_translation.data[0].add_(1e-8)
+            return candidate
+
+    class SwapResidentPlanAuthority(a48b.A4TranslationEventScheduler):
+        def _translation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.resident_plan = candidate.plan
+            return candidate
+
+    class TamperSettings(a48b.A4TranslationEventScheduler):
+        def _translation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            self.a4_config = a4.GPU068A4Config(
+                max_cells=1, max_sequences=1, max_symbols=1,
+                max_sequence_symbols=1, max_proteins_per_cell=1,
+            )
+            self.a4_device = 'cuda'
+            return candidate
+
+    class TamperCandidateCell(a48b.A4TranslationEventScheduler):
+        def _translation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.candidate_cell.last_translation += 1e-8
+            return candidate
+
+    class TamperCandidateMembrane(a48b.A4TranslationEventScheduler):
+        def _translation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.candidate_cell.membrane[0] = np.nextafter(
+                candidate.candidate_cell.membrane[0], np.inf,
+            )
+            return candidate
+
+    class TamperCandidateGeneSpecs(a48b.A4TranslationEventScheduler):
+        def _translation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            fingerprint = next(iter(candidate.candidate_cell.gene_specs))
+            candidate.candidate_cell.gene_specs[fingerprint]['promoter'] += 0.125
+            return candidate
+
+    class MutateUnpackedCandidate(a48b.A4TranslationEventScheduler):
+        isolated = False
+
+        def _translation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            self.isolated = (
+                candidate.candidate_cell.last_repair_flux
+                is not cell.last_repair_flux
+            )
+            candidate.candidate_cell.last_repair_flux[0] += 0.125
+            return candidate
+
+    class TamperFreshBinding(a48b.A4TranslationEventScheduler):
+        def _translation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.fresh_binding.state.pools[0, a4.a3.POOL_FUEL] += 1e-8
+            return candidate
+
+    for scheduler_type, label in (
+            (TamperHostSource, 'host_source'),
+            (TamperHostReplay, 'host_replay'),
+            (TamperResidentRagged, 'resident_ragged_data'),
+            (TamperResidentState, 'resident_state_data'),
+            (TamperResidentCache, 'resident_cache_data'),
+            (SwapResidentRaggedClone, 'resident_ragged_member_clone'),
+            (SwapResidentStateClone, 'resident_state_member_clone'),
+            (SwapResidentCacheClone, 'resident_cache_member_clone'),
+            (TamperResidentPlan, 'resident_plan_data'),
+            (SwapResidentPlanAuthority, 'resident_plan_authority_swap'),
+            (TamperSettings, 'config_device'),
+            (TamperCandidateCell, 'candidate_cell'),
+            (TamperCandidateMembrane, 'candidate_membrane'),
+            (TamperCandidateGeneSpecs, 'candidate_gene_specs'),
+            (TamperFreshBinding, 'fresh_binding')):
+        world = a4.a3.s66.Formal066World.from_state(
+            v3.pickle_clone(source_state),
+        )
+        cell = world.cells[0]
+        scheduler = scheduler_type(roomy, 'cpu')
+        _a48b_begin_translation_direct(scheduler, world, cell, dt)
+        before = v3.pickle_clone(cell.state_dict())
+        before_world = v3.pickle_clone(world.state_dict())
+        before_rng = copy.deepcopy(world.rng.bit_generator.state)
+        before_objects = (
+            id(cell.pools), id(cell.proteins),
+            id(cell.damaged_proteins), id(cell.gene_specs), id(world.rng),
+        )
+        before_receipt_count = len(scheduler._receipts)
+        try:
+            _assert_raises(
+                (a48b.A4TranslationCommitError, a4.A4SchemaError),
+                lambda: scheduler.cpu_translation(
+                    world, cell, dt, world.config,
+                ),
+            )
+            v3.assert_recursive_close(
+                before, cell.state_dict(), 0.0, 0.0,
+                'a48b.tamper_' + label,
+            )
+            v3.assert_recursive_close(
+                before_world, world.state_dict(), 0.0, 0.0,
+                'a48b.tamper_world_' + label,
+            )
+            _, record = scheduler._record(cell)
+            if (world.rng.bit_generator.state != before_rng
+                    or before_objects != (
+                        id(cell.pools), id(cell.proteins),
+                        id(cell.damaged_proteins), id(cell.gene_specs),
+                        id(world.rng),
+                    )
+                    or len(scheduler._receipts) != before_receipt_count
+                    or any(entry['event'] == 'translation_cpu'
+                           for entry in record['events'])):
+                raise AssertionError(label + ' crossed preclaim boundary')
+        finally:
+            _a48_abort_direct(scheduler, cell)
+
+    if torch is not None and torch.cuda.is_available():
+        for scheduler_type, label in (
+                (TamperCandidateMembrane, 'candidate_membrane'),
+                (SwapResidentRaggedClone, 'resident_ragged_member_clone'),
+                (SwapResidentStateClone, 'resident_state_member_clone'),
+                (SwapResidentCacheClone, 'resident_cache_member_clone'),
+                (SwapResidentPlanAuthority, 'resident_plan_authority_swap')):
+            cuda_world = a4.a3.s66.Formal066World.from_state(
+                v3.pickle_clone(source_state),
+            )
+            cuda_cell = cuda_world.cells[0]
+            cuda_scheduler = scheduler_type(roomy, 'cuda')
+            _a48b_begin_translation_direct(
+                cuda_scheduler, cuda_world, cuda_cell, dt,
+            )
+            cuda_before = v3.pickle_clone(cuda_cell.state_dict())
+            cuda_world_before = v3.pickle_clone(cuda_world.state_dict())
+            cuda_rng = copy.deepcopy(cuda_world.rng.bit_generator.state)
+            cuda_objects = (
+                id(cuda_cell.pools), id(cuda_cell.proteins),
+                id(cuda_cell.damaged_proteins), id(cuda_cell.gene_specs),
+                id(cuda_world.rng),
+            )
+            cuda_receipt_count = len(cuda_scheduler._receipts)
+            try:
+                _assert_raises(
+                    (a48b.A4TranslationCommitError, a4.A4SchemaError),
+                    lambda: cuda_scheduler.cpu_translation(
+                        cuda_world, cuda_cell, dt, cuda_world.config,
+                    ),
+                )
+                v3.assert_recursive_close(
+                    cuda_before, cuda_cell.state_dict(), 0.0, 0.0,
+                    'a48b.cuda_' + label,
+                )
+                v3.assert_recursive_close(
+                    cuda_world_before, cuda_world.state_dict(), 0.0, 0.0,
+                    'a48b.cuda_world_' + label,
+                )
+                _, cuda_record = cuda_scheduler._record(cuda_cell)
+                if (cuda_world.rng.bit_generator.state != cuda_rng
+                        or cuda_objects != (
+                            id(cuda_cell.pools), id(cuda_cell.proteins),
+                            id(cuda_cell.damaged_proteins),
+                            id(cuda_cell.gene_specs), id(cuda_world.rng),
+                        )
+                        or len(cuda_scheduler._receipts)
+                        != cuda_receipt_count
+                        or any(entry['event'] == 'translation_cpu'
+                               for entry in cuda_record['events'])):
+                    raise AssertionError(
+                        'CUDA %s tamper crossed preclaim boundary' % label
+                    )
+            finally:
+                _a48_abort_direct(cuda_scheduler, cuda_cell)
+    elif _REQUIRE_CUDA:
+        raise AssertionError('CUDA required for A4.8b trust regression')
+
+    isolation_devices = ['cpu']
+    if torch is not None and torch.cuda.is_available():
+        isolation_devices.append('cuda')
+    for device in isolation_devices:
+        isolation_world = a4.a3.s66.Formal066World.from_state(
+            v3.pickle_clone(source_state),
+        )
+        isolation_cell = isolation_world.cells[0]
+        isolation_before = v3.pickle_clone(isolation_cell.state_dict())
+        isolation_world_before = v3.pickle_clone(
+            isolation_world.state_dict(),
+        )
+        repair_flux_object = isolation_cell.last_repair_flux
+        repair_flux_before = np.asarray(
+            isolation_cell.last_repair_flux, dtype=np.float64,
+        ).copy()
+        isolation_rng = copy.deepcopy(
+            isolation_world.rng.bit_generator.state,
+        )
+        isolation_objects = (
+            id(isolation_cell.pools), id(isolation_cell.proteins),
+            id(isolation_cell.damaged_proteins),
+            id(isolation_cell.gene_specs), id(isolation_world.rng),
+        )
+        isolation_scheduler = MutateUnpackedCandidate(roomy, device)
+        _a48b_begin_translation_direct(
+            isolation_scheduler, isolation_world, isolation_cell, dt,
+        )
+        isolation_receipt_count = len(isolation_scheduler._receipts)
+        try:
+            _assert_raises(
+                (a48b.A4TranslationCommitError, a4.A4SchemaError),
+                lambda: isolation_scheduler.cpu_translation(
+                    isolation_world, isolation_cell, dt,
+                    isolation_world.config,
+                ),
+            )
+            if not isolation_scheduler.isolated:
+                raise AssertionError(
+                    device + ' unpacked candidate array aliases live state'
+                )
+            v3.assert_recursive_close(
+                isolation_before, isolation_cell.state_dict(), 0.0, 0.0,
+                'a48b.%s.unpacked_candidate_reject' % device,
+            )
+            v3.assert_recursive_close(
+                isolation_world_before, isolation_world.state_dict(),
+                0.0, 0.0,
+                'a48b.%s.unpacked_candidate_world' % device,
+            )
+            if (isolation_cell.last_repair_flux is not repair_flux_object
+                    or not np.array_equal(
+                        isolation_cell.last_repair_flux, repair_flux_before,
+                    )
+                    or isolation_world.rng.bit_generator.state
+                    != isolation_rng
+                    or isolation_objects != (
+                        id(isolation_cell.pools),
+                        id(isolation_cell.proteins),
+                        id(isolation_cell.damaged_proteins),
+                        id(isolation_cell.gene_specs),
+                        id(isolation_world.rng),
+                    )
+                    or len(isolation_scheduler._receipts)
+                    != isolation_receipt_count):
+                raise AssertionError(
+                    device + ' unpacked candidate mutation escaped isolation'
+                )
+            _, isolation_record = isolation_scheduler._record(
+                isolation_cell,
+            )
+            if any(entry['event'] == 'translation_cpu'
+                   for entry in isolation_record['events']):
+                raise AssertionError(
+                    device + ' unpacked candidate tamper crossed claim'
+                )
+        finally:
+            _a48_abort_direct(isolation_scheduler, isolation_cell)
+
+    stale_world = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(source_state),
+    )
+    stale_cell = stale_world.cells[0]
+    stale_fingerprint = next(iter(stale_cell.gene_specs))
+    stale_cell.gene_specs[stale_fingerprint]['promoter'] += 0.125
+    stale_scheduler = a48b.A4TranslationEventScheduler(roomy, 'cpu')
+    _a48b_begin_translation_direct(
+        stale_scheduler, stale_world, stale_cell, dt,
+    )
+    stale_before = v3.pickle_clone(stale_cell.state_dict())
+    stale_rng = copy.deepcopy(stale_world.rng.bit_generator.state)
+    try:
+        _assert_raises(
+            (a48b.A4TranslationCommitError, a4.A4SchemaError),
+            lambda: stale_scheduler.cpu_translation(
+                stale_world, stale_cell, dt, stale_world.config,
+            ),
+        )
+        v3.assert_recursive_close(
+            stale_before, stale_cell.state_dict(), 0.0, 0.0,
+            'a48b.preexisting_stale_gene_specs',
+        )
+        _, stale_record = stale_scheduler._record(stale_cell)
+        if (stale_world.rng.bit_generator.state != stale_rng
+                or any(entry['event'] == 'translation_cpu'
+                       for entry in stale_record['events'])):
+            raise AssertionError('stale gene_specs crossed claim boundary')
+    finally:
+        _a48_abort_direct(stale_scheduler, stale_cell)
+
+    class TamperLiveGeneSpecs(a48b.A4TranslationEventScheduler):
+        tampered_state = None
+
+        def _translation_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            fingerprint = next(iter(cell.gene_specs))
+            cell.gene_specs[fingerprint]['promoter'] += 0.125
+            self.tampered_state = v3.pickle_clone(cell.state_dict())
+            return candidate
+
+    live_world = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(source_state),
+    )
+    live_cell = live_world.cells[0]
+    live_scheduler = TamperLiveGeneSpecs(roomy, 'cpu')
+    _a48b_begin_translation_direct(live_scheduler, live_world, live_cell, dt)
+    live_rng = copy.deepcopy(live_world.rng.bit_generator.state)
+    try:
+        _assert_raises(
+            (a48b.A4TranslationCommitError, a4.A4SchemaError),
+            lambda: live_scheduler.cpu_translation(
+                live_world, live_cell, dt, live_world.config,
+            ),
+        )
+        if live_scheduler.tampered_state is None:
+            raise AssertionError('live gene_specs seam did not run')
+        v3.assert_recursive_close(
+            live_scheduler.tampered_state, live_cell.state_dict(),
+            0.0, 0.0, 'a48b.live_gene_specs_no_extra_mutation',
+        )
+        _, live_record = live_scheduler._record(live_cell)
+        if (live_world.rng.bit_generator.state != live_rng
+                or any(entry['event'] == 'translation_cpu'
+                       for entry in live_record['events'])):
+            raise AssertionError('live gene_specs tamper crossed claim boundary')
+    finally:
+        _a48_abort_direct(live_scheduler, live_cell)
+
+    wrong_world = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(source_state),
+    )
+    wrong_cell = wrong_world.cells[0]
+    wrong_scheduler = a48b.A4TranslationEventScheduler(roomy, 'cpu')
+    _a48b_begin_translation_direct(
+        wrong_scheduler, wrong_world, wrong_cell, dt,
+    )
+    wrong_before = v3.pickle_clone(wrong_cell.state_dict())
+    wrong_rng = copy.deepcopy(wrong_world.rng.bit_generator.state)
+    _assert_raises(
+        a3s.A3SchedulerProtocolError,
+        lambda: wrong_scheduler.cpu_translation(
+            wrong_world, wrong_cell, np.nextafter(dt, np.inf),
+            wrong_world.config,
+        ),
+    )
+    foreign = copy.deepcopy(wrong_cell)
+    _assert_raises(
+        a3s.A3SchedulerProtocolError,
+        lambda: wrong_scheduler.cpu_translation(
+            wrong_world, foreign, dt, wrong_world.config,
+        ),
+    )
+    v3.assert_recursive_close(
+        wrong_before, wrong_cell.state_dict(), 0.0, 0.0,
+        'a48b.wrong_cell_dt',
+    )
+    if wrong_world.rng.bit_generator.state != wrong_rng:
+        raise AssertionError('wrong cell/dt changed PCG64')
+    _a48_abort_direct(wrong_scheduler, wrong_cell)
+
+    class FailAfterPublishNoGeneTouch(a48b.A4TranslationEventScheduler):
+        def _publish_translation_candidate(self, world, cell, candidate):
+            super(FailAfterPublishNoGeneTouch, self)._publish_translation_candidate(
+                world, cell, candidate,
+            )
+            cell.pools[a4.a3.POOL_FUEL] += 1.0
+            cell.proteins[999999] = 1.0
+            cell.damaged_proteins[999998] = 1.0
+            cell.last_translation += 1.0
+            raise RuntimeError('injected A4.8b publish failure without gene touch')
+
+    class FailAfterPublishGeneReplace(a48b.A4TranslationEventScheduler):
+        def _publish_translation_candidate(self, world, cell, candidate):
+            super(FailAfterPublishGeneReplace, self)._publish_translation_candidate(
+                world, cell, candidate,
+            )
+            cell.pools[a4.a3.POOL_FUEL] += 1.0
+            cell.proteins[999999] = 1.0
+            cell.damaged_proteins[999998] = 1.0
+            cell.last_translation += 1.0
+            fingerprint = next(iter(cell.gene_specs))
+            cell.gene_specs[fingerprint]['promoter'] += 0.125
+            cell.gene_specs = copy.deepcopy(cell.gene_specs)
+            raise RuntimeError('injected A4.8b publish failure')
+
+    rollback_devices = ['cpu']
+    if torch is not None and torch.cuda.is_available():
+        rollback_devices.append('cuda')
+
+    def run_publish_rollback(failure_type, failure_label, device):
+        rollback_world = a4.a3.s66.Formal066World.from_state(
+            v3.pickle_clone(source_state),
+        )
+        rollback_cell = rollback_world.cells[0]
+        rollback_scheduler = failure_type(roomy, device)
+        _a48b_begin_translation_direct(
+            rollback_scheduler, rollback_world, rollback_cell, dt,
+        )
+        rollback_before = v3.pickle_clone(rollback_cell.state_dict())
+        rollback_rng_object = rollback_world.rng
+        rollback_rng = copy.deepcopy(rollback_world.rng.bit_generator.state)
+        rollback_ids = (
+            id(rollback_cell.pools), id(rollback_cell.proteins),
+            id(rollback_cell.damaged_proteins),
+            id(rollback_cell.gene_specs), id(rollback_world.rng),
+        )
+        rollback_nested_spec_ids = {
+            int(fingerprint): id(spec)
+            for fingerprint, spec in rollback_cell.gene_specs.items()
+        }
+        rollback_gene_order = list(rollback_cell.gene_specs)
+        caught = None
+        try:
+            rollback_scheduler.cpu_translation(
+                rollback_world, rollback_cell, dt, rollback_world.config,
+            )
+        except RuntimeError as error:
+            caught = error
+        if caught is None:
+            raise AssertionError(
+                '%s/%s injected translation publish failure escaped' % (
+                    device, failure_label,
+                )
+            )
+        v3.assert_recursive_close(
+            rollback_before, rollback_cell.state_dict(), 0.0, 0.0,
+            'a48b.%s.%s.publish_rollback' % (device, failure_label),
+        )
+        actual_nested_spec_ids = {
+            int(fingerprint): id(spec)
+            for fingerprint, spec in rollback_cell.gene_specs.items()
+        }
+        if (rollback_world.rng is not rollback_rng_object
+                or rollback_world.rng.bit_generator.state != rollback_rng
+                or rollback_ids != (
+                    id(rollback_cell.pools), id(rollback_cell.proteins),
+                    id(rollback_cell.damaged_proteins),
+                    id(rollback_cell.gene_specs), id(rollback_world.rng),
+                )
+                or actual_nested_spec_ids != rollback_nested_spec_ids
+                or list(rollback_cell.gene_specs) != rollback_gene_order):
+            raise AssertionError(
+                '%s/%s translation rollback identity/state differs' % (
+                    device, failure_label,
+                )
+            )
+        _a48b_translation_entry(rollback_scheduler, rollback_cell)
+        receipt = _a48_abort_direct(
+            rollback_scheduler, rollback_cell, caught,
+        )
+        if receipt['status'] != 'aborted':
+            raise AssertionError(
+                '%s/%s postclaim translation failure was not aborted' % (
+                    device, failure_label,
+                )
+            )
+
+    for failure_type, failure_label in (
+            (FailAfterPublishNoGeneTouch, 'no_gene_touch'),
+            (FailAfterPublishGeneReplace, 'nested_and_outer_gene_replace')):
+        for device in rollback_devices:
+            run_publish_rollback(failure_type, failure_label, device)
+
+    duplicate_world = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(source_state),
+    )
+    duplicate_cell = duplicate_world.cells[0]
+    duplicate_scheduler = a48b.A4TranslationEventScheduler(roomy, 'cpu')
+    _a48b_begin_translation_direct(
+        duplicate_scheduler, duplicate_world, duplicate_cell, dt,
+    )
+    duplicate_scheduler.cpu_translation(
+        duplicate_world, duplicate_cell, dt, duplicate_world.config,
+    )
+    duplicate_before = v3.pickle_clone(duplicate_cell.state_dict())
+    duplicate_rng = copy.deepcopy(duplicate_world.rng.bit_generator.state)
+    _assert_raises(
+        a3s.A3DuplicateEventError,
+        lambda: duplicate_scheduler.cpu_translation(
+            duplicate_world, duplicate_cell, dt, duplicate_world.config,
+        ),
+    )
+    v3.assert_recursive_close(
+        duplicate_before, duplicate_cell.state_dict(), 0.0, 0.0,
+        'a48b.duplicate',
+    )
+    if duplicate_world.rng.bit_generator.state != duplicate_rng:
+        raise AssertionError('duplicate translation changed PCG64')
+    _a48_abort_direct(duplicate_scheduler, duplicate_cell)
+
+    order_world = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(source_state),
+    )
+    order_cell = order_world.cells[0]
+    order_scheduler = a48b.A4TranslationEventScheduler(roomy, 'cpu')
+    order_scheduler.begin_step(order_world, [order_cell])
+    metabolism_rank = a3s.WORLD_EVENT_ORDER.index('cell_metabolism_loop')
+    for event in a3s.WORLD_EVENT_ORDER[:metabolism_rank]:
+        order_scheduler.claim_world(event, status='skipped')
+    order_scheduler.claim(order_cell, 'surface_exchange', status='skipped')
+    order_scheduler.reserve_metabolism_dispatch(order_world, order_cell, dt)
+    order_scheduler.begin_a3_metabolism(order_world, order_cell, dt)
+    order_scheduler.claim(order_cell, 'gene_refresh', status='skipped')
+    order_before = v3.pickle_clone(order_cell.state_dict())
+    order_rng = copy.deepcopy(order_world.rng.bit_generator.state)
+    _assert_raises(
+        a3s.A3EventOrderError,
+        lambda: order_scheduler.cpu_translation(
+            order_world, order_cell, dt, order_world.config,
+        ),
+    )
+    v3.assert_recursive_close(
+        order_before, order_cell.state_dict(), 0.0, 0.0,
+        'a48b.out_of_order',
+    )
+    if order_world.rng.bit_generator.state != order_rng:
+        raise AssertionError('out-of-order translation changed PCG64')
+    _a48_abort_direct(order_scheduler, order_cell)
+    return ('Q/S/W/P exact + each one-short; host/resident member, storage, '
+            'device, authority and full-candidate trust rejection; packed/'
+            'unpacked non-alias; wrong cell/dt; preclaim atomic; postclaim '
+            'nested gene-spec/value/object/RNG rollback; duplicate/out-of-order')
+
+
+def test_a48b_world_lockstep_stress_interleave_save_clone_and_a3_authority():
+    capacity = a4.GPU068A4Config()
+    for steps, seed in ((1, 9991), (10, 9992)):
+        source = v3.make_world(seed=seed, cells=1)
+        state = v3.pickle_clone(source.state_dict())
+        cpu = a4.a3.s66.Formal066World.from_state(v3.pickle_clone(state))
+        hybrid = _a48b_hybrid_from_state(state, capacity, 'cpu')
+        for _ in range(steps):
+            cpu.step(0.1)
+            hybrid.step(0.1)
+        v3._assert_world_pair(
+            cpu, hybrid, state_atol=v3.WORLD_FP64_ATOL,
+            ledger_atol=v3.LEDGER_ATOL,
+            label='a48b.lockstep_%d' % steps,
+        )
+
+    stressed = v3.make_world(seed=9993, cells=1)
+    stressed.config.external_translator = True
+    stressed.config.protein_repair = True
+    stressed.config.quiescence = True
+    stressed.config.quiescence_effector = True
+    for ci, cell in enumerate(stressed.cells):
+        cell.current_stress = 1.4 + 0.1 * ci
+        cell.damage_trace[:] = 0.8 + 0.05 * ci
+        cell.membrane_oxidation[:] = np.linspace(
+            0.25, 1.75, len(cell.membrane_oxidation),
+        )
+        cell.pools[a4.a3.POOL_REACTIVE] += 0.14 + 0.01 * ci
+        cell.pools[a4.a3.POOL_AGGREGATE] += 0.06
+        cell.pools[a4.a3.POOL_ATP] += 0.45
+        cell.behavioural_quiescence = 0.55 + 0.05 * ci
+        cell._sync_damage_pool()
+    stress_state = v3.pickle_clone(stressed.state_dict())
+    stress_cpu = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(stress_state),
+    )
+    stress_hybrid = _a48b_hybrid_from_state(
+        stress_state, capacity, 'cpu',
+    )
+    for _ in range(3):
+        stress_cpu.step(0.1)
+        stress_hybrid.step(0.1)
+    v3._assert_world_pair(
+        stress_cpu, stress_hybrid, state_atol=v3.WORLD_FP64_ATOL,
+        ledger_atol=v3.LEDGER_ATOL,
+        label='a48b.translation_heavy_stress_3',
+    )
+
+    interleave_source = v3.make_world(seed=9994, cells=2)
+    interleave_source.config.endogenous_damage = False
+    for cell in interleave_source.cells:
+        cell.genome_lesions = [
+            0.5 / 0.00065 for _ in cell.genomes
+        ]
+        cell._refresh_gene_cache()
+    interleave_state = v3.pickle_clone(interleave_source.state_dict())
+    interleave_cpu = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(interleave_state),
+    )
+    interleave_hybrid = _a48b_hybrid_from_state(
+        interleave_state, capacity, 'cpu',
+    )
+    interleave_cpu.step(0.1)
+    original_translation = a48.A4HydrolysisEventScheduler.cpu_translation
+
+    def legacy_translation_bomb(*args, **kwargs):
+        raise AssertionError('legacy CPU translation bridge was called')
+
+    a48.A4HydrolysisEventScheduler.cpu_translation = legacy_translation_bomb
+    try:
+        receipt = interleave_hybrid.step(0.1)
+    finally:
+        a48.A4HydrolysisEventScheduler.cpu_translation = original_translation
+    v3._assert_world_pair(
+        interleave_cpu, interleave_hybrid,
+        state_atol=v3.WORLD_FP64_ATOL,
+        ledger_atol=v3.LEDGER_ATOL,
+        label='a48b.two_cell_interleave',
+    )
+    previous_motion = None
+    for record in receipt['cells']:
+        by_name = {entry['event']: entry for entry in record['events']}
+        names = [entry['event'] for entry in record['events']]
+        if (names.count('translation_cpu') != 1
+                or names.count('genome_hydrolysis_cpu_rng') != 1):
+            raise AssertionError('A4.8b integrated event count differs')
+        translation = by_name['translation_cpu']['ordinal']
+        replication = by_name['replication_cpu']['ordinal']
+        hydrolysis = by_name['genome_hydrolysis_cpu_rng']['ordinal']
+        motion = by_name['motion']['ordinal']
+        if not translation < replication < hydrolysis < motion:
+            raise AssertionError('A4.8b per-cell event order differs')
+        if previous_motion is not None and previous_motion >= translation:
+            raise AssertionError('A4.8b two-cell chain was batched/reordered')
+        previous_motion = motion
+        if (by_name['translation_cpu']['metadata']['authority']
+                != 'A4.8b-resident-plan-atomic-cpu-cell-commit'):
+            raise AssertionError('A4.8b translation authority differs')
+        if by_name['genome_hydrolysis_cpu_rng']['metadata'][
+                'eligible_genome_count'] < 1:
+            raise AssertionError('interleave fixture drew no hydrolysis RNG')
+
+    persisted = _a48b_hybrid_from_state(
+        v3.make_world(seed=9995, cells=1).state_dict(), capacity, 'cpu',
+    )
+    persisted.step(0.1)
+    twin = persisted.clone()
+    with tempfile.TemporaryDirectory() as directory:
+        path = os.path.join(directory, 'a48b.pkl')
+        persisted.save(path)
+        restored = a48b.Hybrid066WorldA4Translation.load(path)
+        for value in (twin, restored):
+            if (type(value) is not a48b.Hybrid066WorldA4Translation
+                    or type(value.scheduler)
+                    is not a48b.A4TranslationEventScheduler
+                    or value.scheduler.a4_device != 'cpu'
+                    or value.scheduler.a4_config != capacity):
+                raise AssertionError('A4.8b save/clone authority was lost')
+        persisted.step(0.1)
+        twin.step(0.1)
+        restored.step(0.1)
+        v3.assert_recursive_close(
+            persisted.world.state_dict(), twin.world.state_dict(),
+            0.0, 0.0, 'a48b.clone_continuation',
+        )
+        v3.assert_recursive_close(
+            persisted.world.state_dict(), restored.world.state_dict(),
+            0.0, 0.0, 'a48b.save_continuation',
+        )
+
+    active = _a48b_hybrid_from_state(
+        v3.make_world(seed=9996, cells=1).state_dict(), capacity, 'cpu',
+    )
+    active.scheduler.begin_step(active.world, active.world.cells)
+    _assert_raises(a3s.A3SchedulerProtocolError, active.clone)
+    active.scheduler.abort_step(RuntimeError('expected active-save rejection'))
+    active.scheduler._a4_translation_commit_active = True
+    try:
+        _assert_raises(a3s.A3SchedulerProtocolError, active.state_dict)
+    finally:
+        active.scheduler._a4_translation_commit_active = False
+
+    boundary_details = []
+    devices = ['cpu']
+    if torch is not None and torch.cuda.is_available():
+        devices.append('cuda')
+    elif _REQUIRE_CUDA:
+        raise AssertionError('CUDA required for A4.8b boundary authority')
+    for device in devices:
+        for (label, state, cell_id, dt,
+             expected_symbols, expected_rng_change) in (
+                _a48b_replication_boundary_cases(seed=10001)
+        ):
+            direct = a4.a3.s66.Formal066World.from_state(
+                v3.pickle_clone(state),
+            )
+            integrated_hybrid = _a48b_hybrid_from_state(
+                state, capacity, device,
+            )
+            integrated = integrated_hybrid.world
+            direct_cell = next(
+                cell for cell in direct.cells if int(cell.cell_id) == cell_id
+            )
+            integrated_cell = next(
+                cell for cell in integrated.cells
+                if int(cell.cell_id) == cell_id
+            )
+            direct_before_rng = copy.deepcopy(
+                direct.rng.bit_generator.state,
+            )
+            integrated_before_rng = copy.deepcopy(
+                integrated.rng.bit_generator.state,
+            )
+            direct_cell.translate(dt, direct.config)
+            direct_cell._replicate_genome(direct, dt, direct.config)
+
+            scheduler = integrated_hybrid.scheduler
+            _a48b_begin_translation_direct(
+                scheduler, integrated, integrated_cell, dt,
+            )
+            scheduler.cpu_translation(
+                integrated, integrated_cell, dt, integrated.config,
+            )
+            if integrated.rng.bit_generator.state != integrated_before_rng:
+                raise AssertionError(
+                    '%s/%s translation consumed replication RNG' % (
+                        device, label,
+                    )
+                )
+            scheduler.cpu_replication(
+                integrated, integrated_cell, dt, integrated.config,
+            )
+            _a48b_assert_cell_matches(
+                direct_cell, integrated_cell,
+                'a48b.boundary.%s.%s' % (device, label),
+                atol=v3.WORLD_FP64_ATOL,
+            )
+            if direct.rng.bit_generator.state != integrated.rng.bit_generator.state:
+                raise AssertionError(
+                    '%s/%s post-translation replication PCG64 differs' % (
+                        device, label,
+                    )
+                )
+            if (int(integrated_cell.last_replication_symbols)
+                    != expected_symbols):
+                raise AssertionError(
+                    '%s/%s discrete replication gate differs' % (
+                        device, label,
+                    )
+                )
+            actual_rng_change = (
+                integrated.rng.bit_generator.state != integrated_before_rng
+            )
+            direct_rng_change = (
+                direct.rng.bit_generator.state != direct_before_rng
+            )
+            if (actual_rng_change != expected_rng_change
+                    or direct_rng_change != expected_rng_change):
+                raise AssertionError(
+                    '%s/%s RNG branch control differs' % (device, label)
+                )
+            replication_entry = [
+                entry for entry in scheduler._record(integrated_cell)[1]['events']
+                if entry['event'] == 'replication_cpu'
+            ]
+            if (len(replication_entry) != 1
+                    or replication_entry[0]['metadata']['authority']
+                    != 'frozen-0.6.6-wrapper-to-0.4'):
+                raise AssertionError('A3 CPU replication authority differs')
+            _a48_abort_direct(scheduler, integrated_cell)
+            boundary_details.append(device + ':' + label)
+
+    if (a48b.FULL_GPU_WORLD_STEP is not False
+            or a48b.PORT_STATUS.get('genome_replication')
+            != 'cpu-authoritative-scheduler-bridged'
+            or a3s.PORT_STATUS.get('translation_replication_division')
+            != 'CPU-authoritative-scheduler-bridged'):
+        raise AssertionError('A4.8b changed A3/full-GPU authority')
+    for relative, expected in PROMOTED_A3_SHA256.items():
+        path = os.path.join(ROOT, *relative.split('/'))
+        if _sha256(path) != expected:
+            raise AssertionError(relative + ' changed from promoted A3 bytes')
+    return ('1/10-step + translation-heavy stress + 2-cell nonbatched '
+            'translation/replication/hydrolysis/motion lockstep; legacy '
+            'translation bomb; save/load/clone + active reject; immediate '
+            'A3 CPU replication boundaries and PCG64 exact: ' +
+            ', '.join(boundary_details))
+
+
 TESTS = (
     test_api_scope,
     test_source_hash_inputs_present,
@@ -7545,6 +8862,10 @@ TESTS = (
     test_a48a_candidate_cpu_cuda_purity_fresh_binding_and_one_shot,
     test_a48a_fail_closed_capacity_trust_order_and_publish_rollback,
     test_a48a_world_interleave_lockstep_save_clone_and_a3_authority,
+    test_a48b_translation_atomic_commit_formal066_oracle_and_gates,
+    test_a48b_translation_candidate_cpu_cuda_commit_purity_and_fresh_binding,
+    test_a48b_translation_capacity_trust_rollback_and_exact_once,
+    test_a48b_world_lockstep_stress_interleave_save_clone_and_a3_authority,
 )
 
 
@@ -7572,7 +8893,7 @@ def run_all(write=False, output_dir=None):
     failed = sum(row['status'] == 'FAIL' for row in rows)
     elapsed = time.time() - started
     payload = {
-        'build': a48.BUILD,
+        'build': a48b.BUILD,
         'schema': {
             'ragged_genome': a4.SCHEMA_VERSION,
             'gene_cache': a4.GENE_CACHE_SCHEMA_VERSION,
@@ -7590,9 +8911,10 @@ def run_all(write=False, output_dir=None):
                 a47.DELETION_PLAN_SCHEMA_VERSION
             ),
             'genome_hydrolysis_atomic_commit': a48.SCHEMA_VERSION,
+            'paid_translation_atomic_commit': a48b.SCHEMA_VERSION,
         },
         'development_slice': (
-            'A4.8a-single-cell-genome-hydrolysis-atomic-commit-bridge'
+            'A4.8b-single-cell-paid-translation-atomic-commit-bridge'
         ),
         'promoted_baseline_unchanged': 'SOMA-CELL 0.6.8-GPU A3',
         'full_gpu_world_step': False,
@@ -7614,7 +8936,7 @@ def run_all(write=False, output_dir=None):
             writer.writeheader()
             writer.writerows(rows)
         lines = [
-            '%s VALIDATION' % a48.BUILD,
+            '%s VALIDATION' % a48b.BUILD,
             '%d PASS / %d FAIL / %d TOTAL' % (passed, failed, len(rows)),
             'elapsed %.6fs' % elapsed,
             '',

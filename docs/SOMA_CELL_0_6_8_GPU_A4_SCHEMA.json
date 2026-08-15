@@ -1,8 +1,8 @@
 {
-  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.8a-hydrolysis-atomic-commit",
+  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.8b-translation-atomic-commit",
   "status": "development_slice_not_promoted",
   "full_gpu_world_step": false,
-  "authoritative_state": "committed_CPU_world_and_full_PCG64_are_durable_after_A4_8a;_A4_resident_descriptors_are_event_local_validated_evidence_only",
+  "authoritative_state": "committed_CPU_world_and_full_PCG64_are_durable_after_A4_8b;_A4_resident_descriptors_are_event_local_validated_evidence_only",
   "ragged_genome": {
     "schema_version": "0.6.8-GPU-A4.1-ragged-genome",
     "sequence_order": [
@@ -645,14 +645,81 @@
       "the_eligible_dt_zero_draw_difference_is_corrected_only_inside_the_A4_wrapper",
       "single_cell_event_order_preserves_world_PCG64_interleaving_and_no_multi_cell_tape_is_created",
       "explicit_per_cell_host_device_round_trips_are_correctness_validation_not_a_performance_candidate",
-      "paid_translation_and_all_replication_commits_remain_CPU_authoritative",
+      "inside_the_A4_8a_hydrolysis_only_wrapper_paid_translation_and_all_replication_commits_remain_CPU_authoritative",
+      "full_gpu_world_step_remains_false"
+    ]
+  },
+  "integration_paid_translation_atomic_commit": {
+    "schema_version": "0.6.8-GPU-A4.8b-translation-atomic-commit",
+    "ownership": "private_one_shot_single_cell_resident_result_commit_bridge_with_committed_CPU_world_and_full_PCG64_as_durable_step_boundary_authority",
+    "public_apis": [
+      "A4TranslationEventScheduler",
+      "Hybrid066WorldA4Translation",
+      "A4TranslationCommitError"
+    ],
+    "scheduler_event": {
+      "event_id": "translation_cpu",
+      "rank_and_predecessors": "inherited_unchanged_from_A3_exact_once_scheduler_after_maintenance_and_before_replication",
+      "scope": "this_event_is_replaced_in_addition_to_the_inherited_A4_8a_hydrolysis_override_all_replication_events_keep_A3_authority",
+      "external_inputs": "no_external_binding_plan_or_candidate_is_accepted"
+    },
+    "source_boundary": [
+      "exactly_one_live_cell_after_maintenance_and_before_replication",
+      "config_object_is_the_active_world_config_and_its_serialized_bytes_are_attested",
+      "fresh_host_A4_binding_with_explicit_fixed_capacities",
+      "explicit_Torch_CPU_or_CUDA_device",
+      "live_PCG64_object_and_full_state_are_attested_and_no_draw_is_permitted"
+    ],
+    "preclaim_pipeline": [
+      "pack_and_bind_the_live_single_cell_without_mutation",
+      "evaluate_an_independent_NumPy_paid_translation_oracle",
+      "upload_ragged_state_and_gene_cache_then_evaluate_the_A4_3_resident_plan",
+      "explicitly_read_back_every_resident_source_cache_state_and_plan_value",
+      "require_exact_cell_discrete_fingerprint_count_and_order_agreement_and_float64_absolute_error_at_most_2e_12",
+      "use_the_resident_readback_as_commit_authority_and_never_substitute_host_oracle_values",
+      "require_live_gene_specs_to_equal_the_genome_derived_A4_2_cache_and_deep_copy_them_into_the_candidate",
+      "build_a_private_CPU_candidate_from_the_resident_result_and_issue_a_fresh_binding",
+      "recheck_cell_and_object_identity_generation_alive_state_dt_world_config_A4_capacity_device_source_and_full_live_RNG",
+      "repeat_explicit_host_and_resident_value_reattestation_to_detect_alias_and_Torch_data_version_bypasses"
+    ],
+    "atomic_publish": [
+      "claim_translation_cpu_exactly_once_only_after_all_checks_pass",
+      "publish_paid_FUEL_MINERAL_ATP_and_synchronized_CATALYST_DAMAGED_PROTEIN_ledgers",
+      "publish_ordered_active_and_damaged_protein_dictionaries_last_translation_and_conditionally_last_quiescence",
+      "preserve_the_pools_array_identity",
+      "preserve_the_frozen_dictionary_identity_branch_early_return_retains_objects_while_weight_gate_sync_replaces_them_even_for_zero_work",
+      "preserve_gene_specs_genomes_lesions_replication_state_world_energy_and_full_PCG64_state"
+    ],
+    "failure_semantics": {
+      "before_claim": "biology_object_identity_receipts_world_ledgers_and_live_RNG_are_unchanged_and_the_legacy_CPU_translation_bridge_is_not_called",
+      "after_claim": "restore_original_pool_dictionary_gene_cache_scalar_and_RNG_identities_and_values_then_record_an_aborted_outer_step",
+      "capacity": "exact_Q_S_W_P_pass_and_each_one_short_case_fails_before_claim_without_clip_reallocation_or_fallback",
+      "lifetime": "binding_oracle_resident_plan_and_candidate_are_private_one_shot_disposable_objects"
+    },
+    "downstream_replication_gate": {
+      "authority": "the_immediately_following_replication_event_remains_the_promoted_A3_CPU_bridge",
+      "controls": "Torch_CPU_and_CUDA_each_cover_ATP_exact_and_next_below_nucleotide_exact_and_next_below_and_replicase_below_and_above_threshold",
+      "required_result": "all_twelve_discrete_copy_event_and_full_PCG64_controls_match_direct_frozen_translate_then_replicate_without_fallback"
+    },
+    "persistence": {
+      "durable_authority": "committed_CPU_world_and_full_PCG64_state_at_step_boundary",
+      "saved_A4_metadata": "fixed_capacities_device_translation_scheduler_type_and_inherited_hydrolysis_metadata",
+      "save_load_clone": "restore_Hybrid066WorldA4Translation_and_A4TranslationEventScheduler_with_exact_next_step_continuation",
+      "active_or_pending": "serialization_is_rejected"
+    },
+    "invariants": [
+      "promoted_A3_A4_3_and_A4_8a_sources_remain_byte_identical",
+      "resident_readback_is_commit_authority_and_the_NumPy_result_is_validation_only",
+      "single_cell_event_order_preserves_replication_hydrolysis_motion_and_world_PCG64_interleaving_without_batching",
+      "explicit_per_cell_host_device_round_trips_are_correctness_validation_not_a_performance_candidate",
+      "all_replication_commits_remain_CPU_authoritative",
       "full_gpu_world_step_remains_false"
     ]
   },
   "cpu_authoritative_after_slice": [
-    "paid_translation_world_commit_and_scheduler_event",
     "all_replication_branches_and_actual_template_copy_completed_genome_arena_lesion_cycle_cache_and_novel_path_commits",
-    "all_scheduler_events_except_the_A4_wrapper_single_cell_genome_hydrolysis_event",
+    "all_scheduler_events_except_the_A4_wrapper_single_cell_paid_translation_and_genome_hydrolysis_events",
+    "promoted_A3_standalone_paid_translation_behavior_outside_the_A4_wrapper",
     "promoted_A3_standalone_dt_zero_hydrolysis_bridge_behavior_outside_the_A4_wrapper",
     "division_death_corpse_edna_hgt",
     "neural_and_causal_systems"
