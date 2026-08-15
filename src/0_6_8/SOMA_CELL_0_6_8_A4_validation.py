@@ -1,5 +1,5 @@
 # coding: utf-8
-"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.7a slices."""
+"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.7b slices."""
 from __future__ import division
 
 import argparse
@@ -29,9 +29,9 @@ try:
 except Exception:  # pragma: no cover
     torch = None
 
-RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_7A_VALIDATION_RESULTS.json'
-RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_7a_validation.csv'
-RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_7A_VALIDATION_RESULTS.txt'
+RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_7B_VALIDATION_RESULTS.json'
+RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_7b_validation.csv'
+RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_7B_VALIDATION_RESULTS.txt'
 
 SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4.py',
@@ -737,6 +737,99 @@ def _a47_manual_apply_tape(cell, tape):
     return out
 
 
+def _a47b_hydrolysis_fixture(zero_hit=False):
+    """A4.7b one-cell source with non-candidate active intermediates."""
+    world, cell, _, dt = _a47_hydrolysis_fixture(
+        boundaries=bool(zero_hit),
+    )
+    template = _a47_gene_sequence(a4.g2.ROLE_REPLICASE, 0)
+    copy_symbols = template[:7].copy()
+    cell.replication_template = template.copy()
+    cell.replication_copy = [int(value) for value in copy_symbols]
+    cell.replication_template_lesion = 0.125
+    cell.replication_fractional = 0.375
+    cell._refresh_gene_cache()
+    cell._sync_protein_pool()
+
+    sequences = list(cell.genomes) + [template, copy_symbols]
+    symbol_count = sum(len(sequence) for sequence in sequences)
+    capacity = a4.GPU068A4Config(
+        max_cells=1, max_sequences=len(sequences),
+        max_symbols=symbol_count,
+        max_sequence_symbols=max(len(sequence) for sequence in sequences),
+        max_proteins_per_cell=64,
+    )
+    if (not zero_hit
+            and (len(sequences) != 5 or symbol_count != 199
+                 or sum(len(genome) for genome in cell.genomes)
+                 + len(copy_symbols) != 151)):
+        raise AssertionError('A4.7b exact-capacity fixture drifted')
+    return world, cell, capacity, dt
+
+
+def _a47b_formal066_oracle(world, cell, dt):
+    """Return direct frozen-CPU hydrolysis state and descriptor expectations."""
+    before = copy.deepcopy(cell)
+    cpu_world = copy.deepcopy(world)
+    actual = copy.deepcopy(cell)
+    cpu_world.cells = [actual]
+    actual._decay_information_and_proteins(cpu_world, dt)
+
+    sequences = [
+        np.asarray(genome, dtype=np.uint8).copy()
+        for genome in actual.genomes
+    ]
+    if actual.replication_template is not None:
+        sequences.extend((
+            np.asarray(actual.replication_template, dtype=np.uint8).copy(),
+            np.asarray(actual.replication_copy, dtype=np.uint8).copy(),
+        ))
+    width = max([len(sequence) for sequence in sequences] or [0])
+    fixed = np.zeros((len(sequences), width), dtype=np.uint8)
+    lengths = np.asarray(
+        [len(sequence) for sequence in sequences], dtype=np.int64,
+    )
+    for index, sequence in enumerate(sequences):
+        fixed[index, :len(sequence)] = sequence
+    offsets = np.zeros((len(sequences) + 1,), dtype=np.int64)
+    if len(sequences):
+        offsets[1:] = np.cumsum(lengths, dtype=np.int64)
+
+    lesion_after = np.asarray(actual.genome_lesions, dtype=np.float64)
+    event_delta = (
+        int(actual.genome_damage_events)
+        - int(before.genome_damage_events)
+    )
+    source_sequences = list(before.genomes)
+    if before.replication_template is not None:
+        source_sequences.extend((
+            before.replication_template, before.replication_copy,
+        ))
+    source_symbol_count = sum(len(sequence) for sequence in source_sequences)
+    material_after = (
+        sum(len(genome) for genome in actual.genomes)
+        + len(actual.replication_copy)
+    )
+    return cpu_world, actual, {
+        'final_symbols': fixed,
+        'final_lengths': lengths,
+        'final_offsets': offsets,
+        'final_symbol_count': int(offsets[-1]),
+        'pools_after': np.asarray(actual.pools, dtype=np.float64).copy(),
+        'genome_lesions_after': lesion_after.copy(),
+        'genome_lesion_mean_after': (
+            float(np.mean(lesion_after)) if len(lesion_after) else 1.0
+        ),
+        'genome_damage_event_delta': event_delta,
+        'topology_sequence_delta': 0,
+        'topology_symbol_delta': int(offsets[-1]) - source_symbol_count,
+        'genome_material_symbols_after': material_after,
+        'cache_dirty': bool(event_delta),
+        'gene_specs_after': copy.deepcopy(actual.gene_specs),
+        'rng_after_state': copy.deepcopy(cpu_world.rng.bit_generator.state),
+    }
+
+
 def _assert_completion_cpu_parity(plan, before_cells, cpu_cells, label,
                                   atol=2e-12):
     if int(plan.cell_count) != len(before_cells):
@@ -949,10 +1042,15 @@ def test_api_scope():
         'A4HydrolysisError', 'A4HydrolysisScopeError',
         'A4HydrolysisRngTape', 'prepare_genome_hydrolysis_rng_tape',
         'validate_a4_hydrolysis_rng_tape',
+        'A4HydrolysisDeletionPlan',
+        'validate_a4_hydrolysis_deletion_plan',
+        'genome_hydrolysis_deletion_numpy',
+        'genome_hydrolysis_deletion_torch',
+        'genome_hydrolysis_deletion_plan',
     )
     missing = [name for name in hydrolysis_required if not hasattr(a47, name)]
     if missing:
-        raise AssertionError('missing A4.7a API: %s' % missing)
+        raise AssertionError('missing A4.7b API: %s' % missing)
     if a4.FULL_GPU_WORLD_STEP is not False:
         raise AssertionError('A4.1 must not claim full GPU world-step')
     if hasattr(a4.A4GeneCacheBatch, 'from_state_dict'):
@@ -1001,11 +1099,13 @@ def test_api_scope():
         raise AssertionError('A4.6b2 completion plan field set differs')
     if a44.FULL_GPU_WORLD_STEP is not False:
         raise AssertionError('A4.6b2 must not claim full GPU world-step')
-    if (a47.BUILD != 'SOMA-CELL 0.6.8-GPU A4.7a'
+    if (a47.BUILD != 'SOMA-CELL 0.6.8-GPU A4.7b'
             or a47.SCHEMA_VERSION
             != '0.6.8-GPU-A4.7a-genome-hydrolysis-rng-tape'
+            or a47.DELETION_PLAN_SCHEMA_VERSION
+            != '0.6.8-GPU-A4.7b-genome-hydrolysis-deletion-plan'
             or a47.FULL_GPU_WORLD_STEP is not False):
-        raise AssertionError('A4.7a identity/authority differs')
+        raise AssertionError('A4.7b identity/authority differs')
     hydrolysis_fields = set(
         a47.A4HydrolysisRngTape.__dataclass_fields__
     )
@@ -1016,6 +1116,17 @@ def test_api_scope():
                 'final_symbols', 'completed_symbols', 'pools_after',
                 'genome_lesions_after'}):
         raise AssertionError('A4.7a tape exposed application state')
+    if tuple(a47._DELETION_PLAN_ARRAY_FIELDS) != (
+            'scope_valid', 'scope_error_code', 'final_symbols',
+            'final_lengths', 'genome_lesions_after', 'pools_after',
+            'symbol_count_after', 'topology_symbol_delta',
+            'genome_damage_event_delta', 'gene_cache_dirty',
+            'gene_cache_refresh_count', 'genome_material_symbols_after',
+            'genome_lesion_mean_after'):
+        raise AssertionError('A4.7b deletion-plan field order differs')
+    if (a47.DELETION_SCOPE_OK != 0
+            or a47.DELETION_SCOPE_TAPE_MISMATCH != 1):
+        raise AssertionError('A4.7b deletion scope codes differ')
     if (a44.SCOPE_FP64_DISCRETE_BOUNDARY != 6
             or a44.FP64_DISCRETE_GUARD_EPS != 4096.0):
         raise AssertionError('A4.5b fp64 discrete guard contract differs')
@@ -1036,10 +1147,18 @@ def test_api_scope():
             or a44.PORT_STATUS.get('material_mutation')
             != expected_material):
         raise AssertionError('A4.6b2 authority status differs')
-    return '%s / %s + %s + %s + %s / full_gpu=false' % (
+    expected_hydrolysis = (
+        'a4.7b-single-cell-row-padded-deletion-ledger-plan-'
+        'not-arena-cache-live-rng-committed-not-integrated-'
+        'cpu-authoritative'
+    )
+    if a47.PORT_STATUS.get('genome_symbol_hydrolysis') != expected_hydrolysis:
+        raise AssertionError('A4.7b hydrolysis authority status differs')
+    return '%s / %s + %s + %s + %s + %s / full_gpu=false' % (
         a47.BUILD, a4.SCHEMA_VERSION,
         a4.GENE_CACHE_SCHEMA_VERSION + ' + ' + a4.TRANSLATION_SCHEMA_VERSION,
         a44.SCHEMA_VERSION, a47.SCHEMA_VERSION,
+        a47.DELETION_PLAN_SCHEMA_VERSION,
     )
 
 
@@ -5999,6 +6118,663 @@ def test_a47a_hydrolysis_torch_trust_scope_and_a3_authority():
             '/'.join(devices))
 
 
+def test_a47b_hydrolysis_apply_formal066_oracle_and_noop():
+    world, cell, capacity, dt = _a47b_hydrolysis_fixture()
+    rng_before = copy.deepcopy(world.rng.bit_generator.state)
+    ragged, state, binding = _paid_replication_binding(
+        [cell], world.config, capacity,
+    )
+    tape = a47.prepare_genome_hydrolysis_rng_tape(
+        binding, dt, rng_before,
+    )
+    plan = a47.genome_hydrolysis_deletion_numpy(
+        binding, dt, tape,
+    )
+    if a47.validate_a4_hydrolysis_deletion_plan(
+            plan, binding, dt, tape) is not plan:
+        raise AssertionError('A4.7b validator did not return its plan')
+    cpu_world, actual, expected = _a47b_formal066_oracle(
+        world, cell, dt,
+    )
+    if (not bool(plan.scope_valid[0])
+            or int(plan.scope_error_code[0]) != 0
+            or not np.array_equal(
+                plan.final_symbols[:5], expected['final_symbols'],
+            )
+            or not np.array_equal(
+                plan.final_lengths[:5], expected['final_lengths'],
+            )
+            or int(plan.symbol_count_after[0])
+            != expected['final_symbol_count']
+            or int(plan.topology_symbol_delta[0])
+            != expected['topology_symbol_delta']
+            or int(plan.genome_damage_event_delta[0])
+            != expected['genome_damage_event_delta']
+            or int(plan.genome_material_symbols_after[0])
+            != expected['genome_material_symbols_after']
+            or bool(plan.gene_cache_dirty[0]) is not True
+            or int(plan.gene_cache_refresh_count[0]) != 2):
+        raise AssertionError('A4.7b Formal066 discrete descriptor differs')
+    if (not np.array_equal(
+            plan.genome_lesions_after[:3],
+            expected['genome_lesions_after'],
+            )
+            or np.any(plan.genome_lesions_after[3:] != 0.0)
+            or not np.array_equal(
+                plan.pools_after[0], expected['pools_after'],
+            )
+            or float(plan.genome_lesion_mean_after[0]).hex()
+            != float(expected['genome_lesion_mean_after']).hex()):
+        raise AssertionError('A4.7b Formal066 float descriptor differs')
+    if ([int(value) for value in plan.final_lengths[:5]]
+            != [47, 48, 47, 48, 7]
+            or expected['final_offsets'].tolist()
+            != [0, 47, 95, 142, 190, 197]
+            or float(plan.pools_after[0, a4.a3.POOL_WASTE]).hex()
+            != '0x1.719f7f8ca8198p-8'):
+        raise AssertionError('A4.7b topology/ordered waste fixture drifted')
+
+    template = np.asarray(cell.replication_template, dtype=np.uint8)
+    copy_symbols = np.asarray(cell.replication_copy, dtype=np.uint8)
+    if (not np.array_equal(plan.final_symbols[3, :48], template)
+            or not np.array_equal(plan.final_symbols[4, :7], copy_symbols)):
+        raise AssertionError('A4.7b touched active template/copy rows')
+    final_genomes = [
+        np.asarray(plan.final_symbols[index, :int(plan.final_lengths[index])],
+                   dtype=np.uint8).copy()
+        for index in range(3)
+    ]
+    conceptual_cache = a4._gene_cache_from_genomes(final_genomes)
+    _assert_gene_specs_equal(
+        actual.gene_specs, conceptual_cache, 'a47b.conceptual_cache',
+    )
+    if cpu_world.rng.bit_generator.state != tape.rng_after_state:
+        raise AssertionError('A4.7b direct CPU RNG differs from tape')
+
+    zero_world, zero_cell, zero_capacity, zero_dt = (
+        _a47b_hydrolysis_fixture(zero_hit=True)
+    )
+    zero_ragged, _, zero_binding = _paid_replication_binding(
+        [zero_cell], zero_world.config, zero_capacity,
+    )
+    zero_tape = a47.prepare_genome_hydrolysis_rng_tape(
+        zero_binding, zero_dt,
+        copy.deepcopy(zero_world.rng.bit_generator.state),
+    )
+    zero_plan = a47.genome_hydrolysis_deletion_numpy(
+        zero_binding, zero_dt, zero_tape,
+    )
+    _, _, zero_expected = _a47b_formal066_oracle(
+        zero_world, zero_cell, zero_dt,
+    )
+    source_lengths = np.diff(zero_ragged.sequence_offsets[:6])
+    if (not np.array_equal(zero_plan.final_lengths[:5], source_lengths)
+            or not np.array_equal(
+                zero_plan.pools_after[0], zero_expected['pools_after'],
+            )
+            or not np.array_equal(
+                zero_plan.genome_lesions_after[:3],
+                zero_expected['genome_lesions_after'],
+            )
+            or int(zero_plan.symbol_count_after[0])
+            != int(zero_ragged.symbol_count)
+            or int(zero_plan.topology_symbol_delta[0]) != 0
+            or int(zero_plan.genome_damage_event_delta[0]) != 0
+            or bool(zero_plan.gene_cache_dirty[0])
+            or int(zero_plan.gene_cache_refresh_count[0]) != 0):
+        raise AssertionError('A4.7b zero-hit descriptor is not an exact no-op')
+    return ('hit/miss/hit Formal066 deletion, sequential waste, lesion/event/'
+            'topology/cache-dirty exact; active rows preserved; dt=0 no-op')
+
+
+def test_a47b_hydrolysis_numpy_torch_devices_and_purity():
+    if torch is None:
+        raise AssertionError('PyTorch is required for A4.7b')
+    world, cell, capacity, dt = _a47b_hydrolysis_fixture()
+    world_before = v3.pickle_clone(world.state_dict())
+    cell_before = v3.pickle_clone(cell.state_dict())
+    rng_before = copy.deepcopy(world.rng.bit_generator.state)
+    ragged, state, binding = _paid_replication_binding(
+        [cell], world.config, capacity,
+    )
+    ragged_before = ragged.state_dict()
+    state_before = state.state_dict()
+    cache_before = binding.cache.state_dict()
+    tape = a47.prepare_genome_hydrolysis_rng_tape(
+        binding, dt, rng_before,
+    )
+    tape_before = tape.state_dict()
+    expected = a47.genome_hydrolysis_deletion_numpy(
+        binding, dt, tape,
+    )
+    expected_state = expected.state_dict()
+    array_names = tuple(
+        name for name, value in expected_state.items()
+        if isinstance(value, np.ndarray)
+    )
+
+    devices = ['cpu']
+    if torch.cuda.is_available():
+        devices.append('cuda')
+    elif _REQUIRE_CUDA:
+        raise AssertionError('CUDA required but unavailable')
+    for device in devices:
+        resident_ragged = ragged.to_torch(device=device)
+        resident_state = state.to_torch(device=device)
+        resident_binding = a4.bind_a4_translation(
+            resident_ragged, resident_state,
+        )
+        resident_tape = tape.to_torch(
+            binding, dt, device=device,
+        )
+        ragged_ptrs = resident_ragged.data_ptrs()
+        state_ptrs = resident_state.data_ptrs()
+        cache_ptrs = resident_binding.cache.data_ptrs()
+        tape_ptrs = resident_tape.data_ptrs()
+        resident_plan = a47.genome_hydrolysis_deletion_torch(
+            resident_binding, dt, resident_tape,
+        )
+        for name in array_names:
+            value = getattr(resident_plan, name)
+            if (not isinstance(value, torch.Tensor)
+                    or value.device.type != device):
+                raise AssertionError(
+                    '%s A4.7b %s escaped device' % (device, name)
+                )
+        readback = resident_plan.to_numpy()
+        if a47.validate_a4_hydrolysis_deletion_plan(
+                readback, binding, dt, tape) is not readback:
+            raise AssertionError('%s A4.7b readback was not validated' % device)
+        v3.assert_recursive_close(
+            expected_state, readback.state_dict(), atol=0.0, rtol=0.0,
+            path='a47b.device.%s' % device,
+        )
+        if (resident_ragged.data_ptrs() != ragged_ptrs
+                or resident_state.data_ptrs() != state_ptrs
+                or resident_binding.cache.data_ptrs() != cache_ptrs
+                or resident_tape.data_ptrs() != tape_ptrs):
+            raise AssertionError('%s A4.7b input pointer changed' % device)
+
+    # Eight final lesions cross the NumPy reduction boundary.  Reducing the
+    # first seven and then appending the eighth changes one fp64 bit, so the
+    # plan must derive the mean from the conceptual final vector in one pass.
+    mean_world, mean_cell, _, mean_dt = _a47_hydrolysis_fixture()
+    mean_root = np.asarray(mean_cell.genomes[0], dtype=np.uint8).copy()
+    mean_cell.genomes = [mean_root.copy() for _ in range(8)]
+    mean_cell.genome_lesions = [float.fromhex(value) for value in (
+        '0x1.ad76af3009b08p+10',
+        '0x1.8b8030d222309p+13',
+        '0x1.22aabaa71530cp+12',
+        '0x1.f8640be991f30p+12',
+        '0x1.2380e7928077cp+11',
+        '0x1.3df56805c6afbp+11',
+        '0x1.de49d4ca52714p+11',
+        '0x1.32a89effea992p+11',
+    )]
+    mean_cell._refresh_gene_cache()
+    mean_cell._sync_protein_pool()
+    mean_capacity = a4.GPU068A4Config(
+        max_cells=1, max_sequences=8, max_symbols=384,
+        max_sequence_symbols=48, max_proteins_per_cell=64,
+    )
+    mean_ragged, mean_state, mean_binding = _paid_replication_binding(
+        [mean_cell], mean_world.config, mean_capacity,
+    )
+    mean_tape = a47.prepare_genome_hydrolysis_rng_tape(
+        mean_binding, mean_dt,
+        copy.deepcopy(mean_world.rng.bit_generator.state),
+    )
+    mean_expected = a47.genome_hydrolysis_deletion_numpy(
+        mean_binding, mean_dt, mean_tape,
+    )
+    _, _, mean_oracle = _a47b_formal066_oracle(
+        mean_world, mean_cell, mean_dt,
+    )
+    final_lesions = mean_oracle['genome_lesions_after']
+    cpu_mean = float(np.mean(final_lesions, dtype=np.float64))
+    old_grouping = (
+        float(np.sum(final_lesions[:7], dtype=np.float64))
+        + float(final_lesions[7])
+    ) / 8.0
+    if (int(mean_expected.genome_damage_event_delta[0]) != 8
+            or cpu_mean.hex() != '0x1.de203df070020p+11'
+            or old_grouping.hex() != '0x1.de203df070021p+11'
+            or float(mean_expected.genome_lesion_mean_after[0]).hex()
+            != cpu_mean.hex()):
+        raise AssertionError('A4.7b eight-lesion reduction fixture differs')
+    for device in devices:
+        mean_resident_binding = a4.bind_a4_translation(
+            mean_ragged.to_torch(device=device),
+            mean_state.to_torch(device=device),
+        )
+        mean_resident_tape = mean_tape.to_torch(
+            mean_binding, mean_dt, device=device,
+        )
+        mean_back = a47.genome_hydrolysis_deletion_torch(
+            mean_resident_binding, mean_dt, mean_resident_tape,
+        ).to_numpy()
+        v3.assert_recursive_close(
+            float(mean_back.genome_lesion_mean_after[0]), cpu_mean,
+            atol=2e-12, rtol=0.0,
+            path='a47b.eight_lesion_mean.%s' % device,
+        )
+
+    # The final division for three extremely uneven but finite lesions is one
+    # ULP lower on RTX CUDA than NumPy.  The pairwise numerator and every
+    # non-mean field remain bit-exact; only this final quotient may be either
+    # adjacent fp64 neighbour of the direct Formal066 mean.
+    division_world = v3.make_world(seed=33003, cells=1)
+    division_cell = division_world.cells[0]
+    division_world.config.endogenous_damage = False
+    division_cell.genomes = [
+        _a47_gene_sequence(a4.g2.ROLE_ENERGY, 0, length=33),
+        _a47_gene_sequence(a4.g2.ROLE_MEMBRANE, 0, length=34),
+        _a47_gene_sequence(a4.g2.ROLE_TRANSPORTER, 16, length=35),
+    ]
+    division_cell.genome_lesions = [float.fromhex(value) for value in (
+        '0x1.8000000000001p-1',
+        '0x1.249ad2594c37dp+332',
+        '0x1.249ad2594c37dp+333',
+    )]
+    division_cell.replication_template = None
+    division_cell.replication_copy = []
+    division_cell.replication_template_lesion = 0.0
+    division_cell.replication_fractional = 0.0
+    division_cell.membrane_oxidation[:] = 0.0
+    division_cell._refresh_gene_cache()
+    division_cell._sync_protein_pool()
+    division_dt = 1000.0
+    division_capacity = a4.GPU068A4Config(
+        max_cells=1, max_sequences=3, max_symbols=102,
+        max_sequence_symbols=35, max_proteins_per_cell=64,
+    )
+    division_ragged, division_state, division_binding = (
+        _paid_replication_binding(
+            [division_cell], division_world.config, division_capacity,
+        )
+    )
+    division_tape = a47.prepare_genome_hydrolysis_rng_tape(
+        division_binding, division_dt,
+        copy.deepcopy(division_world.rng.bit_generator.state),
+    )
+    division_expected = a47.genome_hydrolysis_deletion_numpy(
+        division_binding, division_dt, division_tape,
+    )
+    _, _, division_oracle = _a47b_formal066_oracle(
+        division_world, division_cell, division_dt,
+    )
+    division_post = division_oracle['genome_lesions_after']
+    division_mean = float(np.mean(division_post, dtype=np.float64))
+    if (division_tape.hit_mask[:3].tolist() != [False, True, True]
+            or [float(value).hex() for value in division_post] != [
+                '0x1.8000000000001p-1',
+                '0x1.d42aea2879f2fp+331',
+                '0x1.d42aea2879f2fp+332',
+            ]
+            or float(np.sum(division_post, dtype=np.float64)).hex()
+            != '0x1.5f202f9e5b763p+333'
+            or division_mean.hex() != '0x1.d42aea2879f2fp+331'
+            or float(division_expected.genome_lesion_mean_after[0]).hex()
+            != division_mean.hex()):
+        raise AssertionError('A4.7b three-lesion division fixture differs')
+    division_expected_state = division_expected.state_dict()
+    for device in devices:
+        division_resident_binding = a4.bind_a4_translation(
+            division_ragged.to_torch(device=device),
+            division_state.to_torch(device=device),
+        )
+        division_resident_tape = division_tape.to_torch(
+            division_binding, division_dt, device=device,
+        )
+        division_back = a47.genome_hydrolysis_deletion_torch(
+            division_resident_binding, division_dt,
+            division_resident_tape,
+        ).to_numpy()
+        if a47.validate_a4_hydrolysis_deletion_plan(
+                division_back, division_binding, division_dt,
+                division_tape) is not division_back:
+            raise AssertionError(
+                '%s A4.7b ULP readback was not validated' % device
+            )
+        division_actual_state = division_back.state_dict()
+        for name, expected_value in division_expected_state.items():
+            if name == 'genome_lesion_mean_after':
+                continue
+            v3.assert_recursive_close(
+                expected_value, division_actual_state[name],
+                atol=0.0, rtol=0.0,
+                path='a47b.division_nonmean.%s.%s' % (device, name),
+            )
+        actual_mean = float(division_back.genome_lesion_mean_after[0])
+        expected_bits = int(np.asarray(
+            division_mean, dtype=np.float64,
+        ).view(np.uint64))
+        actual_bits = int(np.asarray(
+            actual_mean, dtype=np.float64,
+        ).view(np.uint64))
+        if abs(actual_bits - expected_bits) > 1:
+            raise AssertionError(
+                '%s A4.7b lesion mean exceeds one ULP: %s vs %s' % (
+                    device, actual_mean.hex(), division_mean.hex(),
+                )
+            )
+
+    forbidden = (
+        '.item(', '.cpu(', '.numpy(', '.tolist(',
+        'nonzero(', 'masked_select(', 'unique(',
+    )
+    source = inspect.getsource(a47.genome_hydrolysis_deletion_torch)
+    hits = [token for token in forbidden if token in source]
+    if hits:
+        raise AssertionError('A4.7b Torch path contains host op: %s' % hits)
+    if world.rng.bit_generator.state != rng_before:
+        raise AssertionError('A4.7b apply advanced live RNG')
+    for label, before, after in (
+            ('world', world_before, world.state_dict()),
+            ('cell', cell_before, cell.state_dict()),
+            ('ragged', ragged_before, ragged.state_dict()),
+            ('state', state_before, state.state_dict()),
+            ('cache', cache_before, binding.cache.state_dict()),
+            ('tape', tape_before, tape.state_dict())):
+        v3.assert_recursive_close(
+            before, after, atol=0.0, rtol=0.0,
+            path='a47b.nonmutation.%s' % label,
+        )
+    return ('NumPy/Torch %s final deletion descriptor exact; all outputs '
+            'resident and source/tape/world/live RNG pure' % '/'.join(devices))
+
+
+def test_a47b_hydrolysis_capacity_trust_rollback_and_authority():
+    if torch is None:
+        raise AssertionError('PyTorch is required for A4.7b trust test')
+    world, cell, capacity, dt = _a47b_hydrolysis_fixture()
+    world_before = v3.pickle_clone(world.state_dict())
+    cell_before = v3.pickle_clone(cell.state_dict())
+    rng_before = copy.deepcopy(world.rng.bit_generator.state)
+    ragged, state, binding = _paid_replication_binding(
+        [cell], world.config, capacity,
+    )
+    ragged_before = ragged.state_dict()
+    state_before = state.state_dict()
+    cache_before = binding.cache.state_dict()
+    tape = a47.prepare_genome_hydrolysis_rng_tape(
+        binding, dt, rng_before,
+    )
+    tape_before = tape.state_dict()
+    plan = a47.genome_hydrolysis_deletion_numpy(
+        binding, dt, tape,
+    )
+
+    if (int(ragged.cell_capacity) != 1
+            or int(ragged.sequence_capacity) != 5
+            or int(ragged.symbol_capacity) != 199
+            or int(ragged.max_sequence_symbols) != 48):
+        raise AssertionError('A4.7b exact source capacity drifted')
+    exact_values = {
+        'max_cells': 1,
+        'max_sequences': 5,
+        'max_symbols': 199,
+        'max_sequence_symbols': 48,
+        'max_proteins_per_cell': 64,
+    }
+    for label, field in (
+            ('sequence', 'max_sequences'),
+            ('symbol', 'max_symbols'),
+            ('row_width', 'max_sequence_symbols')):
+        values = dict(exact_values)
+        values[field] -= 1
+        short = a4.GPU068A4Config(**values)
+        _assert_raises(
+            a4.A4CapacityError,
+            lambda short=short: a4.FullFidelityA4GenomeAdapter(
+                short,
+            ).pack_cells([cell]),
+        )
+
+    corruptions = []
+    bad = plan.clone()
+    bad.final_symbols[0, 0] = (
+        int(bad.final_symbols[0, 0]) + 1
+    ) % int(a4.g2.ALPHABET_SIZE)
+    corruptions.append(('used_symbol', bad))
+    bad = plan.clone()
+    tail = int(bad.final_lengths[0])
+    if tail >= int(bad.final_symbols.shape[1]):
+        raise AssertionError('A4.7b trust fixture lacks final-symbol tail')
+    bad.final_symbols[0, tail] = 1
+    corruptions.append(('symbol_tail', bad))
+    bad = plan.clone()
+    bad.final_lengths[0] -= 1
+    corruptions.append(('length', bad))
+    bad = plan.clone()
+    bad.genome_lesions_after[0] = np.nextafter(
+        bad.genome_lesions_after[0], np.float64(np.inf),
+    )
+    corruptions.append(('lesion', bad))
+    bad = plan.clone()
+    bad.pools_after[0, a4.a3.POOL_WASTE] = np.nextafter(
+        bad.pools_after[0, a4.a3.POOL_WASTE], np.float64(np.inf),
+    )
+    corruptions.append(('pool', bad))
+    for label, field in (
+            ('symbol_count', 'symbol_count_after'),
+            ('topology', 'topology_symbol_delta'),
+            ('damage_event', 'genome_damage_event_delta'),
+            ('material', 'genome_material_symbols_after'),
+            ('refresh_count', 'gene_cache_refresh_count')):
+        bad = plan.clone()
+        getattr(bad, field)[0] += 1
+        corruptions.append((label, bad))
+    bad = plan.clone()
+    bad.genome_lesion_mean_after[0] = np.nextafter(
+        np.nextafter(
+            bad.genome_lesion_mean_after[0], np.float64(np.inf),
+        ),
+        np.float64(np.inf),
+    )
+    corruptions.append(('lesion_mean', bad))
+    bad = plan.clone()
+    bad.gene_cache_dirty[0] = False
+    corruptions.append(('cache_dirty', bad))
+    for label, corrupt in corruptions:
+        _assert_raises(
+            a4.A4SchemaError,
+            lambda corrupt=corrupt: (
+                a47.validate_a4_hydrolysis_deletion_plan(
+                    corrupt, binding, dt, tape,
+                )
+            ),
+        )
+
+    wrong_dt = float(np.nextafter(
+        np.float64(dt), np.float64(np.inf),
+    ))
+    _assert_raises(
+        a47.A4HydrolysisScopeError,
+        lambda: a47.validate_a4_hydrolysis_deletion_plan(
+            plan, binding, wrong_dt, tape,
+        ),
+    )
+    stale_cell = copy.deepcopy(cell)
+    stale_cell.genome_lesions[0] = np.nextafter(
+        stale_cell.genome_lesions[0], np.float64(np.inf),
+    )
+    _, _, stale_binding = _paid_replication_binding(
+        [stale_cell], world.config, capacity,
+    )
+    _assert_raises(
+        a47.A4HydrolysisScopeError,
+        lambda: a47.validate_a4_hydrolysis_deletion_plan(
+            plan, stale_binding, dt, tape,
+        ),
+    )
+    foreign_state = copy.deepcopy(
+        np.random.default_rng(10147).bit_generator.state,
+    )
+    foreign_tape = a47.prepare_genome_hydrolysis_rng_tape(
+        binding, dt, foreign_state,
+    )
+    _assert_raises(
+        a47.A4HydrolysisScopeError,
+        lambda: a47.validate_a4_hydrolysis_deletion_plan(
+            plan, binding, dt, foreign_tape,
+        ),
+    )
+
+    second = copy.deepcopy(cell)
+    second.cell_id = int(cell.cell_id) + 1000000
+    multi_capacity = a4.GPU068A4Config(
+        max_cells=2, max_sequences=10, max_symbols=398,
+        max_sequence_symbols=48, max_proteins_per_cell=64,
+    )
+    _, _, multi_binding = _paid_replication_binding(
+        [cell, second], world.config, multi_capacity,
+    )
+    _assert_raises(
+        a47.A4HydrolysisScopeError,
+        lambda: a47.prepare_genome_hydrolysis_rng_tape(
+            multi_binding, dt, rng_before,
+        ),
+    )
+    _assert_raises(
+        a47.A4HydrolysisScopeError,
+        lambda: a47.validate_a4_hydrolysis_deletion_plan(
+            plan, multi_binding, dt, tape,
+        ),
+    )
+
+    source_lengths = np.diff(
+        ragged.sequence_offsets[:int(ragged.sequence_count) + 1]
+    ).astype(np.int64, copy=False)
+    source_rows = np.zeros(
+        (int(ragged.sequence_capacity), int(ragged.max_sequence_symbols)),
+        dtype=np.uint8,
+    )
+    for sequence_index, length in enumerate(source_lengths):
+        start = int(ragged.sequence_offsets[sequence_index])
+        source_rows[sequence_index, :int(length)] = (
+            ragged.symbols[start:start + int(length)]
+        )
+    rollback_expected = {
+        'final_symbols': source_rows,
+        'final_lengths': source_lengths,
+        'genome_lesions_after': ragged.genome_lesions.copy(),
+        'pools_after': state.pools[:1].copy(),
+        'symbol_count_after': np.asarray(
+            [ragged.symbol_count], dtype=np.int64,
+        ),
+        'topology_symbol_delta': np.zeros((1,), dtype=np.int64),
+        'genome_damage_event_delta': np.zeros((1,), dtype=np.int64),
+        'genome_material_symbols_after': (
+            state.genome_material_symbols[:1].copy()
+        ),
+        'genome_lesion_mean_after': state.genome_lesion_mean[:1].copy(),
+        'gene_cache_dirty': np.zeros((1,), dtype=bool),
+        'gene_cache_refresh_count': np.zeros((1,), dtype=np.int64),
+    }
+    devices = ['cpu']
+    if torch.cuda.is_available():
+        devices.append('cuda')
+    elif _REQUIRE_CUDA:
+        raise AssertionError('CUDA required but unavailable')
+    for device in devices:
+        for target in ('actual', 'expected'):
+            resident_binding = a4.bind_a4_translation(
+                ragged.to_torch(device=device),
+                state.to_torch(device=device),
+            )
+            resident_tape = tape.to_torch(
+                binding, dt, device=device,
+            )
+            if target == 'actual':
+                tensor = resident_tape.uniform_draws
+            else:
+                tensor = resident_tape._resident_expected_arrays[
+                    'uniform_draws'
+                ]
+            version = int(tensor._version)
+            tensor.data[0] = torch.remainder(
+                tensor.data[0] + 0.125, 1.0,
+            )
+            if int(tensor._version) != version:
+                raise AssertionError(
+                    '%s %s .data unexpectedly changed version' % (
+                        device, target,
+                    )
+                )
+            failed = a47.genome_hydrolysis_deletion_torch(
+                resident_binding, dt, resident_tape,
+            )
+            scope_valid = failed.scope_valid.detach().cpu().numpy()
+            error_code = failed.scope_error_code.detach().cpu().numpy()
+            if np.any(scope_valid) or not np.all(error_code != 0):
+                raise AssertionError(
+                    '%s %s tape tamper did not scope-fail' % (
+                        device, target,
+                    )
+                )
+            for name, expected_values in rollback_expected.items():
+                values = getattr(failed, name).detach().cpu().numpy()
+                v3.assert_recursive_close(
+                    expected_values, values, atol=0.0, rtol=0.0,
+                    path='a47b.rollback.%s.%s.%s' % (
+                        device, target, name,
+                    ),
+                )
+            _assert_raises(a47.A4HydrolysisScopeError, failed.to_numpy)
+
+        resident_binding = a4.bind_a4_translation(
+            ragged.to_torch(device=device),
+            state.to_torch(device=device),
+        )
+        resident_tape = tape.to_torch(binding, dt, device=device)
+        resident_plan = a47.genome_hydrolysis_deletion_torch(
+            resident_binding, dt, resident_tape,
+        )
+        version = int(resident_plan.final_symbols._version)
+        resident_plan.final_symbols.data[0, 0] = torch.remainder(
+            resident_plan.final_symbols.data[0, 0].to(torch.int64) + 1,
+            int(a4.g2.ALPHABET_SIZE),
+        ).to(resident_plan.final_symbols.dtype)
+        if int(resident_plan.final_symbols._version) != version:
+            raise AssertionError(
+                '%s plan .data unexpectedly changed version' % device
+            )
+        changed_readback = resident_plan.to_numpy()
+        _assert_raises(
+            a4.A4SchemaError,
+            lambda changed_readback=changed_readback: (
+                a47.validate_a4_hydrolysis_deletion_plan(
+                    changed_readback, binding, dt, tape,
+                )
+            ),
+        )
+
+    if (world.rng.bit_generator.state != rng_before
+            or a47.FULL_GPU_WORLD_STEP is not False
+            or a47.PORT_STATUS.get('full_gpu_world_step') is not False
+            or a4.a3.PORT_STATUS.get('genome_symbol_hydrolysis_rng')
+            != 'cpu-authoritative-explicit-hazard-plan'
+            or v3._event_order().count('genome_hydrolysis_cpu_rng') != 1):
+        raise AssertionError('A4.7b changed A3 hydrolysis authority')
+    for label, before, after in (
+            ('world', world_before, world.state_dict()),
+            ('cell', cell_before, cell.state_dict()),
+            ('ragged', ragged_before, ragged.state_dict()),
+            ('state', state_before, state.state_dict()),
+            ('cache', cache_before, binding.cache.state_dict()),
+            ('tape', tape_before, tape.state_dict())):
+        v3.assert_recursive_close(
+            before, after, atol=0.0, rtol=0.0,
+            path='a47b.trust_nonmutation.%s' % label,
+        )
+    return ('exact Q/S/W and each one-short; %d descriptor fields/'
+            'dt/source/tape/multicell trust rejection; CPU/CUDA public/private '
+            'tape rollback plus binding-aware plan .data rejection; '
+            'A3 authority retained' %
+            len(corruptions))
+
+
 TESTS = (
     test_api_scope,
     test_source_hash_inputs_present,
@@ -6043,6 +6819,9 @@ TESTS = (
     test_a47a_hydrolysis_literal_boundaries_and_zero_probability_draw,
     test_a47a_hydrolysis_formal066_hit_miss_hit_oracle_and_purity,
     test_a47a_hydrolysis_torch_trust_scope_and_a3_authority,
+    test_a47b_hydrolysis_apply_formal066_oracle_and_noop,
+    test_a47b_hydrolysis_numpy_torch_devices_and_purity,
+    test_a47b_hydrolysis_capacity_trust_rollback_and_authority,
 )
 
 
@@ -6084,9 +6863,12 @@ def run_all(write=False, output_dir=None):
                 a44.COMPLETION_MUTATION_PLAN_SCHEMA_VERSION
             ),
             'genome_hydrolysis_rng_tape': a47.SCHEMA_VERSION,
+            'genome_hydrolysis_deletion_plan': (
+                a47.DELETION_PLAN_SCHEMA_VERSION
+            ),
         },
         'development_slice': (
-            'A4.7a-single-cell-event-local-genome-hydrolysis-rng-tape'
+            'A4.7b-single-cell-resident-genome-hydrolysis-deletion-plan'
         ),
         'promoted_baseline_unchanged': 'SOMA-CELL 0.6.8-GPU A3',
         'full_gpu_world_step': False,

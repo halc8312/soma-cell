@@ -1,5 +1,5 @@
 {
-  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.7a-hydrolysis-rng-tape",
+  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.7b-hydrolysis-deletion-plan",
   "status": "development_slice_not_promoted",
   "full_gpu_world_step": false,
   "authoritative_state": "A4RaggedGenomeBatch",
@@ -516,9 +516,84 @@
       "no_scheduler_authority_changes_and_full_gpu_world_step_remains_false"
     ]
   },
+  "derived_hydrolysis_deletion_plan": {
+    "schema_version": "0.6.8-GPU-A4.7b-genome-hydrolysis-deletion-plan",
+    "ownership": "pure_single_cell_row_padded_descriptor_not_compact_arena_cache_live_RNG_CPU_cell_world_or_scheduler_authority",
+    "public_apis": [
+      "genome_hydrolysis_deletion_numpy_binding_dt_tape",
+      "genome_hydrolysis_deletion_torch_binding_dt_tape",
+      "genome_hydrolysis_deletion_plan_dispatch",
+      "validate_a4_hydrolysis_deletion_plan_host_binding_dt_tape"
+    ],
+    "supported_scope": [
+      "the_same_exactly_one_cell_post_lesion_gain_A4TranslationBinding_as_the_A4_7a_tape",
+      "a_fully_attested_A4HydrolysisRngTape_bound_to_source_dt_schedule_backend_and_device",
+      "all_used_complete_genome_and_active_template_copy_sequences_are_emitted_as_fixed_row_padded_output",
+      "only_hit_complete_genomes_delete_one_attested_position",
+      "zero_hit_and_zero_genome_sources_are_identity_descriptors"
+    ],
+    "scalar_metadata": {
+      "sequence_capacity": "positive_source_Q",
+      "max_sequence_symbols": "positive_source_W_not_above_frozen_MAX_GENOME_LENGTH",
+      "sequence_count": "used_sequence_count_not_above_Q",
+      "genome_count": "complete_genome_count_with_sequence_count_minus_genome_count_in_0_or_2",
+      "source_symbol_count": "compact_source_symbol_count_not_above_Q_times_W",
+      "cell_id": "single_nonnegative_stable_cell_ID",
+      "source_provenance": "64_character_lowercase_SHA256_of_the_validated_ragged_source",
+      "tape_schedule_sha256": "exact_A4_7a_tape_schedule_digest"
+    },
+    "arrays": {
+      "scope_valid": {"dtype": "bool", "shape": [1]},
+      "scope_error_code": {"dtype": "int64", "shape": [1]},
+      "final_symbols": {"dtype": "uint8", "shape": ["sequence_capacity", "max_sequence_symbols"], "unused": 0},
+      "final_lengths": {"dtype": "int64", "shape": ["sequence_capacity"], "unused": 0},
+      "genome_lesions_after": {"dtype": "float64", "shape": ["sequence_capacity"], "unused": 0.0},
+      "pools_after": {"dtype": "float64", "shape": [1, "POOL_COUNT"]},
+      "symbol_count_after": {"dtype": "int64", "shape": [1]},
+      "topology_symbol_delta": {"dtype": "int64", "shape": [1]},
+      "genome_damage_event_delta": {"dtype": "int64", "shape": [1]},
+      "gene_cache_dirty": {"dtype": "bool", "shape": [1]},
+      "gene_cache_refresh_count": {"dtype": "int64", "shape": [1]},
+      "genome_material_symbols_after": {"dtype": "int64", "shape": [1]},
+      "genome_lesion_mean_after": {"dtype": "float64", "shape": [1]}
+    },
+    "frozen_application_order": [
+      "iterate_complete_genomes_in_existing_order",
+      "on_each_hit_delete_exactly_one_attested_symbol",
+      "add_MONOMER_MASS_to_waste_once_with_sequential_fp64_grouping_never_hit_count_multiplication",
+      "multiply_that_genome_lesion_by_0_80",
+      "increment_genome_damage_event_delta_and_gene_cache_refresh_count",
+      "record_gene_cache_dirty_without_decoding_or_committing_a_live_cache"
+    ],
+    "resident_trust": {
+      "source": "binding_scalar_pointer_version_and_carried_host_provenance_attestation",
+      "tape": "public_and_private_expected_tensors_compare_on_device_before_semantic_use_including_data_version_bypass",
+      "failure": "one_global_scope_failure_with_source_state_rollback_and_zero_event_telemetry",
+      "readback": "full_plan_source_dt_tape_replay_only_after_explicit_to_numpy",
+      "hidden_host_operations": "no_item_cpu_numpy_tolist_torch_equal_or_implicit_synchronization"
+    },
+    "fp64_boundary": {
+      "ordered_waste_and_each_lesion_value": "bit_exact",
+      "lesion_prefix_sum": "NumPy_contiguous_pairwise_grouping_exact",
+      "genome_lesion_mean_after": "finite_nonnegative_expected_or_immediate_nextafter_neighbour_only_due_to_final_CPU_CUDA_division",
+      "maximum_accepted_distance": "one_ULP_for_this_field_only",
+      "software_division": "explicitly_not_implemented"
+    },
+    "invariants": [
+      "row_padded_output_is_not_the_compact_A4RaggedGenomeBatch_arena",
+      "active_replication_template_and_copy_rows_are_byte_exact_and_never_hit",
+      "symbol_count_and_genome_material_symbols_decrease_by_hit_count_while_sequence_and_genome_counts_do_not_change",
+      "topology_symbol_delta_is_negative_hit_count_and_damage_event_delta_refresh_count_equal_hit_count",
+      "gene_cache_dirty_is_true_if_and_only_if_hit_count_is_positive",
+      "deletion_only_shrinks_state_and_capacity_is_never_clipped_or_silently_grown",
+      "actual_compact_arena_cache_live_RNG_CPU_cell_world_and_scheduler_commit_remain_later",
+      "the_A3_dt_zero_bridge_difference_and_multi_cell_hydrolysis_remain_unresolved",
+      "full_gpu_world_step_remains_false"
+    ]
+  },
   "cpu_authoritative_after_slice": [
     "paid_translation_world_commit_and_scheduler_event",
-    "replication_mutation_free_inactive_template_start_actual_template_copy_or_completed_genome_arena_commit_live_lesion_cycle_cache_novel_path_update_hydrolysis_deletion_application_live_RNG_commit_and_world_commit",
+    "replication_mutation_free_inactive_template_start_actual_template_copy_or_completed_genome_arena_commit_live_lesion_cycle_cache_novel_path_update_compact_hydrolysis_arena_cache_live_RNG_CPU_cell_world_and_scheduler_commit_A3_dt_zero_bridge_correction_and_multi_cell_hydrolysis",
     "division_death_corpse_edna_hgt",
     "neural_and_causal_systems"
   ]

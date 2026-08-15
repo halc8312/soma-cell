@@ -1,6 +1,6 @@
-# SOMA-CELL 0.6.8-GPU A4.7a 事前登録（A4.1〜A4.6b2継承）
+# SOMA-CELL 0.6.8-GPU A4.7b 事前登録（A4.1〜A4.7a継承）
 
-状態: A4.6b2までを継承するA4.7a開発slice。A4昇格判定ではない。
+状態: A4.7aまでを継承するA4.7b開発slice。A4昇格判定ではない。
 
 ## 継承する基盤
 
@@ -659,5 +659,81 @@ A3 schedulerを変更せず、後続integration前にbridgeとlockstep testを�
   post-gain hydrolysis RNG tape、未適用・未統合」と記録する。
 - tapeだけでsymbol hydrolysis移植済み、live RNG authority、scheduler authority、
   full GPU world-step、速度向上とは呼ばない。
-- 次はA4.7bでattested tapeをfixed-shape deletion/material/lesion/event/cache-dirty
-  descriptorへ適用する。その後もatomic arena/cache/RNG commitとscheduler統合は別に行う。
+
+## A4.7b追加仮説
+
+A4.7aのattested tapeと同じpost-lesion-gain / pre-hydrolysis一cell bindingがあれば、
+凍結0.3のsymbol deletion、waste返却、lesion減衰、damage event、cache refresh意味を、
+compact arenaやlive stateを変更せずfixed row-padded descriptorとして独立照合できる。
+actual ragged再compactとatomic commitを同時に行う必要はない。
+
+## A4.7bで実装するもの
+
+- coreは既存`SOMA_CELL_0_6_8_gpu_a4_hydrolysis.py`だけを拡張する。
+- pure `A4HydrolysisDeletionPlan`。scalar identityは`sequence_capacity Q`、
+  `max_sequence_symbols W`、sequence/genome/source-symbol count、cell ID、source
+  provenance、A4.7a tape schedule digest。
+- public APIは`genome_hydrolysis_deletion_numpy`、
+  `genome_hydrolysis_deletion_torch`、`genome_hydrolysis_deletion_plan`、および
+  host binding-aware `validate_a4_hydrolysis_deletion_plan`。
+- fixed arraysは`scope_valid[1]`、`scope_error_code[1]`、
+  `final_symbols[Q,W]`、`final_lengths[Q]`、`genome_lesions_after[Q]`、
+  `pools_after[1,POOL_COUNT]`、`symbol_count_after[1]`、
+  `topology_symbol_delta[1]`、`genome_damage_event_delta[1]`、
+  `gene_cache_dirty[1]`、`gene_cache_refresh_count[1]`、
+  `genome_material_symbols_after[1]`、`genome_lesion_mean_after[1]`。
+- 全used sequenceをsource順のrow-padded表現にする。hit complete genomeだけattested
+  positionを1 symbol除去し、missとactive template/copyはbyte-exact、全tailはzero。
+
+各hitはgenome順に、delete、wasteへ`MONOMER_MASS`をfp64で1回加算、当該lesionを
+`*=0.80`、damage eventとcache refresh countを各1増加、の順を保つ。wasteを
+`initial + hit_count * MONOMER_MASS`で一括計算しない。CPUの各hit直後cache refreshは
+このloop中にreaderがないため、A4.7bではliteral refresh countとdirtyだけを保持する。
+final gene cacheはconceptual final complete genomesを既存A4.2 decoderへ渡して照合するが、
+live cacheにはしない。
+
+`genome_lesion_mean_after`は更新後complete lesion全prefixを1配列としてNumPy contiguous
+pairwise groupingでreduceする。CPU/CUDAでsumはexactでも最後のgenome-count divisionだけ
+1 ULP異なる実測edgeがあるため、このfieldだけfinite/nonnegative expectedの直前・直後
+`nextafter`までを許容する。他のsymbols、lengths、各lesion、sequential waste、event/
+material ledgerはexactを維持する。software fp64 divisionは追加しない。
+
+NumPyはsource/dt/tapeをfull replayしてから適用する。Torch CPU/CUDAはbinding provenance、
+capacity、dt、schedule、backend/deviceを照合し、tape public tensorとprivate expected tensorを
+device上で全field比較する。`.data` bypassまたはsemantic mismatchはsingle global failureとし、
+polymer/lesion/pools/derived stateをsource値へrollback、event telemetryをzeroにする。
+通常経路に`.item()`、`.cpu()`、`.numpy()`、`.tolist()`、`torch.equal`、hidden syncを入れない。
+
+## A4.7bで実装しないもの
+
+- row-padded outputからactual compact `A4RaggedGenomeBatch`を再構築・差替するcommit
+- actual gene-cache refresh/差替、CPU cell/world material/event更新
+- live PCG64 after-state commit、A3 hydrolysis bridge/scheduler authority置換
+- A3のeligible `dt==0` draw欠落修正、multi-cell tape連結/interleave
+- completion planとのatomic連結、device RNG、generic allocator/RNG framework
+- division/death/corpse/eDNA/HGT（A5）、neural/causal（A6）、速度向上主張、A4昇格
+
+## A4.7b固定テスト
+
+1. A4.7a hit/miss/hit tapeをdirect Formal066へ適用し、final polymers、genome順の
+   sequential waste、lesion `*0.80`、event/topology/material、cache dirty/refresh count、
+   conceptual final cacheを照合する。active template/copyは不変、`dt==0`はidentity。
+2. NumPy、Torch CPU、明示RTX CUDAで全plan arrays、device residency、source/tape/world/live
+   RNG purityを照合する。更新後lesion prefix groupingを固定し、3-genome巨大finite fixtureで
+   sum exactかつfinal divisionだけ1 ULPを許すことを示す。
+3. exact capacity、position bound、tail、plan field、source/dt/schedule、resident public/private
+   tape `.data`を検査する。失敗時はsingle global rollback、明示readback後host replay reject、
+   no hidden D2H、A3 authority不変を固定する。
+4. A4.1〜A4.7aの43 testsを変更せず継続し、合計46/46をCUDA必須でPASSさせる。
+
+## A4.7b判定
+
+- 46/46、direct Formal066、NumPy/Torch CPU/CUDA、sequential ledger、row-padded polymer、
+  derived state、trust/rollback、source/RNG非変更が全てPASSした場合だけ「A4.7b
+  single-cell hydrolysis deletion/ledger pure descriptor、未compact・未commit・未統合」と
+  記録する。
+- row-padded planをactual arena、live cache/RNG、CPU/world commit、scheduler authority、
+  full GPU world-step、速度向上とは呼ばない。
+- 次はresident chain全体のsource/tape/planをcommit直前に再attestし、compact arena、cache、
+  live RNG、CPU/worldとの境界をatomicに扱う別sliceとする。A3 dt0 bridge修正とmulti-cell
+  event interleaveもその統合前に別途固定する。

@@ -1,6 +1,6 @@
 # SOMA-CELL 0.6.8-GPU A4 contract
 
-Status: A4 development contract through slice A4.7a. This is not an A4
+Status: A4 development contract through slice A4.7b. This is not an A4
 promotion.
 
 ## Authority
@@ -466,6 +466,60 @@ known bridge difference, not a reason to change the frozen oracle.  A4.7a
 preserves the frozen draw and must not replace scheduler authority until the
 A3 bridge and its lockstep tests are corrected in a later integration slice.
 
+## A4.7b scope
+
+A4.7b consumes the trusted A4.7a tape and the same exactly-one-cell
+`A4TranslationBinding` to derive a pure deletion/ledger descriptor.  Public
+entry points are `genome_hydrolysis_deletion_numpy`,
+`genome_hydrolysis_deletion_torch`, and
+`genome_hydrolysis_deletion_plan`; full host replay is
+`validate_a4_hydrolysis_deletion_plan(plan, binding, dt, tape)`.  None of
+these functions changes the binding, tape, CPU cell, world, or live RNG.
+
+`A4HydrolysisDeletionPlan` uses row-padded `final_symbols[Q,W]` rather than
+claiming ownership of the compact ragged arena.  `Q` is source sequence
+capacity and `W` is the frozen per-sequence capacity.  Every used sequence is
+represented: hit complete genomes omit exactly the attested position, misses
+are unchanged, and active replication template/copy rows remain byte-exact.
+Unused symbol rows and row tails are zero.  `final_lengths[Q]` and the scalar
+source identity make a later compact rebuild possible, but this slice does
+not perform that rebuild.
+
+The remaining fixed arrays are `scope_valid[1]`, `scope_error_code[1]`,
+`genome_lesions_after[Q]`, `pools_after[1,POOL_COUNT]`,
+`symbol_count_after[1]`, `topology_symbol_delta[1]`,
+`genome_damage_event_delta[1]`, `gene_cache_dirty[1]`,
+`gene_cache_refresh_count[1]`, `genome_material_symbols_after[1]`, and
+`genome_lesion_mean_after[1]`.  The scalar metadata binds capacity/counts,
+source symbol count, cell ID, source provenance, and the A4.7a tape schedule
+digest.  The plan contains no duplicate RNG state or hit-position authority.
+
+For every hit, complete genomes are processed in original order: delete one
+symbol, add `MONOMER_MASS` to waste with one fp64 addition, multiply that
+genome lesion by `0.80`, increment the damage-event delta, and record one
+cache refresh.  Waste is never computed as `hit_count * MONOMER_MASS` because
+that changes frozen sequential rounding.  Frozen cache refresh has no
+intermediate reader, so the descriptor records the literal refresh count and
+dirty bit; the final cache can be derived from the final complete-genome rows,
+but no cache is made live here.
+
+The lesion mean is formed from the complete updated lesion prefix with the
+same contiguous NumPy pairwise grouping.  CPU and CUDA can differ only in the
+final division by genome count; validation permits the finite, nonnegative
+NumPy result or its immediate `nextafter` neighbour (at most one ULP) for this
+field alone.  Symbols, lengths, lesions, sequential waste, event/material
+ledgers, and all other fields remain exact.  Software fp64 division is not
+introduced for this bounded diagnostic difference.
+
+NumPy replays the tape against the full host source before application.
+Resident application requires matching source provenance, capacity, `dt`,
+schedule, backend, and device, then compares every public tape tensor with its
+private expected tensor on device.  A `.data` bypass or semantic disagreement
+invalidates the single global row and returns source-state rollback values;
+no `.item()`, `.cpu()`, `.numpy()`, `.tolist()`, `torch.equal`, or implicit
+synchronization is used.  Full plan/source replay occurs only after explicit
+readback.
+
 ## Fail-closed invariants
 
 Ragged foundation invariants remain unchanged:
@@ -575,12 +629,32 @@ Hydrolysis-tape invariants are:
 - The tape is RNG evidence only.  It contains no deleted polymer, waste or
   lesion update, damage-event delta, cache refresh, or commit authority.
 
-## Explicit exclusions through A4.7a
+Hydrolysis-deletion-plan invariants are:
+
+- Exactly one source cell and its attested tape are accepted; multi-cell tape
+  concatenation remains outside scope.
+- Row-padded output carries every used sequence without sorting.  Only hit
+  complete genomes shrink by one; template/copy and sequence count are fixed.
+- Symbol count, material-symbol count, topology delta, damage-event delta,
+  cache dirty state, and literal refresh count all agree with the hit count.
+- Waste additions preserve genome order, lesions receive one `* 0.80` per
+  hit, and the derived lesion mean uses the registered grouping/one-ULP final-
+  division boundary only.
+- Deletion only shrinks state.  Capacity is never clipped, repurposed as a
+  material trim, or silently grown; allocation failure is fail closed.
+- The result is a pure descriptor.  Actual arena compaction, cache refresh,
+  RNG advancement, CPU/world application, and scheduling remain separate.
+
+## Explicit exclusions through A4.7b
 
 - No scheduler/world integration or CPU-cell protein/material commit.
 - No mutation-free inactive-template start, actual template/copy/completed-
-  genome arena commit, live lesion/cycle/cache/novel-path update, hydrolysis
-  deletion plan/application, live RNG commit, or device RNG kernel.
+  genome arena commit, compact hydrolysis arena rebuild, live lesion/cycle/
+  cache/novel-path update, live RNG commit, or device RNG kernel.
+- No live gene-cache refresh, despite recording the literal dirty bit and
+  refresh count; no multi-cell hydrolysis tape or deletion plan.
+- No A3 zero-probability bridge correction.  Its eligible `dt == 0` draw
+  difference remains recorded until a later scheduler-integration slice.
 - No scheduler replacement and no change to A3 `gene_refresh`,
   `translation_cpu`, or `replication_cpu` authority.
 - No division, death, corpse/eDNA/HGT, neural, or causal-system port.
@@ -588,7 +662,7 @@ Hydrolysis-tape invariants are:
   CUDA, multi-stream, multi-GPU, or online-GPU abstraction.
 - No formal 13-spec/65-measurement benchmark and no speedup claim.
 
-## Acceptance through A4.7a
+## Acceptance through A4.7b
 
 - All A4.1 lossless/corruption/capacity/residency tests remain PASS.
 - Nested valid markers and invalid-outer/valid-inner recovery match frozen
@@ -741,6 +815,21 @@ Hydrolysis-tape invariants are:
   authority remain unchanged, including the explicitly recorded zero-
   probability draw difference.
 
+- Direct Formal066 hit/miss/hit and `dt == 0` fixtures reproduce final
+  polymers, sequential waste, lesion attenuation, symbol/material ledgers,
+  damage-event delta, cache dirty/refresh count, and derived lesion mean.
+  Active template/copy rows remain byte-exact.
+- NumPy, Torch CPU, and explicit RTX CUDA row-padded descriptors agree.  A
+  large finite three-genome fixture proves the contiguous lesion sum is exact
+  while only the final CUDA division uses the registered one-ULP allowance.
+- Source/tape/world/live RNG remain unchanged.  Source, `dt`, schedule,
+  position, tail, plan, and public/private resident tape corruption fail
+  closed; `.data` tape changes produce one global rollback without hidden
+  D2H.  Exact capacity and deletion-only shrinkage are preserved.
+- All 46 A4 development tests and focused A3 regressions pass while A4.7b is
+  a single-cell row-padded pure descriptor.  Compact arena/cache/live RNG/
+  CPU-cell/world commit and A3 scheduler authority remain unchanged.
+
 Known A4.4b integration blockers are recorded rather than hidden.  On the
 measured six-cell development fixture the current fixed symbol-rank Torch plan
 was about 503 ms per call versus about 10.1 ms for NumPy, so it is not a
@@ -758,7 +847,8 @@ division was rejected as disproportionate complexity.  The launch-heavy path
 must be redesigned and remeasured before scheduler authority, promotion, or
 any speedup claim.
 
-Actual ragged/RNG/cache commit, mutation-free inactive start, hydrolysis
-deletion application, and live RNG advancement remain separate later slices.
-Scheduler replacement remains later, after a contiguous resident chain can
-commit without recreating A3's per-cell host/device round trips.
+Actual compact ragged/cache/live-RNG/CPU-cell/world commit, mutation-free
+inactive start, multi-cell hydrolysis scheduling, and A3 zero-probability
+bridge correction remain separate later slices.  Scheduler replacement
+remains later, after a contiguous resident chain can commit without recreating
+A3's per-cell host/device round trips.
