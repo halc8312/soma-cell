@@ -1,6 +1,6 @@
 # SOMA-CELL 0.6.8-GPU A4 contract
 
-Status: A4 development contract through slice A4.8a. This is not an A4
+Status: A4 development contract through slice A4.8c2. This is not an A4
 promotion.
 
 ## Authority
@@ -665,6 +665,49 @@ make ordinary inactive-founder worlds generally supported and does not claim
 completion, full replication authority, persistent resident state, speedup,
 or a full GPU world-step.
 
+## A4.8c2 scope
+
+A4.8c2 adds exactly one completion branch in a new module while retaining the
+A4.8c1 source unchanged. `A4ReplicationCompletionEventScheduler` accepts a
+live cell with a pre-existing nonempty active template, an entry-time partial
+copy, `mutation == false`, and an A4.6a resident plan that completes in this
+call. A4.8c1 active noncompletion is selected only by the explicit resident
+scope code and delegated to the inherited scheduler. This includes valid
+active-gate `dt == 0`, requested-zero, and resource-stopped noncompletion.
+Mutation-enabled completion, inactive start, and disabled/no-genome/
+replicase-gated pre-active-return branches fail before claim with no frozen-
+CPU fallback.
+
+The resident A4.6a completion readback is commit authority. An independent
+NumPy replay must match all discrete fields and completed bytes exactly and
+permitted fp64 values within absolute `2e-12`; host values are never
+substituted. The completed polymer is the existing paid partial copy followed
+by this call's paid template suffix, preserving prior substitutions. Declared
+source objects, oracle values, resident ragged/state/cache/plan tensor storage
+and values, candidate state, fresh binding, config, device, `dt`, and the
+unchanged live PCG64 state are reattested immediately before claim. Equivalent
+read-only wrapper/view objects are semantic equivalents; A4.8c2 does not claim
+a generic transaction over every opaque mutable member of the CPU cell.
+
+After exactly one `replication_cpu` claim, the bridge appends the completed
+genome and lesion to the existing lists, retains existing genome objects,
+clears template/template-lesion/copy, resets fractional progress, increments
+the cycle, refreshes the existing gene-cache dictionary, conditionally sets
+`novel_path_first_age`, and publishes paid pools and replication telemetry.
+Mutation counters, proteins, damaged proteins, world energy, and the complete
+PCG64 object/state remain unchanged. Preclaim failure changes no bridge-owned
+state; postclaim failure restores the bridge-touched and explicitly snapshotted
+identities, order, values, and RNG state and leaves an aborted outer receipt.
+Protected test-hook code that independently mutates an out-of-scope CPU field
+is not promoted into a generic whole-cell rollback authority. Save/load/clone preserve the
+A4.8c2 wrapper and scheduler type at step boundaries; active serialization is
+rejected.
+
+This remains a correctness-only, per-event explicit-readback bridge. It does
+not implement mutation-enabled completion, inactive start, start-completion,
+pre-active-gate early-return authority, persistent resident state, speedup, or
+a full GPU world-step.
+
 ## Fail-closed invariants
 
 Ragged foundation invariants remain unchanged:
@@ -795,18 +838,20 @@ Hydrolysis-deletion-plan invariants are:
   Failure while publishing restores the original object identities and values
   and is recorded by the outer scheduler as an aborted step.
 
-## Explicit exclusions through A4.8c1
+## Explicit exclusions through A4.8c2
 
 - No scheduler/world integration other than the single-cell translation,
-  active-noncompletion replication, and hydrolysis event replacements in
-  `Hybrid066WorldA4Replication`.
+  pre-existing-active noncompletion and mutation-free completion replication,
+  and hydrolysis event replacements in
+  `Hybrid066WorldA4ReplicationCompletion`.
 - No caller-supplied tape/plan/candidate authority, persistent A4 arena, or
   multi-cell translation/replication/RNG batch. The wrapper rebuilds one
   disposable binding per event and preserves inherited per-cell event/RNG
   interleaving.
-- No inactive-template start, same-call completion, early-noop replication
-  authority, or completed-genome/lesion/cycle/cache/novel-path commit. Those
-  replication branches remain outside the A4.8c1 wrapper scope.
+- No inactive-template start, mutation-enabled same-call completion,
+  start-completion, or disabled/no-genome/replicase-gated pre-active-return
+  authority. Those replication branches remain outside the A4.8c2 wrapper
+  scope; inherited active zero-work noncompletion remains A4.8c1 authority.
 - No change to promoted A3 standalone `gene_refresh`, `translation_cpu`,
   `replication_cpu`, or hydrolysis bridge code, and no change to A4.3/A4.8a
   or A4.8b implementations. Their behavior is replaced only inside the new
@@ -818,7 +863,7 @@ Hydrolysis-deletion-plan invariants are:
   CUDA, multi-stream, multi-GPU, or online-GPU abstraction.
 - No formal 13-spec/65-measurement benchmark and no speedup claim.
 
-## Acceptance through A4.8c1
+## Acceptance through A4.8c2
 
 - All A4.1 lossless/corruption/capacity/residency tests remain PASS.
 - Nested valid markers and invalid-outer/valid-inner recovery match frozen
@@ -1052,6 +1097,25 @@ Hydrolysis-deletion-plan invariants are:
   A3 and A4.8a/b sources remain unchanged and
   `full_gpu_world_step=false`.
 
+- Direct Formal066 mutation-free active completion matches the A4.8c2 commit
+  for the prior partial-copy prefix, paid suffix, completed genome/lesion,
+  paid pools, proof/error telemetry, cycle/reset state, refreshed cache,
+  conditional novel path, existing object identities, and unchanged PCG64.
+- Torch CPU and explicit RTX CUDA candidates use resident A4.6a descriptor
+  authority, preserve preparation purity, match the independent NumPy replay,
+  produce a valid fresh binding, and reject candidate reuse.
+- Exact Q/S/W/P capacities pass and each one-short case fails before claim.
+  Used host/resident/candidate value or storage corruption, wrong `dt`,
+  mutation-enabled completion, inactive start, disabled replication, duplicate
+  use, and injected publish failure obey the declared no-change or bridge-
+  touched identity/RNG rollback boundary.
+- A4.8c1 noncompletion is explicitly delegated without legacy CPU fallback.
+  Completion save/load/clone preserves wrapper/scheduler type, active save is
+  rejected, and the following surface event keeps frozen event order.
+- All 62 A4 development tests pass with explicit CUDA required while promoted
+  A3 and A4.8a/b/c1 sources remain unchanged and
+  `full_gpu_world_step=false`.
+
 Known A4.4b integration blockers are recorded rather than hidden.  On the
 measured six-cell development fixture the current fixed symbol-rank Torch plan
 was about 503 ms per call versus about 10.1 ms for NumPy, so it is not a
@@ -1069,10 +1133,11 @@ division was rejected as disproportionate complexity.  The launch-heavy path
 must be redesigned and remeasured before scheduler authority, promotion, or
 any speedup claim.
 
-A4.8a, A4.8b, and A4.8c1 are bounded exceptions to the earlier pure-descriptor
-boundary: the opt-in wrapper commits paid translation, pre-existing-active
-noncompletion replication, and one hydrolysis event only after complete
-resident readback/replay. The promoted A3 standalone bridges remain
-byte-identical, no persistent resident chain or performance claim is implied,
-and inactive start, completion, early-noop replication authority, division,
-and the A5/A6 subsystems remain separate later slices.
+A4.8a, A4.8b, A4.8c1, and A4.8c2 are bounded exceptions to the earlier
+pure-descriptor boundary: the opt-in wrapper commits paid translation,
+pre-existing-active noncompletion replication, mutation-free active
+completion, and one hydrolysis event only after complete resident
+readback/replay. The promoted A3 standalone bridges remain byte-identical, no
+persistent resident chain or performance claim is implied, and mutation-on
+completion, inactive start, pre-active-gate early-return replication authority,
+division, and the A5/A6 subsystems remain separate later slices.

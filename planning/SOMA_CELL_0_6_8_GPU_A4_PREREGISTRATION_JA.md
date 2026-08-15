@@ -964,3 +964,58 @@ replicase gate通過、非負ATP、same-call noncompletionに限定する。
   A4.8bを維持してSTOPする。tolerance拡大やsilent clipで通さない。
 - 次は同じ4 testを拡張し、pre-existing active completion、その後inactive start/early no-opの順に
   別sliceで閉じる。A4.8c1だけでA4完成、persistent GPU world、speedup、昇格とは呼ばない。
+
+## A4.8c2追加仮説
+
+Rule Lock receipt `20260815T054018Z` の範囲は、pre-existing active nonempty template、
+entry時incomplete copy、`mutation=false`、same-call completionの原子的commitだけとする。
+A4.8c1 coreは変更せず、新規integration moduleのscheduler/world subclassでこの分岐だけを
+追加すれば、A4.6a completion descriptorをresident authorityとして凍結CPU semanticsどおり
+publishできるはずである。
+
+## A4.8c2で実装するもの
+
+- A4.8c1 scheduler/worldを継承する新規integration module。既存event ID/rankの
+  `replication_cpu`をexactly once claimし、A4.8c1 source/coreとpromoted A3は変更しない。
+- claim前にA4.6a `paid_replication_completion_plan`を内部生成し、resident Torch CPU/CUDA
+  fp64 outputを明示readbackする。独立NumPy replayはdiscrete値をexact、float64を最大
+  `2e-12`で照合するoracleに限定し、commit値はresident readbackとする。
+- completion payloadが`existing partial + paid suffix`であること、pools、proofreading台帳、
+  last count/error、fractional reset、new lesion、cycle/topology差分をsourceから再attestする。
+- 検証後だけcomplete genome/lesion追加、template/template lesion消去、copy reset、fractional、
+  cycle、gene cache、条件付き`novel_path_first_age`、paid pools/telemetryを一括publishする。
+- preclaim failureはreceipt/biology/live PCG64を不変にし、claim後publish exceptionは触れた
+  object identity・順序・値を局所rollbackする。`mutation=false`のため成功時も完全PCG64
+  identity/stateとmutation countersを不変にする。旧CPU bridgeへのfallbackは禁止する。
+- scheduler/worldのA4.8c2 type/schema/config/deviceをstep境界のsave/load/cloneで保持し、
+  active/pending serializationを拒否する。`full_gpu_world_step=false`を維持する。
+
+## A4.8c2で実装しないもの
+
+- mutation-on same-call completion、inactive template start、およびdisabled/no-genome/
+  replicase-gate等のpre-active-gate early-return authority。これらへ到達したらno fallbackでSTOPする。
+  active gate通過後の`dt==0`、requested-zero、resource stop noncompletionはA4.8c1へ明示delegateする。
+- caller supplied descriptor/candidate、multi-cell batch、device RNG、persistent arena/cache、
+  generic transaction/RNG framework、A4.6aまたはA4.8c1 coreの変更。
+- fp32、compile/graph/Triton/custom CUDA、performance、speedup、A4完成/昇格、A5/A6。
+
+## A4.8c2固定テスト
+
+1. mutation-free active completionをdirect Formal066と照合し、completed payload、paid pools、
+   proof/fractional/error、new lesion、cycle/template/copy/cache/novel-path、RNG不変を固定する。
+2. 明示Torch CPU/CUDA candidate/commit、independent NumPy oracle、resident device/pointer/content、
+   fresh binding/cache、one-shot、A4.6a source relationを照合する。
+3. exact capacityと各one-short、source/dt/config/device/descriptor/candidate tamper、duplicate/
+   out-of-order、claim前失敗、注入publish失敗のidentity rollbackをfail closedで固定する。
+   mutation-on completion、inactive start、pre-active-gate early returnはscope外かつno fallbackとする。
+4. completion後の後続event、save/load/clone、旧CPU replication未呼出しを照合し、既存58 testsを
+   変更せず継続して既存58 + 新規最大4 = 合計最大62 testsをCUDA必須でPASSさせる。
+
+## A4.8c2判定
+
+- 62/62とA3 regression、direct CPU semantics、resident/NumPy association、atomic rollback、
+  RNG不変、save/clone、promoted A3/A4.8c1 core不変がPASSした場合だけ「A4.8c2
+  mutation-free pre-existing-active completion atomic commit bridge」と記録する。
+- mutation-on completion、inactive start、pre-active-gate early return、CPU fallback、host値commit、scope拡大が
+  必要ならA4.8c1を維持してSTOPする。A4.8c2でもA4は未完であり、
+  `full_gpu_world_step=false`、速度向上なしを維持する。

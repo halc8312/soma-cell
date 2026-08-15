@@ -1,5 +1,5 @@
 # coding: utf-8
-"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.8c1 slices."""
+"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.8c2 slices."""
 from __future__ import division
 
 import argparse
@@ -26,6 +26,7 @@ import SOMA_CELL_0_6_8_gpu_a4_hydrolysis as a47
 import SOMA_CELL_0_6_8_gpu_a4_integration as a48
 import SOMA_CELL_0_6_8_gpu_a4_translation_integration as a48b
 import SOMA_CELL_0_6_8_gpu_a4_replication_integration as a48c
+import SOMA_CELL_0_6_8_gpu_a4_replication_completion_integration as a48c2
 import SOMA_CELL_0_6_8_gpu_a3_scheduler as a3s
 import SOMA_CELL_0_6_8_A3_validation as v3
 
@@ -34,9 +35,9 @@ try:
 except Exception:  # pragma: no cover
     torch = None
 
-RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_8C1_VALIDATION_RESULTS.json'
-RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_8c1_validation.csv'
-RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_8C1_VALIDATION_RESULTS.txt'
+RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_8C2_VALIDATION_RESULTS.json'
+RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_8c2_validation.csv'
+RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_8C2_VALIDATION_RESULTS.txt'
 
 SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4.py',
@@ -45,6 +46,7 @@ SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_integration.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_translation_integration.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_integration.py',
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_replication_completion_integration.py',
     'src/0_6_8/SOMA_CELL_0_6_8_A4_validation.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3.py',
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3_scheduler.py',
@@ -1307,6 +1309,15 @@ def test_api_scope():
                if not hasattr(a48c, name)]
     if missing:
         raise AssertionError('missing A4.8c1 API: %s' % missing)
+    completion_integration_required = (
+        'A4ReplicationCompletionCommitError',
+        'A4ReplicationCompletionEventScheduler',
+        'Hybrid066WorldA4ReplicationCompletion',
+    )
+    missing = [name for name in completion_integration_required
+               if not hasattr(a48c2, name)]
+    if missing:
+        raise AssertionError('missing A4.8c2 API: %s' % missing)
     if a4.FULL_GPU_WORLD_STEP is not False:
         raise AssertionError('A4.1 must not claim full GPU world-step')
     if hasattr(a4.A4GeneCacheBatch, 'from_state_dict'):
@@ -1466,12 +1477,35 @@ def test_api_scope():
                 a48c.Hybrid066WorldA4Replication,
                 a48b.Hybrid066WorldA4Translation)):
         raise AssertionError('A4.8c1 wrapper did not preserve A4.8b authority')
-    return '%s / %s + %s + %s + %s + %s + %s + %s + %s / full_gpu=false' % (
-        a48c.BUILD, a4.SCHEMA_VERSION,
+    completion_public_names = set(a48c2.__all__)
+    if (a48c2.BUILD != 'SOMA-CELL 0.6.8-GPU A4.8c2'
+            or a48c2.SCHEMA_VERSION
+            != ('0.6.8-GPU-A4.8c2-mutation-free-active-completion-'
+                'atomic-commit')
+            or a48c2.FULL_GPU_WORLD_STEP is not False
+            or '_A4ReplicationCompletionCommitCandidate'
+            in completion_public_names):
+        raise AssertionError('A4.8c2 identity/public scope differs')
+    completion_signature = inspect.signature(
+        a48c2.A4ReplicationCompletionEventScheduler.cpu_replication,
+    )
+    if tuple(completion_signature.parameters) != (
+            'self', 'world', 'cell', 'dt', 'config'):
+        raise AssertionError('A4.8c2 bridge accepts external plan authority')
+    if (not issubclass(
+            a48c2.A4ReplicationCompletionEventScheduler,
+            a48c.A4ReplicationEventScheduler)
+            or not issubclass(
+                a48c2.Hybrid066WorldA4ReplicationCompletion,
+                a48c.Hybrid066WorldA4Replication)):
+        raise AssertionError('A4.8c2 wrapper did not preserve A4.8c1 authority')
+    return ('%s / %s + %s + %s + %s + %s + %s + %s + %s + %s / '
+            'full_gpu=false') % (
+        a48c2.BUILD, a4.SCHEMA_VERSION,
         a4.GENE_CACHE_SCHEMA_VERSION + ' + ' + a4.TRANSLATION_SCHEMA_VERSION,
         a44.SCHEMA_VERSION, a47.SCHEMA_VERSION,
         a47.DELETION_PLAN_SCHEMA_VERSION, a48.SCHEMA_VERSION,
-        a48b.SCHEMA_VERSION, a48c.SCHEMA_VERSION,
+        a48b.SCHEMA_VERSION, a48c.SCHEMA_VERSION, a48c2.SCHEMA_VERSION,
     )
 
 
@@ -10225,6 +10259,528 @@ def test_a48c1_world_lockstep_interleave_save_clone_successor_and_authority():
             ))
 
 
+def _a48c2_completion_case(seed=11101, row=0):
+    world, cells, _, dt = _paid_completion_fixture(seed=seed)
+    cell = cells[int(row)]
+    world.config.mutation = False
+    _a48c_reduce_world(world, [cell])
+    return (
+        v3.pickle_clone(world.state_dict()), int(cell.cell_id), float(dt),
+    )
+
+
+def _a48c2_hybrid_from_state(state, capacity=None, device='cpu'):
+    world = a4.a3.s66.Formal066World.from_state(v3.pickle_clone(state))
+    backend = a4.a3.TorchKernelBackendA3(
+        v3._a3_config(device=device, precision='float64'),
+    )
+    return a48c2.Hybrid066WorldA4ReplicationCompletion(
+        world, backend=backend,
+        a4_config=capacity or a4.GPU068A4Config(),
+        a4_device=device,
+    )
+
+
+def _a48c2_assert_completion_oracle(expected_world, expected_cell,
+                                     actual_world, actual_cell, label):
+    _a48b_assert_cell_matches(
+        expected_cell, actual_cell, label,
+        atol=a48c2.REPLICATION_ORACLE_ATOL,
+    )
+    if (expected_world.rng.bit_generator.state
+            != actual_world.rng.bit_generator.state
+            or actual_cell.replication_template is not None
+            or actual_cell.replication_copy
+            or float(actual_cell.replication_template_lesion) != 0.0
+            or float(actual_cell.replication_fractional) != 0.0):
+        raise AssertionError(label + ' completion/RNG state differs')
+    v3.assert_recursive_close(
+        float(expected_world.dissipated_energy),
+        float(actual_world.dissipated_energy),
+        atol=0.0, rtol=0.0, path=label + '.dissipated_energy',
+    )
+
+
+def _a48c2_capacity_for_transition(before, after):
+    def dimensions(cell):
+        sequences = list(cell.genomes)
+        if cell.replication_template is not None:
+            sequences.extend((
+                cell.replication_template, cell.replication_copy,
+            ))
+        q_value = len(sequences)
+        s_value = sum(len(value) for value in sequences)
+        w_value = max([len(value) for value in sequences] or [1])
+        gene_keys = set(int(value) for value in cell.gene_specs)
+        p_value = max(
+            len(gene_keys.union(int(value) for value in cell.proteins)),
+            len(gene_keys.union(
+                int(value) for value in cell.damaged_proteins
+            )),
+            1,
+        )
+        return q_value, s_value, w_value, p_value
+
+    left = dimensions(before)
+    right = dimensions(after)
+    return {
+        'max_cells': 1,
+        'max_sequences': max(left[0], right[0]),
+        'max_symbols': max(left[1], right[1]),
+        'max_sequence_symbols': max(left[2], right[2]),
+        'max_proteins_per_cell': max(left[3], right[3]),
+    }
+
+
+def test_a48c2_mutation_free_completion_atomic_commit_formal066_oracle():
+    if torch is None:
+        raise AssertionError('PyTorch is required for A4.8c2')
+    devices = ['cpu']
+    if torch.cuda.is_available():
+        devices.append('cuda')
+    elif _REQUIRE_CUDA:
+        raise AssertionError('CUDA required but unavailable; fallback forbidden')
+
+    class ObserveCompletion(a48c2.A4ReplicationCompletionEventScheduler):
+        def _replication_completion_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            self.observed_plan = candidate.plan.clone()
+            return candidate
+
+    details = []
+    for device in devices:
+        for row in (0, 1):
+            state, cell_id, dt = _a48c2_completion_case(
+                seed=11101 + row, row=row,
+            )
+            direct = a4.a3.s66.Formal066World.from_state(
+                v3.pickle_clone(state),
+            )
+            world = a4.a3.s66.Formal066World.from_state(
+                v3.pickle_clone(state),
+            )
+            direct_cell = direct.cells[0]
+            cell = world.cells[0]
+            partial = np.asarray(cell.replication_copy, dtype=np.uint8).copy()
+            template = np.asarray(
+                cell.replication_template, dtype=np.uint8,
+            ).copy()
+            cycles_before = int(cell.replication_cycles)
+            rng_before = copy.deepcopy(world.rng.bit_generator.state)
+            identities = _a48c_identity_snapshot(world, cell)
+
+            direct_cell._replicate_genome(direct, dt, direct.config)
+            if (direct_cell.replication_template is not None
+                    or len(direct_cell.genomes) != 2):
+                raise AssertionError('Formal066 completion fixture drifted')
+
+            scheduler = ObserveCompletion(a4.GPU068A4Config(), device)
+            _a48c_begin_replication_direct(scheduler, world, cell, dt)
+            try:
+                scheduler.cpu_replication(world, cell, dt, world.config)
+                _a48c2_assert_completion_oracle(
+                    direct, direct_cell, world, cell,
+                    'a48c2.oracle.%s.%d' % (device, row),
+                )
+                plan = scheduler.observed_plan
+                length = int(plan.completed_lengths[0])
+                appended = int(plan.append_count[0])
+                completed = np.asarray(
+                    plan.completed_symbols[0, :length], dtype=np.uint8,
+                )
+                suffix = np.asarray(
+                    plan.append_symbols[0, :appended], dtype=np.uint8,
+                )
+                if (appended <= 0
+                        or not np.array_equal(completed[:len(partial)], partial)
+                        or not np.array_equal(completed[len(partial):], suffix)
+                        or not np.array_equal(suffix, template[len(partial):])
+                        or int(cell.replication_cycles) != cycles_before + 1
+                        or world.rng.bit_generator.state != rng_before):
+                    raise AssertionError(
+                        '%s row %d completion payload/ledger differs' % (
+                            device, row,
+                        )
+                    )
+                current_ids = _a48c_identity_snapshot(world, cell)
+                for key in ('rng', 'pools', 'genomes', 'lesions', 'copy',
+                            'events', 'proteins', 'damaged', 'gene_specs'):
+                    if current_ids[key] != identities[key]:
+                        raise AssertionError(
+                            '%s row %d changed %s object identity' % (
+                                device, row, key,
+                            )
+                        )
+                if current_ids['genome_items'][:len(
+                        identities['genome_items'])] != identities['genome_items']:
+                    raise AssertionError('existing genome identity changed')
+                entry = _a48c_replication_entry(scheduler, cell)
+                metadata = entry['metadata']
+                if (metadata.get('authority') != (
+                        'A4.8c2-resident-completion-plan-atomic-cpu-cell-commit')
+                        or metadata.get('branch')
+                        != 'active-completion-deterministic'
+                        or int(metadata.get('completion_events', 0)) != 1
+                        or int(metadata.get('rng_call_count', -1)) != 0
+                        or int(metadata.get('amount', 0)) != appended):
+                    raise AssertionError('A4.8c2 completion receipt differs')
+                details.append('%s:%d:%d' % (device, row, appended))
+            finally:
+                _a48_abort_direct(scheduler, cell)
+    return ('Formal066 mutation-free completion payload/lesion/cycle/reset/'
+            'cache/novel-path, object identity and PCG64 no-advance exact: ' +
+            ', '.join(details))
+
+
+def test_a48c2_completion_candidate_cpu_cuda_purity_and_fresh_binding():
+    if torch is None:
+        raise AssertionError('PyTorch is required for A4.8c2')
+    devices = ['cpu']
+    if torch.cuda.is_available():
+        devices.append('cuda')
+    elif _REQUIRE_CUDA:
+        raise AssertionError('CUDA required but unavailable; fallback forbidden')
+    details = []
+    for device in devices:
+        state, cell_id, dt = _a48c2_completion_case(seed=11121)
+        world = a4.a3.s66.Formal066World.from_state(v3.pickle_clone(state))
+        cell = world.cells[0]
+        scheduler = a48c2.A4ReplicationCompletionEventScheduler(
+            a4.GPU068A4Config(), device,
+        )
+        _a48c_begin_replication_direct(scheduler, world, cell, dt)
+        before = v3.pickle_clone(cell.state_dict())
+        before_rng = copy.deepcopy(world.rng.bit_generator.state)
+        before_energy = float(world.dissipated_energy)
+        try:
+            candidate = scheduler._prepare_completion_candidate(
+                world, cell, dt, world.config,
+            )
+            v3.assert_recursive_close(
+                before, cell.state_dict(), 0.0, 0.0,
+                'a48c2.prepare_purity.' + device,
+            )
+            if (world.rng.bit_generator.state != before_rng
+                    or float(world.dissipated_energy) != before_energy
+                    or candidate.candidate_cell is cell
+                    or candidate.plan is candidate.host_replay
+                    or candidate.resident_plan.pools_after.device.type != device
+                    or candidate.resident_binding.ragged.symbols.device.type
+                    != device):
+                raise AssertionError(device + ' candidate authority/purity differs')
+            a4._require_translation_binding(candidate.fresh_binding)
+            a48c._plan_semantic_match(
+                candidate.plan, candidate.host_replay,
+            )
+            direct = a4.a3.s66.Formal066World.from_state(
+                v3.pickle_clone(state),
+            )
+            direct.cells[0]._replicate_genome(direct, dt, direct.config)
+            _a48b_assert_cell_matches(
+                direct.cells[0], candidate.candidate_cell,
+                'a48c2.candidate.' + device,
+                atol=a48c2.REPLICATION_ORACLE_ATOL,
+            )
+            scheduler._commit_completion_candidate(
+                world, cell, dt, world.config, candidate,
+            )
+            _a48c2_assert_completion_oracle(
+                direct, direct.cells[0], world, cell,
+                'a48c2.commit.' + device,
+            )
+            committed = v3.pickle_clone(cell.state_dict())
+            committed_rng = copy.deepcopy(world.rng.bit_generator.state)
+            _assert_raises(
+                (a4.A4Error, a3s.A3SchedulerError),
+                lambda: scheduler._commit_completion_candidate(
+                    world, cell, dt, world.config, candidate,
+                ),
+            )
+            v3.assert_recursive_close(
+                committed, cell.state_dict(), 0.0, 0.0,
+                'a48c2.one_shot.' + device,
+            )
+            if world.rng.bit_generator.state != committed_rng:
+                raise AssertionError(device + ' reused candidate changed RNG')
+            details.append(device)
+        finally:
+            _a48_abort_direct(scheduler, cell)
+    return ('CPU/CUDA resident authority, independent NumPy oracle, prepare '
+            'purity, fresh binding and one-shot candidate PASS: ' +
+            '/'.join(details))
+
+
+def test_a48c2_completion_capacity_trust_rollback_scope_and_exact_once():
+    state, cell_id, dt = _a48c2_completion_case(seed=11141)
+    source = a4.a3.s66.Formal066World.from_state(v3.pickle_clone(state))
+    direct = a4.a3.s66.Formal066World.from_state(v3.pickle_clone(state))
+    direct.cells[0]._replicate_genome(direct, dt, direct.config)
+    exact_values = _a48c2_capacity_for_transition(
+        source.cells[0], direct.cells[0],
+    )
+    exact = a4.GPU068A4Config(**exact_values)
+
+    for device in (['cpu', 'cuda'] if torch is not None
+                   and torch.cuda.is_available() else ['cpu']):
+        world = a4.a3.s66.Formal066World.from_state(v3.pickle_clone(state))
+        cell = world.cells[0]
+        scheduler = a48c2.A4ReplicationCompletionEventScheduler(exact, device)
+        _a48c_begin_replication_direct(scheduler, world, cell, dt)
+        try:
+            scheduler.cpu_replication(world, cell, dt, world.config)
+            _a48c2_assert_completion_oracle(
+                direct, direct.cells[0], world, cell,
+                'a48c2.capacity_exact.' + device,
+            )
+        finally:
+            _a48_abort_direct(scheduler, cell)
+
+    for label, key in (
+            ('Q', 'max_sequences'), ('S', 'max_symbols'),
+            ('W', 'max_sequence_symbols'), ('P', 'max_proteins_per_cell')):
+        values = dict(exact_values)
+        values[key] -= 1
+        _a48c_assert_preclaim_failure(
+            state, cell_id, dt, a4.GPU068A4Config(**values),
+            scheduler_type=a48c2.A4ReplicationCompletionEventScheduler,
+            label='a48c2.capacity_' + label,
+        )
+
+    class TamperResidentPlan(a48c2.A4ReplicationCompletionEventScheduler):
+        def _replication_completion_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.resident_plan.completed_symbols.data[0, 0].bitwise_xor_(1)
+            return candidate
+
+    class TamperHostReplay(a48c2.A4ReplicationCompletionEventScheduler):
+        def _replication_completion_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.host_replay.completed_symbols[0, 0] ^= np.uint8(1)
+            return candidate
+
+    class TamperCandidate(a48c2.A4ReplicationCompletionEventScheduler):
+        def _replication_completion_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            candidate.candidate_cell.membrane[0] += 0.125
+            return candidate
+
+    class SwapResidentCache(a48c2.A4ReplicationCompletionEventScheduler):
+        def _replication_completion_candidate_ready(
+                self, world, cell, dt, config, candidate):
+            object.__setattr__(
+                candidate.resident_binding, 'cache',
+                candidate.resident_binding.cache.clone(),
+            )
+            return candidate
+
+    trust_types = (
+        TamperResidentPlan, TamperHostReplay, TamperCandidate,
+        SwapResidentCache,
+    )
+    for scheduler_type in trust_types:
+        _a48c_assert_preclaim_failure(
+            state, cell_id, dt, exact,
+            scheduler_type=scheduler_type,
+            label='a48c2.trust.' + scheduler_type.__name__,
+        )
+
+    # Wrong dt is checked against the prepared one-shot candidate itself.
+    world = a4.a3.s66.Formal066World.from_state(v3.pickle_clone(state))
+    cell = world.cells[0]
+    scheduler = a48c2.A4ReplicationCompletionEventScheduler(exact, 'cpu')
+    _a48c_begin_replication_direct(scheduler, world, cell, dt)
+    try:
+        candidate = scheduler._prepare_completion_candidate(
+            world, cell, dt, world.config,
+        )
+        before = v3.pickle_clone(cell.state_dict())
+        before_rng = copy.deepcopy(world.rng.bit_generator.state)
+        _assert_raises(
+            (a4.A4Error, a3s.A3SchedulerError),
+            lambda: scheduler._commit_completion_candidate(
+                world, cell, np.nextafter(dt, np.inf),
+                world.config, candidate,
+            ),
+        )
+        v3.assert_recursive_close(
+            before, cell.state_dict(), 0.0, 0.0, 'a48c2.wrong_dt',
+        )
+        if world.rng.bit_generator.state != before_rng:
+            raise AssertionError('wrong-dt rejection changed RNG')
+    finally:
+        _a48_abort_direct(scheduler, cell)
+
+    class FailingPublish(a48c2.A4ReplicationCompletionEventScheduler):
+        def _publish_replication_completion_candidate(
+                self, world, cell, candidate):
+            super(FailingPublish, self)._publish_replication_completion_candidate(
+                world, cell, candidate,
+            )
+            cell.age += 9.0
+            world.rng.random()
+            raise RuntimeError('injected A4.8c2 publish failure')
+
+    world = a4.a3.s66.Formal066World.from_state(v3.pickle_clone(state))
+    cell = world.cells[0]
+    scheduler = FailingPublish(exact, 'cpu')
+    _a48c_begin_replication_direct(scheduler, world, cell, dt)
+    before = v3.pickle_clone(cell.state_dict())
+    before_ids = _a48c_identity_snapshot(world, cell)
+    before_rng = copy.deepcopy(world.rng.bit_generator.state)
+    try:
+        _assert_raises(
+            RuntimeError,
+            lambda: scheduler.cpu_replication(world, cell, dt, world.config),
+        )
+        v3.assert_recursive_close(
+            before, cell.state_dict(), 0.0, 0.0, 'a48c2.rollback',
+        )
+        after_ids = _a48c_identity_snapshot(world, cell)
+        if after_ids != before_ids or world.rng.bit_generator.state != before_rng:
+            raise AssertionError('A4.8c2 publish rollback identity/RNG differs')
+    finally:
+        _a48_abort_direct(scheduler, cell)
+
+    for label, mutate in (
+            ('mutation_on', lambda world, cell: setattr(
+                world.config, 'mutation', True)),
+            ('inactive', lambda world, cell: (
+                setattr(cell, 'replication_template', None),
+                setattr(cell, 'replication_copy', []))),
+            ('disabled', lambda world, cell: setattr(
+                world.config, 'genome_replication', False))):
+        scoped = a4.a3.s66.Formal066World.from_state(v3.pickle_clone(state))
+        scoped_cell = scoped.cells[0]
+        mutate(scoped, scoped_cell)
+        scoped.initial_total_material = scoped.total_material()
+        scoped_state = v3.pickle_clone(scoped.state_dict())
+        _a48c_assert_preclaim_failure(
+            scoped_state, int(scoped_cell.cell_id), dt, exact,
+            scheduler_type=a48c2.A4ReplicationCompletionEventScheduler,
+            label='a48c2.scope.' + label,
+        )
+    return ('Q/S/W/P exact and one-short; resident/host/candidate trust; '
+            'wrong-dt; declared identity/RNG rollback; mutation/inactive/disabled '
+            'scope fail-closed PASS')
+
+
+def test_a48c2_inherited_c1_save_clone_successor_and_authority():
+    devices = ['cpu']
+    if torch is not None and torch.cuda.is_available():
+        devices.append('cuda')
+    elif _REQUIRE_CUDA:
+        raise AssertionError('CUDA required but unavailable; fallback forbidden')
+
+    # Noncompletion remains explicitly delegated to the inherited c1 bridge.
+    source, cells, _, dt = _paid_replication_b_fixture(seed=11161)
+    _a48c_reduce_world(source, [cells[0]])
+    noncompletion_state = v3.pickle_clone(source.state_dict())
+    delegated = []
+    for device in devices:
+        direct = a4.a3.s66.Formal066World.from_state(
+            v3.pickle_clone(noncompletion_state),
+        )
+        world = a4.a3.s66.Formal066World.from_state(
+            v3.pickle_clone(noncompletion_state),
+        )
+        direct.cells[0]._replicate_genome(direct, dt, direct.config)
+        scheduler = a48c2.A4ReplicationCompletionEventScheduler(
+            a4.GPU068A4Config(), device,
+        )
+        _a48c_begin_replication_direct(scheduler, world, world.cells[0], dt)
+        try:
+            scheduler.cpu_replication(
+                world, world.cells[0], dt, world.config,
+            )
+            _a48c_assert_oracle(
+                direct, direct.cells[0], world, world.cells[0],
+                'a48c2.delegate.' + device,
+            )
+            entry = _a48c_replication_entry(scheduler, world.cells[0])
+            if entry['metadata'].get('authority') != (
+                    'A4.8c1-resident-plan-atomic-cpu-cell-rng-commit'):
+                raise AssertionError(device + ' did not delegate to A4.8c1')
+            delegated.append(device)
+        finally:
+            _a48_abort_direct(scheduler, world.cells[0])
+
+    # Freeze wrapper/scheduler persistence before the one supported completion.
+    completion_state, _, completion_dt = _a48c2_completion_case(seed=11162)
+    capacity = a4.GPU068A4Config()
+    hybrid = _a48c2_hybrid_from_state(completion_state, capacity, 'cpu')
+    twin = hybrid.clone()
+    with tempfile.TemporaryDirectory() as directory:
+        path = os.path.join(directory, 'a48c2.pkl')
+        hybrid.save(path)
+        restored = a48c2.Hybrid066WorldA4ReplicationCompletion.load(path)
+        for value in (hybrid, twin, restored):
+            if (type(value) is not a48c2.Hybrid066WorldA4ReplicationCompletion
+                    or type(value.scheduler)
+                    is not a48c2.A4ReplicationCompletionEventScheduler
+                    or value.scheduler.a4_device != 'cpu'
+                    or value.scheduler.a4_config != capacity):
+                raise AssertionError('A4.8c2 save/clone authority was lost')
+        cpu = a4.a3.s66.Formal066World.from_state(
+            v3.pickle_clone(completion_state),
+        )
+        cpu.step(completion_dt)
+        receipts = []
+        for value in (hybrid, twin, restored):
+            receipts.append(value.step(completion_dt))
+            v3._assert_world_pair(
+                cpu, value, state_atol=v3.WORLD_FP64_ATOL,
+                ledger_atol=v3.LEDGER_ATOL,
+                label='a48c2.persisted_completion',
+            )
+        for receipt in receipts:
+            record = receipt['cells'][0]
+            names = [entry['event'] for entry in record['events']]
+            by_name = {entry['event']: entry for entry in record['events']}
+            if (names.count('replication_cpu') != 1
+                    or not names.index('translation_cpu')
+                    < names.index('replication_cpu')
+                    < names.index('surface_assembly')
+                    or by_name['replication_cpu']['metadata'].get('authority')
+                    != ('A4.8c2-resident-completion-plan-atomic-'
+                        'cpu-cell-commit')):
+                raise AssertionError('A4.8c2 successor order/authority differs')
+
+    active = _a48c2_hybrid_from_state(completion_state, capacity, 'cpu')
+    active.scheduler.begin_step(active.world, active.world.cells)
+    _assert_raises(a3s.A3SchedulerProtocolError, active.clone)
+    active.scheduler.abort_step(RuntimeError('expected active-save rejection'))
+    active.scheduler._a4_replication_completion_commit_active = True
+    try:
+        _assert_raises(a3s.A3SchedulerProtocolError, active.state_dict)
+    finally:
+        active.scheduler._a4_replication_completion_commit_active = False
+
+    expected_status = (
+        'a4.8c2-mutation-free-pre-existing-active-completion-'
+        'resident-descriptor-cpu-cell-atomic-commit-'
+        'a4.8c1-active-noncompletion-inherited-'
+        'mutation-completion-inactive-early-noop-fail-closed'
+    )
+    if (a48c2.PORT_STATUS.get('genome_replication') != expected_status
+            or a48c2.FULL_GPU_WORLD_STEP is not False
+            or not issubclass(
+                a48c2.A4ReplicationCompletionEventScheduler,
+                a48c.A4ReplicationEventScheduler,
+            )
+            or not issubclass(
+                a48c2.Hybrid066WorldA4ReplicationCompletion,
+                a48c.Hybrid066WorldA4Replication,
+            )):
+        raise AssertionError('A4.8c2 scope/API/full-GPU authority differs')
+    for relative, expected in PROMOTED_A3_SHA256.items():
+        if _sha256(os.path.join(ROOT, *relative.split('/'))) != expected:
+            raise AssertionError(relative + ' changed from promoted A3 bytes')
+    return ('inherited c1 delegation %s; completion save/load/clone type; '
+            'translation<replication<surface successor order; active save '
+            'reject; promoted A3 byte authority/full_gpu=false PASS' %
+            '/'.join(delegated))
+
+
 TESTS = (
     test_api_scope,
     test_source_hash_inputs_present,
@@ -10284,6 +10840,10 @@ TESTS = (
     test_a48c1_active_noncompletion_candidate_cpu_cuda_purity_and_rng,
     test_a48c1_active_noncompletion_capacity_trust_rollback_scope_and_exact_once,
     test_a48c1_world_lockstep_interleave_save_clone_successor_and_authority,
+    test_a48c2_mutation_free_completion_atomic_commit_formal066_oracle,
+    test_a48c2_completion_candidate_cpu_cuda_purity_and_fresh_binding,
+    test_a48c2_completion_capacity_trust_rollback_scope_and_exact_once,
+    test_a48c2_inherited_c1_save_clone_successor_and_authority,
 )
 
 
@@ -10311,7 +10871,7 @@ def run_all(write=False, output_dir=None):
     failed = sum(row['status'] == 'FAIL' for row in rows)
     elapsed = time.time() - started
     payload = {
-        'build': a48c.BUILD,
+        'build': a48c2.BUILD,
         'schema': {
             'ragged_genome': a4.SCHEMA_VERSION,
             'gene_cache': a4.GENE_CACHE_SCHEMA_VERSION,
@@ -10333,9 +10893,12 @@ def run_all(write=False, output_dir=None):
             'active_noncompletion_replication_atomic_commit': (
                 a48c.SCHEMA_VERSION
             ),
+            'mutation_free_active_completion_atomic_commit': (
+                a48c2.SCHEMA_VERSION
+            ),
         },
         'development_slice': (
-            'A4.8c1-pre-existing-active-noncompletion-replication-'
+            'A4.8c2-mutation-free-pre-existing-active-completion-'
             'atomic-commit-bridge'
         ),
         'promoted_baseline_unchanged': 'SOMA-CELL 0.6.8-GPU A3',
@@ -10358,7 +10921,7 @@ def run_all(write=False, output_dir=None):
             writer.writeheader()
             writer.writerows(rows)
         lines = [
-            '%s VALIDATION' % a48c.BUILD,
+            '%s VALIDATION' % a48c2.BUILD,
             '%d PASS / %d FAIL / %d TOTAL' % (passed, failed, len(rows)),
             'elapsed %.6fs' % elapsed,
             '',
