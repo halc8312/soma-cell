@@ -1,8 +1,8 @@
 {
-  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.8b-translation-atomic-commit",
+  "schema_id": "SOMA-CELL-0.6.8-GPU-A4.8c1-active-noncompletion-replication-atomic-commit",
   "status": "development_slice_not_promoted",
   "full_gpu_world_step": false,
-  "authoritative_state": "committed_CPU_world_and_full_PCG64_are_durable_after_A4_8b;_A4_resident_descriptors_are_event_local_validated_evidence_only",
+  "authoritative_state": "committed_CPU_world_and_full_PCG64_are_durable_after_A4_8c1;_A4_resident_descriptors_are_event_local_validated_evidence_only",
   "ragged_genome": {
     "schema_version": "0.6.8-GPU-A4.1-ragged-genome",
     "sequence_order": [
@@ -660,7 +660,7 @@
     "scheduler_event": {
       "event_id": "translation_cpu",
       "rank_and_predecessors": "inherited_unchanged_from_A3_exact_once_scheduler_after_maintenance_and_before_replication",
-      "scope": "this_event_is_replaced_in_addition_to_the_inherited_A4_8a_hydrolysis_override_all_replication_events_keep_A3_authority",
+      "scope": "inside_the_A4_8b_wrapper_this_event_is_replaced_in_addition_to_the_inherited_A4_8a_hydrolysis_override_and_all_replication_events_keep_A3_authority",
       "external_inputs": "no_external_binding_plan_or_candidate_is_accepted"
     },
     "source_boundary": [
@@ -712,14 +712,83 @@
       "resident_readback_is_commit_authority_and_the_NumPy_result_is_validation_only",
       "single_cell_event_order_preserves_replication_hydrolysis_motion_and_world_PCG64_interleaving_without_batching",
       "explicit_per_cell_host_device_round_trips_are_correctness_validation_not_a_performance_candidate",
-      "all_replication_commits_remain_CPU_authoritative",
+      "inside_the_A4_8b_wrapper_all_replication_commits_remain_CPU_authoritative",
+      "full_gpu_world_step_remains_false"
+    ]
+  },
+  "integration_active_noncompletion_replication_atomic_commit": {
+    "schema_version": "0.6.8-GPU-A4.8c1-active-noncompletion-replication-atomic-commit",
+    "ownership": "private_one_shot_single_cell_resident_result_and_optional_PCG64_tape_commit_bridge_with_committed_CPU_world_and_full_PCG64_as_durable_step_boundary_authority",
+    "public_apis": [
+      "A4ReplicationEventScheduler",
+      "Hybrid066WorldA4Replication",
+      "A4ReplicationCommitError"
+    ],
+    "scheduler_event": {
+      "event_id": "replication_cpu",
+      "rank_and_predecessors": "inherited_unchanged_from_A3_exact_once_scheduler_after_translation_and_before_surface_assembly",
+      "scope": "only_pre_existing_active_nonempty_template_incomplete_copy_and_same_call_noncompletion_with_valid_replicase_ATP_and_fp64_scope",
+      "inherited_overrides": "A4_8b_paid_translation_and_A4_8a_genome_hydrolysis",
+      "external_inputs": "no_external_binding_tape_plan_or_candidate_is_accepted"
+    },
+    "branch_dispatch": {
+      "mutation_false": "A4_4b_paid_replication_elongation_plan_with_live_PCG64_unchanged",
+      "mutation_true": "A4_5a_prepare_substitution_rng_tape_then_paid_replication_substitution_plan_with_exact_after_state_commit",
+      "zero_append": "dt_zero_requested_zero_and_resource_stop_are_supported_after_the_active_gate_and_keep_their_fractional_error_and_last_telemetry",
+      "fail_closed": "inactive_start_same_call_completion_disabled_no_genome_replicase_gate_negative_ATP_fp64_ambiguity_and_capacity_failure_are_rejected_before_claim_without_CPU_fallback"
+    },
+    "preclaim_pipeline": [
+      "pack_and_bind_the_live_single_cell_and_require_live_gene_specs_to_equal_the_genome_derived_cache",
+      "evaluate_an_independent_NumPy_plan_and_for_mutation_generate_a_literal_scalar_PCG64_tape_from_the_exact_before_state",
+      "upload_ragged_state_cache_optional_tape_and_evaluate_the_resident_plan_on_explicit_Torch_CPU_or_CUDA",
+      "explicitly_read_back_every_resident_source_tape_and_plan_value",
+      "require_exact_scope_append_bytes_counts_discrete_order_and_RNG_and_float64_absolute_error_at_most_2e_12",
+      "use_the_resident_readback_as_commit_authority_and_never_substitute_host_oracle_values",
+      "build_a_deep_isolated_CPU_candidate_from_the_resident_result_and_issue_a_fresh_binding",
+      "regenerate_the_mutation_tape_from_the_live_source_and_live_RNG_immediately_before_claim",
+      "recheck_cell_scheduler_world_config_dt_capacity_device_live_RNG_host_source_oracle_tape_and_every_resident_object_backend_pointer_version_and_value",
+      "reattest_candidate_full_state_object_identity_and_fresh_binding_to_detect_alias_whole_member_and_Torch_data_bypasses"
+    ],
+    "atomic_publish": [
+      "claim_replication_cpu_exactly_once_only_after_all_checks_pass",
+      "write_NUCLEOTIDE_and_ATP_into_the_existing_pools_array",
+      "extend_the_existing_replication_copy_list_with_the_ordered_resident_suffix",
+      "publish_replication_fractional_last_symbols_effective_error_and_cumulative_proofreading_ATP",
+      "update_substitution_count_inside_the_existing_mutation_events_dictionary",
+      "for_mutation_true_publish_the_attested_after_state_into_the_same_live_PCG64_object_and_for_false_preserve_the_complete_state",
+      "preserve_genomes_lesions_template_gene_specs_protein_dictionaries_cycles_novel_path_and_world_energy_identity_and_value"
+    ],
+    "failure_semantics": {
+      "before_claim": "receipts_biology_object_identity_world_ledgers_and_live_RNG_are_unchanged_and_the_legacy_CPU_replication_bridge_is_not_called",
+      "after_claim": "restore_original_pool_copy_mutation_event_telemetry_scope_outside_biology_and_RNG_identities_order_and_values_then_record_an_aborted_outer_step",
+      "capacity": "exact_Q_S_W_P_pass_and_each_one_short_case_fails_before_claim_without_clip_reallocation_or_fallback",
+      "lifetime": "binding_oracle_tape_resident_plan_and_candidate_are_private_one_shot_disposable_objects"
+    },
+    "downstream_surface_gate": {
+      "authority": "the_immediately_following_surface_assembly_event_keeps_its_inherited_A3_authority",
+      "controls": "Torch_CPU_and_CUDA_each_cover_ATP_next_below_exact_and_next_above_threshold_after_replication",
+      "required_result": "discrete_surface_outcome_and_full_PCG64_state_match_the_direct_frozen_replication_then_surface_twin"
+    },
+    "persistence": {
+      "durable_authority": "committed_CPU_world_and_full_PCG64_state_at_step_boundary",
+      "saved_A4_metadata": "fixed_capacities_device_replication_scheduler_type_and_inherited_translation_hydrolysis_metadata",
+      "save_load_clone": "restore_Hybrid066WorldA4Replication_and_A4ReplicationEventScheduler_with_exact_next_step_continuation",
+      "active_or_pending": "serialization_is_rejected"
+    },
+    "invariants": [
+      "promoted_A3_A4_pure_cores_and_A4_8a_b_sources_remain_byte_identical",
+      "resident_readback_is_commit_authority_and_the_NumPy_result_is_validation_only",
+      "single_cell_event_order_preserves_replication_surface_hydrolysis_motion_and_world_PCG64_interleaving_without_batching",
+      "inactive_start_completion_and_early_noop_replication_authority_remain_unimplemented_and_fail_closed",
+      "explicit_per_cell_host_device_round_trips_are_correctness_validation_not_a_performance_candidate",
       "full_gpu_world_step_remains_false"
     ]
   },
   "cpu_authoritative_after_slice": [
-    "all_replication_branches_and_actual_template_copy_completed_genome_arena_lesion_cycle_cache_and_novel_path_commits",
-    "all_scheduler_events_except_the_A4_wrapper_single_cell_paid_translation_and_genome_hydrolysis_events",
+    "all_replication_branches_except_pre_existing_active_same_call_noncompletion_and_all_inactive_start_completion_early_noop_completed_genome_lesion_cycle_cache_and_novel_path_commits",
+    "all_scheduler_events_except_the_A4_wrapper_single_cell_paid_translation_active_noncompletion_replication_and_genome_hydrolysis_events",
     "promoted_A3_standalone_paid_translation_behavior_outside_the_A4_wrapper",
+    "promoted_A3_standalone_replication_behavior_outside_the_A4_wrapper",
     "promoted_A3_standalone_dt_zero_hydrolysis_bridge_behavior_outside_the_A4_wrapper",
     "division_death_corpse_edna_hgt",
     "neural_and_causal_systems"

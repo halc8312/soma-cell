@@ -617,6 +617,54 @@ aborted outer scheduler receipt. The event-local bindings, oracle, resident
 plan, and candidate are disposable and have no save authority. The bridge is
 correctness-only and makes no speed or full-world claim.
 
+## A4.8c1 scope
+
+A4.8c1 adds one deliberately partial replication-event replacement in a new
+module without editing promoted A3, the A4.4--A4.6 pure cores, or either
+earlier integration bridge. `A4ReplicationEventScheduler` inherits A4.8b
+translation and A4.8a hydrolysis, then replaces only `replication_cpu` for a
+live cell that already has a nonempty active template and an incomplete copy
+and whose current call remains noncompletion. `Hybrid066WorldA4Replication`
+preserves the scheduler type, fixed capacities, config, and explicit device
+across save, load, and clone. Active or pending serialization remains
+forbidden.
+
+Mutation-free calls use the A4.4b deterministic resident elongation plan.
+Mutation-enabled calls use a PCG64 substitution tape prepared from a clone of
+the exact live before-state and the A4.5a resident substitution plan. Valid
+active calls with `dt == 0`, requested zero, or resource-stopped zero append
+remain in scope because the frozen path still updates fractional/error/last
+telemetry after its active gates. Inactive start, same-call completion,
+disabled/no-genome/replicase-gated early returns, negative ATP, fp64 discrete
+ambiguity, and capacity failure are rejected before claim with no CPU
+fallback.
+
+The resident readback is commit authority. An independent NumPy replay must
+match every discrete value, append byte and order exactly and every permitted
+fp64 value within absolute `2e-12`; its host values are never substituted.
+Immediately before claim the bridge recreates the mutation tape from the live
+source and RNG, and reattests the host source/oracle, every resident
+ragged/state/cache/tape/plan object, backend, device, pointer and value, and a
+deep-isolated candidate with a fresh binding. Whole-member swaps, coordinated
+host/tape changes, aliases, and Torch `.data` version bypasses fail closed.
+
+After exactly one `replication_cpu` claim, the bridge updates the existing
+pools array, extends the existing replication-copy list in order, updates
+fractional/last/effective-error/proofreading telemetry, and updates the
+existing mutation-event dictionary's substitution counter. Mutation-enabled
+calls also publish the attested PCG64 after-state into the same live generator;
+mutation-free calls leave the full state unchanged. Genomes, lesions,
+template, gene-spec outer/nested dictionaries, protein dictionaries,
+replication cycles, novel-path state, and world energy retain identity and
+value. Preclaim failure changes nothing; postclaim failure restores all
+touched and attested identities, order, values and RNG state and leaves an
+aborted outer receipt.
+
+This is a correctness-only, opt-in active-noncompletion bridge. It does not
+make ordinary inactive-founder worlds generally supported and does not claim
+completion, full replication authority, persistent resident state, speedup,
+or a full GPU world-step.
+
 ## Fail-closed invariants
 
 Ragged foundation invariants remain unchanged:
@@ -747,19 +795,22 @@ Hydrolysis-deletion-plan invariants are:
   Failure while publishing restores the original object identities and values
   and is recorded by the outer scheduler as an aborted step.
 
-## Explicit exclusions through A4.8b
+## Explicit exclusions through A4.8c1
 
-- No scheduler/world integration other than the single-cell translation and
-  hydrolysis event replacements in `Hybrid066WorldA4Translation`.
+- No scheduler/world integration other than the single-cell translation,
+  active-noncompletion replication, and hydrolysis event replacements in
+  `Hybrid066WorldA4Replication`.
 - No caller-supplied tape/plan/candidate authority, persistent A4 arena, or
-  multi-cell translation/RNG batch. The wrapper rebuilds one disposable
-  binding per event and preserves inherited per-cell event/RNG interleaving.
-- No mutation-free inactive-template start or live template/copy/completed-
-  genome replication commit. Every replication branch remains the promoted
-  A3 CPU-authoritative scheduler event.
+  multi-cell translation/replication/RNG batch. The wrapper rebuilds one
+  disposable binding per event and preserves inherited per-cell event/RNG
+  interleaving.
+- No inactive-template start, same-call completion, early-noop replication
+  authority, or completed-genome/lesion/cycle/cache/novel-path commit. Those
+  replication branches remain outside the A4.8c1 wrapper scope.
 - No change to promoted A3 standalone `gene_refresh`, `translation_cpu`,
   `replication_cpu`, or hydrolysis bridge code, and no change to A4.3/A4.8a
-  implementations. Their behavior is replaced only inside the new wrapper.
+  or A4.8b implementations. Their behavior is replaced only inside the new
+  wrapper.
 - No device RNG kernel or performance claim; both correctness bridges
   intentionally perform explicit per-cell host/device validation round trips.
 - No division, death, corpse/eDNA/HGT, neural, or causal-system port.
@@ -767,7 +818,7 @@ Hydrolysis-deletion-plan invariants are:
   CUDA, multi-stream, multi-GPU, or online-GPU abstraction.
 - No formal 13-spec/65-measurement benchmark and no speedup claim.
 
-## Acceptance through A4.8b
+## Acceptance through A4.8c1
 
 - All A4.1 lossless/corruption/capacity/residency tests remain PASS.
 - Nested valid markers and invalid-outer/valid-inner recovery match frozen
@@ -980,6 +1031,27 @@ Hydrolysis-deletion-plan invariants are:
 - All 54 A4 development tests pass with explicit CUDA required while promoted
   A3 source/scheduler bytes remain unchanged and `full_gpu_world_step=false`.
 
+- Direct Formal066 active-partial mutation-off, forced substitution miss/hit,
+  `dt == 0`, requested-zero, and resource-stop cases match the A4.8c1 commit.
+  Append bytes/order, paid pools, fractional/error/proof telemetry,
+  substitution counters, object identities and full PCG64 state are exact.
+- Torch CPU and explicit RTX CUDA candidates use resident plan authority,
+  preserve preparation purity, produce a valid fresh binding, keep mutation-
+  free RNG unchanged, and publish the exact mutation-enabled tape after-state.
+- Exact Q/S/W/P capacities pass and each one-short case fails before claim.
+  Live/config/source/RNG, host oracle/tape, resident storage/member/device/
+  pointer/value, candidate alias, duplicate/order, and injected publish
+  corruptions are rejected with the declared no-change or full-rollback
+  identity semantics.
+- Crafted active-noncompletion one-step, ten-step and two-cell nonbatched
+  replication/surface/hydrolysis RNG order, save/load/clone continuation,
+  active-save rejection, and legacy replication-bridge bomb pass. The
+  following surface-assembly ATP next-below/exact/next-above controls match
+  the direct CPU twin on Torch CPU and CUDA.
+- All 58 A4 development tests pass with explicit CUDA required while promoted
+  A3 and A4.8a/b sources remain unchanged and
+  `full_gpu_world_step=false`.
+
 Known A4.4b integration blockers are recorded rather than hidden.  On the
 measured six-cell development fixture the current fixed symbol-rank Torch plan
 was about 503 ms per call versus about 10.1 ms for NumPy, so it is not a
@@ -997,9 +1069,10 @@ division was rejected as disproportionate complexity.  The launch-heavy path
 must be redesigned and remeasured before scheduler authority, promotion, or
 any speedup claim.
 
-A4.8a and A4.8b are bounded exceptions to the earlier pure-descriptor
-boundary: the new wrapper commits only paid translation and one hydrolysis
-event after complete resident readback/replay. The promoted A3 standalone
-bridges remain byte-identical, no persistent resident chain or performance
-claim is implied, and all replication commits, division, and the A5/A6
-subsystems remain separate later slices.
+A4.8a, A4.8b, and A4.8c1 are bounded exceptions to the earlier pure-descriptor
+boundary: the opt-in wrapper commits paid translation, pre-existing-active
+noncompletion replication, and one hydrolysis event only after complete
+resident readback/replay. The promoted A3 standalone bridges remain
+byte-identical, no persistent resident chain or performance claim is implied,
+and inactive start, completion, early-noop replication authority, division,
+and the A5/A6 subsystems remain separate later slices.
