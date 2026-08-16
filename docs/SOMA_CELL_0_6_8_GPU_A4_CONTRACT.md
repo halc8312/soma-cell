@@ -1,6 +1,7 @@
 # SOMA-CELL 0.6.8-GPU A4 contract
 
-Status: A4 development contract through slice A4.9b. This is not an A4
+Status: A4 development contract through slice A4.9c. A4.9c acceptance requires
+the final 98/98 CUDA artifact and is not preclaimed here. This is not an A4
 promotion.
 
 ## Authority
@@ -1277,6 +1278,135 @@ membership intact, audits R/S/C as `CPU_NEWER`, and requires a fresh full
 rank-5 rebuild. A5 continues to consume committed CPU state; there is no A5
 D2H flush and no A5 port in this slice.
 
+## A4.9c scope
+
+A4.9c adds a bounded immutable maintenance shadow foundation in the new
+`SOMA_CELL_0_6_8_gpu_a4_resident_maintenance_foundation.py` module. It extends
+the A4.9b wrapper's active resident generation with exactly two maintenance
+fields and supplies a disposable pure selected-row maintenance plan. It does
+not intercept, claim, publish, or commit the A3 rank-4 `maintenance` event.
+The promoted A3, A4 pure cores, A4.8a/A4.8b/c1-c8 bridges, A4.9a core, and
+A4.9b core remain frozen. Committed CPU biology and the CPU world's full PCG64
+object/state remain the only durable biology and RNG authority.
+
+`A4MaintenanceSupplementBatch` is factory-only and has exactly the fields
+`schema_version`, `cell_capacity`, `cell_count`, `source_provenance`,
+`transporters`, and `maintenance_shortfall`. Its only arrays are float64
+`transporters[C,36,4]` and float64 `maintenance_shortfall[C]`. Used rows are
+finite and nonnegative; every unused tail bit is zero. Shape, dtype, capacity,
+finite-value, sign, source-association, presence, identity, or tail failure is
+rejected without clipping, casting, growth, dropping, or mutation. An absent
+CPU `maintenance_shortfall` is numerically canonicalized to `0.0`, but its
+absence is sealed separately from an explicit zero, so an absent/explicit
+transition or equal-valued rebind is still source drift.
+
+`pack_a4_maintenance_supplement(world, config=None)` captures the exact world,
+ordered cell-container and cell identities, configuration, full 30-array
+translation-state provenance, ragged/cache relation, transporter objects, and
+shortfall identity/presence/value association from one stable CPU snapshot.
+`A4MaintenanceBinding` has exactly `translation` and `supplement`, and
+`bind_a4_maintenance(supplement)` can recover only the exact private base
+binding sealed by that factory. Equal-valued foreign worlds, alternate base
+bindings, copied supplements, and cross-owner, cross-generation, cross-device,
+or value-only associations fail closed. Binding `to_torch(device)` and
+`to_numpy()` jointly convert all base 50 plus supplement two arrays into 52
+fresh non-aliasing arrays. Standalone supplement conversion, decomposition and
+recombination, serialization, restore, public apply, publish, or owner swap is
+not an authority surface.
+
+`A4SelectedMaintenancePlan` has exactly `schema_version`, `target_index`,
+`target_cell_id`, `dt_hex`, `target_mask`, `source_provenance`, `state_after`,
+and `supplement_after`. The NumPy, Torch, and dispatch entry points all accept
+only `(binding, dt, target_index, target_cell_id)`. Index and cell ID must match
+one used row, `dt` must be finite and nonnegative, and `dt==0` remains a valid
+pure evaluation. The one-hot target mask is derived internally; no caller mask,
+CPU cell, output buffer, plan, candidate, or commit target is accepted.
+
+The fixed ordered maintenance calculation is:
+
+```text
+maintenance = dt * (0.0042
+    + 0.010 * pools[CATALYST]
+    + 0.009 * sequential_segment_channel_sum(transporters)
+    + 0.0025 * sequential_segment_sum(membrane)
+    + 0.008 * A2_exact_tension(
+          pools, membrane, genome_material_symbols * MONOMER_MASS)
+    + 0.000030 * complete_genome_symbols)
+paid = min(pools[ATP], maintenance)
+ATP_after = pools[ATP] - paid
+maintenance_shortfall_after = max(0.0, maintenance - paid)
+```
+
+The tension term uses complete-genome material plus the paid partial
+replication copy already represented by `genome_material_symbols`. The literal
+DNA term instead derives only the first `genome_counts[cell]` complete sequence
+lengths from resident ragged offsets in genome order; it excludes template and
+partial-copy slots and accepts no host-derived count sidecar. Target ATP and
+target shortfall are compared with the direct Formal066/A3 oracle within
+`2e-12`; the mask, complete-symbol count, and every excluded value are exact.
+
+The only biological delta in the disposable plan is target
+`state_after.pools[..., ATP]` plus target
+`supplement_after.maintenance_shortfall`. The target's other pool entries, all
+other state arrays, transporters, non-target rows, unused tails, CPU world,
+RNG, receipts, energy/material ledgers, and resident owner metadata remain
+unchanged. Output contains exactly 33 fresh arrays: one target mask, all 30
+translation-state arrays, and both supplement arrays. Torch output is version
+zero and non-aliasing with source52, A4.9b plan31, any arena/candidate, another
+maintenance plan, and its sibling outputs. The plan is nonserializable and
+cannot be promoted to a composite candidate, CPU publish payload, rank-4
+receipt, or durable biology.
+
+The private A4.9c owner subclasses the frozen A4.9b owner and binds one
+composite generation of exactly 52 tensors: 11 ragged, 30 translation-state,
+nine derived-cache, and two maintenance-supplement tensors. The supplement is
+part of the same S domain and shares the base arena ID, storage generation,
+owner token, lifecycle, M/R/S/C epochs, lease, retirement, and swap. It is not
+an independently active sidecar. Supplement-only CPU drift advances S once and
+becomes `CPU_NEWER`; simultaneous base and supplement S drift still advances S
+only once. Membership/order/ID/generation/alive drift is M/`INVALID`, and
+pointer, version, content, association, presence, seal, guard, or CAS trust
+failure is `INVALID` rather than a silent rebind.
+
+Initial construction and a permitted `CPU_NEWER` rebuild create all 52 tensors
+in fresh storage, attest the stable CPU source before and after construction,
+and publish them only with one prevalidated composite pointer/guard CAS.
+Partial, sidecar-only, in-place, or old-storage swaps are forbidden. Ordinary
+pre-CAS construction failure discards the candidate and preserves the old
+composite exactly; an old-source or rollback trust failure isolates it as
+`INVALID`.
+
+For the inherited live A4.9b rank-5 selected-translation transaction, each
+fresh base candidate carries both supplement tensors by value-preserving D2D
+clone and rebinds them to the new composite generation. All 52 candidate
+tensors are fresh and non-aliasing, and translation does not publish or change
+`transporters` or `maintenance_shortfall`. A successful translation advances S
+and storage generation exactly once as A4.9b requires; sidecar carry adds no
+second epoch or generation increment. This storage carry is not a maintenance
+biology write.
+
+A3 rank-4 maintenance remains unmodified CPU authority and continues to update
+CPU ATP/shortfall. That CPU change makes the immutable composite S-stale, so
+the later rank-5 A4.9b preclaim performs the existing explicit full rebuild
+before selected translation. A4.9c therefore does not provide rank-4 live
+commit, rank-4-to-rank-5 resident continuity, maintenance-originated receipt,
+CPU publish, RNG call, or owner swap. Save/load/clone persist only committed CPU
+biology, full PCG64, and the wrapper's schema/config/device/status envelope;
+supplement, binding, plan, owner, composite52, lease, epochs, pointers, seals,
+guards, and candidates are never serialized. Load and clone begin ownerless and
+construct fresh non-aliasing composite storage only at first explicit rank-5
+use.
+
+The wrapper-level status retains `resident_device_writes=true` and
+`resident_d2h_publish=true` solely for
+`inherited-a4.9b-selected-translation-only`. The A4.9c-specific status is
+`selected_maintenance=pure-plan-only`,
+`maintenance_resident_device_writes=false`,
+`maintenance_resident_d2h_publish=false`, `maintenance_live_commit=false`, and
+`maintenance_resident_biology_authority=false`. Overall resident biology status
+remains `cpu-durable-after-atomic-selected-publish`, and
+`full_gpu_world_step=false`.
+
 ## Fail-closed invariants
 
 Ragged foundation invariants remain unchanged:
@@ -1468,7 +1598,34 @@ Resident selected-translation transaction invariants are:
 - Exact C/Q/S/W/P passes and each one-short case fails preclaim. CPU A5 events
   consume committed CPU without a resident flush; no A5 authority is added.
 
-## Explicit exclusions through A4.9b
+Resident maintenance foundation invariants are:
+
+- The public supplement has exactly two arrays, and its binding jointly binds
+  and converts one exact base50 plus those two arrays. A value-equal foreign or
+  recombined association is not the same generation.
+- Composite storage has exactly 52 tensors in groups 11/30/9/2. Base and
+  supplement share one owner, arena, lifecycle, epoch tuple, storage generation,
+  lease, CAS, and retirement; no partial or sidecar-only active generation exists.
+- A pure selected-maintenance result has exactly 33 fresh arrays in groups
+  1/30/2. Its only permitted delta is selected ATP/shortfall, and it has no
+  apply, publish, swap, receipt, serialization, or commit authority.
+- Complete-genome symbols for the literal DNA term come from resident ragged
+  offsets and exclude template/partial-copy slots. The tension term separately
+  retains complete plus partial-copy material accounting.
+- Supplement-only or simultaneous base/supplement S drift advances S once.
+  Invalid membership, association, pointer/version/content, seal, guard, or CAS
+  trust never becomes a coherent equal-valued rebind.
+- Every A4.9b translation successor is a fresh 52-tensor candidate whose two
+  supplement tensors are value-preserving D2D carries. Translation advances S
+  and generation once; carry does not add another increment or maintenance
+  write/publish claim.
+- Rank-4 maintenance remains CPU-authoritative and is not intercepted. Its CPU
+  update makes the shadow `CPU_NEWER`; the later rank-5 full rebuild is not a
+  rank-4-to-rank-5 resident biological chain.
+- CPU/full-PCG64 remain the only durable state. Runtime composite artifacts are
+  nonserializable, load/clone start ownerless, and no resident flush is required.
+
+## Explicit exclusions through A4.9c
 
 - No scheduler/world integration other than the single-cell translation,
   pre-existing-active noncompletion, mutation-free completion, mutation-
@@ -1499,6 +1656,16 @@ Resident selected-translation transaction invariants are:
   compaction, slot reuse, device-dirty/`RESIDENT_NEWER` state, or multi-cell
   GPU-primary biological kernel. Full candidate diagnostic D2H/readback is
   integrity validation; only its selected row has CPU publish semantics.
+- A4.9c adds immutable composite52 storage, diagnostic joint conversion, a
+  disposable selected-maintenance plan, and value-preserving A4.9b sidecar
+  carry only. It adds no live rank-4 maintenance claim/annotation/commit,
+  maintenance device write or D2H publish, ATP/shortfall CPU publish, resident
+  durable authority, rank-4-to-rank-5 resident chain, or multi-cell simultaneous
+  maintenance kernel.
+- No resident generic reaction, precursor synthesis, replication c1-c8,
+  hydrolysis, surface assembly, damage/aggregation/reactive/repair, batch event
+  transaction, cross-event fusion, partial/per-cell refresh, `RESIDENT_NEWER`,
+  or A5 flush is introduced by A4.9c.
 - No division, death, corpse/eDNA/HGT, neural, or causal-system port.
 - No fp32 claim, mixed precision, `torch.compile`, CUDA Graph, Triton, custom
   CUDA, multi-stream, multi-GPU, or online-GPU abstraction.
@@ -1978,6 +2145,39 @@ Resident selected-translation transaction invariants are:
   or speedup evidence. `full_gpu_world_step=false`; A3 remains the promoted
   baseline and A4 remains incomplete and unpromoted.
 
+## A4.9c targeted evidence and final acceptance gate
+
+The four append-only A4.9c tests passed 4/4 in one same-process CPU targeted
+run. Per-test times in fixed test order were 13.226, 6.990, 33.403, and 417.018
+seconds; measured wall time including runner overhead was 470.638 seconds.
+They then passed 4/4 in one unique CUDA targeted run, with per-test times
+27.613945189, 20.824857565, 38.894032027, and 729.268094097 seconds and measured
+wall time 816.609105498 seconds. These runs cover the pure selected-maintenance
+oracle/plan33, composite52 coherence/rebuild/A4.9b carry, fail-closed trust and
+rollback, and A4.9b-successor lockstep/persistence/frozen94 authority tests in
+that order.
+
+The unique CUDA run used Python 3.12.3 on WSL2 kernel 6.18.33.2, PyTorch
+2.13.0+cu130 with CUDA 13 and cuDNN 92000, and an RTX 4060 Ti with
+17,175,019,520 bytes reported VRAM, compute capability 8.9, 34 SMs, and driver
+581.57. Peak PyTorch allocation was 1,777,533,952 bytes and peak reservation
+was 1,872,756,736 bytes. The runner record was session 89172, PID 386, with
+chunks `b4cc00`, `329134`, `112201`, `d87bea`, and `c33794`. The targeted runs
+wrote no result artifact. Their durations are correctness-run observations,
+not a benchmark, throughput result, performance improvement, or speedup claim.
+
+A4.9c final acceptance remains gated on one later full validation artifact
+produced from the final frozen contract/schema bytes. Its JSON must report
+build `SOMA-CELL 0.6.8-GPU A4.9c`, development slice
+`A4.9c-composite52-maintenance-shadow-foundation-and-disposable-pure-selected-maintenance-plan`,
+`require_cuda=true`, `passed=98`, `failed=0`, `total=98`, and
+`full_gpu_world_step=false`; all four final A4.9c rows must be PASS with empty
+errors. The 30-path source SHA-256 map must include these final contract/schema
+bytes and the frozen A4.9c preregistration, validator, and core. Until that
+artifact lands, this contract records the targeted 4/4 evidence and the exact
+gate only; it does not claim final 98/98 acceptance, A4 completion, promotion,
+GPU-primary performance, or a full GPU world-step.
+
 Known A4.4b integration blockers are recorded rather than hidden.  On the
 measured six-cell development fixture the current fixed symbol-rank Torch plan
 was about 503 ms per call versus about 10.1 ms for NumPy, so it is not a
@@ -2004,10 +2204,14 @@ byte-identical. A4.9a adds the runtime-persistent immutable world-wide shadow;
 A4.9b connects it only to the bounded rank-5, zero-RNG selected paid-
 translation transaction described above. The full candidate integrity path
 performs diagnostic D2H, while only the selected target row is semantically
-published into durable CPU authority. There is still no writable resident
-chain across pretranslation phases, replication, hydrolysis, or A5; no batched
-live or device-RNG authority; and no performance or speedup claim. Zero-length
-complete genomes, negative entry ATP, dead direct calls, guarded fp64
-replicase-boundary cases, division, and the A5/A6 subsystems remain later
-slices. A3 remains the promoted baseline, A4 remains incomplete and
-unpromoted, and `full_gpu_world_step=false`.
+published into durable CPU authority. A4.9c extends that wrapper with one
+immutable composite52 shadow and a disposable pure selected-maintenance plan33;
+it neither intercepts nor commits rank-4 maintenance, and only the inherited
+A4.9b rank-5 transaction retains device-write/D2H-publish status. There is
+still no writable resident chain across pretranslation phases, replication,
+hydrolysis, or A5; no batched live or device-RNG authority; and no performance
+or speedup claim. Zero-length complete genomes, negative entry ATP, dead direct
+calls, guarded fp64 replicase-boundary cases, division, and the A5/A6
+subsystems remain later slices. A4.9c final 98/98 CUDA acceptance remains the
+artifact gate stated above. A3 remains the promoted baseline, A4 remains
+incomplete and unpromoted, and `full_gpu_world_step=false`.

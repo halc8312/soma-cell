@@ -1843,3 +1843,264 @@ event order、CPU durable authorityを変えずにpersistent resident transactio
 - A4.9bでもpretranslation phasesのresident連続化、replication/hydrolysisとの同一arena chain、multi-cell
   simultaneous kernel、device RNG、A5/A6、formal performanceは未達である。A4完成・昇格・speedupと呼ばず、
   `full_gpu_world_step=false`を維持する。
+
+## A4.9c追加仮説
+
+Rule Lock receipt `20260815T235115Z`（`work_sessions/20260815T235115Z_SOMA_CELL_0_6_8_GPU_A4_PREFLIGHT.json`、
+clean-start HEAD `49f3ccd5242d7ce3f1730314d6a13d934e3faa25`）の範囲は、A4.9bの50-tensor arenaに
+maintenance固有の2 fieldを補うworld-wide immutable shadow foundationと、そこから一cellだけを評価する
+disposable pure selected-maintenance planに限定する。
+
+A3のcell event orderでは`generic_reactions`がrank 2、`precursor_synthesis`がrank 3、`maintenance`が
+rank 4、A4.9bの`translation_cpu`がrank 5である。generic reactionは複数のgene-coded reactionと追加telemetry、
+precursor synthesisは4つのpaid synthesisと`last_catalysis`を必要とし、どちらも後続CPU maintenanceによって
+rank 5前に再びSをdirtyにする。rank 6 replicationはc1〜c8の構造分岐、rank 13 hydrolysisはRNG、deletion、waste、
+lesion、R/S/C compactionを伴う。これに対してmaintenanceはzero RNG、ATP支払いとshortfall代入だけであり、rank 5へ
+隣接する。既存A4.9aの11 ragged tensorと30 translation-state tensorはpools、membrane、完全genomeとpartial copyを
+合わせた`genome_material_symbols`を既に持ち、追加で必要なのは`transporters`入力と
+`maintenance_shortfall` current/outputだけである。したがって、次のscientifically coherent resident event候補は
+maintenance一つとする。
+
+ただしA3 backendのmaintenanceはgeneric/precursorと同じ内部`plan -> claim -> commit`経路に直結され、独立scheduler
+hookを持たない。2 fieldのresident storage、A4.9b translation generationをまたぐcarry、live rank-4 claim/CPU publishを
+一つのsliceで同時に導入すると、storage/coherence仮説とevent-authority仮説を分離できない。A4.9cは前者とpure oracleだけを
+閉じ、rank 4のlive claim、CPU publish、owner swap、rank 4→5 resident chainは別fresh Rule LockのA4.9d以降へ残す。
+
+## A4.9cで実装するもの
+
+- biology implementationは新規module
+  `src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_resident_maintenance_foundation.py`だけに置く。promoted A3、A4.1〜A4.7
+  pure core、A4.8a/b/c1〜c8、A4.9a resident arena、A4.9b resident translation integrationはbyte不変とする。
+  validation fileには末尾への新規4 test、専用wiring/hash constants、および後述するshared prereg whole-file hashの
+  global value更新だけを許し、既存94 test function body/name/orderを変更しない。
+- constantsを除くpublic `__all__`は`A4ResidentMaintenanceFoundationError`、
+  `A4MaintenanceSupplementBatch`、`A4MaintenanceBinding`、`A4SelectedMaintenancePlan`、
+  `pack_a4_maintenance_supplement`、`bind_a4_maintenance`、`paid_maintenance_selected_numpy`、
+  `paid_maintenance_selected_torch`、`paid_maintenance_selected`、
+  `A4ResidentMaintenanceFoundationScheduler`、`Hybrid066WorldA4ResidentMaintenanceFoundation`に固定する。
+  public constantsは`BUILD`、`BUILD_ID`、`BUILD_LONG`、`SCHEMA_VERSION`、`SUPPLEMENT_SCHEMA_VERSION`、
+  `SELECTED_PLAN_SCHEMA_VERSION`、`SAVE_VERSION`、`FULL_GPU_WORLD_STEP`、`MAINTENANCE_ORACLE_ATOL`、
+  `PORT_STATUS`と継承する`COHERENT/CPU_NEWER/INVALID`だけとする。owner、candidate、lease、guard、seal、CAS、
+  CPU apply/publishはprivateとし、`FULL_GPU_WORLD_STEP=False`を維持する。
+- `PORT_STATUS`とvalidation payloadは、wrapper全体についてA4.9b rank-5 selected translation由来の
+  `resident_device_writes=true`とselected-row `resident_d2h_publish=true`を明示し、そのscopeを
+  `inherited-a4.9b-selected-translation-only`へ固定する。同時にA4.9c追加scopeを
+  `selected_maintenance=pure-plan-only`、`maintenance_resident_device_writes=false`、
+  `maintenance_resident_d2h_publish=false`、`maintenance_live_commit=false`、
+  `maintenance_resident_biology_authority=false`、`full_gpu_world_step=false`と別keyで記録する。wrapper全体の継承済み
+  translation write/publishをfalseに上書きしたり、A4.9c maintenanceにresident write/publish authorityがあると記録したりしない。
+
+## A4.9c maintenance supplementとbinding
+
+- `A4MaintenanceSupplementBatch`のfieldは`schema_version`、`cell_capacity`、`cell_count`、
+  `source_provenance`、`transporters`、`maintenance_shortfall`に固定する。arrayはexactly 2本だけで、
+  `transporters`はfloat64 `[C, MEMBRANE_SEGMENTS, CHANNEL_COUNT]`、`maintenance_shortfall`はfloat64 `[C]`とする。
+  現行constantの`MEMBRANE_SEGMENTS=36`、`CHANNEL_COUNT=4`を使い、別capacity fieldや第三tensorを追加しない。
+  used rowはfinite/nonnegative、unused `[cell_count:C]` tailはbitwise zero、cell order/countは同時にpackしたbase stateと
+  exact一致しなければならない。capacity overflow、shape/dtype違反、NaN/Inf、negative、nonzero tailをclip、drop、cast、
+  silent growせずfail closedとする。
+- public signatureを`pack_a4_maintenance_supplement(world, config=None)`に固定する。このfactoryは安定した一つのCPU
+  world snapshotからragged/state/cacheを含むexact host `A4TranslationBinding`とsupplement 2 arrayを内部で同時生成し、
+  そのbindingへのprivate strong reference、world/cell/container identity、full 30-array content digest
+  `a4._translation_state_provenance(state)`、ordered cell ID/mask、config、C/N、CPU fieldの
+  identity/presence/value associationをsupplement creation sealと`source_provenance`へ束縛する。callerからcells、
+  translation state/binding/cache/provenanceを受け取らず、`config`を指定した時は同じworldのcanonical configとのexact
+  associationを検査する。fresh Formal066 cellに
+  `maintenance_shortfall` attributeが無い場合だけA3 packと同じnumeric `0.0`へcanonicalizeするが、rowごとの明示presence bitを
+  sealする。attributeが存在する場合はscalar/attribute identityとexact valueもsealし、absent→explicit `0.0`、
+  explicit `0.0`→absent、equal-value rebindのいずれもnumeric arrayが同じでもS driftとして検出する。
+  `transporters` object/rowのidentity、shape、order、content変化もS driftとする。
+- `A4MaintenanceBinding`はfactory-onlyで、fieldを既存`A4TranslationBinding`である`translation`と
+  `A4MaintenanceSupplementBatch`である`supplement`に固定する。public signature
+  `bind_a4_maintenance(supplement)`は、factory sealに保存されたexact private host translation bindingだけを取り出し、
+  world/cell/container strong identity、C/N、ordered cell IDs/mask、translation full-state provenance、supplement source
+  association、全52 arrayのobject/storage/contentを再照合して束縛する。callerがbase binding/state/cache/worldを追加指定する
+  overloadを作らず、equal-valued foreign world/binding、copied supplement、手作りprovenance、cross-owner/cross-generation/
+  cross-device associationをdigest等値だけで受理しない。
+- `A4MaintenanceBinding.to_torch(device)`と`.to_numpy()`だけがbase 50 + supplement 2を一つのoperationでjointly
+  convertし、全52 arrayをfresh non-alias storageへ移した後に新base binding、supplement、相互association sealを同時に
+  rebindする。caller-supplied translation bindingへのsupplement差替え、supplement単独のcross-device conversion、変換後52の
+  分解再結合を拒否する。private composite ownerだけは、そのexact active arenaとresident supplementをstrong identityで
+  検査するprivate trusted factoryからbindingを作ってよく、public coupled factoryを迂回するvalue-based associationを許さない。
+- supplement、binding、selected planはdiagnostic `validate`、上記joint conversionまたはpointer inspection以外の
+  authorityを持たない。public `apply`、in-place update、owner swap、CPU publish、`state_dict`/restore/pickleを持たず、
+  全artifactをnonserializableとする。明示変換が返すarrayも新しいdiagnostic copyであり、durable biologyやcommit candidateに
+  再分類しない。
+
+## A4.9c pure selected-maintenance ordered semantics
+
+- `A4SelectedMaintenancePlan`のfieldは`schema_version`、`target_index`、`target_cell_id`、`dt_hex`、
+  `target_mask`、`source_provenance`、`state_after`、`supplement_after`に固定する。
+  `paid_maintenance_selected_numpy(binding, dt, target_index, target_cell_id)`、
+  `paid_maintenance_selected_torch(...)`、dispatcher `paid_maintenance_selected(...)`は、bindingのused rowから
+  indexとcell IDがexact一致する一つだけを選び、`target_mask[C]`をexact one-hotにする。callerがmask、CPU cell、cache、
+  output buffer、plan、commit targetを渡すsurfaceは作らない。`dt`はfinite/nonnegativeで`float(dt).hex()`をsealし、
+  `dt==0`も有効な一回のpure evaluationとする。
+- target rowについて、計算順をFormal066/A3の`_maintenance`と同じ次のfixed orderにする。
+
+  `maintenance = dt * (0.0042 + 0.010 * pools[CATALYST]`
+
+  `    + 0.009 * ordered_sum(transporters.reshape(segment, channel))`
+
+  `    + 0.0025 * ordered_sum(membrane)`
+
+  `    + 0.008 * A2_exact_tension(pools, membrane, genome_material_symbols * MONOMER_MASS)`
+
+  `    + 0.000030 * complete_genome_symbols)`
+
+  `paid = min(pools[ATP], maintenance)`、`ATP_after = pools[ATP] - paid`、
+  `maintenance_shortfall_after = max(0.0, maintenance - paid)`とする。transporterはsegment-major、その内側をchannel-major、
+  membraneはsegment orderでsequential fixed sumする。A2 exact tension中のgenome massだけはcomplete genomeとpaid partial
+  replication copyを合わせた既存`genome_material_symbols`を使う。
+- 最後の`0.000030`項の`complete_genome_symbols`は、resident raggedのcell
+  `cell_sequence_offsets[ci]`から最初の`genome_counts[ci]` complete sequenceだけについて、各
+  `sequence_offsets[g+1] - sequence_offsets[g]`をdevice上でgenome orderにfixed sumして導出する。replication template/copy
+  slot、partial copy、`genome_material_symbols`のpartial成分をこの項へ含めず、host count、CPU genome list、第三sidecar
+  tensorをoracleへ注入しない。これによりA3 `_genome_mass`のcomplete+copy tensionと、literal maintenance DNA項の
+  complete-only意味を混同しない。
+- planの唯一のbiological deltaはtarget rowの`state_after.pools[..., ATP]`と
+  `supplement_after.maintenance_shortfall`である。target poolsのATP以外、stateの他29 array、target
+  `transporters`、non-target全32 source array、unused tailはsourceとbit-exactにする。planはworld/cell、CPU array/dict/
+  scalar、RNG object/state、receipt、event scheduler、energy/material ledger、resident owner/arena/epoch/generationを一切変更しない。
+  target ATP/shortfallのNumPy/Torch fp64だけをFormal066 direct oracleに`MAINTENANCE_ORACLE_ATOL=2e-12`以下で照合し、
+  discrete/mask、complete-symbol count、他fieldはexactとする。既存上限を拡張しない。
+- outputは`target_mask` 1本、full-capacity `state_after` 30本、full-capacity `supplement_after` 2本のexactly
+  33 array/tensorである。NumPyは全33をfresh object/storage、Torchは全33をfresh object/storageかつversion 0で最終生成し、
+  source 52、A4.9b selected-translation plan 31、別maintenance plan、resident candidate、互いのoutputとのaliasを禁止する。
+  clone後のin-place書換えでTorch versionを進めたり、version metadataを後付けして隠したりしない。入力とoutputの
+  pointer/version/dtype/shape/content、`.data`経由の変更、source provenanceをreturn直前まで再検査し、一つでも違えばplanを
+  破棄する。この33-tensor planはdisposable oracleであり、52-tensor arena candidate、CPU publish data、rank-4 receiptに
+  昇格できない。
+
+## A4.9c composite 52-tensor shadowとA4.9b carry
+
+- private `_A4ResidentMaintenanceFoundationOwner`はfrozen A4.9b translation ownerをsubclass化し、active generationを
+  A4.9a由来のragged 11 + translation state 30 + resident cache 9 + supplement 2 = exactly 52 tensorの一つのcompositeとする。
+  supplementはS domainの一部で、baseと同じarena ID、storage generation、owner token、lifecycle、M/R/S/C epoch、retirementを
+  共有する。独立sidecar owner、arena ID、lifecycle、epoch、generation、lease、partial-active状態を作らない。
+- composite CPU auditはfrozen A4.9a/A4.9b guardにsupplementのbase-arena association、CPU field strong anchors、presence bits、
+  pointer/version/content digestを加える。sidecar-only driftはSを一回だけ進めて`CPU_NEWER`とし、同じauditでbase Sと
+  sidecar Sの複数fieldが変化してもstate epochをfieldごとに重複加算しない。R driftとの同時発生は既存どおりR/S/C、
+  membership/order/ID/generation/alive driftはM/`INVALID`とする。pointer/version/content、association、epoch、seal trust違反は
+  `INVALID`であり、equal numeric valueや`.data` tamperをcoherentと扱わない。
+- initial buildと`CPU_NEWER` rebuildは、安定CPU sourceからfrozen 50-tensor candidateとfresh supplement 2 H2Dを別storageへ
+  全量作成し、base+sidecarのpost-build CPU sourceをもう一度exact attestする。private composite candidateとguardを完全に
+  preallocate/sealした後、outer reentrant lock内でexpected old arena/lifecycle/epochs/generation、zero lease、base/sidecar guardを
+  両方prevalidateし、base swapとsupplement pointer/seal/guard assignmentをlock release前に行う。sidecar-only swap、partial
+  generation公開、old storage reuse/in-place copy、lock内allocation/callback/readbackを禁止し、失敗時はcandidate 52を捨てて
+  old compositeを同じlifecycle/epochs/generationで保つ。`INVALID`のauto-rebuildは継承して禁止する。
+- inherited A4.9b rank-5 selected translationがfresh candidateを作るたび、supplement 2を値不変でD2D cloneし、new base
+  arena ID/generation/device/config/epochsとpost-translation CPU state provenanceへ再束縛する。candidateは全52 tensorがfresh、
+  version 0、old composite 52、maintenance plan 33、translation plan 31、他candidateとnon-aliasでなければならない。
+  `transporters`と`maintenance_shortfall`は全row/tail bit-exactで、rank-5 CPU publishはこの2 fieldへ書かない。
+- A4.9b annotation前にbase+sidecarのfull composite CAS armを終了する。overrideするprivate finalizationはouter lock内で
+  frozen base CASを実行し、lock release前にpreallocated supplement/guardをdirect assignmentするだけとし、annotation後に
+  allocation、validation、readback、callback、fallible hookを行わない。pre-CAS failureはnew sidecarを捨ててold 52をexactに
+  保ち、trust/rollback不一致だけ`INVALID`へ隔離する。成功はtransaction入力のcoherent generationからstorage generationと
+  S epochをA4.9b translationとしてexactly `+1`、M/R/C/cache-sourceを不変にし、supplement carryによる追加`+1`を行わない。
+  rank-5前に別のCPU_NEWER composite rebuildが必要な場合、そのdirty-domain epoch/generation進行と後続translationの`+1`は
+  A4.9bどおり別generationとして監査する。pure maintenance plan単独ではowner swap、epoch/generation進行を一切行わない。
+
+## A4.9c authority、event order、RNG、save/load/clone
+
+- CPU world/cellと同じPCG64 object/full stateを唯一のdurable biology/RNG authorityとして維持する。A4.9c scheduler/worldは
+  A4.9b scheduler/worldを継承してcomposite52 construction/audit/rebuild/translation carryだけを追加し、A3 rank-4
+  `maintenance`をoverride/interceptせず、maintenance plan/claim/annotation/commit/receiptをlive stepから呼ばない。
+  rank 4は従来のA3 CPU authorityのままCPU ATP/shortfallを更新し、それによるS driftはrank 5 preclaimで
+  `CPU_NEWER`としてcomposite full rebuildされる。A4.9c pure plan outputをCPU rank 4の代わりにpublishしない。
+- A4.9c supplement pack/bind/audit/rebuild、pure selected plan、A4.9b sidecar carryは全てRNG-freeで、device RNGを作らず、
+  PCG64 call count/order/stateを変えない。既存world/cell event order、rank-5 exactly-once claim/receipt、translation CPU
+  publish/material ledger、c1〜c8 replication、hydrolysis、A5 CPU boundary、successful-step list-container normalizationを
+  A4.9bからそのまま継承する。A4.9c由来のreceipt、energy dissipation、ATP支払い、shortfall publishは0件である。
+- `A4ResidentMaintenanceFoundationScheduler`と`Hybrid066WorldA4ResidentMaintenanceFoundation`が公開するresident statusは
+  schema/config/device、foundation availability、上記overall-inheritedとmaintenance-onlyの分離statusに限定する。
+  `SAVE_VERSION`は継承CPU wrapper envelopeを識別するだけで、
+  supplement、binding、plan、owner、arena 52、candidate、lease、epochs/pointers/seals/guardsをserializeしない。A49b transaction、
+  composite rebuild/swap、lease、A3/A4 pending commit中のsave/cloneを拒否する。
+- step boundaryのsaveはcommitted CPU state/full PCG64だけを保存し、resident flush/D2Hを待たない。load/cloneはCPU biology/RNGを
+  exact復元/複製してownerを`None`から始め、最初の明示rank-5 constructionでnew owner token、arena ID、fresh non-alias
+  composite52を全量作る。source/clone/load間でsupplement object、arena、candidate、plan、leaseを共有せず、pointer、arena ID、
+  epoch数値一致をcorrectness条件にしない。同membershipの成功step後container rebindだけをA4.9bどおり正規化し、actual
+  member/order/ID/generation/alive差をM/`INVALID`として隠さない。
+
+## A4.9cで実装しないもの
+
+- live rank-4 maintenance plan/claim/annotation/CPU publish、A3 backend interceptionまたはscheduler hook、maintenanceによる
+  resident owner swap/CAS/epoch advance、rank 4→rank 5 resident chain、device→CPU maintenance publish、resident ATP/
+  shortfall durable authority。これらはA4.9d以降で別preregistrationとする。
+- rank 2 generic metabolism、rank 3 precursor synthesis、rank 6 replication c1〜c8のresident接続、rank 13 hydrolysis、
+  surface assembly、damage/aggregation/reactive/repair、multi-cell simultaneous maintenance、cross-event fusion、batch event
+  transaction、caller-selected live target。
+- third supplement tensor、host-derived complete-genome-count injection、partial/per-cell H2D refresh、in-place resident write、
+  old/plan storage reuse、slot reuse、allocator/compaction、`RESIDENT_NEWER`/device-dirty、resident D2H publish、A5 flush、
+  artifact serialization、CPU fallback、capacity clip/grow/drop/truncate。
+- fp32/mixed precision、tolerance拡張、`torch.compile`、CUDA Graph、Triton、custom CUDA、multi-stream/multi-GPU、online GPU、
+  performance/speedup claim、A4完成/昇格、A5/A6。`full_gpu_world_step=false`、baseline A3、CPU durable authorityを維持する。
+
+## A4.9c固定テストとfreeze wiring
+
+1. `test_a49c_selected_maintenance_plan_formal066_cpu_cuda_isolation`でheterogeneous supplement/bindingのfirst/middle/last
+   target、ATP-rich/poor/zero、nonzero prior shortfall、absent-vs-explicit-zero、`dt==0`をdirect Formal066/A3 maintenanceと照合する。
+   transporter/membrane fixed sum、complete+copy tension、complete-only DNA項、NumPy/Torch CPU/明示CUDA fp64、target
+   ATP/shortfall `2e-12`、他全field bit-exact、joint 52 conversion、33 fresh/version-0/non-alias、source/CPU/RNG/receipt/owner
+   不変を固定する。値がbit-exactに等しい別world、別packのbase/supplement、copyしたsupplementのcross-bindを拒否する。
+2. `test_a49c_composite52_shadow_pointers_coherence_rebuild_and_capacity`で2-array pack、tail、52-tensor exact readback、
+   pointer/version、base association、sidecar-only S drift、base+sidecar同時driftのsingle epoch、presence drift、full
+   composite rebuild/swapを固定する。C exact/one-short、36/4 shape、base C/Q/S/W/P/cache capacityをfail closedとし、
+   A4.9b rich/early/no-op translation後のfresh52 carry、sidecar bit-exact、S/generation各exactly一回、M/R/C不変、全世代
+   non-aliasを固定する。
+3. `test_a49c_plan_and_arena_seals_leases_tamper_scope_fail_closed`でwrong index/ID/dt/device/source association、equal-valued
+   foreign world/binding、caller-supplied alternate base、stale/
+   duplicate/cross-owner lease、malformed supplement、plan/source/candidate tensor、pointer/version/content/`.data`、presence/identity、
+   epoch/generation/guard/CAS改ざんを注入する。pre-CAS failureのold52 exact、trust違反の`INVALID`隔離、partial/sidecar-only
+   swapなし、planからapply/publish/swap/save不可、zero RNG/receiptを固定する。
+4. `test_a49c_reconstruction_a49b_successor_frozen94_authority`で1-step/10-step/2-cell、save/load/clone、successful-step
+   list normalization、actual membership差、A5 no-flushをdirect A49b/CPUと照合する。rank-4 CPU maintenanceとrank-5 A49b
+   translationのevent/receipt/PCG64/material結果、first rank-5 fresh52、全artifact nonserialization、overall A4.9b
+   translation device-write/D2H status trueとmaintenance-only write/D2H/live-commit status false、frozen
+   A3/A4/A4.8/A4.9a/A4.9b authorityと次のfreeze条件を固定する。
+- current prior test name tupleは94件をappend-onlyで凍結し、name SHA-256
+  `9f1e611f7cc918ba77c20bc38d83df5129007b3629dcbe279737d57590dd1347`、function-AST SHA-256
+  `2a6095e7c360ea7cb1e12a9120cc9b17ec96f9e09462880056abd563ef728c44`をexact照合する。既存tupleに
+  94名が全て一意で`test_a48c5_capacity_trust_rollback_scope_and_exact_once`はexactly 1回であることを凍結し、
+  deduplicate、reorder、rename、function body editを行わない。A4.9a core SHA-256
+  `03d689830b71dced3531d8d0a289faaecf3b22553cb5c51f9e5cb6071536982a`、A4.9b core SHA-256
+  `be8cd45b0dc3edd32987688bcb2641121c4fdf6498a9624a8ae8b208b3b3eb31`も固定する。
+- frozen validatorの`SOURCE_PATHS`は29 pathのままbyte/order不変とする。A4.9c moduleをそこへappendせず、別constant
+  `A49C_SOURCE_PATHS = SOURCE_PATHS + (A49C_NEW_MODULE_PATH,)`をexact 30 pathとして追加し、専用
+  `a49c_source_sha256_map()`と新test/payloadだけが使う。これにより既存A4.9bの`len(SOURCE_PATHS)==29` assertionを
+  変更しない。
+- このA4.9c append直前までのpreregistration prefixはexactly 143,281 bytes、SHA-256
+  `d1dd7f0ee7ba56508cbc1eccd7ffcb3487d5242d0d3f16839e0031e9dc231334`である。新authority testは先頭143,281 bytesと
+  A4.9c suffix marker/length増加を別々に検査し、A4.9b以前の1 byte変更も拒否する。shared prereg全体を検査する既存
+  A4.9b test function bodyは変更せず、既存global `_A49B_PREREG_SHA256`のvalueだけをfinal A4.9c whole-file digestへ更新する。
+  同じfinal digestを新`_A49C_PREREG_SHA256`にも固定し、新testはprefix hashとwhole-file hashの両方を検査する。
+- test wiringはexactに
+  `A49C_TESTS = (test_a49c_selected_maintenance_plan_formal066_cpu_cuda_isolation,
+  test_a49c_composite52_shadow_pointers_coherence_rebuild_and_capacity,
+  test_a49c_plan_and_arena_seals_leases_tamper_scope_fail_closed,
+  test_a49c_reconstruction_a49b_successor_frozen94_authority)`、
+  `A49C_VALIDATION_TESTS = A49B_VALIDATION_TESTS + A49C_TESTS`とし、`run_all()`は後者をexactly一回ずつ順にiterateする。
+  既存最大94 + 新規最大4 = 合計最大98 testsとし、performanceを測定しない。
+
+## A4.9c GO/STOP判定
+
+- 上記fresh Rule Lockに結び付くnew-module-only biology implementationとappend-only validation開始はGOとする。最大98/98、
+  Formal066 maintenance ordered semantics、NumPy/Torch CPU/CUDA fp64、complete-only DNA項、33 fresh plan、composite52
+  build/rebuild/A4.9b carry、S-only coherence、single composite CAS/rollback、zero maintenance-originated RNG/receipt/CPU
+  publish、inherited A4.9b translation write/D2Hの明示、save/load/clone、
+  A5 CPU boundary、frozen94/prefix/source hashesが全てPASSした場合だけ
+  「A4.9c composite52 maintenance shadow foundation and disposable pure selected-maintenance plan」と記録する。
+- A4.9a/A4.9b/A3/A4.1〜A4.8 biology sourceの編集が必要、resident complete-only symbol countを第三tensorまたはhost値で
+  注入する、partial copyをliteral DNA項へ二重計上する、source/presence/base associationをsealできない、33 outputの一つでも
+  alias/version非0、public pack/bindがcaller-supplied baseを受け取る、equal-valued foreign world/bindingを同一generationと
+  誤認する、52をjoint conversion/rebindできない、planがCPU/RNG/receipt/owner/epochを変更する、planをlive rank 4へ接続する、
+  sidecarをbaseと別swapする、
+  partial52 generationを公開する、translation carryがsidecar 2 tensorのbiology値を変更する、またはcandidate baseへの
+  scalar provenance再束縛を省略する、S epoch/generationをcarryだけで二重加算する、
+  annotation後にfallible workを呼ぶ、pre-CAS failureでold52をexact保持できない場合はA4.9bを正式authorityとして維持してSTOPする。
+- stale/`INVALID`を受理または自動refresh/rebuildする、tamperをsilent rebindする、CPU/device fallback、clip/grow/drop、
+  artifact serialization/D2H publish/device-dirty、tolerance拡張、prior94 dedupe/reorder/body edit、29-path tuple変更、旧143,281-byte
+  prefix変更、既存test failure、live maintenanceを同sliceへ追加する場合もSTOPする。A4.9cでもrank 4 resident event authority、
+  maintenance→translation resident continuity、GPU-primary performance、A4完成/昇格は未達であり、
+  `full_gpu_world_step=false`を維持する。

@@ -1,5 +1,5 @@
 # coding: utf-8
-"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.9b slices."""
+"""Focused validation for SOMA-CELL 0.6.8-GPU A4.1 through A4.9c slices."""
 from __future__ import division
 
 import argparse
@@ -38,6 +38,7 @@ import SOMA_CELL_0_6_8_gpu_a4_replication_start_completion_mutation_integration 
 import SOMA_CELL_0_6_8_gpu_a4_replication_early_noop_integration as a48c8
 import SOMA_CELL_0_6_8_gpu_a4_resident_arena as a49a
 import SOMA_CELL_0_6_8_gpu_a4_resident_translation_integration as a49b
+import SOMA_CELL_0_6_8_gpu_a4_resident_maintenance_foundation as a49c
 import SOMA_CELL_0_6_8_gpu_a3_scheduler as a3s
 import SOMA_CELL_0_6_8_A3_validation as v3
 
@@ -46,9 +47,9 @@ try:
 except Exception:  # pragma: no cover
     torch = None
 
-RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_9B_VALIDATION_RESULTS.json'
-RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_9b_validation.csv'
-RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_9B_VALIDATION_RESULTS.txt'
+RESULT_JSON = 'SOMA_CELL_0_6_8_GPU_A4_9C_VALIDATION_RESULTS.json'
+RESULT_CSV = 'soma_cell_0_6_8_gpu_a4_9c_validation.csv'
+RESULT_TXT = 'SOMA_CELL_0_6_8_GPU_A4_9C_VALIDATION_RESULTS.txt'
 
 SOURCE_PATHS = (
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4.py',
@@ -82,6 +83,11 @@ SOURCE_PATHS = (
     'planning/SOMA_CELL_0_6_8_GPU_A4_PREREGISTRATION_JA.md',
 )
 
+A49C_NEW_MODULE_PATH = (
+    'src/0_6_8/SOMA_CELL_0_6_8_gpu_a4_resident_maintenance_foundation.py'
+)
+A49C_SOURCE_PATHS = SOURCE_PATHS + (A49C_NEW_MODULE_PATH,)
+
 PROMOTED_A3_SHA256 = {
     'src/0_6_8/SOMA_CELL_0_6_8_gpu_a3.py': (
         '6ca66378702dabd5a388553ca92279376deae5ba8c39bea9bdbe3488aa41b4f6'
@@ -108,6 +114,16 @@ def source_sha256_map():
         path = os.path.join(ROOT, *relative.split('/'))
         if not os.path.isfile(path):
             raise AssertionError('source hash input missing: %s' % relative)
+        result[relative] = _sha256(path)
+    return result
+
+
+def a49c_source_sha256_map():
+    result = {}
+    for relative in A49C_SOURCE_PATHS:
+        path = os.path.join(ROOT, *relative.split('/'))
+        if not os.path.isfile(path):
+            raise AssertionError('A4.9c source hash input missing: %s' % relative)
         result[relative] = _sha256(path)
     return result
 
@@ -21823,7 +21839,7 @@ _A49B_CORE_SHA256 = (
 )
 
 _A49B_PREREG_SHA256 = (
-    'd1dd7f0ee7ba56508cbc1eccd7ffcb3487d5242d0d3f16839e0031e9dc231334'
+    'df9927d1db7b15015d57d0402f0f7941e9d0eddda7075bbddd7ddbcec901d9c7'
 )
 
 _A49B_PRIOR_90_NAMES_SHA256 = (
@@ -23944,6 +23960,1373 @@ def test_a49b_world_lockstep_persistence_a5_boundary_frozen90_authority():
             ))
 
 
+_A49C_CORE_SHA256 = (
+    'b983a19c0b204fd643c2f98ec5078375665db1dc8ae8d555ea05ae764942eb86'
+)
+
+_A49C_PREREG_SHA256 = (
+    'df9927d1db7b15015d57d0402f0f7941e9d0eddda7075bbddd7ddbcec901d9c7'
+)
+
+_A49C_PREREG_PREFIX_BYTES = 143281
+_A49C_PREREG_PREFIX_SHA256 = (
+    'd1dd7f0ee7ba56508cbc1eccd7ffcb3487d5242d0d3f16839e0031e9dc231334'
+)
+
+_A49C_PRIOR_94_NAMES_SHA256 = (
+    '9f1e611f7cc918ba77c20bc38d83df5129007b3629dcbe279737d57590dd1347'
+)
+
+_A49C_PRIOR_94_AST_SHA256 = (
+    '2a6095e7c360ea7cb1e12a9120cc9b17ec96f9e09462880056abd563ef728c44'
+)
+
+_A49C_PUBLIC_API = (
+    'BUILD', 'BUILD_ID', 'BUILD_LONG', 'SCHEMA_VERSION',
+    'SUPPLEMENT_SCHEMA_VERSION', 'SELECTED_PLAN_SCHEMA_VERSION',
+    'SAVE_VERSION', 'FULL_GPU_WORLD_STEP', 'MAINTENANCE_ORACLE_ATOL',
+    'PORT_STATUS', 'COHERENT', 'CPU_NEWER', 'INVALID',
+    'A4ResidentMaintenanceFoundationError',
+    'A4MaintenanceSupplementBatch', 'A4MaintenanceBinding',
+    'A4SelectedMaintenancePlan', 'pack_a4_maintenance_supplement',
+    'bind_a4_maintenance', 'paid_maintenance_selected_numpy',
+    'paid_maintenance_selected_torch', 'paid_maintenance_selected',
+    'A4ResidentMaintenanceFoundationScheduler',
+    'Hybrid066WorldA4ResidentMaintenanceFoundation',
+)
+
+
+def _a49c_devices():
+    return tuple(_a49a_devices())
+
+
+def _a49c_fixture(seed=18900):
+    world, cells, capacity, _ = _paid_translation_fixture(seed=seed)
+    width = int(a49c.a3.MEMBRANE_SEGMENTS * a49c.a3.CHANNEL_COUNT)
+    for index, cell in enumerate(cells):
+        cell.transporters = (
+            np.arange(width, dtype=np.float64).reshape(
+                a49c.a3.MEMBRANE_SEGMENTS, a49c.a3.CHANNEL_COUNT,
+            ) * np.float64((index + 1) * 1.0e-5)
+        )
+        if hasattr(cell, 'maintenance_shortfall'):
+            delattr(cell, 'maintenance_shortfall')
+    cells[1].maintenance_shortfall = 0.0
+    cells[3].maintenance_shortfall = 0.321
+    cells[0].pools[a49c.a3.POOL_ATP] = 5.0
+    cells[1].pools[a49c.a3.POOL_ATP] = 1.0e-9
+    cells[2].pools[a49c.a3.POOL_ATP] = 0.0
+    cells[3].pools[a49c.a3.POOL_ATP] = 0.4
+    template = np.asarray(cells[2].genomes[0], dtype=np.uint8).copy()
+    cells[2].replication_template = template.copy()
+    cells[2].replication_copy = [int(value) for value in template[:11]]
+    cells[2].replication_template_lesion = 0.25
+    cells[2].replication_fractional = 0.5
+    cells[2]._refresh_gene_cache()
+    return world, cells, capacity
+
+
+def _a49c_hybrid_from_state(state, capacity, device='cpu'):
+    world = a4.a3.s66.Formal066World.from_state(v3.pickle_clone(state))
+    backend = a4.a3.TorchKernelBackendA3(
+        v3._a3_config(device=device, precision='float64'),
+    )
+    return a49c.Hybrid066WorldA4ResidentMaintenanceFoundation(
+        world, backend=backend, a4_config=capacity, a4_device=device,
+    )
+
+
+def _a49c_host_array(value):
+    if a4._is_tensor(value):
+        return value.detach().cpu().numpy()
+    return np.asarray(value)
+
+
+def _a49c_exact_array(left, right):
+    left = _a49c_host_array(left)
+    right = _a49c_host_array(right)
+    return (left.dtype == right.dtype and left.shape == right.shape
+            and left.tobytes() == right.tobytes())
+
+
+def _a49c_binding_snapshot(binding):
+    return tuple(
+        _a49c_host_array(value).copy()
+        for value in a49c._binding_arrays(binding)
+    )
+
+
+def _a49c_assert_binding_snapshot(snapshot, binding, label):
+    arrays = a49c._binding_arrays(binding)
+    if len(snapshot) != 52 or len(arrays) != 52:
+        raise AssertionError(label + ' composite array count differs')
+    for index, (before, after) in enumerate(zip(snapshot, arrays)):
+        if not _a49c_exact_array(before, after):
+            raise AssertionError(
+                '%s composite array[%d] changed' % (label, index)
+            )
+
+
+def _a49c_assert_binding52(binding, label):
+    if binding.validate() is not binding:
+        raise AssertionError(label + ' binding validate identity differs')
+    arrays = tuple(a49c._binding_arrays(binding))
+    if len(arrays) != 52 or len({id(value) for value in arrays}) != 52:
+        raise AssertionError(label + ' binding is not exactly 52 objects')
+    storage = tuple(a49c._array_storage_descriptor(value) for value in arrays)
+    if a4._is_tensor(arrays[0]):
+        pointers = binding.data_ptrs()
+        if (len(pointers) != 52 or len(set(pointers.values())) != 52
+                or any(int(value._version) != 0 for value in arrays)):
+            raise AssertionError(
+                label + ' binding pointers/version-zero differ'
+            )
+    else:
+        for index, left in enumerate(arrays):
+            if any(np.shares_memory(np.asarray(left), np.asarray(right))
+                   for right in arrays[index + 1:]):
+                raise AssertionError(label + ' NumPy binding aliases storage')
+    return {tuple(value) for value in storage}
+
+
+def _a49c_assert_plan33(plan, source, label):
+    if plan.validate() is not plan:
+        raise AssertionError(label + ' plan validate identity differs')
+    outputs = tuple(a49c._plan_arrays(plan))
+    if len(outputs) != 33 or len({id(value) for value in outputs}) != 33:
+        raise AssertionError(label + ' plan is not exactly 33 objects')
+    source_arrays = tuple(a49c._binding_arrays(source))
+    if a4._is_tensor(outputs[0]):
+        pointers = plan.data_ptrs()
+        source_pointers = source.data_ptrs()
+        if (len(pointers) != 33 or len(set(pointers.values())) != 33
+                or set(pointers.values()).intersection(
+                    source_pointers.values())
+                or any(int(value._version) != 0 for value in outputs)):
+            raise AssertionError(label + ' Torch plan freshness differs')
+    else:
+        for index, left in enumerate(outputs):
+            if (any(np.shares_memory(np.asarray(left), np.asarray(right))
+                    for right in outputs[index + 1:])
+                    or any(np.shares_memory(
+                        np.asarray(left), np.asarray(right),
+                    ) for right in source_arrays)):
+                raise AssertionError(label + ' NumPy plan aliases storage')
+    return outputs
+
+
+def _a49c_expect_error(fn, kinds=None):
+    kinds = kinds or (
+        a49c.A4ResidentMaintenanceFoundationError,
+        a49b.A4ResidentTranslationCommitError,
+        a49a.A4ResidentArenaError,
+        a49a.A4ResidentArenaScopeError,
+        a4.A4CapacityError,
+        TypeError, ValueError,
+    )
+    try:
+        fn()
+    except kinds as exc:
+        return exc
+    raise AssertionError('expected A4.9c fail-closed exception')
+
+
+def _a49c_cpu_identities(world):
+    return tuple(
+        (id(cell), id(cell.pools), id(cell.transporters),
+         hasattr(cell, 'maintenance_shortfall'),
+         id(getattr(cell, 'maintenance_shortfall', None)))
+        for cell in world.cells
+    )
+
+
+def _a49c_owner(world, capacity, device='cpu'):
+    return a49c._A4ResidentMaintenanceFoundationOwner.from_cpu(
+        world, capacity, device,
+    )
+
+
+def test_a49c_selected_maintenance_plan_formal066_cpu_cuda_isolation():
+    world, cells, capacity = _a49c_fixture(seed=18900)
+    before = v3.pickle_clone(world.state_dict())
+    identities = _a49c_cpu_identities(world)
+    rng = world.rng
+    rng_state = v3.pickle_clone(rng.bit_generator.state)
+    supplement = a49c.pack_a4_maintenance_supplement(world, capacity)
+    binding = a49c.bind_a4_maintenance(supplement)
+    _a49c_assert_binding52(binding, 'a49c.public.host52')
+    source_snapshot = _a49c_binding_snapshot(binding)
+    source_presence = tuple(getattr(supplement, '_presence'))
+    if (source_presence != (False, True, False, True)
+            or supplement.transporters.shape != (
+                int(capacity.max_cells), int(a49c.a3.MEMBRANE_SEGMENTS),
+                int(a49c.a3.CHANNEL_COUNT),
+            )
+            or supplement.maintenance_shortfall.shape
+            != (int(capacity.max_cells),)):
+        raise AssertionError('A4.9c heterogeneous supplement shape/presence differs')
+
+    cases = (
+        ('rich_first', 0, 0.137),
+        ('poor_middle', 1, 0.137),
+        ('zero_partial_middle', 2, 0.137),
+        ('prior_shortfall_last', 3, 0.137),
+        ('zero_dt', 2, 0.0),
+    )
+    details = []
+    for label, index, dt in cases:
+        target = cells[index]
+        oracle = a4.a3.maintenance_numpy(
+            a4.a3.pack_a3_cell(
+                copy.deepcopy(target), model_config=world.config,
+            ),
+            dt,
+        )
+        numpy_plan = a49c.paid_maintenance_selected_numpy(
+            binding, dt, index, int(target.cell_id),
+        )
+        _a49c_assert_plan33(
+            numpy_plan, binding, 'a49c.numpy.' + label,
+        )
+        if (numpy_plan.target_index != index
+                or numpy_plan.target_cell_id != int(target.cell_id)
+                or numpy_plan.dt_hex != float(dt).hex()
+                or int(np.count_nonzero(numpy_plan.target_mask)) != 1
+                or not bool(numpy_plan.target_mask[index])
+                or tuple(getattr(
+                    numpy_plan.supplement_after, '_presence', (),
+                )) != source_presence
+                or hasattr(target, 'maintenance_shortfall')
+                != source_presence[index]):
+            raise AssertionError(label + ' selector/presence differs')
+        a49c._require_selected_scope(
+            binding, numpy_plan.state_after,
+            numpy_plan.supplement_after, index,
+        )
+        np_atp = float(
+            numpy_plan.state_after.pools[index, a49c.a3.POOL_ATP]
+        )
+        np_shortfall = float(
+            numpy_plan.supplement_after.maintenance_shortfall[index]
+        )
+        if (abs(np_atp - float(oracle.pools[a49c.a3.POOL_ATP]))
+                > a49c.MAINTENANCE_ORACLE_ATOL
+                or abs(np_shortfall - float(oracle.maintenance_shortfall))
+                > a49c.MAINTENANCE_ORACLE_ATOL):
+            raise AssertionError(label + ' NumPy Formal066 oracle differs')
+
+        for device in _a49c_devices():
+            resident = binding.to_torch(device)
+            source_storage = _a49c_assert_binding52(
+                resident, 'a49c.%s.%s.source52' % (device, label),
+            )
+            torch_plan = a49c.paid_maintenance_selected(
+                resident, dt, index, int(target.cell_id),
+            )
+            _a49c_assert_plan33(
+                torch_plan, resident,
+                'a49c.%s.%s.plan33' % (device, label),
+            )
+            host_plan = torch_plan.to_numpy()
+            _a49c_assert_plan33(
+                host_plan, binding,
+                'a49c.%s.%s.host33' % (device, label),
+            )
+            if (abs(float(host_plan.state_after.pools[
+                        index, a49c.a3.POOL_ATP])
+                    - float(oracle.pools[a49c.a3.POOL_ATP]))
+                    > a49c.MAINTENANCE_ORACLE_ATOL
+                    or abs(float(
+                        host_plan.supplement_after.maintenance_shortfall[index]
+                    ) - float(oracle.maintenance_shortfall))
+                    > a49c.MAINTENANCE_ORACLE_ATOL):
+                raise AssertionError(
+                    '%s/%s Torch Formal066 oracle differs' % (label, device)
+                )
+            for name in a4._TRANSLATION_ARRAY_FIELDS:
+                if not _a49c_exact_array(
+                        getattr(host_plan.state_after, name),
+                        getattr(numpy_plan.state_after, name)):
+                    raise AssertionError(
+                        '%s/%s state field differs: %s' % (
+                            label, device, name,
+                        )
+                    )
+            if (not _a49c_exact_array(
+                    host_plan.supplement_after.transporters,
+                    numpy_plan.supplement_after.transporters)
+                    or not _a49c_exact_array(
+                        host_plan.supplement_after.maintenance_shortfall,
+                        numpy_plan.supplement_after.maintenance_shortfall)):
+                raise AssertionError(label + '/' + device + ' sidecar differs')
+            if len(source_storage) != 52:
+                raise AssertionError(label + '/' + device + ' source52 differs')
+            details.append('%s:%s' % (device, label))
+
+        _a49c_assert_binding_snapshot(
+            source_snapshot, binding, 'a49c.source.' + label,
+        )
+        _a49a_assert_world_unchanged(
+            before, rng, rng_state, world, 'a49c.pure.' + label,
+        )
+        if identities != _a49c_cpu_identities(world):
+            raise AssertionError(label + ' changed CPU field identities')
+
+    implicit = a49c.pack_a4_maintenance_supplement(world)
+    explicit_default = a49c.pack_a4_maintenance_supplement(
+        world, a4.GPU068A4Config(),
+    )
+    if (implicit.source_provenance == explicit_default.source_provenance
+            or a49c.bind_a4_maintenance(implicit).validate() is None
+            or a49c.bind_a4_maintenance(explicit_default).validate() is None):
+        raise AssertionError('implicit/explicit config provenance differs')
+
+    foreign = a4.a3.s66.Formal066World.from_state(
+        v3.pickle_clone(world.state_dict()),
+    )
+    foreign_supplement = a49c.pack_a4_maintenance_supplement(
+        foreign, capacity,
+    )
+    if foreign_supplement.source_provenance == supplement.source_provenance:
+        raise AssertionError('equal-valued foreign world reused provenance')
+    _a49c_expect_error(lambda: copy.copy(foreign_supplement))
+    _a49c_expect_error(lambda: pickle.loads(pickle.dumps(foreign_supplement)))
+    _a49c_expect_error(foreign_supplement.to_numpy)
+    _a49c_expect_error(
+        lambda: foreign_supplement.to_torch('cpu'),
+    )
+    alternate = a49c.pack_a4_maintenance_supplement(world, capacity)
+    object.__setattr__(
+        alternate, '_base_binding_ref',
+        getattr(foreign_supplement, '_base_binding_ref'),
+    )
+    _a49c_expect_error(lambda: a49c.bind_a4_maintenance(alternate))
+
+    return ('heterogeneous first/middle/last rich/poor/zero/prior/dt0; '
+            'complete+partial-copy tension and complete-only DNA direct A3 '
+            'oracle exact; NumPy/%s joint52 + fresh33 version-zero nonalias; '
+            'presence/source/CPU/RNG immutable; implicit-explicit/equal-world/'
+            'copy/alternate-base fail closed: %s' % (
+                '/'.join(_a49c_devices()), '/'.join(details),
+            ))
+
+
+def test_a49c_composite52_shadow_pointers_coherence_rebuild_and_capacity():
+    tail_world, _, tail_capacity = _a49a_fixture(seed=19000)
+    tail_world.cells = list(tail_world.cells[:2])
+    tail_supplement = a49c.pack_a4_maintenance_supplement(
+        tail_world, tail_capacity,
+    )
+    tail_binding = a49c.bind_a4_maintenance(tail_supplement)
+    _a49c_assert_binding52(tail_binding, 'a49c.tail.host52')
+    if (tail_supplement.cell_count != 2
+            or tail_supplement.cell_capacity != 4
+            or np.any(tail_supplement.transporters[2:].view(np.uint64) != 0)
+            or np.any(
+                tail_supplement.maintenance_shortfall[2:].view(np.uint64)
+                != 0)):
+        raise AssertionError('A4.9c two-array unused tail is not bitwise zero')
+
+    world, cells, capacity = _a49a_fixture(seed=19001)
+    owner = _a49c_owner(world, capacity, 'cpu')
+    initial_binding = owner._maintenance_binding
+    initial_storage = _a49c_assert_binding52(
+        initial_binding, 'a49c.owner.initial52',
+    )
+    initial_snapshot = _a49c_binding_snapshot(initial_binding)
+    expected = a49c.bind_a4_maintenance(
+        a49c.pack_a4_maintenance_supplement(world, capacity)
+    ).to_torch('cpu')
+    for index, (left, right) in enumerate(zip(
+            a49c._binding_arrays(initial_binding),
+            a49c._binding_arrays(expected))):
+        if not _a49c_exact_array(left, right):
+            raise AssertionError(
+                'initial resident52 readback[%d] differs' % index
+            )
+    if (owner.lifecycle != a49c.COHERENT
+            or owner.epochs
+            != a49a.A4ResidentArenaEpochs(1, 1, 1, 1, 1)
+            or int(owner._storage_generation) != 1):
+        raise AssertionError('initial composite lifecycle/epochs differ')
+
+    old_binding = owner._maintenance_binding
+    old_snapshot = _a49c_binding_snapshot(old_binding)
+    old_generation = int(owner._storage_generation)
+    old_epochs = owner.epochs
+    cells[0].transporters[0, 0] = np.nextafter(
+        float(cells[0].transporters[0, 0]), np.inf,
+    )
+    if owner.audit_cpu(world) != a49c.CPU_NEWER:
+        raise AssertionError('sidecar-only drift did not become CPU_NEWER')
+    dirty_epochs = owner.epochs
+    if (dirty_epochs != a49a._advance_epochs(
+            old_epochs, frozenset(('S',)), cache_built=False)):
+        raise AssertionError('sidecar-only drift did not advance S once')
+    owner.audit_cpu(world)
+    if owner.epochs != dirty_epochs:
+        raise AssertionError('repeated sidecar audit double-counted S')
+    expected_id = owner.arena_id
+    expected_lifecycle = owner.lifecycle
+    candidate = owner.prepare_rebuild(world)
+    candidate_storage = _a49c_assert_binding52(
+        candidate.new_binding_ref, 'a49c.owner.rebuild52',
+    )
+    if initial_storage.intersection(candidate_storage):
+        raise AssertionError('rebuild candidate52 aliases old generation')
+    owner.swap_rebuild(
+        candidate, world, expected_id, expected_lifecycle, dirty_epochs,
+    )
+    if (owner.lifecycle != a49c.COHERENT
+            or int(owner._storage_generation) != old_generation + 1
+            or owner.epochs != dirty_epochs
+            or owner._maintenance_binding is old_binding
+            or not candidate.consumed):
+        raise AssertionError('full composite rebuild CAS differs')
+    _a49c_assert_binding_snapshot(
+        old_snapshot, old_binding, 'a49c.rebuild.retired52',
+    )
+
+    simultaneous_epochs = owner.epochs
+    cells[1].pools[a49c.a3.POOL_ATP] = np.nextafter(
+        float(cells[1].pools[a49c.a3.POOL_ATP]), np.inf,
+    )
+    cells[1].transporters[0, 1] = np.nextafter(
+        float(cells[1].transporters[0, 1]), np.inf,
+    )
+    if (owner.audit_cpu(world) != a49c.CPU_NEWER
+            or owner.epochs != a49a._advance_epochs(
+                simultaneous_epochs, frozenset(('S',)),
+                cache_built=False,
+            )):
+        raise AssertionError('base+sidecar simultaneous drift double-counted S')
+    expected_id = owner.arena_id
+    expected_epochs = owner.epochs
+    candidate = owner.prepare_rebuild(world)
+    owner.swap_rebuild(
+        candidate, world, expected_id, a49c.CPU_NEWER,
+        expected_epochs,
+    )
+
+    presence_world, presence_cells, presence_capacity = _a49a_fixture(
+        seed=19002,
+    )
+    if hasattr(presence_cells[0], 'maintenance_shortfall'):
+        delattr(presence_cells[0], 'maintenance_shortfall')
+    presence_owner = _a49c_owner(
+        presence_world, presence_capacity, 'cpu',
+    )
+    presence_epochs = presence_owner.epochs
+    presence_cells[0].maintenance_shortfall = 0.0
+    if (presence_owner.audit_cpu(presence_world) != a49c.CPU_NEWER
+            or presence_owner.epochs != a49a._advance_epochs(
+                presence_epochs, frozenset(('S',)),
+                cache_built=False,
+            )):
+        raise AssertionError('absent-to-explicit-zero presence drift was hidden')
+
+    capacity_details = []
+    for device in _a49c_devices():
+        exact_world, _, exact = _a49a_fixture(seed=19010)
+        exact_owner = _a49c_owner(exact_world, exact, device)
+        _a49c_assert_binding52(
+            exact_owner._maintenance_binding,
+            'a49c.%s.capacity.exact52' % device,
+        )
+        values = {
+            'max_cells': int(exact.max_cells),
+            'max_sequences': int(exact.max_sequences),
+            'max_symbols': int(exact.max_symbols),
+            'max_sequence_symbols': int(exact.max_sequence_symbols),
+            'max_proteins_per_cell': int(exact.max_proteins_per_cell),
+        }
+        for axis, field in (
+                ('C', 'max_cells'), ('Q', 'max_sequences'),
+                ('S', 'max_symbols'), ('W', 'max_sequence_symbols'),
+                ('P', 'max_proteins_per_cell')):
+            short_values = dict(values)
+            short_values[field] -= 1
+            short = a4.GPU068A4Config(**short_values)
+            short_world, _, _ = _a49a_fixture(seed=19011)
+            before = v3.pickle_clone(short_world.state_dict())
+            rng = short_world.rng
+            rng_state = v3.pickle_clone(rng.bit_generator.state)
+            _a49c_expect_error(
+                lambda short_world=short_world, short=short, device=device:
+                _a49c_owner(short_world, short, device),
+            )
+            _a49a_assert_world_unchanged(
+                before, rng, rng_state, short_world,
+                'a49c.%s.capacity.%s' % (device, axis),
+            )
+            capacity_details.append(device + ':' + axis)
+
+    class CaptureScheduler(a49c.A4ResidentMaintenanceFoundationScheduler):
+        def __init__(self, *args, **kwargs):
+            self.prepared_seen = None
+            self.finalized_seen = None
+            super(CaptureScheduler, self).__init__(*args, **kwargs)
+
+        def _resident_translation_candidate_ready(
+                self, world, cell, dt, config, prepared):
+            self.prepared_seen = prepared
+            return prepared
+
+        def _resident_translation_finalized_ready(
+                self, world, cell, prepared, finalized):
+            self.finalized_seen = finalized
+            return finalized
+
+    carry_details = []
+    for device in _a49c_devices():
+        carry_world, carry_cells, carry_capacity, carry_dt = (
+            _paid_translation_fixture(seed=19020)
+        )
+        scheduler = CaptureScheduler(carry_capacity, device)
+        scheduler._bind_resident_world(carry_world)
+        carry_owner = scheduler._resident_owner_for_rank5(carry_world)
+        branches = (
+            ('rich', carry_cells[0], carry_dt, True),
+            ('early', carry_cells[3], carry_dt, False),
+            ('eligible_dt0', carry_cells[0], 0.0, True),
+        )
+        for label, cell, dt, expected_sync in branches:
+            scheduler.prepared_seen = None
+            scheduler.finalized_seen = None
+            before_binding = carry_owner._maintenance_binding
+            before_snapshot = _a49c_binding_snapshot(before_binding)
+            before_storage = _a49c_assert_binding52(
+                before_binding, 'a49c.%s.%s.old52' % (device, label),
+            )
+            before_generation = int(carry_owner._storage_generation)
+            before_epochs = carry_owner.epochs
+            sidecar_before = (
+                _a49c_host_array(
+                    before_binding.supplement.transporters,
+                ).copy(),
+                _a49c_host_array(
+                    before_binding.supplement.maintenance_shortfall,
+                ).copy(),
+            )
+            _a49b_begin_translation_direct(
+                scheduler, carry_world, cell, dt,
+            )
+            try:
+                scheduler.cpu_translation(
+                    carry_world, cell, dt, carry_world.config,
+                )
+                prepared = scheduler.prepared_seen
+                finalized = scheduler.finalized_seen
+                after_binding = carry_owner._maintenance_binding
+                after_storage = _a49c_assert_binding52(
+                    after_binding,
+                    'a49c.%s.%s.new52' % (device, label),
+                )
+                if (prepared is None or finalized is None
+                        or bool(prepared.sync_performed) is not expected_sync
+                        or before_storage.intersection(after_storage)
+                        or int(carry_owner._storage_generation)
+                        != before_generation + 1
+                        or carry_owner.epochs != a49a._advance_epochs(
+                            before_epochs, frozenset(('S',)),
+                            cache_built=False,
+                        )
+                        or carry_owner.lifecycle != a49c.COHERENT
+                        or after_binding is before_binding
+                        or not prepared.consumed or not finalized.consumed
+                        or not _a49c_exact_array(
+                            sidecar_before[0],
+                            after_binding.supplement.transporters)
+                        or not _a49c_exact_array(
+                            sidecar_before[1],
+                            after_binding.supplement.maintenance_shortfall)):
+                    raise AssertionError(
+                        '%s/%s translation sidecar carry differs' % (
+                            device, label,
+                        )
+                    )
+                _a49c_assert_binding_snapshot(
+                    before_snapshot, before_binding,
+                    'a49c.%s.%s.retired52' % (device, label),
+                )
+                carry_details.append('%s:%s' % (device, label))
+            finally:
+                _a48_abort_direct(scheduler, cell)
+
+    return ('two-array shape/tail and resident52 exact; sidecar-only and '
+            'base+sidecar S-once/idempotent full CAS; presence drift; exact '
+            'C/Q/S/W/P one-short %s; rich/early/no-op A4.9b carry fresh52 '
+            'sidecar-bit-exact generation/S +1 %s' % (
+                '/'.join(capacity_details), '/'.join(carry_details),
+            ))
+
+
+def test_a49c_plan_and_arena_seals_leases_tamper_scope_fail_closed():
+    gc.collect()
+    if any(len(registry) != 0 for registry in (
+            a49c._SUPPLEMENT_REGISTRY, a49c._BINDING_REGISTRY,
+            a49c._PLAN_REGISTRY)):
+        raise AssertionError('A4.9c weak creation registries retained artifacts')
+
+    def transient_artifacts():
+        world, cells, capacity = _a49c_fixture(seed=19100)
+        supplement = a49c.pack_a4_maintenance_supplement(world, capacity)
+        binding = a49c.bind_a4_maintenance(supplement)
+        a49c.paid_maintenance_selected_numpy(
+            binding, 0.1, 0, int(cells[0].cell_id),
+        )
+
+    transient_artifacts()
+    gc.collect()
+    if any(len(registry) != 0 for registry in (
+            a49c._SUPPLEMENT_REGISTRY, a49c._BINDING_REGISTRY,
+            a49c._PLAN_REGISTRY)):
+        raise AssertionError('A4.9c weak creation registries did not release')
+
+    world, cells, capacity = _a49c_fixture(seed=19101)
+    supplement = a49c.pack_a4_maintenance_supplement(world, capacity)
+    binding = a49c.bind_a4_maintenance(supplement)
+    plan = a49c.paid_maintenance_selected_numpy(
+        binding, 0.1, 0, int(cells[0].cell_id),
+    )
+    for bad_dt in (-1.0, float('nan'), float('inf'), True, '0.1'):
+        _a49c_expect_error(
+            lambda bad_dt=bad_dt: a49c.paid_maintenance_selected_numpy(
+                binding, bad_dt, 0, int(cells[0].cell_id),
+            )
+        )
+    for bad_index in (-1, len(cells), True, 1.0):
+        _a49c_expect_error(
+            lambda bad_index=bad_index: a49c.paid_maintenance_selected_numpy(
+                binding, 0.1, bad_index, int(cells[0].cell_id),
+            )
+        )
+    _a49c_expect_error(
+        lambda: a49c.paid_maintenance_selected_numpy(
+            binding, 0.1, 0, int(cells[0].cell_id) + 1,
+        )
+    )
+    resident = binding.to_torch('cpu')
+    _a49c_expect_error(
+        lambda: a49c.paid_maintenance_selected_numpy(
+            resident, 0.1, 0, int(cells[0].cell_id),
+        )
+    )
+    _a49c_expect_error(
+        lambda: a49c.paid_maintenance_selected_torch(
+            binding, 0.1, 0, int(cells[0].cell_id),
+        )
+    )
+    for artifact in (supplement, binding, plan):
+        _a49c_expect_error(lambda artifact=artifact: pickle.dumps(artifact))
+        for forbidden in ('apply', 'publish', 'swap', 'state_dict'):
+            if hasattr(artifact, forbidden):
+                raise AssertionError(
+                    '%s exposed forbidden %s' % (
+                        type(artifact).__name__, forbidden,
+                    )
+                )
+    _a49c_expect_error(
+        lambda: a49c.A4MaintenanceSupplementBatch(),
+    )
+    _a49c_expect_error(lambda: a49c.A4MaintenanceBinding())
+    _a49c_expect_error(lambda: a49c.A4SelectedMaintenancePlan())
+
+    for offset, bad in enumerate((
+            True, np.bool_(False), '0.0', np.asarray([0.0]), [0.0],
+            None, -1.0, float('nan'), float('inf'))):
+        bad_world, bad_cells, bad_capacity = _a49c_fixture(
+            seed=19110 + offset,
+        )
+        bad_cells[0].maintenance_shortfall = bad
+        _a49c_expect_error(
+            lambda bad_world=bad_world, bad_capacity=bad_capacity:
+            a49c.pack_a4_maintenance_supplement(
+                bad_world, bad_capacity,
+            )
+        )
+
+    alias_world, _, alias_capacity = _a49c_fixture(seed=19120)
+    alias_source = a49c.bind_a4_maintenance(
+        a49c.pack_a4_maintenance_supplement(
+            alias_world, alias_capacity,
+        )
+    )
+    alias_copy = alias_source.to_numpy()
+    object.__setattr__(
+        alias_copy.translation.state, 'membrane',
+        alias_source.translation.state.membrane,
+    )
+    _a49c_expect_error(alias_copy.validate)
+
+    source_modes = (
+        ('ragged_counts', lambda value:
+         value.translation.ragged.genome_counts.data.__setitem__(
+             0, value.translation.ragged.genome_counts.data[0] + 1)),
+        ('ragged_offsets', lambda value:
+         value.translation.ragged.sequence_offsets.data.__setitem__(
+             1, value.translation.ragged.sequence_offsets.data[1] + 1)),
+        ('state', lambda value:
+         value.translation.state.pools.data.__setitem__(
+             (0, 0), value.translation.state.pools.data[0, 0] + 1.0)),
+        ('cache', lambda value:
+         value.translation.cache.copy_numbers.data.__setitem__(
+             0, value.translation.cache.copy_numbers.data[0] + 1)),
+        ('transporters', lambda value:
+         value.supplement.transporters.data.__setitem__(
+             (0, 0, 0), value.supplement.transporters.data[0, 0, 0] + 1.0)),
+        ('shortfall', lambda value:
+         value.supplement.maintenance_shortfall.data.__setitem__(
+             0, value.supplement.maintenance_shortfall.data[0] + 1.0)),
+    )
+    tamper_details = []
+    for offset, (label, mutate) in enumerate(source_modes):
+        tamper_world, _, tamper_capacity = _a49c_fixture(
+            seed=19130 + offset,
+        )
+        tampered = a49c.bind_a4_maintenance(
+            a49c.pack_a4_maintenance_supplement(
+                tamper_world, tamper_capacity,
+            )
+        ).to_torch('cpu')
+        mutate(tampered)
+        _a49c_expect_error(tampered.validate)
+        tamper_details.append('source:' + label)
+
+    plan_modes = (
+        ('mask', lambda value: value.target_mask.data.__setitem__(
+            0, ~value.target_mask.data[0])),
+        ('state', lambda value: value.state_after.pools.data.__setitem__(
+            (0, 0), value.state_after.pools.data[0, 0] + 1.0)),
+        ('transporters', lambda value:
+         value.supplement_after.transporters.data.__setitem__(
+             (0, 0, 0),
+             value.supplement_after.transporters.data[0, 0, 0] + 1.0)),
+        ('shortfall', lambda value:
+         value.supplement_after.maintenance_shortfall.data.__setitem__(
+             0,
+             value.supplement_after.maintenance_shortfall.data[0] + 1.0)),
+    )
+    for offset, (label, mutate) in enumerate(plan_modes):
+        tamper_world, tamper_cells, tamper_capacity = _a49c_fixture(
+            seed=19140 + offset,
+        )
+        source = a49c.bind_a4_maintenance(
+            a49c.pack_a4_maintenance_supplement(
+                tamper_world, tamper_capacity,
+            )
+        ).to_torch('cpu')
+        tampered_plan = a49c.paid_maintenance_selected(
+            source, 0.1, 0, int(tamper_cells[0].cell_id),
+        )
+        mutate(tampered_plan)
+        _a49c_expect_error(tampered_plan.validate)
+        tamper_details.append('plan:' + label)
+
+    lease_world, _, lease_capacity = _a49a_fixture(seed=19150)
+    lease_owner = _a49c_owner(lease_world, lease_capacity, 'cpu')
+    lease_a = lease_owner._open_read_lease(lease_world)
+    lease_b = lease_owner._open_read_lease(lease_world)
+    _a49c_expect_error(lease_a.__enter__)
+    with lease_b as active:
+        leased = active._binding_once()
+        if leased is not lease_owner._maintenance_binding:
+            raise AssertionError('read lease did not return composite52')
+        _a49c_expect_error(active._binding_once)
+    _a49c_expect_error(lease_b.__enter__)
+    other_world, _, other_capacity = _a49a_fixture(seed=19151)
+    other_owner = _a49c_owner(other_world, other_capacity, 'cpu')
+    cross = lease_owner._open_read_lease(lease_world)
+    _a49c_expect_error(lambda: other_owner._activate_lease(cross))
+    with cross as active:
+        active._binding_once()
+
+    for offset, field in enumerate(('transporters', 'shortfall')):
+        active_world, _, active_capacity = _a49a_fixture(
+            seed=19160 + offset,
+        )
+        active_owner = _a49c_owner(active_world, active_capacity, 'cpu')
+        source = active_owner._maintenance_source
+        if field == 'transporters':
+            source.transporters[0, 0, 0] += 7.0
+        else:
+            source.maintenance_shortfall[0] += 7.0
+        _a49c_expect_error(active_owner._guard_or_invalidate)
+        if active_owner.lifecycle != a49c.INVALID:
+            raise AssertionError(field + ' active observation stayed usable')
+        tamper_details.append('active-observation:' + field)
+
+    candidate_modes = ('source_transporters', 'source_shortfall',
+                       'binding_base', 'binding_sidecar')
+    for offset, mode in enumerate(candidate_modes):
+        candidate_world, candidate_cells, candidate_capacity = _a49a_fixture(
+            seed=19170 + offset,
+        )
+        candidate_owner = _a49c_owner(
+            candidate_world, candidate_capacity, 'cpu',
+        )
+        candidate_cells[0].transporters[0, 0] = np.nextafter(
+            float(candidate_cells[0].transporters[0, 0]), np.inf,
+        )
+        candidate_owner.audit_cpu(candidate_world)
+        expected_id = candidate_owner.arena_id
+        expected_epochs = candidate_owner.epochs
+        candidate = candidate_owner.prepare_rebuild(candidate_world)
+        if mode == 'source_transporters':
+            candidate.source_ref.transporters[0, 0, 0] += 7.0
+        elif mode == 'source_shortfall':
+            candidate.source_ref.maintenance_shortfall[0] += 7.0
+        elif mode == 'binding_base':
+            candidate.new_binding_ref.translation.ragged.genome_counts.data[0] += 1
+        else:
+            candidate.new_binding_ref.supplement.transporters.data[0, 0, 0] += 1.0
+        _a49c_expect_error(lambda: candidate_owner.swap_rebuild(
+            candidate, candidate_world, expected_id,
+            a49c.CPU_NEWER, expected_epochs,
+        ))
+        if (candidate_owner.lifecycle != a49c.INVALID
+                or candidate_owner._maintenance_rebuild_candidate is not None):
+            raise AssertionError(mode + ' candidate was not quarantined')
+        tamper_details.append('candidate:' + mode)
+
+    ordinary_world, ordinary_cells, ordinary_capacity = _a49a_fixture(
+        seed=19180,
+    )
+    ordinary_owner = _a49c_owner(
+        ordinary_world, ordinary_capacity, 'cpu',
+    )
+    ordinary_cells[0].transporters[0, 0] = np.nextafter(
+        float(ordinary_cells[0].transporters[0, 0]), np.inf,
+    )
+    ordinary_owner.audit_cpu(ordinary_world)
+    old_binding = ordinary_owner._maintenance_binding
+    old_snapshot = _a49c_binding_snapshot(old_binding)
+    old_generation = int(ordinary_owner._storage_generation)
+    candidate = ordinary_owner.prepare_rebuild(ordinary_world)
+    _a49c_expect_error(lambda: ordinary_owner.swap_rebuild(
+        candidate, ordinary_world, ordinary_owner.arena_id + '-wrong',
+        a49c.CPU_NEWER, ordinary_owner.epochs,
+    ))
+    if (ordinary_owner.lifecycle != a49c.CPU_NEWER
+            or ordinary_owner._maintenance_rebuild_candidate is not None
+            or int(ordinary_owner._storage_generation) != old_generation):
+        raise AssertionError('ordinary wrong CAS invalidated old composite')
+    _a49c_assert_binding_snapshot(
+        old_snapshot, old_binding, 'a49c.ordinary-cas.old52',
+    )
+
+    class TranslationTamper(a49c.A4ResidentMaintenanceFoundationScheduler):
+        def __init__(self, *args, **kwargs):
+            self.mode = kwargs.pop('mode')
+            self.prepared_seen = None
+            super(TranslationTamper, self).__init__(*args, **kwargs)
+
+        def _resident_translation_candidate_ready(
+                self, world, cell, dt, config, prepared):
+            self.prepared_seen = prepared
+            if self.mode == 'prepared_base':
+                prepared._a49c_candidate_binding.translation.ragged.genome_counts.data[0] += 1
+            elif self.mode == 'prepared_sidecar':
+                prepared._a49c_candidate_binding.supplement.transporters.data[0, 0, 0] += 1.0
+            elif self.mode == 'ordinary':
+                raise RuntimeError('ordinary preclaim hook failure')
+            return prepared
+
+        def _publish_resident_translation_candidate(
+                self, world, cell, prepared):
+            super(TranslationTamper, self)._publish_resident_translation_candidate(
+                world, cell, prepared,
+            )
+            if self.mode == 'publisher_sidecar':
+                prepared._a49c_candidate_binding.supplement.transporters.data[0, 0, 0] += 1.0
+                raise RuntimeError('publisher sidecar trust failure')
+
+        def _resident_translation_finalized_ready(
+                self, world, cell, prepared, finalized):
+            if self.mode == 'finalized_base':
+                finalized._a49c_new_binding.translation.cache.copy_numbers.data[0] += 1
+            elif self.mode == 'finalized_sidecar':
+                finalized._a49c_new_binding.supplement.maintenance_shortfall.data[0] += 1.0
+            return finalized
+
+    for offset, mode in enumerate((
+            'prepared_base', 'prepared_sidecar', 'ordinary',
+            'publisher_sidecar', 'finalized_base', 'finalized_sidecar')):
+        tx_world, tx_cells, tx_capacity, tx_dt = _paid_translation_fixture(
+            seed=19190 + offset,
+        )
+        cell = tx_cells[0]
+        scheduler = TranslationTamper(tx_capacity, 'cpu', mode=mode)
+        scheduler._bind_resident_world(tx_world)
+        tx_owner = scheduler._resident_owner_for_rank5(tx_world)
+        old_arena = tx_owner._arena
+        old_binding = tx_owner._maintenance_binding
+        old_snapshot = _a49c_binding_snapshot(old_binding)
+        old_generation = int(tx_owner._storage_generation)
+        before = v3.pickle_clone(tx_world.state_dict())
+        rng = tx_world.rng
+        rng_state = v3.pickle_clone(rng.bit_generator.state)
+        _a49b_begin_translation_direct(scheduler, tx_world, cell, tx_dt)
+        caught = None
+        try:
+            scheduler.cpu_translation(tx_world, cell, tx_dt, tx_world.config)
+        except BaseException as exc:
+            caught = exc
+        if caught is None:
+            raise AssertionError(mode + ' injected translation failure escaped')
+        _a49a_assert_world_unchanged(
+            before, rng, rng_state, tx_world,
+            'a49c.translation.' + mode,
+        )
+        expected_lifecycle = (
+            a49c.COHERENT if mode == 'ordinary' else a49c.INVALID
+        )
+        if (tx_owner.lifecycle != expected_lifecycle
+                or tx_owner._arena is not old_arena
+                or tx_owner._maintenance_binding is not old_binding
+                or int(tx_owner._storage_generation) != old_generation
+                or tx_owner._tx_active
+                or tx_owner._tx_prepared is not None
+                or tx_owner._maintenance_phase != 'idle'):
+            raise AssertionError(mode + ' rollback/quarantine differs')
+        _a49c_assert_binding_snapshot(
+            old_snapshot, old_binding, 'a49c.translation.' + mode,
+        )
+        _, record = scheduler._record(cell)
+        claims = [entry for entry in record['events']
+                  if entry['event'] == 'translation_cpu']
+        if mode.startswith('prepared') or mode == 'ordinary':
+            if claims:
+                raise AssertionError(mode + ' crossed preclaim boundary')
+        elif (len(claims) != 1 or 'amount' in claims[0]['metadata']
+              or 'rng_draw_count' in claims[0]['metadata']):
+            raise AssertionError(mode + ' claim was annotated before rollback')
+        _a48_abort_direct(scheduler, cell, caught)
+        tamper_details.append('translation:' + mode)
+
+    for offset, mode in enumerate(('build', 'clone', 'seal')):
+        fail_world, fail_cells, fail_capacity, fail_dt = (
+            _paid_translation_fixture(seed=19210 + offset)
+        )
+        cell = fail_cells[0]
+        scheduler = a49c.A4ResidentMaintenanceFoundationScheduler(
+            fail_capacity, 'cpu',
+        )
+        scheduler._bind_resident_world(fail_world)
+        fail_owner = scheduler._resident_owner_for_rank5(fail_world)
+        old_binding = fail_owner._maintenance_binding
+        old_snapshot = _a49c_binding_snapshot(old_binding)
+        old_generation = int(fail_owner._storage_generation)
+        original_make = a49c._make_resident_maintenance_binding
+        original_clone = torch.Tensor.clone
+        target_pointers = set(old_binding.supplement.data_ptrs().values())
+
+        def make_failure(*args, **kwargs):
+            raise RuntimeError('injected sidecar build failure')
+
+        def seal_failure(*args, **kwargs):
+            built = original_make(*args, **kwargs)
+            object.__setattr__(
+                built.supplement, '_content_digests', ('tamper', 'tamper'),
+            )
+            return built
+
+        def clone_failure(tensor, *args, **kwargs):
+            if int(tensor.data_ptr()) in target_pointers:
+                raise RuntimeError('injected sidecar clone failure')
+            return original_clone(tensor, *args, **kwargs)
+
+        if mode == 'build':
+            a49c._make_resident_maintenance_binding = make_failure
+        elif mode == 'seal':
+            a49c._make_resident_maintenance_binding = seal_failure
+        else:
+            torch.Tensor.clone = clone_failure
+        _a49b_begin_translation_direct(
+            scheduler, fail_world, cell, fail_dt,
+        )
+        caught = None
+        try:
+            scheduler.cpu_translation(
+                fail_world, cell, fail_dt, fail_world.config,
+            )
+        except BaseException as exc:
+            caught = exc
+        finally:
+            a49c._make_resident_maintenance_binding = original_make
+            torch.Tensor.clone = original_clone
+        if (caught is None or fail_owner.lifecycle != a49c.COHERENT
+                or fail_owner._maintenance_binding is not old_binding
+                or int(fail_owner._storage_generation) != old_generation
+                or fail_owner._tx_active
+                or fail_owner._tx_prepared is not None
+                or fail_owner._maintenance_phase != 'idle'):
+            raise AssertionError(mode + ' failure stranded transaction')
+        _a49c_assert_binding_snapshot(
+            old_snapshot, old_binding, 'a49c.sidecar-failure.' + mode,
+        )
+        _a48_abort_direct(scheduler, cell, caught)
+        tamper_details.append('sidecar-failure:' + mode)
+
+    return ('strict selector/dt/scalar/device/artifact scope; weak registries '
+            'release; NumPy alias and source/plan .data seals; composite '
+            'leases; active/candidate observation/base/sidecar quarantine; '
+            'ordinary CAS preserves old52; prepared/publisher/finalized '
+            'trust INVALID vs ordinary abort; build/clone/seal tx neutral: %s' %
+            '/'.join(tamper_details))
+
+
+def test_a49c_reconstruction_a49b_successor_frozen94_authority():
+    capacity = a4.GPU068A4Config()
+
+    def a49b_from_state(state, device):
+        return _a49b_hybrid_from_state(state, capacity, device)
+
+    def run_lockstep(label, state, steps, device):
+        inherited = a49b_from_state(state, device)
+        successor = _a49c_hybrid_from_state(state, capacity, device)
+        original_container = successor.world.cells
+        original_members = tuple(successor.world.cells)
+        last_generation = 0
+        for step_index in range(int(steps)):
+            inherited_receipt = inherited.step(0.1)
+            successor_receipt = successor.step(0.1)
+            v3.assert_recursive_close(
+                inherited_receipt, successor_receipt, 0.0, 0.0,
+                '%s.receipt[%d]' % (label, step_index),
+            )
+            v3.assert_recursive_close(
+                inherited.world.state_dict(),
+                successor.world.state_dict(),
+                v3.WORLD_FP64_ATOL, 0.0,
+                '%s.world[%d]' % (label, step_index),
+            )
+            if (successor.world.cells is not original_container
+                    or tuple(successor.world.cells) != original_members):
+                raise AssertionError(
+                    '%s step %d did not normalize same membership' % (
+                        label, step_index,
+                    )
+                )
+            owner = successor.scheduler._a49b_owner
+            if owner is None or owner.lifecycle != a49c.COHERENT:
+                raise AssertionError(label + ' did not construct rank5 owner')
+            if int(owner._storage_generation) <= last_generation:
+                raise AssertionError(label + ' storage generation did not advance')
+            last_generation = int(owner._storage_generation)
+            for record in successor_receipt['cells']:
+                names = [entry['event'] for entry in record['events']]
+                by_name = {
+                    entry['event']: entry for entry in record['events']
+                }
+                if (tuple(names) != tuple(a3s.CELL_EVENT_ORDER)
+                        or names.count('maintenance') != 1
+                        or names.count('translation_cpu') != 1
+                        or names.index('maintenance')
+                        >= names.index('translation_cpu')
+                        or by_name['translation_cpu']['metadata'].get(
+                            'authority')
+                        != ('A4.9b-world-resident-selected-paid-'
+                            'translation-atomic-CAS')
+                        or by_name['translation_cpu']['metadata'].get(
+                            'rng_draw_count') != 0):
+                    raise AssertionError(label + ' event authority/order differs')
+            if tuple(
+                    entry['event']
+                    for entry in successor_receipt['world_events']) != tuple(
+                        a3s.WORLD_EVENT_ORDER):
+                raise AssertionError(label + ' world event order differs')
+
+            # Rank-5 is followed by CPU transporter/repair work.  The shadow
+            # is therefore audited as CPU_NEWER at the boundary and rebuilt
+            # at the next rank-5 preclaim; a repeated audit is idempotent.
+            epoch_before = owner.epochs
+            if owner.audit_cpu(successor.world) != a49c.CPU_NEWER:
+                raise AssertionError(label + ' end-step drift was not observed')
+            observed_epochs = owner.epochs
+            if (observed_epochs.state_epoch
+                    != epoch_before.state_epoch + 1):
+                raise AssertionError(label + ' end-step S epoch differs')
+            owner.audit_cpu(successor.world)
+            if owner.epochs != observed_epochs:
+                raise AssertionError(label + ' repeated end-step audit advanced')
+        return inherited, successor, last_generation
+
+    lockstep_details = []
+    for device in _a49c_devices():
+        for steps, seed in ((1, 19300), (10, 19301)):
+            source = v3.make_world(seed=seed, cells=1)
+            _, successor, generation = run_lockstep(
+                'a49c.%s.lockstep_%d' % (device, steps),
+                source.state_dict(), steps, device,
+            )
+            lockstep_details.append(
+                '%s:%d:g%d' % (device, steps, generation)
+            )
+        two = v3.make_world(seed=19302, cells=2)
+        two.config.endogenous_damage = False
+        for cell in two.cells:
+            cell.genome_lesions = [
+                0.5 / 0.00065 for _ in cell.genomes
+            ]
+            cell._refresh_gene_cache()
+        run_lockstep(
+            'a49c.%s.two_cell' % device,
+            two.state_dict(), 1, device,
+        )
+
+    persistence_details = []
+    for device in _a49c_devices():
+        persisted_source = v3.make_world(seed=19310, cells=1)
+        persisted = _a49c_hybrid_from_state(
+            persisted_source.state_dict(), capacity, device,
+        )
+        persisted.step(0.1)
+        durable = persisted.state_dict()
+        expected_keys = {
+            'schema', 'config', 'device', 'foundation', 'port_status',
+        }
+        top_status = durable.get('a4_resident_maintenance_foundation')
+        scheduler_status = durable.get('scheduler', {}).get(
+            'a4_resident_maintenance_foundation'
+        )
+        if (not isinstance(top_status, Mapping)
+                or not isinstance(scheduler_status, Mapping)
+                or set(top_status) != expected_keys
+                or set(scheduler_status) != expected_keys
+                or top_status != scheduler_status
+                or top_status['port_status'] != a49c.PORT_STATUS):
+            raise AssertionError(device + ' canonical foundation status differs')
+        for value in (top_status, scheduler_status):
+            if any(key in value for key in (
+                    'supplement', 'binding', 'owner', 'arena', 'candidate',
+                    'lease', 'epochs', 'pointers', 'seal', 'guard')):
+                raise AssertionError(device + ' saved runtime artifact')
+        pickle.dumps(durable, protocol=pickle.HIGHEST_PROTOCOL)
+
+        twin = persisted.clone()
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, 'a49c.pkl')
+            persisted.save(path)
+            restored = (
+                a49c.Hybrid066WorldA4ResidentMaintenanceFoundation.load(
+                    path,
+                )
+            )
+        for value in (twin, restored):
+            if (type(value)
+                    is not a49c.Hybrid066WorldA4ResidentMaintenanceFoundation
+                    or type(value.scheduler)
+                    is not a49c.A4ResidentMaintenanceFoundationScheduler
+                    or value.scheduler._a49b_owner is not None
+                    or value.scheduler._a49b_world is not value.world
+                    or value.scheduler._a49b_cells is not value.world.cells
+                    or value.scheduler.a4_device != device
+                    or value.scheduler.a4_config != capacity):
+                raise AssertionError(device + ' reconstruction authority differs')
+        v3.assert_recursive_close(
+            twin.world.state_dict(), restored.world.state_dict(),
+            0.0, 0.0, 'a49c.%s.clone-load' % device,
+        )
+        v3.assert_recursive_close(
+            persisted.world.state_dict(), twin.world.state_dict(),
+            v3.WORLD_FP64_ATOL, 0.0,
+            'a49c.%s.source-clone' % device,
+        )
+
+        wrappers = (persisted, twin, restored)
+        owners = []
+        storage = []
+        arena_ids = set()
+        for index, value in enumerate(wrappers):
+            owner = value.scheduler._resident_owner_for_rank5(value.world)
+            owners.append(owner)
+            storage.append(_a49c_assert_binding52(
+                owner._maintenance_binding,
+                'a49c.%s.persisted%d' % (device, index),
+            ))
+            arena_ids.add(owner.arena_id)
+        if len(arena_ids) != 3:
+            raise AssertionError(device + ' reconstruction reused arena ID')
+        for left in range(3):
+            for right in range(left + 1, 3):
+                if storage[left].intersection(storage[right]):
+                    raise AssertionError(
+                        device + ' reconstructed composite52 aliases'
+                    )
+
+        twin_owner = owners[1]
+        twin.world.cells[0].transporters[0, 0] = np.nextafter(
+            float(twin.world.cells[0].transporters[0, 0]), np.inf,
+        )
+        twin_owner.audit_cpu(twin.world)
+        pending = twin_owner.prepare_rebuild(twin.world)
+        _a49c_expect_error(twin.state_dict)
+        twin_owner._discard_composite_rebuild(pending)
+        restored_owner = owners[2]
+        lease = restored_owner._open_read_lease(restored.world)
+        _a49c_expect_error(restored.state_dict)
+        with lease as active:
+            active._binding_once()
+        _a49c_expect_error(lambda: pickle.dumps(restored_owner))
+        persistence_details.append(device + ':fresh3x52')
+
+    bad_state = a49c.A4ResidentMaintenanceFoundationScheduler(
+        capacity, 'cpu',
+    ).state_dict()
+    bad_state = copy.deepcopy(bad_state)
+    bad_state['a4_resident_maintenance_foundation']['supplement'] = {}
+    _a49c_expect_error(
+        lambda: a49c.A4ResidentMaintenanceFoundationScheduler.from_state(
+            bad_state,
+        )
+    )
+
+    member_source = v3.make_world(seed=19320, cells=2)
+    member_source.cells[1].alive = False
+    member_source.cells[1].death_reason = 'a49c_integrated_death'
+    member = _a49c_hybrid_from_state(
+        member_source.state_dict(), capacity, 'cpu',
+    )
+    member_container = member.world.cells
+    original_members = tuple(member.world.cells)
+    receipt = member.step(0.1)
+    member_owner = member.scheduler._a49b_owner
+    old_binding = member_owner._maintenance_binding
+    old_snapshot = _a49c_binding_snapshot(old_binding)
+    old_generation = int(member_owner._storage_generation)
+    if (receipt['status'] != 'complete'
+            or member.world.cells is not member_container
+            or tuple(member.world.cells) == original_members
+            or len(member.world.cells) != 1):
+        raise AssertionError('successful membership normalization was hidden')
+    _a49c_expect_error(lambda: member.step(0.1))
+    if (member_owner.lifecycle != a49c.INVALID
+            or member_owner._maintenance_binding is not old_binding
+            or int(member_owner._storage_generation) != old_generation):
+        raise AssertionError('actual membership drift auto-rebuilt composite')
+    _a49c_assert_binding_snapshot(
+        old_snapshot, old_binding, 'a49c.a5.no-flush52',
+    )
+
+    prior_names = '\n'.join(
+        fn.__name__ for fn in A49B_VALIDATION_TESTS
+    )
+    new_names = tuple(fn.__name__ for fn in A49C_TESTS)
+    prereg_path = os.path.join(
+        ROOT, 'planning', 'SOMA_CELL_0_6_8_GPU_A4_PREREGISTRATION_JA.md',
+    )
+    with open(prereg_path, 'rb') as handle:
+        preregistration = handle.read()
+    suffix = preregistration[_A49C_PREREG_PREFIX_BYTES:]
+    public_signatures = (
+        tuple(inspect.signature(
+            a49c.pack_a4_maintenance_supplement,
+        ).parameters),
+        tuple(inspect.signature(a49c.bind_a4_maintenance).parameters),
+        tuple(inspect.signature(
+            a49c.paid_maintenance_selected_numpy,
+        ).parameters),
+        tuple(inspect.signature(
+            a49c.paid_maintenance_selected_torch,
+        ).parameters),
+        tuple(inspect.signature(
+            a49c.paid_maintenance_selected,
+        ).parameters),
+    )
+    if (tuple(a49c.__all__) != _A49C_PUBLIC_API
+            or public_signatures != (
+                ('world', 'config'), ('supplement',),
+                ('binding', 'dt', 'target_index', 'target_cell_id'),
+                ('binding', 'dt', 'target_index', 'target_cell_id'),
+                ('binding', 'dt', 'target_index', 'target_cell_id'),
+            )
+            or tuple(a49c.A4MaintenanceSupplementBatch.__dataclass_fields__)
+            != ('schema_version', 'cell_capacity', 'cell_count',
+                'source_provenance', 'transporters',
+                'maintenance_shortfall')
+            or tuple(a49c.A4MaintenanceBinding.__dataclass_fields__)
+            != ('translation', 'supplement')
+            or tuple(a49c.A4SelectedMaintenancePlan.__dataclass_fields__)
+            != ('schema_version', 'target_index', 'target_cell_id',
+                'dt_hex', 'target_mask', 'source_provenance',
+                'state_after', 'supplement_after')
+            or not issubclass(
+                a49c.A4ResidentMaintenanceFoundationScheduler,
+                a49b.A4ResidentTranslationEventScheduler)
+            or not issubclass(
+                a49c.Hybrid066WorldA4ResidentMaintenanceFoundation,
+                a49b.Hybrid066WorldA4ResidentTranslation)
+            or a49c.A4ResidentMaintenanceFoundationScheduler.cpu_translation
+            is not a49b.A4ResidentTranslationEventScheduler.cpu_translation
+            or a49c.FULL_GPU_WORLD_STEP is not False
+            or a49c.PORT_STATUS.get('resident_device_writes') is not True
+            or a49c.PORT_STATUS.get('resident_d2h_publish') is not True
+            or a49c.PORT_STATUS.get('resident_device_writes_scope')
+            != 'inherited-a4.9b-selected-translation-only'
+            or a49c.PORT_STATUS.get('resident_d2h_publish_scope')
+            != 'inherited-a4.9b-selected-translation-only'
+            or a49c.PORT_STATUS.get('selected_maintenance')
+            != 'pure-plan-only'
+            or any(a49c.PORT_STATUS.get(key) is not False for key in (
+                'maintenance_resident_device_writes',
+                'maintenance_resident_d2h_publish',
+                'maintenance_live_commit',
+                'maintenance_resident_biology_authority',
+                'full_gpu_world_step'))):
+        raise AssertionError('A4.9c public API/status authority differs')
+
+    if (len(SOURCE_PATHS) != 29
+            or len(A49C_SOURCE_PATHS) != 30
+            or A49C_SOURCE_PATHS[:-1] != SOURCE_PATHS
+            or A49C_SOURCE_PATHS[-1] != A49C_NEW_MODULE_PATH
+            or len(A49B_VALIDATION_TESTS) != 94
+            or len(A49C_TESTS) != 4
+            or len(A49C_VALIDATION_TESTS) != 98
+            or new_names != (
+                'test_a49c_selected_maintenance_plan_formal066_cpu_cuda_isolation',
+                'test_a49c_composite52_shadow_pointers_coherence_rebuild_and_capacity',
+                'test_a49c_plan_and_arena_seals_leases_tamper_scope_fail_closed',
+                'test_a49c_reconstruction_a49b_successor_frozen94_authority',
+            )
+            or hashlib.sha256(prior_names.encode('utf-8')).hexdigest()
+            != _A49C_PRIOR_94_NAMES_SHA256
+            or _a48c7_prior_test_ast_sha256(A49B_VALIDATION_TESTS)
+            != _A49C_PRIOR_94_AST_SHA256
+            or hashlib.sha256(preregistration).hexdigest()
+            != _A49C_PREREG_SHA256
+            or hashlib.sha256(preregistration[
+                :_A49C_PREREG_PREFIX_BYTES]).hexdigest()
+            != _A49C_PREREG_PREFIX_SHA256
+            or not suffix.startswith('\n## A4.9c追加仮説'.encode('utf-8'))
+            or _sha256(os.path.join(
+                ROOT, *A49C_NEW_MODULE_PATH.split('/'),
+            )) != _A49C_CORE_SHA256
+            or _sha256(os.path.join(
+                ROOT, 'src', '0_6_8',
+                'SOMA_CELL_0_6_8_gpu_a4_resident_arena.py',
+            )) != _A49A_CORE_SHA256
+            or _sha256(os.path.join(
+                ROOT, 'src', '0_6_8',
+                'SOMA_CELL_0_6_8_gpu_a4_resident_translation_integration.py',
+            )) != _A49B_CORE_SHA256):
+        raise AssertionError('A4.9c frozen94/prefix/source/hash wiring differs')
+
+    for relative, expected_hash in _A49A_FROZEN_CORE_SHA256.items():
+        if _sha256(os.path.join(ROOT, *relative.split('/'))) != expected_hash:
+            raise AssertionError(relative + ' changed from frozen authority')
+
+    return ('A49b-vs-A49c 1/10-step and 2-cell CPU/event/receipt/PCG64 '
+            'lockstep with end-step CPU_NEWER/next-rank5 rebuild %s; '
+            'save/load/clone ownerless then three fresh nonalias52 %s; '
+            'pending/lease save reject, exact status, actual membership A5 '
+            'no-flush INVALID; public24, frozen94 AST/names, prefix/whole, '
+            'SOURCE_PATHS29/A49C30, total98, frozen cores' % (
+                '/'.join(lockstep_details),
+                '/'.join(persistence_details),
+            ))
+
+
 TESTS = (
     test_api_scope,
     test_source_hash_inputs_present,
@@ -24056,11 +25439,20 @@ A49B_TESTS = (
 
 A49B_VALIDATION_TESTS = A49A_VALIDATION_TESTS + A49B_TESTS
 
+A49C_TESTS = (
+    test_a49c_selected_maintenance_plan_formal066_cpu_cuda_isolation,
+    test_a49c_composite52_shadow_pointers_coherence_rebuild_and_capacity,
+    test_a49c_plan_and_arena_seals_leases_tamper_scope_fail_closed,
+    test_a49c_reconstruction_a49b_successor_frozen94_authority,
+)
+
+A49C_VALIDATION_TESTS = A49B_VALIDATION_TESTS + A49C_TESTS
+
 
 def run_all(write=False, output_dir=None):
     rows = []
     started = time.time()
-    for fn in A49B_VALIDATION_TESTS:
+    for fn in A49C_VALIDATION_TESTS:
         then = time.perf_counter()
         try:
             detail = fn()
@@ -24081,7 +25473,7 @@ def run_all(write=False, output_dir=None):
     failed = sum(row['status'] == 'FAIL' for row in rows)
     elapsed = time.time() - started
     payload = {
-        'build': a49b.BUILD,
+        'build': a49c.BUILD,
         'schema': {
             'ragged_genome': a4.SCHEMA_VERSION,
             'gene_cache': a4.GENE_CACHE_SCHEMA_VERSION,
@@ -24139,29 +25531,62 @@ def run_all(write=False, output_dir=None):
                 a49b.SELECTED_PLAN_SCHEMA_VERSION
             ),
             'resident_selected_translation': a49b.SCHEMA_VERSION,
+            'maintenance_supplement': a49c.SUPPLEMENT_SCHEMA_VERSION,
+            'selected_maintenance_plan': (
+                a49c.SELECTED_PLAN_SCHEMA_VERSION
+            ),
+            'resident_maintenance_foundation': a49c.SCHEMA_VERSION,
         },
         'development_slice': (
-            'A4.9b-persistent-arena-RNG-free-selected-paid-translation-'
-            'transaction'
+            'A4.9c-composite52-maintenance-shadow-foundation-and-'
+            'disposable-pure-selected-maintenance-plan'
         ),
         'promoted_baseline_unchanged': 'SOMA-CELL 0.6.8-GPU A3',
         'full_gpu_world_step': False,
-        'resident_biology_authority': False,
-        'resident_device_writes': True,
-        'resident_device_writes_scope': 'RNG-free paid translation only',
-        'resident_d2h_publish': True,
-        'resident_d2h_publish_scope': 'selected translation row only',
-        'frozen_prior_test_count': 90,
-        'frozen_prior_test_names_sha256': _A49B_PRIOR_90_NAMES_SHA256,
-        'frozen_prior_test_ast_sha256': _A49B_PRIOR_90_AST_SHA256,
+        'resident_biology_authority': (
+            a49c.PORT_STATUS['resident_biology_authority']
+        ),
+        'resident_device_writes': (
+            a49c.PORT_STATUS['resident_device_writes']
+        ),
+        'resident_device_writes_scope': (
+            a49c.PORT_STATUS['resident_device_writes_scope']
+        ),
+        'resident_d2h_publish': (
+            a49c.PORT_STATUS['resident_d2h_publish']
+        ),
+        'resident_d2h_publish_scope': (
+            a49c.PORT_STATUS['resident_d2h_publish_scope']
+        ),
+        'selected_maintenance': a49c.PORT_STATUS['selected_maintenance'],
+        'maintenance_resident_device_writes': (
+            a49c.PORT_STATUS['maintenance_resident_device_writes']
+        ),
+        'maintenance_resident_d2h_publish': (
+            a49c.PORT_STATUS['maintenance_resident_d2h_publish']
+        ),
+        'maintenance_live_commit': (
+            a49c.PORT_STATUS['maintenance_live_commit']
+        ),
+        'maintenance_resident_biology_authority': (
+            a49c.PORT_STATUS['maintenance_resident_biology_authority']
+        ),
+        'frozen_prior_test_count': 94,
+        'frozen_prior_test_names_sha256': _A49C_PRIOR_94_NAMES_SHA256,
+        'frozen_prior_test_ast_sha256': _A49C_PRIOR_94_AST_SHA256,
         'resident_arena_core_sha256': _A49A_CORE_SHA256,
         'resident_translation_core_sha256': _A49B_CORE_SHA256,
-        'a49b_preregistration_sha256': _A49B_PREREG_SHA256,
+        'resident_maintenance_foundation_core_sha256': _A49C_CORE_SHA256,
+        'a49c_preregistration_prefix_bytes': _A49C_PREREG_PREFIX_BYTES,
+        'a49c_preregistration_prefix_sha256': (
+            _A49C_PREREG_PREFIX_SHA256
+        ),
+        'a49c_preregistration_sha256': _A49C_PREREG_SHA256,
         'fixed_fixture_capacity': {
             'C': 4, 'Q': 10, 'S': 340, 'W': 48, 'P': 32, 'K': 21,
         },
         'require_cuda': bool(_REQUIRE_CUDA),
-        'source_sha256_map': source_sha256_map(),
+        'source_sha256_map': a49c_source_sha256_map(),
         'passed': passed, 'failed': failed, 'total': len(rows),
         'elapsed_seconds': elapsed, 'rows': rows,
     }
@@ -24178,7 +25603,7 @@ def run_all(write=False, output_dir=None):
             writer.writeheader()
             writer.writerows(rows)
         lines = [
-            '%s VALIDATION' % a49b.BUILD,
+            '%s VALIDATION' % a49c.BUILD,
             '%d PASS / %d FAIL / %d TOTAL' % (passed, failed, len(rows)),
             'elapsed %.6fs' % elapsed,
             '',
