@@ -1,0 +1,53 @@
+{
+  "schema_version": "SOMA-REPAIR-STATE-1",
+  "updated_utc": "2026-09-13T10:05:39.383045+00:00",
+  "checkpoint": "SOMA-REPAIR R0",
+  "status": "TARGETED_REPAIRS_VERIFIED_NOT_FULL_MODEL_ACCEPTANCE",
+  "upstream_handoff": {
+    "file": "SOMA_CODEX_HANDOFF_20260814.zip",
+    "sha256": "69971c7c2ed2788ed6fac485c9df8a1a9e0929aff1bc1bb889838bcdf691ca8f",
+    "git_head": "0e36608ee5c4d23c573de7de7b60b280b310dc1c",
+    "manifest_entries": 670
+  },
+  "scope": "Repair fork of detailed 0.6.6 and historical 0.6.5 evaluator; no coarse substitution, no A3/GPU changes.",
+  "primary_candidate": "src/repair_r0/SOMA_REPAIR_R0_particle.py",
+  "grammar_candidate": "src/repair_r0/SOMA_REPAIR_R0_grammar.py",
+  "test_command": "python src/repair_r0/run_repair_checks.py --output runs/r0",
+  "source_sha256": {
+    "SOMA_REPAIR_R0_particle.py": "94fd62745e43d590ad217d7fa26a740dd1b2313b3498718dbb584db572033e12",
+    "SOMA_REPAIR_R0_grammar.py": "8fc11625a4fd76b8d1c10d3c05d04579d8e27d8c957437b19332f4617edf5f03"
+  },
+  "measured_validation": {
+    "targeted_checks": {"passed": 30, "total": 30},
+    "same_boundary_contracts_on_legacy": {"passed": 0, "failed": 5, "errors": 0},
+    "historical_regressions_rerun": false,
+    "cuda_tested": false,
+    "pythonista_device_tested": false
+  },
+  "resolved_in_named_fork": [
+    "R01-last-grammar-deletion",
+    "R01-no-preset-reacquisition",
+    "R02-protein-and-ATP-gated-actuator-estimation",
+    "R03-exact-context-cache"
+  ],
+  "partially_addressed": [
+    "R04-environment-label-removed-from-estimator; unvalidated long_delay rejected",
+    "R06-literal-zero external fitness counter withdrawn as evidence"
+  ],
+  "unresolved": [
+    "R04-environment observability and causal delay task",
+    "R05-equal initial budgets and matched comparisons",
+    "R06-complete event instrumentation and test scope map",
+    "R07-units, energetics, and resolution convergence",
+    "R08-designed internal value versus emergent normativity",
+    "promoter included in legacy protein fingerprint and primary-genome semantics",
+    "other inherited neural, sensorimotor, diagnosis and HGT pathways not fully audited",
+    "population sizes, kinetic acceleration and founder priming still inherited",
+    "legacy mutation kernels outside dedicated grammar mutation not audited"
+  ],
+  "next_repair_stage": "SOMA-REPAIR R1",
+  "A3_GPU_status": "BLOCKED_UNTIL_REPAIRED_CPU_REFERENCE_ACCEPTED",
+  "scientific_claims": "No new adaptive advantage, lineage retention/loss, open-endedness, life or consciousness claim.",
+  "drive_policy": "DO_NOT_ACCESS_UNTIL_USER_REENABLES",
+  "codex_after_august_handoff": "NOT_ACCESSED; merge carefully against user PC work; never overwrite it blindly."
+}
