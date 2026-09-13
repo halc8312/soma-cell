@@ -1,0 +1,61 @@
+{
+  "suite": "SOMA R0 targeted repair checks",
+  "legacy_mode": false,
+  "environment": {
+    "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+    "numpy": "2.3.5",
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41"
+  },
+  "test_count": 30,
+  "passed": 30,
+  "failures": 0,
+  "errors": 0,
+  "source_sha256": {
+    "SOMA_REPAIR_R0_particle.py": "94fd62745e43d590ad217d7fa26a740dd1b2313b3498718dbb584db572033e12",
+    "SOMA_REPAIR_R0_grammar.py": "8fc11625a4fd76b8d1c10d3c05d04579d8e27d8c957437b19332f4617edf5f03"
+  },
+  "test_script_sha256": "9373cc0cf65fe558e002a35d912feef9b2e4c7327638242046c4bb4b769dd301",
+  "metrics": {
+    "real_allele_cache": {"unique_evaluations": 2, "score": 0.26667358766625615},
+    "absent_kernel_1000": {"changed": 0, "scope": "restricted proposal kernel, not biological frequency"},
+    "zero_atp": {"estimate": 1.0, "evidence": 0.0, "paid": 0.0},
+    "zero_protein": {"estimate": 1.0, "evidence": 0.0, "paid": 0.0},
+    "material_last_deletion": {"monomers_returned": 0.01312000000000002, "resource_residual": 0.0},
+    "single_gene_1000": {
+      "zero_grammar_proposals": 186,
+      "events": {"deletion": 186, "duplication": 196, "dormancy": 214, "reactivation": 0, "regulatory": 336},
+      "not_ecological_frequency": true
+    },
+    "paid_update": {"ATP": 4.900000000002125e-06, "estimate": 0.6400000000000001, "evidence": 0.08, "abstract_material_residual": 0.0},
+    "protein_dose_response": [
+      {"protein_fraction": 0.1, "evidence": 0.008, "paid": 4.900000000000001e-07},
+      {"protein_fraction": 0.5, "evidence": 0.04, "paid": 2.4500000000000003e-06},
+      {"protein_fraction": 1.0, "evidence": 0.08, "paid": 4.9000000000000005e-06}
+    ],
+    "translation_gate": {"before_expressed_modules": 0, "after_expressed_modules": 5, "translation_ATP": 0.0010909302857142755},
+    "payment_dose_response": [
+      {"paid_fraction": 0.0, "estimate": 1.0, "evidence": 0.0, "ATP": 0.0},
+      {"paid_fraction": 0.25, "estimate": 0.9031957480130537, "evidence": 0.02, "ATP": 1.2250000000000001e-06},
+      {"paid_fraction": 0.5, "estimate": 0.8110770276274835, "evidence": 0.04, "ATP": 2.4500000000000003e-06},
+      {"paid_fraction": 1.0, "estimate": 0.6400000000000001, "evidence": 0.08, "ATP": 4.9000000000000005e-06}
+    ],
+    "cached_uncached_assay": {"identical": true, "generations": 1, "population": 3, "evaluation_seconds": 0.2, "scope": "historical tournament correctness ONLY"},
+    "controlled_hgt_gate": {
+      "seed": 915,
+      "transferred_symbols": 80,
+      "encoded_modules_after_HGT": 5,
+      "expressed_before_translation": 0,
+      "expressed_after_translation": 5,
+      "external_inoculum": true,
+      "accelerated_contact_fixture_not_evolution": true
+    },
+    "death_fixture": {"preserved_genome_symbols": 576, "material_residual": 0.0},
+    "short_integrated_runs": [
+      {"seed": 913, "steps": 120, "age": 11.999999999999973, "cells": 6, "divisions": 3, "max_resource_residual": 6.661227800464076e-07, "finite": true},
+      {"seed": 914, "steps": 120, "age": 11.999999999999973, "cells": 6, "divisions": 3, "max_resource_residual": 6.002607655375414e-07, "finite": true},
+      {"seed": 915, "steps": 120, "age": 11.999999999999973, "cells": 6, "divisions": 3, "max_resource_residual": 6.551299094326168e-07, "finite": true}
+    ],
+    "division_fixture": {"daughters": 2, "abstract_resource_residual": 0.0, "forced_completion_fixture": true}
+  },
+  "scope_limit": "Boundary and short-integration evidence; not a new evolution/learning/biology claim; old 343 tests not included."
+}
