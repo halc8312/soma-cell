@@ -1,0 +1,243 @@
+--- src/0_6_6/SOMA_CELL_0_6_6_pythonista.py
++++ src/repair_r0/SOMA_REPAIR_R0_particle.py
+@@ -1,3 +1,6 @@
++# Derived from immutable detailed particle model 0.6.6; NOT a GPU release.
++# The R0 fork repairs named pathways only. Founder matching, physical units,
++# environment discrimination and other inherited learning paths need R1 review.
+ # coding: utf-8
+ """SOMA-CELL 0.6.6 — shared chemical ecology with endogenous generations.
+ 
+@@ -27,20 +30,22 @@
+     if path not in sys.path:
+         sys.path.insert(0, path)
+ 
+-import SOMA_CELL_0_6_5_pythonista as s65
++import SOMA_REPAIR_R0_grammar as s65
+ 
+ s64=s65.s64; s63=s65.s63; s62=s65.s62; s61=s65.s61; f06=s65.f06
+ p2=s65.p2; p1=s65.p1; p0=s65.p0; s5=s65.s5; s4=s65.s4; g2=s65.g2
+ 
+-BUILD='SOMA-CELL 0.6.6'
++BUILD='SOMA-REPAIR R0 particle candidate'
+ BUILD_LONG=BUILD+' | endogenous shared chemical ecology'
+-SCHEMA_VERSION='0.6.6-ECO1.0'
++SCHEMA_VERSION='REPAIR-R0-P1'
+ SAVE_VERSION=1
+-SAVE_FILE='soma_cell_0_6_6.pkl'
+-LOG_FILE='soma_cell_0_6_6_longrun.csv'
+-REPORT_FILE='soma_cell_0_6_6_report.txt'
+-SESSION_FILE='soma_cell_0_6_6_sessions.csv'
++SAVE_FILE='soma_repair_r0_particle.pkl'
++LOG_FILE='soma_repair_r0_particle_longrun.csv'
++REPORT_FILE='soma_repair_r0_particle_report.txt'
++SESSION_FILE='soma_repair_r0_particle_sessions.csv'
+ SIM_HZ=10.0
++GRAMMAR_PROTEIN_REFERENCE = 0.00045  # model protein mass for unit capacity
++GRAMMAR_UPDATE_REFERENCE_DT = 0.1
+ clamp=s65.clamp
+ _atomic_pickle=s65._atomic_pickle
+ 
+@@ -132,6 +137,10 @@
+                  **kwargs):
+         if ecology_environment not in ECO66_ENVIRONMENTS:
+             raise ValueError('unknown 0.6.6 ecology environment')
++        if ecology_environment == ENV_LONG_DELAY:
++            raise ValueError('R0: long_delay is not a validated delay task; use stable or periodic')
++        if not eco66_grammar_costs:
++            raise ValueError('R0: free grammar activity is not an allowed mode')
+         self.ecology_environment=str(ecology_environment)
+         self.shared_ecology=bool(shared_ecology)
+         self.eco66_founder_mode=str(eco66_founder_mode)
+@@ -233,72 +242,134 @@
+         return super(Formal066ProtoCell,self).update_division(dt*scale,config)
+ 
+     def _grammar_traits(self):
++        """Separate encoded potential from function supported by matching protein.
++
++        The primary-genome convention is inherited from 0.6.6. Only its active
++        grammar alleles and their exact protein fingerprints authorize function;
++        DNA sequence or unrelated/damaged proteins alone do not authorize it.
++        """
+         if not self.genomes:
+-            return {'active_count':0}
+-        return s65.grammar_traits_from_sequence(self.genomes[0])
+-
+-    def _pay_grammar_costs(self,world,dt,traits):
+-        if not getattr(world.config,'eco66_grammar_costs',True):
++            return {'active_count': 0, 'capacities': {n: 0.0 for n in s65.GRAMMAR_NAMES}}
++        traits = dict(s65.grammar_traits_from_sequence(self.genomes[0]))
++        protein_mass = dict.fromkeys(s65.GRAMMAR_NAMES, 0.0)
++        seen = set()
++        for rec in s65.grammar_records_from_sequence(self.genomes[0]):
++            fp = rec['fingerprint']
++            if fp in seen or rec['promoter'] < s65.ACTIVE_PROMOTER_MIN or rec['efficiency'] < 2:
++                continue
++            seen.add(fp)
++            amount = float(self.proteins.get(fp, 0.0))
++            if not math.isfinite(amount) or amount < 0.0:
++                raise FloatingPointError('invalid grammar protein mass')
++            if amount > 1e-10:  # same cleanup resolution as _sync_protein_pool
++                protein_mass[s65.GRAMMAR_NAMES[rec['module']]] += amount
++        capacities = {name: min(1.0, protein_mass[name] / GRAMMAR_PROTEIN_REFERENCE)
++                      if traits.get(name, False) else 0.0 for name in s65.GRAMMAR_NAMES}
++        traits['encoded_active_count'] = traits['active_count']
++        for name in s65.GRAMMAR_NAMES:
++            traits[name] = bool(capacities[name] > 0.0)
++        traits['active_count'] = sum(int(traits[n]) for n in s65.GRAMMAR_NAMES)
++        traits['capacities'] = capacities
++        if not traits['readiness']:
++            traits['readiness_fraction'] = 0.0
++        if not traits['organ']:
++            traits['organ_mode'] = 'none'
++        return traits
++
++    def _pay_grammar_costs(self, world, dt, traits):
++        """Debit first; return the actual fraction of expressed work purchased.
++
++        This is the legacy abstract ATP/resource ledger, NOT an SI chemistry
++        assertion. No expression => no work. No ATP => no information update.
++        """
++        if not math.isfinite(float(dt)) or dt < 0.0:
++            raise ValueError('invalid timestep')
++        if not getattr(world.config, 'eco66_grammar_costs', True):
++            raise ValueError('R0: refusing free grammar computation')
++        requested = sum(GRAMMAR_ACTIVITY_ATP_RATES[name] * traits['capacities'].get(name, 0.0)
++                        for name in s65.GRAMMAR_NAMES) * dt
++        atp = float(self.pools[s5.POOL_ATP])
++        waste = float(self.pools[s5.POOL_WASTE])
++        if not math.isfinite(atp) or not math.isfinite(waste) or atp < 0.0 or waste < 0.0:
++            raise FloatingPointError('invalid ATP/waste pool before activity')
++        if requested <= 0.0:
++            return 0.0
++        paid = min(atp, requested)
++        self.pools[s5.POOL_ATP] -= paid
++        world.dissipated_energy += paid
++        self.eco66_grammar_atp += paid
++        converted = min(waste, paid * GRAMMAR_ACTIVITY_WEAR_RATE)
++        self.pools[s5.POOL_WASTE] -= converted
++        self.pools[s5.POOL_REACTIVE] += converted
++        self.eco66_grammar_wear += converted
++        return paid / requested
++
++    def _update_actuator_estimate(self, traits, work_fraction, dt):
++        """Execute a paid, expression-limited update from local physical history."""
++        if work_fraction <= 0.0 or dt <= 0.0:
+             return
+-        requested=sum(GRAMMAR_ACTIVITY_ATP_RATES[name] for name in active_module_names(traits))*dt
+-        if requested<=0.0:
++        command = np.asarray(self.eco66_prev_issued, dtype=float)
++        cn = float(np.linalg.norm(command))
++        if cn < 0.18:
+             return
+-        paid=min(float(self.pools[s5.POOL_ATP]),requested)
+-        self.pools[s5.POOL_ATP]-=paid
+-        world.dissipated_energy+=paid
+-        self.eco66_grammar_atp+=paid
+-        converted=min(float(self.pools[s5.POOL_WASTE]),paid*GRAMMAR_ACTIVITY_WEAR_RATE)
+-        self.pools[s5.POOL_WASTE]-=converted
+-        self.pools[s5.POOL_REACTIVE]+=converted
+-        self.eco66_grammar_wear+=converted
+-
+-    def _update_actuator_estimate(self,world,traits):
+-        if not getattr(world.config,'eco66_motor_adaptation',True):
++        disp = torus_delta(self.pos, self.eco66_prev_pos)
++        proj = float(np.dot(disp, command / cn))
++        if abs(proj) < 1e-6:
+             return
+-        if not (traits.get('sentinel') and traits.get('organ') and traits.get('plasticity')):
++        obs = 1.0 if proj >= 0.0 else -1.0
++        predictive_capacity = traits['capacities'].get('prediction', 0.0)
++        alpha_ref = 0.10 + 0.08 * predictive_capacity
++        exposure = dt / GRAMMAR_UPDATE_REFERENCE_DT * work_fraction
++        alpha = -math.expm1(math.log1p(-alpha_ref) * exposure)
++        self.eco66_actuator_estimate = float(clamp(
++            (1.0 - alpha) * self.eco66_actuator_estimate + alpha * obs, -1.0, 1.0))
++        self.eco66_estimator_evidence = float(clamp(
++            self.eco66_estimator_evidence + 0.08 * exposure, 0.0, 1.0))
++
++    def apply_effectors(self, world, dt, config):
++        if not math.isfinite(float(dt)) or dt < 0.0:
++            raise ValueError('invalid timestep')
++        if not self.alive or dt == 0.0:
+             return
+-        command=np.asarray(self.eco66_prev_issued,dtype=float)
+-        cn=float(np.linalg.norm(command))
+-        if cn<0.18:
+-            return
+-        disp=torus_delta(self.pos,self.eco66_prev_pos)
+-        proj=float(np.dot(disp,command/max(cn,1e-12)))
+-        if abs(proj)<1e-6:
+-            return
+-        obs=1.0 if proj>=0.0 else -1.0
+-        alpha=0.18 if traits.get('prediction') else 0.10
+-        if world.config.ecology_environment==ENV_LONG_DELAY and not traits.get('prediction'):
+-            alpha*=0.42
+-        self.eco66_actuator_estimate=(1.0-alpha)*self.eco66_actuator_estimate+alpha*obs
+-        self.eco66_actuator_estimate=float(clamp(self.eco66_actuator_estimate,-1.0,1.0))
+-        self.eco66_estimator_evidence=float(clamp(self.eco66_estimator_evidence+0.08,0.0,1.0))
+-
+-    def apply_effectors(self,world,dt,config):
+         self._init_066_state()
+-        traits=self._grammar_traits()
+-        self._update_actuator_estimate(world,traits)
+-        self._pay_grammar_costs(world,dt,traits)
+-
+-        intended=np.asarray(self.last_control_vectors[s4.CONTROL_MOTOR],dtype=float).copy()
+-        compensate=1.0
+-        if (traits.get('sentinel') and traits.get('organ') and traits.get('plasticity')
+-                and self.eco66_estimator_evidence>=0.16):
+-            compensate=1.0 if self.eco66_actuator_estimate>=0.0 else -1.0
+-        issued=intended*compensate
+-        backup=np.asarray(self.last_control_vectors[s4.CONTROL_MOTOR],dtype=float).copy()
+-        surface_before=np.asarray(self.surface_flux,dtype=float).copy()
+-        self.last_control_vectors[s4.CONTROL_MOTOR]=issued
++        traits = self._grammar_traits()
++        backup = np.asarray(self.last_control_vectors[s4.CONTROL_MOTOR], dtype=float).copy()
++        surface_before = np.asarray(self.surface_flux, dtype=float).copy()
++        paid_fraction = self._pay_grammar_costs(world, dt, traits)
++        required_capacity = min(traits['capacities'].get(n, 0.0)
++                                for n in ('sentinel', 'organ', 'plasticity'))
++        work_fraction = paid_fraction * required_capacity
++        if not getattr(config, 'eco66_motor_adaptation', True):
++            work_fraction = 0.0
++        self._update_actuator_estimate(traits, work_fraction, dt)
++        compensate = 1.0
++        if work_fraction > 0.0 and self.eco66_estimator_evidence >= 0.16:
++            desired_sign = 1.0 if self.eco66_actuator_estimate >= 0.0 else -1.0
++            compensate = 1.0 + work_fraction * (desired_sign - 1.0)
++        issued = backup * compensate
++        self.last_control_vectors[s4.CONTROL_MOTOR] = issued
+         try:
+-            super(Formal066ProtoCell,self).apply_effectors(world,dt,config)
++            super(Formal066ProtoCell, self).apply_effectors(world, dt, config)
+         finally:
+-            self.last_control_vectors[s4.CONTROL_MOTOR]=backup
+-        # Physical actuator law belongs to the environment. The organism sees
+-        # only resulting motion, never the sign or switch time.
+-        sign=float(world._eco66_motor_sign()) if hasattr(world,'_eco66_motor_sign') else 1.0
+-        motor_delta=np.asarray(self.surface_flux,dtype=float)-surface_before
+-        self.surface_flux=surface_before+sign*motor_delta
+-        self.eco66_prev_pos=np.asarray(self.pos,dtype=float).copy()
+-        self.eco66_prev_issued=np.asarray(issued,dtype=float).copy()
++            self.last_control_vectors[s4.CONTROL_MOTOR] = backup
++        sign = float(world._eco66_motor_sign()) if hasattr(world, '_eco66_motor_sign') else 1.0
++        motor_delta = np.asarray(self.surface_flux, dtype=float) - surface_before
++        self.surface_flux = surface_before + sign * motor_delta
++        if work_fraction > 0.0:
++            self.eco66_prev_pos = np.asarray(self.pos, dtype=float).copy()
++            self.eco66_prev_issued = np.asarray(issued, dtype=float).copy()
+@@ -536,7 +607,10 @@
+-            'eco66_external_fitness_events':0,
++            'eco66_external_fitness_events':None,
++            'repair_external_selection_instrumented':False,
++            'repair_mean_expressed_modules':float(np.mean([c._grammar_traits()['active_count'] for c in living])) if living else 0.0,
++            'repair_scope':'R0 named-path repair; other audit issues unresolved',
+@@ -571,6 +645,8 @@
+     @classmethod
+     def from_state(cls,state):
++        if state.get('build') != BUILD:
++            raise ValueError('R0 cannot silently migrate a historical particle save')
+@@ -625,7 +701,7 @@
+-        'finite':int(bool(world.finite())),'external_fitness_events':0,
++        'finite':int(bool(world.finite())),'external_fitness_events':None,
+     }
