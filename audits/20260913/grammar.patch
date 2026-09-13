@@ -1,0 +1,31 @@
+--- src/0_6_5/SOMA_CELL_0_6_5_pythonista.py
++++ src/repair_r0/SOMA_REPAIR_R0_grammar.py
+@@ -1,3 +1,7 @@
++# Derived from the immutable 0.6.5 baseline. September 2026 repair branch.
++# R0: no last-gene protection, no template insertion without a donor,
++# and exact-context evaluation caching. Lower-layer model limitations remain.
++# The tournament below is a historical assay ONLY, not endogenous reproduction.
+ # coding: utf-8
+@@ -35,14 +39,14 @@
+-BUILD='SOMA-CELL 0.6.5'
++BUILD='SOMA-REPAIR R0 grammar / historical assay fork'
+@@ -218,50 +222,64 @@
+-def mutate_grammar_sequence(sequence,rng,rate=0.22,duplication=True):
++def mutate_grammar_sequence(sequence, rng, rate=0.22, duplication=True):
++    # R0: the final grammar gene may be deleted if the base polymer remains valid.
++    # No-records is a no-op; this restricted kernel no longer mints a ready-made gene.
++    # Full implementation is preserved in the R0 handoff package and source SHA in REPAIR_STATE.json.
+@@ -386,7 +404,76 @@
+-def run_grammar_evolution_assay(seed=101,environment=ENV_STABLE,generations=12,population=24,mutation=True,seconds=16.0,standing_variation=True):
++def evaluation_cache_context(sequence, environment, evaluation_seeds, seconds):
++    # R0 key includes the complete sequence, config, seeds, duration, runtime and source hashes.
++    ...
++
++def evaluation_cache_key(sequence, environment, evaluation_seeds, seconds):
++    ...
++
++def run_grammar_evolution_assay(seed=101,environment=ENV_STABLE,generations=12,population=24,mutation=True,seconds=16.0,standing_variation=True,use_cache=True):
++    # grammar_signature is descriptive only; it is no longer the evaluation identity.
++    ...
++
++NOTE: This repository patch is an audit summary. Exact repaired-source hashes and the full tested source are recorded in REPAIR_STATE.json and the September 2026 repair artifact. Do not treat the ellipses above as executable source.
